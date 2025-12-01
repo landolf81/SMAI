@@ -258,12 +258,12 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     };
   }, [enableSnapScroll, trackAdView]); // visiblePosts 제거 - 함수형 업데이트 사용
 
-  // 게시글 요소들을 Observer에 등록
+  // 게시글 요소들을 Observer에 등록 (renderedCount 변경 시마다 재등록)
   useEffect(() => {
     if (!observerRef.current || !postsContainerRef.current) return;
 
     const postElements = postsContainerRef.current.querySelectorAll('[data-post-id]');
-    
+
     postElements.forEach((element) => {
       observerRef.current.observe(element);
     });
@@ -275,7 +275,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         });
       }
     };
-  }, [data]);
+  }, [data, renderedCount]); // renderedCount 추가 - 순차 렌더링된 새 요소도 Observer에 등록
 
   // 첫 로딩 완료 후 최상단으로 스크롤 (뒤로가기가 아닌 경우)
   useEffect(() => {
