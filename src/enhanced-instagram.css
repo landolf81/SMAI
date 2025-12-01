@@ -1,0 +1,313 @@
+/* Enhanced Instagram Style Animations */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heartPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes likeHeart {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  15% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(0.95);
+  }
+  45%, 80% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile screen overflow fix */
+@media (max-width: 768px) {
+  .enhanced-instagram-post {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .enhanced-instagram-feed {
+    padding: 0 !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  /* Post internal content */
+  .post-header,
+  .post-content,
+  .post-actions,
+  .post-footer {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Image/Video container */
+  .media-section,
+  .image-slider-container {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* Slider images */
+  .slider-image,
+  .post-image,
+  .post-video {
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+  }
+
+  /* YouTube embed */
+  .youtube-embed-container {
+    width: 100% !important;
+    padding: 0 !important;
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.heart-pulse {
+  animation: heartPulse 0.3s ease-in-out;
+}
+
+.bounce-subtle {
+  animation: bounce 0.5s ease-out;
+}
+
+/* Loading Skeleton */
+.skeleton {
+  animation: shimmer 1.5s infinite;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+}
+
+/* Instagram Post Base Styles */
+.instagram-post {
+  background: white;
+  border: 1px solid #dbdbdb;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  transition: all 0.3s ease;
+}
+
+.instagram-post:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Media Container */
+.media-container {
+  position: relative;
+  width: 100%;
+  background: #000;
+  overflow: hidden;
+}
+
+.media-container img,
+.media-container video {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Video Controls */
+.video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.media-container:hover .video-controls {
+  opacity: 1;
+}
+
+/* Interaction Buttons */
+.interaction-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin: 4px;
+  transition: transform 0.2s ease;
+}
+
+.interaction-button:hover {
+  transform: scale(1.1);
+}
+
+.interaction-button:active {
+  transform: scale(0.95);
+}
+
+.interaction-button.liked {
+  color: #ed4956;
+  animation: heartPulse 0.3s ease-in-out;
+}
+
+/* Comments Section */
+.comments-section {
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comment-item {
+  display: flex;
+  margin-bottom: 12px;
+  animation: slideUp 0.3s ease-out;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+/* Loading States */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Floating Action Button */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0095f6;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 1000;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.fab:active {
+  transform: scale(0.95);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .instagram-post {
+    background-color: #1a1a1a;
+    border-color: #333;
+    color: #fff;
+  }
+  
+  .skeleton {
+    background: linear-gradient(90deg, #2a2a2a 25%, #1a1a1a 50%, #2a2a2a 75%);
+  }
+}

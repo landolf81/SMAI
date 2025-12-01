@@ -1,0 +1,229 @@
+/* App.css - 경락가 웹앱 전용 스타일 */
+
+/* 전역 스타일 재정의 */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* 메인 앱 컨테이너 */
+#root {
+  width: 100%;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* 모바일 화면 최적화 */
+@media (max-width: 768px) {
+  .app,
+  .app-container,
+  .main-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}
+
+/* 카드 호버 효과 개선 */
+.market-card:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 가격 표시 스타일 */
+.price-display {
+  font-family: 'Noto Sans KR', monospace;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* 상태 인디케이터 */
+.status-indicator {
+  position: relative;
+  display: inline-block;
+}
+
+.status-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -12px;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: pulse 2s infinite;
+}
+
+/* 성주참외 브랜드 색상 그라데이션 */
+.brand-gradient {
+  background: linear-gradient(135deg, 
+    #22c55e 0%,     /* 성주 녹색 */
+    #f97316 50%,    /* 참외 주황색 */
+    #0ea5e9 100%    /* 하늘 파란색 */
+  );
+}
+
+/* 데이터 테이블 개선 */
+.data-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+}
+
+.data-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .market-card {
+    margin: 0 4px;
+    padding: 12px;
+  }
+  
+  .price-display {
+    font-size: 1.25rem;
+  }
+  
+  .stat-card {
+    padding: 16px;
+  }
+}
+
+/* 다크모드 지원 */
+[data-theme="market-dark"] .market-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme="market-dark"] .sidebar-gradient {
+  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
+}
+
+/* 인쇄 스타일 */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .market-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #e5e7eb;
+  }
+}
+
+/* 접근성 개선 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* 포커스 스타일 개선 */
+.focus\:outline-market:focus {
+  outline: 2px solid #22c55e;
+  outline-offset: 2px;
+}
+
+/* 사용자 정의 스크롤바 */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 게시물 헤더 영역에서 DaisyUI countdown CSS 오버라이드 */
+article header *:before,
+article header *:after {
+  content: none !important;
+}
+
+/* 조회수 영역에서 의도치 않은 CSS content 제거 */
+.mr-2:before,
+.mr-2:after {
+  content: none !important;
+}
+
+/* DaisyUI countdown 클래스 완전 비활성화 */
+.countdown > *:before {
+  content: none !important;
+}
+
+/* 더 구체적인 선택자로 mr-2 클래스 보호 */
+header .mr-2:before,
+header .mr-2:after,
+header div.mr-2:before,
+header div.mr-2:after {
+  content: none !important;
+  display: none !important;
+}
+
+/* pin-indicator 클래스에 대한 추가 보호 */
+.pin-indicator:before,
+.pin-indicator:after,
+.pin-indicator *:before,
+.pin-indicator *:after {
+  content: none !important;
+  display: none !important;
+}
+
+/* view-count 클래스에 대한 추가 보호 */
+.view-count:before,
+.view-count:after,
+.view-count *:before,
+.view-count *:after {
+  content: none !important;
+  display: none !important;
+}
+
+/* 모든 가상 요소에서 "0" 관련 content 제거 */
+*:before,
+*:after {
+  content: none !important;
+}
+
+/* 특정 유틸리티만 허용 */
+.tooltip:after,
+.dropdown-content:after,
+.modal:after {
+  content: "" !important;
+}

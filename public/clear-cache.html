@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캐시 초기화 및 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 2em;
+        }
+        .section {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            border-left: 4px solid #4CAF50;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3);
+            border-left: 4px solid #f44336;
+        }
+        .info {
+            background: rgba(33, 150, 243, 0.3);
+            border-left: 4px solid #2196F3;
+        }
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .status.online {
+            background: #4CAF50;
+        }
+        .status.offline {
+            background: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 캐시 초기화 및 Supabase 테스트</h1>
+
+        <div class="section info">
+            <h3>📋 현재 상태</h3>
+            <p>프론트엔드: <span class="status" id="frontendStatus">확인 중...</span></p>
+            <p>Supabase: <span class="status" id="supabaseStatus">확인 중...</span></p>
+            <p>인증 상태: <strong id="authStatus">확인 중...</strong></p>
+            <p>로컬 스토리지 항목: <strong id="localStorageCount">-</strong>개</p>
+            <p>세션 스토리지 항목: <strong id="sessionStorageCount">-</strong>개</p>
+        </div>
+
+        <div class="section">
+            <h3>🔧 1단계: 캐시 및 스토리지 초기화</h3>
+            <button onclick="clearAll()">전체 캐시 삭제</button>
+            <button onclick="clearLocalStorage()">로컬 스토리지만 삭제</button>
+            <button onclick="clearSessionStorage()">세션 스토리지만 삭제</button>
+            <pre id="clearResult">버튼을 클릭하세요...</pre>
+        </div>
+
+        <div class="section">
+            <h3>🧪 2단계: Supabase 연결 테스트</h3>
+            <button onclick="testSupabaseConnection()">연결 테스트</button>
+            <button onclick="testUsersTable()">users 테이블 조회</button>
+            <button onclick="testUserProfile()">프로필 조회 (3초 타임아웃)</button>
+            <pre id="supabaseResult">버튼을 클릭하세요...</pre>
+        </div>
+
+        <div class="section">
+            <h3>🔐 3단계: 인증 테스트</h3>
+            <input type="email" id="testEmail" placeholder="이메일" value="landolf@me.com" style="padding: 10px; border-radius: 5px; border: none; margin: 5px; width: 250px;">
+            <input type="password" id="testPassword" placeholder="비밀번호" value="Test1234!" style="padding: 10px; border-radius: 5px; border: none; margin: 5px; width: 250px;">
+            <br>
+            <button onclick="testLogin()">로그인 테스트</button>
+            <button onclick="testSignup()">회원가입 테스트</button>
+            <button onclick="testLogout()">로그아웃</button>
+            <pre id="authResult">버튼을 클릭하세요...</pre>
+        </div>
+
+        <div class="section success">
+            <h3>✅ 완전 재시작 (권장)</h3>
+            <button onclick="fullReset()">🚀 캐시 삭제 + 페이지 새로고침</button>
+            <p>이 버튼은 모든 캐시를 삭제하고 페이지를 새로고침합니다.</p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://zynlhezlaxvolpptruiu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bmxoZXpsYXh2b2xwcHRydWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjE1MDQsImV4cCI6MjA3ODMzNzUwNH0.G9ngWwqr3Hp_mTStHJIaY_rRS0AejrNmxFTwlxcsxEw';
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 초기 상태 확인
+        window.addEventListener('load', async () => {
+            updateStorageCounts();
+            await checkStatus();
+        });
+
+        function updateStorageCounts() {
+            document.getElementById('localStorageCount').textContent = localStorage.length;
+            document.getElementById('sessionStorageCount').textContent = sessionStorage.length;
+        }
+
+        async function checkStatus() {
+            // 프론트엔드 상태
+            const frontendEl = document.getElementById('frontendStatus');
+            frontendEl.textContent = '온라인';
+            frontendEl.classList.add('online');
+
+            // Supabase 연결 상태
+            try {
+                const { data, error } = await supabaseClient.from('users').select('count').limit(1);
+                const supabaseEl = document.getElementById('supabaseStatus');
+                if (!error) {
+                    supabaseEl.textContent = '연결됨';
+                    supabaseEl.classList.add('online');
+                } else {
+                    supabaseEl.textContent = '오류';
+                    supabaseEl.classList.add('offline');
+                }
+            } catch (err) {
+                const supabaseEl = document.getElementById('supabaseStatus');
+                supabaseEl.textContent = '연결 실패';
+                supabaseEl.classList.add('offline');
+            }
+
+            // 인증 상태
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            document.getElementById('authStatus').textContent = session ? `로그인됨 (${session.user.email})` : '로그아웃됨';
+        }
+
+        function clearAll() {
+            const result = document.getElementById('clearResult');
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                result.textContent = '✅ 로컬 스토리지와 세션 스토리지가 모두 삭제되었습니다.\n\n' +
+                    '⚠️ 브라우저 캐시도 삭제하려면 Ctrl+Shift+Delete를 누르세요.';
+                updateStorageCounts();
+            } catch (error) {
+                result.textContent = '❌ 삭제 실패: ' + error.message;
+            }
+        }
+
+        function clearLocalStorage() {
+            const result = document.getElementById('clearResult');
+            const before = localStorage.length;
+            localStorage.clear();
+            const after = localStorage.length;
+            result.textContent = `✅ 로컬 스토리지 삭제 완료\n삭제 전: ${before}개\n삭제 후: ${after}개`;
+            updateStorageCounts();
+        }
+
+        function clearSessionStorage() {
+            const result = document.getElementById('clearResult');
+            const before = sessionStorage.length;
+            sessionStorage.clear();
+            const after = sessionStorage.length;
+            result.textContent = `✅ 세션 스토리지 삭제 완료\n삭제 전: ${before}개\n삭제 후: ${after}개`;
+            updateStorageCounts();
+        }
+
+        async function testSupabaseConnection() {
+            const result = document.getElementById('supabaseResult');
+            result.textContent = 'Supabase 연결 테스트 중...';
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    result.textContent = '✅ Supabase REST API 연결 성공!\n\n응답 코드: ' + response.status;
+                } else {
+                    result.textContent = '⚠️ Supabase 응답:\nStatus: ' + response.status + '\n' + response.statusText;
+                }
+            } catch (error) {
+                result.textContent = '❌ Supabase 연결 오류:\n' + error.message;
+            }
+        }
+
+        async function testUsersTable() {
+            const result = document.getElementById('supabaseResult');
+            result.textContent = 'users 테이블 조회 중...';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('id, email, username')
+                    .limit(3);
+
+                if (error) {
+                    result.textContent = '❌ users 테이블 조회 실패:\n' + JSON.stringify(error, null, 2);
+                } else {
+                    result.textContent = '✅ users 테이블 조회 성공!\n\n' +
+                        `총 ${data.length}명 조회:\n` +
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                result.textContent = '❌ 조회 오류:\n' + error.message;
+            }
+        }
+
+        async function testUserProfile() {
+            const result = document.getElementById('supabaseResult');
+            result.textContent = '프로필 조회 중... (3초 타임아웃)';
+
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+
+                if (!session) {
+                    result.textContent = '❌ 로그인이 필요합니다.';
+                    return;
+                }
+
+                // 3초 타임아웃
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('타임아웃 (3초)')), 3000)
+                );
+
+                const queryPromise = supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                const startTime = Date.now();
+                const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+                const endTime = Date.now();
+
+                if (error) {
+                    result.textContent = `❌ 프로필 조회 실패 (${endTime - startTime}ms):\n` +
+                        JSON.stringify(error, null, 2);
+                } else {
+                    result.textContent = `✅ 프로필 조회 성공! (${endTime - startTime}ms)\n\n` +
+                        JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                result.textContent = '❌ 조회 오류:\n' + error.message;
+            }
+        }
+
+        async function testLogin() {
+            const result = document.getElementById('authResult');
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+
+            result.textContent = `로그인 시도 중... (${email})`;
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) {
+                    result.textContent = '❌ 로그인 실패:\n' + JSON.stringify(error, null, 2);
+                } else {
+                    result.textContent = '✅ 로그인 성공!\n\n' +
+                        `사용자 ID: ${data.user.id}\n` +
+                        `이메일: ${data.user.email}\n` +
+                        `로그인 시간: ${new Date(data.session.expires_at * 1000).toLocaleString()}`;
+                    await checkStatus();
+                }
+            } catch (error) {
+                result.textContent = '❌ 로그인 오류:\n' + error.message;
+            }
+        }
+
+        async function testSignup() {
+            const result = document.getElementById('authResult');
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+
+            result.textContent = `회원가입 시도 중... (${email})`;
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            username: email.split('@')[0],
+                            name: email.split('@')[0]
+                        }
+                    }
+                });
+
+                if (error) {
+                    result.textContent = '❌ 회원가입 실패:\n' + JSON.stringify(error, null, 2);
+                } else {
+                    result.textContent = '✅ 회원가입 성공!\n\n' +
+                        `사용자 ID: ${data.user.id}\n` +
+                        `이메일: ${data.user.email}\n\n` +
+                        '⚠️ 이메일 인증이 필요할 수 있습니다.';
+                    await checkStatus();
+                }
+            } catch (error) {
+                result.textContent = '❌ 회원가입 오류:\n' + error.message;
+            }
+        }
+
+        async function testLogout() {
+            const result = document.getElementById('authResult');
+            result.textContent = '로그아웃 중...';
+
+            try {
+                const { error } = await supabaseClient.auth.signOut();
+
+                if (error) {
+                    result.textContent = '❌ 로그아웃 실패:\n' + JSON.stringify(error, null, 2);
+                } else {
+                    result.textContent = '✅ 로그아웃 성공!';
+                    await checkStatus();
+                }
+            } catch (error) {
+                result.textContent = '❌ 로그아웃 오류:\n' + error.message;
+            }
+        }
+
+        function fullReset() {
+            localStorage.clear();
+            sessionStorage.clear();
+            alert('✅ 모든 캐시가 삭제되었습니다.\n\n페이지를 새로고침합니다...');
+            location.reload(true);
+        }
+    </script>
+</body>
+</html>

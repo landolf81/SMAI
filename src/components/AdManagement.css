@@ -1,0 +1,311 @@
+/* 광고 관리 시스템 전용 스타일 */
+
+/* 광고 생성/수정 폼 애니메이션 */
+.ad-creator .form-section {
+    animation: slideInLeft 0.3s ease-out;
+}
+
+.ad-creator .preview-section {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 이미지 업로더 드래그 앤 드롭 효과 */
+.image-uploader [data-drag-active="true"] {
+    border-color: #3b82f6;
+    background-color: #dbeafe;
+    transform: scale(1.02);
+    transition: all 0.2s ease-in-out;
+}
+
+/* 광고 미리보기 반응형 */
+.ad-preview .preview-container {
+    transition: all 0.3s ease-in-out;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    .ad-creator {
+        grid-template-columns: 1fr;
+    }
+    
+    .ad-creator .preview-section {
+        order: -1;
+    }
+    
+    .ad-dashboard .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ad-dashboard table {
+        font-size: 0.875rem;
+    }
+    
+    .ad-dashboard .tab-navigation {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* 광고 카드 호버 효과 */
+.ad-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ad-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* 성과 지표 색상 */
+.performance-excellent {
+    @apply text-green-600 bg-green-50 border-green-200;
+}
+
+.performance-good {
+    @apply text-blue-600 bg-blue-50 border-blue-200;
+}
+
+.performance-average {
+    @apply text-yellow-600 bg-yellow-50 border-yellow-200;
+}
+
+.performance-poor {
+    @apply text-red-600 bg-red-50 border-red-200;
+}
+
+/* 로딩 애니메이션 */
+.loading-spinner {
+    @apply animate-spin rounded-full border-4 border-gray-200 border-t-blue-600;
+}
+
+/* 폼 검증 에러 스타일 */
+.form-field-error {
+    @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+}
+
+.form-field-error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* 탭 전환 애니메이션 */
+.tab-content {
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 통계 카드 애니메이션 */
+.stats-card {
+    transition: all 0.3s ease-in-out;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 알림 배지 */
+.notification-badge {
+    @apply absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center;
+    animation: pulse 2s infinite;
+}
+
+/* 드롭다운 메뉴 애니메이션 */
+.dropdown-menu {
+    animation: dropDown 0.2s ease-out;
+}
+
+@keyframes dropDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 성공/에러 메시지 스타일 */
+.message-success {
+    @apply bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg;
+    animation: slideDown 0.3s ease-out;
+}
+
+.message-error {
+    @apply bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 프로그레스 바 */
+.progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.progress-fill {
+    @apply bg-blue-600 h-2 rounded-full transition-all duration-300 ease-in-out;
+}
+
+/* 툴팁 */
+.tooltip {
+    @apply absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg opacity-0 pointer-events-none transition-opacity duration-200;
+}
+
+.tooltip.show {
+    @apply opacity-100;
+}
+
+/* 반응형 그리드 */
+.responsive-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+@media (max-width: 640px) {
+    .responsive-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+/* 스켈레톤 로더 */
+.skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+}
+
+.skeleton-text {
+    @apply h-4 bg-gray-200 rounded animate-pulse;
+}
+
+.skeleton-avatar {
+    @apply w-12 h-12 bg-gray-200 rounded-full animate-pulse;
+}
+
+/* 버튼 로딩 상태 */
+.btn-loading {
+    @apply relative text-transparent transition-all duration-200;
+}
+
+.btn-loading::after {
+    content: '';
+    @apply absolute inset-0 flex items-center justify-center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' stroke='currentColor' stroke-width='4' fill='none' opacity='0.25'/%3E%3Cpath d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' fill='currentColor'/%3E%3C/svg%3E");
+    background-size: 1rem 1rem;
+    background-repeat: no-repeat;
+    background-position: center;
+    animation: spin 1s linear infinite;
+}
+
+/* 광고 위치별 특별 스타일 */
+.ad-position-header {
+    @apply bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200;
+}
+
+.ad-position-sidebar {
+    @apply bg-white shadow-lg border border-gray-100;
+}
+
+.ad-position-banner {
+    @apply bg-gradient-to-r from-yellow-50 via-white to-orange-50 border border-yellow-200;
+}
+
+.ad-position-market-detail {
+    @apply bg-green-50 border border-green-200;
+}
+
+.ad-position-footer {
+    @apply bg-gray-100 border border-gray-300;
+}
+
+/* 다크 모드 지원 (미래 확장용) */
+@media (prefers-color-scheme: dark) {
+    .ad-dashboard {
+        @apply bg-gray-900 text-white;
+    }
+    
+    .ad-dashboard .bg-white {
+        @apply bg-gray-800 border-gray-700;
+    }
+    
+    .ad-dashboard .text-gray-900 {
+        @apply text-gray-100;
+    }
+    
+    .ad-dashboard .text-gray-600 {
+        @apply text-gray-300;
+    }
+    
+    .ad-dashboard .border-gray-200 {
+        @apply border-gray-700;
+    }
+}
+
+/* 접근성 개선 */
+.focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+.sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}
+
+/* 인쇄 스타일 */
+@media print {
+    .ad-dashboard .no-print {
+        display: none;
+    }
+    
+    .ad-dashboard {
+        @apply text-black bg-white;
+    }
+    
+    .ad-dashboard .shadow-lg,
+    .ad-dashboard .shadow-md,
+    .ad-dashboard .shadow-sm {
+        box-shadow: none;
+        @apply border border-gray-300;
+    }
+}

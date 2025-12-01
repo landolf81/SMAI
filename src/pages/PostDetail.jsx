@@ -1,0 +1,680 @@
+import React, { useState, useContext } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { postService, commentService, adService } from '../services';
+import { AuthContext } from '../context/AuthContext';
+import moment from 'moment';
+import 'moment/locale/ko';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
+// 컴포넌트
+import MobileAdDisplay from '../components/MobileAdDisplay';
+import ProfileModal from '../components/ProfileModal';
+
+// 아이콘
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import PersonIcon from '@mui/icons-material/Person';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import SendIcon from '@mui/icons-material/Send';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import LockIcon from '@mui/icons-material/Lock';
+
+moment.locale('ko');
+
+const PostDetail = () => {
+  const { postId } = useParams();
+  const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
+  const queryClient = useQueryClient();
+
+  const [commentContent, setCommentContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isSecretComment, setIsSecretComment] = useState(false);
+
+  // 게시물 조회
+  const { data: post, isLoading, error } = useQuery({
+    queryKey: ['post', postId],
+    queryFn: async () => {
+      const response = await postService.getPost(postId);
+      return response;
+    },
+    enabled: !!postId,
+    staleTime: 1000 * 60 * 5, // 5분간 캐시 유지
+    refetchOnWindowFocus: false, // 윈도우 포커스 시 refetch 방지
+    refetchOnReconnect: false // 재연결 시 refetch 방지
+  });
+
+  // 댓글 조회
+  const { data: comments = [], isLoading: commentsLoading, error: commentsError } = useQuery({
+    queryKey: ['post-comments', postId],
+    queryFn: async () => {
+      console.log('📝 댓글 조회 시작 - postId:', postId);
+      const response = await commentService.getComments(postId);
+      console.log('📝 댓글 조회 결과:', response);
+      return response || [];
+    },
+    enabled: !!postId
+  });
+
+  // 광고 조회 (모바일 전용)
+  const { data: ads = [] } = useQuery({
+    queryKey: ['detail-page-ads'],
+    queryFn: async () => {
+      try {
+        const response = await adService.getActiveAds();
+        return response || [];
+      } catch (error) {
+        console.error('광고 로드 실패:', error);
+        return [];
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5분간 캐시 유지
+  });
+
+  // 댓글 작성 뮤테이션
+  const createCommentMutation = useMutation({
+    mutationFn: (commentData) => commentService.createComment(commentData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post-comments', postId]);
+      // 댓글 작성 시 게시물 refetch 제거 (조회수 증가 방지)
+      setCommentContent('');
+      setIsSubmitting(false);
+      setIsSecretComment(false);
+    },
+    onError: (error) => {
+      console.error('댓글 작성 실패:', error);
+      alert('댓글 작성에 실패했습니다.');
+      setIsSubmitting(false);
+    }
+  });
+
+  // 좋아요 토글 뮤테이션
+  const likeMutation = useMutation({
+    mutationFn: () => postService.toggleLike(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post', postId]);
+    }
+  });
+
+  // 게시물 삭제 뮤테이션
+  const deleteMutation = useMutation({
+    mutationFn: () => postService.deletePost(postId),
+    onSuccess: () => {
+      alert('게시물이 삭제되었습니다.');
+      navigate(-1);
+    }
+  });
+
+  // 거래 상태 변경 뮤테이션 (중고거래)
+  const tradeStatusMutation = useMutation({
+    mutationFn: (status) => postService.updateTradeStatus(postId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post', postId]);
+      queryClient.invalidateQueries(['secondHandPosts']);
+      alert('거래 상태가 변경되었습니다.');
+    },
+    onError: (error) => {
+      alert(error.message || '거래 상태 변경에 실패했습니다.');
+    }
+  });
+
+  // 가격 추출 함수
+  const extractPrice = (title, desc) => {
+    const text = title + ' ' + (desc || '');
+    const pricePatterns = [
+      /(\d{1,3}(?:,\d{3})*)\s*만원/,
+      /(\d{1,3}(?:,\d{3})*)\s*만/,
+      /(\d{1,3}(?:,\d{3})*)\s*원/,
+    ];
+    for (const pattern of pricePatterns) {
+      const match = text.match(pattern);
+      if (match) return match[0];
+    }
+    return null;
+  };
+
+  // 지역 추출 함수
+  const extractLocation = (desc) => {
+    if (!desc) return null;
+    const locationPatterns = [
+      /📍\s*([가-힣]+(?:시|군|구)?\s*[가-힣]*)/,
+      /위치[:\s]*([가-힣]+(?:시|군|구)?\s*[가-힣]*)/,
+      /지역[:\s]*([가-힣]+(?:시|군|구)?\s*[가-힣]*)/,
+      /(성주|고령|칠곡|구미|대구|김천|상주)(?:시|군)?/,
+    ];
+    for (const pattern of locationPatterns) {
+      const match = desc.match(pattern);
+      if (match) return match[1] || match[0];
+    }
+    return null;
+  };
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!commentContent.trim()) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+    if (!currentUser) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+
+    setIsSubmitting(true);
+    createCommentMutation.mutate({
+      postId: postId,
+      content: commentContent.trim(),
+      isSecret: isSecretComment
+    });
+  };
+
+  const handleLike = () => {
+    if (!currentUser) {
+      alert('로그인이 필요합니다.');
+      navigate('/login');
+      return;
+    }
+    likeMutation.mutate();
+  };
+
+  const handleEdit = () => {
+    navigate(`/post/edit/${postId}`);
+  };
+
+  const handleDelete = () => {
+    if (window.confirm('정말 삭제하시겠습니까?')) {
+      deleteMutation.mutate();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="loading loading-spinner loading-lg text-orange-500"></div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="text-center">
+          <ShoppingBagIcon className="text-6xl text-gray-400 mb-4" />
+          <h2 className="text-xl font-semibold text-gray-700 mb-2">게시물을 찾을 수 없습니다</h2>
+          <p className="text-gray-500 mb-4">삭제되었거나 존재하지 않는 게시물입니다.</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+          >
+            돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const price = post.post_type === 'secondhand' ? extractPrice(post.title || post.name, post.description || post.desc) : null;
+  const location = post.post_type === 'secondhand' ? extractLocation(post.description || post.desc) : null;
+  const isSecondHand = post.post_type === 'secondhand';
+  const isOwner = currentUser && currentUser.id === post.user_id;
+  const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin');
+  const canChangeTradeStatus = isSecondHand && (isOwner || isAdmin);
+  const tradeStatus = post.tradeInfo?.status || 'available';
+
+  // 비밀 댓글 볼 수 있는 권한 체크
+  const canViewSecretComment = (comment) => {
+    if (!comment.is_secret) return true;
+    if (!currentUser) return false;
+    // 댓글 작성자 본인이거나 게시물 작성자면 볼 수 있음
+    return comment.user_id === currentUser.id || post.user_id === currentUser.id || isAdmin;
+  };
+
+  // 다중 이미지 파싱
+  const getImageUrls = () => {
+    const imgData = post.img || post.photo;
+    if (!imgData) return [];
+
+    try {
+      const parsed = JSON.parse(imgData);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    } catch {
+      // JSON이 아니면 단일 URL로 처리
+      return [imgData];
+    }
+    return [];
+  };
+
+  const imageUrls = getImageUrls();
+
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="max-w-4xl mx-auto">
+        {/* 헤더 */}
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+          <div className="px-4 py-4 flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ArrowBackIcon />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">
+              {isSecondHand ? '사고팔고 상세' : '게시물 상세'}
+            </h1>
+            <div className="w-10"></div>
+          </div>
+        </div>
+
+        {/* 게시물 내용 */}
+        <div className="bg-white border-b border-gray-200">
+          {/* 작성자 정보 */}
+          <div className="px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {post.profile_pic ? (
+                <img
+                  src={post.profile_pic}
+                  alt={post.username}
+                  onClick={() => {
+                    setSelectedUser({
+                      user_id: post.user_id,
+                      userId: post.user_id,
+                      id: post.user_id,
+                      username: post.username,
+                      user_name: post.user_name,
+                      name: post.user_name || post.username,
+                      profile_pic: post.profile_pic
+                    });
+                    setShowProfileModal(true);
+                  }}
+                  className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              ) : (
+                <div
+                  onClick={() => {
+                    setSelectedUser({
+                      user_id: post.user_id,
+                      userId: post.user_id,
+                      id: post.user_id,
+                      username: post.username,
+                      user_name: post.user_name,
+                      name: post.user_name || post.username,
+                      profile_pic: post.profile_pic
+                    });
+                    setShowProfileModal(true);
+                  }}
+                  className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
+                >
+                  <PersonIcon className="text-gray-500" />
+                </div>
+              )}
+              <div>
+                <div
+                  onClick={() => {
+                    setSelectedUser({
+                      user_id: post.user_id,
+                      userId: post.user_id,
+                      id: post.user_id,
+                      username: post.username,
+                      user_name: post.user_name,
+                      name: post.user_name || post.username,
+                      profile_pic: post.profile_pic
+                    });
+                    setShowProfileModal(true);
+                  }}
+                  className="font-semibold text-gray-900 cursor-pointer hover:underline"
+                >
+                  {post.user_name || post.username}
+                </div>
+                <div className="text-sm text-gray-500">{moment(post.created_at || post.createdAt).fromNow()}</div>
+              </div>
+            </div>
+
+            {/* 수정/삭제 버튼 */}
+            {isOwner && (
+              <div className="flex gap-2">
+                <button
+                  onClick={handleEdit}
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                >
+                  <EditIcon fontSize="small" />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <DeleteIcon fontSize="small" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 제목 (중고거래) */}
+          {isSecondHand && post.title && (
+            <div className="px-4 pb-3">
+              {/* 판매 상태 배지 */}
+              <div className="flex items-center gap-2 mb-2">
+                {tradeStatus === 'sold' ? (
+                  <span className="px-3 py-1 bg-gray-800 text-white text-sm font-bold rounded-full">
+                    판매완료
+                  </span>
+                ) : tradeStatus === 'reserved' ? (
+                  <span className="px-3 py-1 bg-yellow-500 text-white text-sm font-bold rounded-full">
+                    예약중
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 bg-orange-500 text-white text-sm font-bold rounded-full">
+                    판매중
+                  </span>
+                )}
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">{post.title}</h2>
+              {price && (
+                <div className="text-2xl font-bold text-orange-600 mt-2">{price}</div>
+              )}
+              {location && (
+                <div className="flex items-center gap-1 text-gray-600 mt-2">
+                  <LocationOnIcon fontSize="small" />
+                  <span>{location}</span>
+                </div>
+              )}
+
+              {/* 거래 상태 변경 버튼 (작성자/관리자만) */}
+              {canChangeTradeStatus && (
+                <div className="flex gap-2 mt-4">
+                  {tradeStatus !== 'sold' && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('판매완료로 변경하시겠습니까?')) {
+                          tradeStatusMutation.mutate('sold');
+                        }
+                      }}
+                      disabled={tradeStatusMutation.isPending}
+                      className="flex-1 py-2 px-4 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 disabled:opacity-50 transition-colors"
+                    >
+                      {tradeStatusMutation.isPending ? '처리중...' : '판매완료'}
+                    </button>
+                  )}
+                  {tradeStatus === 'sold' && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('다시 판매중으로 변경하시겠습니까?')) {
+                          tradeStatusMutation.mutate('available');
+                        }
+                      }}
+                      disabled={tradeStatusMutation.isPending}
+                      className="flex-1 py-2 px-4 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                    >
+                      {tradeStatusMutation.isPending ? '처리중...' : '다시 판매하기'}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 이미지 슬라이더 */}
+          {imageUrls.length > 0 && (
+            <div className="w-full bg-gray-100">
+              {imageUrls.length === 1 ? (
+                // 단일 이미지
+                <img
+                  src={imageUrls[0]}
+                  alt={post.title || post.name || '게시물 이미지'}
+                  className="w-full h-auto max-h-[600px] object-contain"
+                  onClick={() => window.open(imageUrls[0], '_blank')}
+                />
+              ) : (
+                // 다중 이미지 슬라이더
+                <Swiper
+                  modules={[Navigation, Pagination]}
+                  navigation
+                  pagination={{ clickable: true }}
+                  className="w-full"
+                  style={{ '--swiper-navigation-color': '#f97316', '--swiper-pagination-color': '#f97316' }}
+                >
+                  {imageUrls.map((url, index) => (
+                    <SwiperSlide key={index}>
+                      <img
+                        src={url}
+                        alt={`${post.title || post.name || '게시물 이미지'} ${index + 1}`}
+                        className="w-full h-auto max-h-[600px] object-contain bg-gray-100"
+                        onClick={() => window.open(url, '_blank')}
+                      />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              )}
+            </div>
+          )}
+
+          {/* 내용 */}
+          <div className="px-4 py-4">
+            <p className="text-gray-700 whitespace-pre-wrap">
+              {post.description || post.desc || post.content}
+            </p>
+          </div>
+
+          {/* 통계 정보 */}
+          <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-4 text-sm text-gray-500">
+            <span className="flex items-center gap-1">
+              <VisibilityIcon fontSize="small" />
+              {post.views_count || post.views || 0}
+            </span>
+            {/* 중고거래가 아닌 경우에만 좋아요 표시 */}
+            {!isSecondHand && (
+              <span className="flex items-center gap-1">
+                <ThumbUpIcon fontSize="small" />
+                {post.likes_count || post.likes || 0}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              <ChatBubbleOutlineIcon fontSize="small" />
+              {comments.length}
+            </span>
+          </div>
+
+          {/* 좋아요/댓글 버튼 */}
+          <div className="px-4 py-3 border-t border-gray-100 flex gap-2">
+            {/* 중고거래가 아닌 경우에만 좋아요 버튼 표시 */}
+            {!isSecondHand && (
+              <button
+                onClick={handleLike}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                {post.user_liked ? (
+                  <ThumbUpIcon className="text-blue-600" fontSize="small" />
+                ) : (
+                  <ThumbUpOutlinedIcon fontSize="small" />
+                )}
+                <span className={post.user_liked ? 'text-blue-600 font-medium' : 'text-gray-700'}>
+                  좋아요
+                </span>
+              </button>
+            )}
+            <button
+              onClick={() => document.getElementById('comment-input')?.focus()}
+              className={`${isSecondHand ? 'w-full' : 'flex-1'} flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors`}
+            >
+              <ChatBubbleOutlineIcon fontSize="small" />
+              <span className="text-gray-700">댓글</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 댓글 섹션 */}
+        <div className="bg-white mt-2">
+          <div className="px-4 py-3 border-b border-gray-200">
+            <h3 className="font-semibold text-gray-900">
+              댓글 {comments.length}
+            </h3>
+          </div>
+
+          {/* 댓글 로딩 상태 */}
+          {commentsLoading && (
+            <div className="px-4 py-8 text-center">
+              <div className="loading loading-spinner loading-md text-orange-500"></div>
+              <p className="text-gray-500 mt-2">댓글을 불러오는 중...</p>
+            </div>
+          )}
+
+          {/* 댓글 에러 */}
+          {commentsError && (
+            <div className="px-4 py-8 text-center text-red-500">
+              댓글을 불러오는데 실패했습니다.
+              <button
+                onClick={() => window.location.reload()}
+                className="ml-2 text-blue-500 underline"
+              >
+                새로고침
+              </button>
+            </div>
+          )}
+
+          {/* 댓글 목록 */}
+          {!commentsLoading && !commentsError && (
+            <div className="divide-y divide-gray-100">
+              {comments.map((comment) => (
+              <div key={comment.id} className="px-4 py-3">
+                <div className="flex items-start gap-2">
+                  {comment.profile_pic ? (
+                    <img
+                      src={comment.profile_pic}
+                      alt={comment.username}
+                      onClick={() => {
+                        setSelectedUser(comment);
+                        setShowProfileModal(true);
+                      }}
+                      className="w-8 h-8 rounded-full object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                    />
+                  ) : (
+                    <div
+                      onClick={() => {
+                        setSelectedUser(comment);
+                        setShowProfileModal(true);
+                      }}
+                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-gray-300 transition-colors"
+                    >
+                      <PersonIcon className="text-gray-500" sx={{ fontSize: 18 }} />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span
+                        onClick={() => {
+                          setSelectedUser(comment);
+                          setShowProfileModal(true);
+                        }}
+                        className="font-medium text-sm text-gray-900 cursor-pointer hover:underline"
+                      >
+                        {comment.user_name || comment.username}
+                      </span>
+                      {comment.is_secret && (
+                        <span className="inline-flex items-center gap-0.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                          <LockIcon sx={{ fontSize: 12 }} />
+                          비밀
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-500">{moment(comment.created_at || comment.createdAt).fromNow()}</span>
+                    </div>
+                    {canViewSecretComment(comment) ? (
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap mt-0.5">{comment.description || comment.desc}</p>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic mt-0.5">비밀 댓글입니다.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+              {comments.length === 0 && (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  첫 번째 댓글을 작성해보세요!
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 댓글 입력 */}
+          {currentUser && (
+            <div className="border-t border-gray-200 bg-white">
+              <form onSubmit={handleCommentSubmit} className="p-3">
+                {/* 중고거래일 때만 비밀댓글 옵션 표시 */}
+                {isSecondHand && (
+                  <div className="mb-2">
+                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isSecretComment}
+                        onChange={(e) => setIsSecretComment(e.target.checked)}
+                        className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+                      />
+                      <LockIcon sx={{ fontSize: 16 }} />
+                      <span>비밀 댓글</span>
+                      <span className="text-xs text-gray-400">(판매자와 본인만 볼 수 있음)</span>
+                    </label>
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    id="comment-input"
+                    type="text"
+                    value={commentContent}
+                    onChange={(e) => setCommentContent(e.target.value)}
+                    placeholder={isSecretComment ? "비밀 댓글을 입력하세요..." : "댓글을 입력하세요..."}
+                    className={`flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
+                      isSecretComment ? 'border-orange-300 bg-orange-50' : 'border-gray-300'
+                    }`}
+                    disabled={isSubmitting}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !commentContent.trim()}
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 text-sm flex-shrink-0"
+                  >
+                    {isSecretComment && <LockIcon sx={{ fontSize: 14 }} />}
+                    <SendIcon sx={{ fontSize: 18 }} />
+                    <span>작성</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* 광고 영역 */}
+          {ads.length > 0 && (
+            <div className="border-t border-gray-200 py-4">
+              <MobileAdDisplay ad={ads[0]} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 프로필 모달 */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => {
+          setShowProfileModal(false);
+          setSelectedUser(null);
+        }}
+        user={selectedUser}
+      />
+    </div>
+  );
+};
+
+export default PostDetail;

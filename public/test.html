@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서버 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-results {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 서버 연결 테스트</h1>
+
+    <div class="success">
+        <h2>✅ 이 페이지가 보인다면 프론트엔드 서버는 정상입니다!</h2>
+        <p>현재 URL: <strong id="currentUrl"></strong></p>
+    </div>
+
+    <div class="info">
+        <h3>📋 테스트 항목</h3>
+        <ul>
+            <li>프론트엔드 서버: http://localhost:3001</li>
+            <li>백엔드 서버: http://localhost:8801</li>
+            <li>Supabase: https://zynlhezlaxvolpptruiu.supabase.co</li>
+        </ul>
+    </div>
+
+    <div class="test-results">
+        <h3>🔍 API 연결 테스트</h3>
+        <button onclick="testBackend()">백엔드 테스트</button>
+        <button onclick="testSupabase()">Supabase 테스트</button>
+        <button onclick="testMarketData()">경락 정보 테스트</button>
+        <pre id="results">테스트 버튼을 클릭하세요...</pre>
+    </div>
+
+    <script>
+        document.getElementById('currentUrl').textContent = window.location.href;
+
+        async function testBackend() {
+            const results = document.getElementById('results');
+            results.textContent = '백엔드 서버 테스트 중...';
+
+            try {
+                const response = await fetch('http://localhost:8801/health');
+                const data = await response.json();
+                results.textContent = '✅ 백엔드 서버 정상!\n\n' + JSON.stringify(data, null, 2);
+            } catch (error) {
+                results.textContent = '❌ 백엔드 서버 오류:\n\n' + error.message;
+            }
+        }
+
+        async function testSupabase() {
+            const results = document.getElementById('results');
+            results.textContent = 'Supabase 연결 테스트 중...';
+
+            try {
+                const response = await fetch('https://zynlhezlaxvolpptruiu.supabase.co/rest/v1/', {
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bmxoZXpsYXh2b2xwcHRydWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjE1MDQsImV4cCI6MjA3ODMzNzUwNH0.G9ngWwqr3Hp_mTStHJIaY_rRS0AejrNmxFTwlxcsxEw',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bmxoZXpsYXh2b2xwcHRydWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjE1MDQsImV4cCI6MjA3ODMzNzUwNH0.G9ngWwqr3Hp_mTStHJIaY_rRS0AejrNmxFTwlxcsxEw'
+                    }
+                });
+
+                if (response.ok) {
+                    results.textContent = '✅ Supabase 연결 정상!';
+                } else {
+                    results.textContent = '⚠️ Supabase 응답:\n\nStatus: ' + response.status;
+                }
+            } catch (error) {
+                results.textContent = '❌ Supabase 연결 오류:\n\n' + error.message;
+            }
+        }
+
+        async function testMarketData() {
+            const results = document.getElementById('results');
+            results.textContent = '경락 정보 테스트 중...';
+
+            try {
+                const response = await fetch('https://zynlhezlaxvolpptruiu.supabase.co/rest/v1/latest_market_prices?limit=3', {
+                    headers: {
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bmxoZXpsYXh2b2xwcHRydWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjE1MDQsImV4cCI6MjA3ODMzNzUwNH0.G9ngWwqr3Hp_mTStHJIaY_rRS0AejrNmxFTwlxcsxEw',
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bmxoZXpsYXh2b2xwcHRydWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjE1MDQsImV4cCI6MjA3ODMzNzUwNH0.G9ngWwqr3Hp_mTStHJIaY_rRS0AejrNmxFTwlxcsxEw'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    results.textContent = '✅ 경락 정보 정상!\n\n데이터 ' + data.length + '개:\n\n' + JSON.stringify(data, null, 2);
+                } else if (Array.isArray(data) && data.length === 0) {
+                    results.textContent = '⚠️ 경락 정보 테이블은 존재하지만 데이터가 없습니다.';
+                } else {
+                    results.textContent = '❌ 예상치 못한 응답:\n\n' + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                results.textContent = '❌ 경락 정보 조회 오류:\n\n' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

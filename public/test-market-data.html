@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>경락 정보 데이터 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #3498db;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        input[type="date"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            margin: 10px 5px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 13px;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 경락 정보 데이터 테스트</h1>
+
+        <div class="test-section">
+            <h3>📅 날짜 선택</h3>
+            <input type="date" id="testDate" value="2025-08-17">
+            <button onclick="testAllQueries()">전체 테스트 실행</button>
+            <button class="success" onclick="checkTableStructure()">테이블 구조 확인</button>
+            <button class="danger" onclick="clearResults()">결과 초기화</button>
+        </div>
+
+        <div class="test-section">
+            <h3>1️⃣ 테이블 존재 여부 확인</h3>
+            <button onclick="testTableExists()">테이블 확인</button>
+            <div id="tableExistsResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2️⃣ 전체 데이터 개수 확인</h3>
+            <button onclick="testTotalCount()">전체 개수 조회</button>
+            <div id="totalCountResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3️⃣ 날짜별 데이터 확인</h3>
+            <button onclick="testDateRange()">날짜 범위 조회</button>
+            <div id="dateRangeResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4️⃣ 특정 날짜 시장 목록 조회</h3>
+            <button onclick="testAvailableMarkets()">시장 목록 조회</button>
+            <div id="availableMarketsResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5️⃣ 특정 날짜 경락가 데이터 조회</h3>
+            <button onclick="testMarketData()">경락가 조회</button>
+            <div id="marketDataResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>6️⃣ 최신 10개 데이터 샘플</h3>
+            <button onclick="testLatestData()">최신 데이터 조회</button>
+            <div id="latestDataResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://zynlhezlaxvolpptruiu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp5bmxoZXpsYXh2b2xwcHRydWl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjE1MDQsImV4cCI6MjA3ODMzNzUwNH0.G9ngWwqr3Hp_mTStHJIaY_rRS0AejrNmxFTwlxcsxEw';
+
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function getSelectedDate() {
+            return document.getElementById('testDate').value;
+        }
+
+        function clearResults() {
+            ['tableExistsResult', 'totalCountResult', 'dateRangeResult',
+             'availableMarketsResult', 'marketDataResult', 'latestDataResult'].forEach(id => {
+                document.getElementById(id).innerHTML = '';
+            });
+        }
+
+        async function testTableExists() {
+            const result = document.getElementById('tableExistsResult');
+            result.innerHTML = '<p>테이블 확인 중...</p>';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('count')
+                    .limit(1);
+
+                if (error) {
+                    result.innerHTML = `
+                        <span class="status error">❌ 실패</span>
+                        <p>에러: ${error.message}</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <span class="status success">✅ 테이블 존재</span>
+                        <p>latest_market_prices 테이블이 정상적으로 확인되었습니다.</p>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <span class="status error">❌ 오류</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testTotalCount() {
+            const result = document.getElementById('totalCountResult');
+            result.innerHTML = '<p>전체 데이터 개수 조회 중...</p>';
+
+            try {
+                const { count, error } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) {
+                    result.innerHTML = `
+                        <span class="status error">❌ 실패</span>
+                        <p>에러: ${error.message}</p>
+                    `;
+                } else {
+                    result.innerHTML = `
+                        <span class="status success">✅ 성공</span>
+                        <p>전체 데이터 개수: <strong>${count.toLocaleString()}개</strong></p>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <span class="status error">❌ 오류</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testDateRange() {
+            const result = document.getElementById('dateRangeResult');
+            result.innerHTML = '<p>날짜 범위 조회 중...</p>';
+
+            try {
+                // 최소 날짜
+                const { data: minData, error: minError } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('market_date')
+                    .order('market_date', { ascending: true })
+                    .limit(1);
+
+                // 최대 날짜
+                const { data: maxData, error: maxError } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('market_date')
+                    .order('market_date', { ascending: false })
+                    .limit(1);
+
+                // 고유 날짜 개수
+                const { data: uniqueDates, error: uniqueError } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('market_date');
+
+                if (minError || maxError || uniqueError) {
+                    result.innerHTML = `<span class="status error">❌ 실패</span>`;
+                } else {
+                    const dates = [...new Set(uniqueDates.map(d => d.market_date))];
+                    result.innerHTML = `
+                        <span class="status success">✅ 성공</span>
+                        <p>최소 날짜: <strong>${minData[0]?.market_date || 'N/A'}</strong></p>
+                        <p>최대 날짜: <strong>${maxData[0]?.market_date || 'N/A'}</strong></p>
+                        <p>고유 날짜 개수: <strong>${dates.length}일</strong></p>
+                        <details>
+                            <summary>날짜 목록 보기</summary>
+                            <pre>${dates.sort().join('\n')}</pre>
+                        </details>
+                    `;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <span class="status error">❌ 오류</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testAvailableMarkets() {
+            const result = document.getElementById('availableMarketsResult');
+            const date = getSelectedDate();
+            result.innerHTML = `<p>${date} 시장 목록 조회 중...</p>`;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('market_name')
+                    .eq('market_date', date)
+                    .order('market_name');
+
+                if (error) {
+                    result.innerHTML = `
+                        <span class="status error">❌ 실패</span>
+                        <p>에러: ${error.message}</p>
+                        <pre>${JSON.stringify(error, null, 2)}</pre>
+                    `;
+                } else {
+                    const uniqueMarkets = [...new Set(data.map(item => item.market_name))];
+
+                    if (uniqueMarkets.length === 0) {
+                        result.innerHTML = `
+                            <span class="status error">⚠️ 데이터 없음</span>
+                            <p>${date} 날짜에 경락 정보가 없습니다.</p>
+                        `;
+                    } else {
+                        result.innerHTML = `
+                            <span class="status success">✅ 성공</span>
+                            <p>${date} 시장 개수: <strong>${uniqueMarkets.length}개</strong></p>
+                            <ul>
+                                ${uniqueMarkets.map(m => `<li>${m}</li>`).join('')}
+                            </ul>
+                        `;
+                    }
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <span class="status error">❌ 오류</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testMarketData() {
+            const result = document.getElementById('marketDataResult');
+            const date = getSelectedDate();
+            result.innerHTML = `<p>${date} 경락가 데이터 조회 중...</p>`;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('*')
+                    .eq('market_date', date)
+                    .order('market_name');
+
+                if (error) {
+                    result.innerHTML = `
+                        <span class="status error">❌ 실패</span>
+                        <p>에러: ${error.message}</p>
+                    `;
+                } else if (data.length === 0) {
+                    result.innerHTML = `
+                        <span class="status error">⚠️ 데이터 없음</span>
+                        <p>${date} 날짜에 경락 정보가 없습니다.</p>
+                    `;
+                } else {
+                    const tableHtml = `
+                        <span class="status success">✅ 성공</span>
+                        <p>조회된 데이터: <strong>${data.length}개</strong></p>
+                        <table>
+                            <tr>
+                                <th>시장명</th>
+                                <th>상자수</th>
+                                <th>평균가</th>
+                                <th>최저가</th>
+                                <th>최고가</th>
+                                <th>총액</th>
+                            </tr>
+                            ${data.map(d => `
+                                <tr>
+                                    <td>${d.market_name}</td>
+                                    <td>${d.total_boxes?.toLocaleString() || 0}</td>
+                                    <td>${d.avg_price?.toLocaleString() || 0}원</td>
+                                    <td>${d.min_price?.toLocaleString() || 0}원</td>
+                                    <td>${d.max_price?.toLocaleString() || 0}원</td>
+                                    <td>${d.total_amount?.toLocaleString() || 0}원</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                        <details>
+                            <summary>JSON 데이터 보기</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                    result.innerHTML = tableHtml;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <span class="status error">❌ 오류</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testLatestData() {
+            const result = document.getElementById('latestDataResult');
+            result.innerHTML = '<p>최신 데이터 조회 중...</p>';
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('latest_market_prices')
+                    .select('*')
+                    .order('market_date', { ascending: false })
+                    .limit(10);
+
+                if (error) {
+                    result.innerHTML = `
+                        <span class="status error">❌ 실패</span>
+                        <p>에러: ${error.message}</p>
+                    `;
+                } else {
+                    const tableHtml = `
+                        <span class="status success">✅ 성공</span>
+                        <p>최신 10개 데이터</p>
+                        <table>
+                            <tr>
+                                <th>날짜</th>
+                                <th>시장명</th>
+                                <th>상자수</th>
+                                <th>평균가</th>
+                            </tr>
+                            ${data.map(d => `
+                                <tr>
+                                    <td>${d.market_date}</td>
+                                    <td>${d.market_name}</td>
+                                    <td>${d.total_boxes?.toLocaleString() || 0}</td>
+                                    <td>${d.avg_price?.toLocaleString() || 0}원</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                        <details>
+                            <summary>JSON 데이터 보기</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                    result.innerHTML = tableHtml;
+                }
+            } catch (error) {
+                result.innerHTML = `
+                    <span class="status error">❌ 오류</span>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function checkTableStructure() {
+            alert('테이블 구조를 확인하려면 Supabase Dashboard를 사용하세요:\n\nhttps://app.supabase.com/project/zynlhezlaxvolpptruiu/editor');
+        }
+
+        async function testAllQueries() {
+            clearResults();
+            await testTableExists();
+            await new Promise(r => setTimeout(r, 500));
+            await testTotalCount();
+            await new Promise(r => setTimeout(r, 500));
+            await testDateRange();
+            await new Promise(r => setTimeout(r, 500));
+            await testAvailableMarkets();
+            await new Promise(r => setTimeout(r, 500));
+            await testMarketData();
+            await new Promise(r => setTimeout(r, 500));
+            await testLatestData();
+        }
+
+        // 페이지 로드 시 자동 실행
+        window.addEventListener('load', () => {
+            console.log('경락 정보 테스트 페이지가 로드되었습니다.');
+            console.log('테스트 날짜:', document.getElementById('testDate').value);
+        });
+    </script>
+</body>
+</html>
