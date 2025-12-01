@@ -974,6 +974,17 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                       <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
                       <span>동영상</span>
                     </div>
+
+                    {/* 음소거 토글 버튼 */}
+                    <button
+                      onClick={handleMuteToggle}
+                      className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
+                    >
+                      <FontAwesomeIcon
+                        icon={isMuted ? faVolumeMute : faVolumeUp}
+                        className="w-4 h-4"
+                      />
+                    </button>
                   </>
                 )
               ) : (
