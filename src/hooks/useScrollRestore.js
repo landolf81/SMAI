@@ -35,7 +35,6 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
     if (Math.abs(scrollTop - lastScrollPositionRef.current) > 10) {
       scrollManager.saveScrollPosition(boardType, scrollTop, tag, search, userId);
       lastScrollPositionRef.current = scrollTop;
-      console.log(`💾 [${boardType}] 스크롤 위치 저장:`, scrollTop);
     }
   };
 

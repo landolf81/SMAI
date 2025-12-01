@@ -712,7 +712,6 @@ export const postService = {
   async incrementViewCount(postId) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { success: false };
 
       // postId를 정수로 변환 (posts.id가 bigint인 경우)
       const postIdInt = parseInt(postId, 10);
@@ -721,29 +720,37 @@ export const postService = {
         return { success: false };
       }
 
-      // 1. post_views 테이블에 조회 기록 추가 (중복 방지용)
-      const { error: viewError } = await supabase
-        .from('post_views')
-        .insert([{
-          post_id: postIdInt,
-          user_id: user.id,
-          viewed_at: new Date().toISOString(),
-          ip_address: 'unknown',
-          session_id: null
-        }]);
+      // 로그인 사용자: post_views 테이블로 중복 방지
+      if (user) {
+        const { error: viewError } = await supabase
+          .from('post_views')
+          .insert([{
+            post_id: postIdInt,
+            user_id: user.id,
+            viewed_at: new Date().toISOString(),
+            ip_address: 'unknown',
+            session_id: null
+          }]);
 
-      // 중복 키 에러(23505)면 이미 조회한 것 - 조회수 증가 안 함
-      if (viewError && viewError.code === '23505') {
-        console.log('이미 조회한 게시물:', postId);
-        return { success: true, alreadyViewed: true };
+        // 중복 키 에러(23505)면 이미 조회한 것 - 조회수 증가 안 함
+        if (viewError && viewError.code === '23505') {
+          return { success: true, alreadyViewed: true };
+        }
+
+        if (viewError) {
+          console.warn('조회 기록 추가 실패:', viewError.code, viewError.message);
+          return { success: false };
+        }
+      } else {
+        // 비로그인 사용자: sessionStorage로 중복 방지
+        const viewedKey = `post_viewed_${postIdInt}`;
+        if (sessionStorage.getItem(viewedKey)) {
+          return { success: true, alreadyViewed: true };
+        }
+        sessionStorage.setItem(viewedKey, 'true');
       }
 
-      if (viewError) {
-        console.warn('조회 기록 추가 실패:', viewError.code, viewError.message);
-        return { success: false };
-      }
-
-      // 2. posts.views_count 증가 (중복이 아닐 때만)
+      // posts.views_count 증가
       const { data: currentPost, error: fetchError } = await supabase
         .from('posts')
         .select('views_count')
@@ -765,7 +772,6 @@ export const postService = {
         return { success: false };
       }
 
-      console.log('✅ 조회수 증가 성공:', postId, '->', (currentPost.views_count || 0) + 1);
       return { success: true };
     } catch (error) {
       console.error('조회수 증가 예외:', error);

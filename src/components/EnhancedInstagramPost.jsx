@@ -622,19 +622,18 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 조회수 증가 및 열람 기록 저장 (게시물이 보일 때 한 번만)
   useEffect(() => {
-    if (isVisible && !viewCountIncreased && currentUser?.id) {
+    if (isVisible && !viewCountIncreased) {
       const increaseViewCount = async () => {
         try {
-          // 조회수 증가
+          // 조회수 증가 (로그인/비로그인 모두)
           await postService.incrementViewCount(post.id);
-          // 피드 알고리즘용 열람 기록 저장
-          await postService.recordPostView(post.id);
+          // 피드 알고리즘용 열람 기록 저장 (로그인 사용자만)
+          if (currentUser?.id) {
+            await postService.recordPostView(post.id);
+          }
           setViewCountIncreased(true);
         } catch (error) {
-          // 조회수 증가 실패는 무시 (중요하지 않은 기능)
-          if (process.env.NODE_ENV === 'development') {
-            console.error('조회수 증가 실패:', error);
-          }
+          console.error('조회수 증가 실패:', error);
         }
       };
 
