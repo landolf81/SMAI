@@ -17,6 +17,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // 페이지 진입 시 스크롤 최상단으로 이동
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 디바이스 감지
   useEffect(() => {
     const checkDevice = () => {
