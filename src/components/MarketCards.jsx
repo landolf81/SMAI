@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adService } from '../services';
 import MobileAdDisplay from './MobileAdDisplay';
@@ -8,8 +8,13 @@ import { AuthContext } from '../context/AuthContext';
 
 const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const { currentUser } = useContext(AuthContext);
   const [showLoginModal, setShowLoginModal] = useState(false);
+
+  // 순차적 렌더링을 위한 상태
+  const [renderedCount, setRenderedCount] = useState(0);
+  const renderIntervalRef = useRef(null);
 
 
   // 활성 광고 데이터 가져오기 (모바일에서만)
@@ -114,7 +119,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     const isNegative = change < 0;
     
     if (change === 0) return <span className="text-gray-500 text-xs">보합</span>;
-    
+
     return (
       <div className="flex items-center space-x-1 text-xs">
         <span className={isPositive ? 'text-red-500' : 'text-blue-500'}>
@@ -126,6 +131,54 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       </div>
     );
   };
+
+  // 순차적 렌더링: 데이터 로드 후 카드를 위에서부터 순서대로 표시
+  useEffect(() => {
+    // 로딩 중이거나 데이터가 없으면 스킵
+    if (loading || !marketData || marketData.length === 0) {
+      setRenderedCount(0);
+      return;
+    }
+
+    // 뒤로가기(POP)일 때는 즉시 모두 표시
+    if (navigationType === 'POP') {
+      setRenderedCount(marketData.length);
+      return;
+    }
+
+    // 이미 모두 렌더링 완료된 경우
+    if (renderedCount >= marketData.length) {
+      return;
+    }
+
+    // 기존 인터벌 정리
+    if (renderIntervalRef.current) {
+      clearInterval(renderIntervalRef.current);
+    }
+
+    // 첫 번째 아이템 즉시 표시
+    if (renderedCount === 0) {
+      setRenderedCount(1);
+    }
+
+    // 나머지 아이템 순차적 표시 (80ms 간격 - 카드가 크므로 좀 더 여유있게)
+    renderIntervalRef.current = setInterval(() => {
+      setRenderedCount(prev => {
+        if (prev >= marketData.length) {
+          clearInterval(renderIntervalRef.current);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 80);
+
+    return () => {
+      if (renderIntervalRef.current) {
+        clearInterval(renderIntervalRef.current);
+      }
+    };
+  }, [loading, marketData?.length, navigationType]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 loading-container safe-area-top safe-area-bottom">
@@ -172,21 +225,24 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     <>
       {/* 모바일 전용 레이아웃 - 세로 스택 */}
       <div className="space-y-4 flex flex-col items-center">
-        {marketData.map((market, index) => {
+        {marketData.slice(0, renderedCount).map((market, index) => {
           const theme = getMarketTheme(market.name);
           return (
           <React.Fragment key={market.id}>
-            <div 
+            <div
               className="w-full max-w-md mx-auto bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 haptic-feedback no-select market-card cursor-pointer"
               onClick={() => handleCardClick(market.name)}
-              style={{ 
-                boxShadow: `-4px 0 15px ${theme.bg.includes('blue') ? 'rgba(59, 130, 246, 0.25)' : 
-                            theme.bg.includes('green') ? 'rgba(34, 197, 94, 0.25)' : 
-                            theme.bg.includes('orange') ? 'rgba(249, 115, 22, 0.25)' : 
-                            theme.bg.includes('red') ? 'rgba(239, 68, 68, 0.25)' : 
-                            theme.bg.includes('yellow') ? 'rgba(234, 179, 8, 0.25)' : 
-                            theme.bg.includes('pink') ? 'rgba(236, 72, 153, 0.25)' : 
-                            'rgba(59, 130, 246, 0.25)'}, 0 4px 15px rgba(0, 0, 0, 0.1)`
+              style={{
+                boxShadow: `-4px 0 15px ${theme.bg.includes('blue') ? 'rgba(59, 130, 246, 0.25)' :
+                            theme.bg.includes('green') ? 'rgba(34, 197, 94, 0.25)' :
+                            theme.bg.includes('orange') ? 'rgba(249, 115, 22, 0.25)' :
+                            theme.bg.includes('red') ? 'rgba(239, 68, 68, 0.25)' :
+                            theme.bg.includes('yellow') ? 'rgba(234, 179, 8, 0.25)' :
+                            theme.bg.includes('pink') ? 'rgba(236, 72, 153, 0.25)' :
+                            'rgba(59, 130, 246, 0.25)'}, 0 4px 15px rgba(0, 0, 0, 0.1)`,
+                animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
+                animationDelay: navigationType !== 'POP' ? `${index * 50}ms` : '0ms',
+                opacity: navigationType !== 'POP' ? 0 : 1
               }}
             >
             {/* 농협명 헤더 - 간소화 */}

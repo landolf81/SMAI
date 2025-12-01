@@ -249,3 +249,19 @@ body {
 .animate-slide-right {
   animation: slideRight 0.3s ease-out;
 }
+
+/* 피드 게시글 순차적 렌더링 애니메이션 */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards;
+}

@@ -1,6 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useNavigationType } from 'react-router-dom';
 import { qnaService, adService } from '../services';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import QnADetail from './QnADetail';
@@ -21,11 +21,16 @@ moment.locale('ko');
 
 const QnAList = () => {
   const navigate = useNavigate();
+  const navigationType = useNavigationType();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [isMobile] = useState(() => isMobileDevice());
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+
+  // 순차적 렌더링을 위한 상태
+  const [renderedCount, setRenderedCount] = useState(0);
+  const renderIntervalRef = useRef(null);
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
   useScrollRestore('qna', statusFilter, searchTerm);
@@ -119,6 +124,53 @@ const QnAList = () => {
 
     return result;
   }, [questions, adsData]);
+
+  // 순차적 렌더링: 데이터 로드 후 아이템을 위에서부터 순서대로 표시
+  useEffect(() => {
+    // 로딩 중이거나 데이터가 없으면 스킵
+    if (isLoading || !questionsWithAds.length) {
+      setRenderedCount(0);
+      return;
+    }
+
+    // 뒤로가기(POP)일 때는 즉시 모두 표시
+    if (navigationType === 'POP') {
+      setRenderedCount(questionsWithAds.length);
+      return;
+    }
+
+    // 이미 모두 렌더링 완료된 경우
+    if (renderedCount >= questionsWithAds.length) {
+      return;
+    }
+
+    // 기존 인터벌 정리
+    if (renderIntervalRef.current) {
+      clearInterval(renderIntervalRef.current);
+    }
+
+    // 첫 번째 아이템 즉시 표시
+    if (renderedCount === 0) {
+      setRenderedCount(1);
+    }
+
+    // 나머지 아이템 순차적 표시 (50ms 간격)
+    renderIntervalRef.current = setInterval(() => {
+      setRenderedCount(prev => {
+        if (prev >= questionsWithAds.length) {
+          clearInterval(renderIntervalRef.current);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 50);
+
+    return () => {
+      if (renderIntervalRef.current) {
+        clearInterval(renderIntervalRef.current);
+      }
+    };
+  }, [isLoading, questionsWithAds.length, navigationType]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -266,9 +318,20 @@ const QnAList = () => {
           {/* 질문 목록 */}
           <div className="space-y-4">
             {questionsWithAds.length > 0 && (
-              questionsWithAds.map((item) => {
+              questionsWithAds.slice(0, renderedCount).map((item, index) => {
                 if (item.type === 'ad') {
-                  return <MobileAdDisplay key={item.key} ad={item.data} />;
+                  return (
+                    <div
+                      key={item.key}
+                      style={{
+                        animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
+                        animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
+                        opacity: navigationType !== 'POP' ? 0 : 1
+                      }}
+                    >
+                      <MobileAdDisplay ad={item.data} />
+                    </div>
+                  );
                 }
 
                 const question = item.data;
@@ -281,6 +344,11 @@ const QnAList = () => {
                       'bg-blue-50/30'
                     }`}
                     onClick={() => setSelectedQuestionId(question.id)}
+                    style={{
+                      animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
+                      animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
+                      opacity: navigationType !== 'POP' ? 0 : 1
+                    }}
                   >
                   <div className="flex items-start gap-4">
                     {/* 질문 내용 */}

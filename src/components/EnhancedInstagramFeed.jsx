@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useNavigationType } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { postService, adService } from '../services';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
@@ -7,9 +8,14 @@ import MobileAdDisplay from './MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
 
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
+  const navigationType = useNavigationType();
   const [visiblePosts, setVisiblePosts] = useState(new Set());
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+  // 순차적 렌더링을 위한 상태 (표시된 아이템 수)
+  const [renderedCount, setRenderedCount] = useState(0);
+  const renderIntervalRef = useRef(null);
   const observerRef = useRef(null);
   const postsContainerRef = useRef(null);
   const scrollTimeoutRef = useRef(null);
@@ -271,6 +277,81 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     };
   }, [data]);
 
+  // 첫 로딩 완료 후 최상단으로 스크롤 (뒤로가기가 아닌 경우)
+  useEffect(() => {
+    // 이미 스크롤했거나, 로딩 중이거나, 데이터가 없으면 스킵
+    if (hasInitialScrolled || isLoading || !data?.pages?.length) return;
+
+    // highlightPostId가 있으면 해당 위치로 스크롤하므로 여기서는 스킵
+    if (highlightPostId) return;
+
+    // 뒤로가기(POP)일 때는 useScrollRestore가 처리하므로 스킵
+    if (navigationType === 'POP') {
+      setHasInitialScrolled(true);
+      return;
+    }
+
+    // 첫 페이지 로딩 완료 시 최상단으로 스크롤
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setHasInitialScrolled(true);
+    console.log('📍 피드 로딩 완료 - 최상단으로 스크롤');
+  }, [isLoading, data, hasInitialScrolled, highlightPostId, navigationType]);
+
+  // 순차적 렌더링: 데이터 로드 후 게시글을 위에서부터 순서대로 표시
+  useEffect(() => {
+    // 로딩 중이거나 데이터가 없으면 스킵
+    if (isLoading || !postsWithAds.length) {
+      setRenderedCount(0);
+      return;
+    }
+
+    // 뒤로가기(POP)일 때는 즉시 모두 표시 (스크롤 위치 복원을 위해)
+    if (navigationType === 'POP') {
+      setRenderedCount(postsWithAds.length);
+      return;
+    }
+
+    // 이미 모두 렌더링 완료된 경우
+    if (renderedCount >= postsWithAds.length) {
+      return;
+    }
+
+    // 기존 인터벌 정리
+    if (renderIntervalRef.current) {
+      clearInterval(renderIntervalRef.current);
+    }
+
+    // 첫 번째 아이템 즉시 표시
+    if (renderedCount === 0) {
+      setRenderedCount(1);
+    }
+
+    // 나머지 아이템 순차적 표시 (50ms 간격)
+    renderIntervalRef.current = setInterval(() => {
+      setRenderedCount(prev => {
+        if (prev >= postsWithAds.length) {
+          clearInterval(renderIntervalRef.current);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 50);
+
+    return () => {
+      if (renderIntervalRef.current) {
+        clearInterval(renderIntervalRef.current);
+      }
+    };
+  }, [isLoading, postsWithAds.length, navigationType]);
+
+  // 무한 스크롤로 추가 데이터 로드 시 새 아이템 즉시 렌더링
+  useEffect(() => {
+    if (postsWithAds.length > renderedCount && renderedCount > 0) {
+      // 새로운 페이지 로드 시 바로 모두 표시
+      setRenderedCount(postsWithAds.length);
+    }
+  }, [postsWithAds.length]);
+
   // highlightPostId가 있을 때 해당 게시물로 스크롤
   useEffect(() => {
     if (highlightPostId && data?.pages) {
@@ -524,7 +605,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 p-4">
-          {postsWithAds.map((item) => (
+          {postsWithAds.slice(0, renderedCount).map((item, index) => (
             <div
               key={item.key}
               data-post-id={item.data.id}
@@ -532,6 +613,11 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
               className={`relative ${enableSnapScroll ? 'snap-start' : ''} ${
                 isScrolling && enableSnapScroll ? 'transition-opacity duration-200' : ''
               }`}
+              style={{
+                animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
+                animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
+                opacity: navigationType !== 'POP' ? 0 : 1
+              }}
             >
               {item.type === 'post' ? (
                 <EnhancedInstagramPost
