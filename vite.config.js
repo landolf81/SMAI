@@ -32,7 +32,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   esbuild: {
-    // 프로덕션 빌드에서 console과 debugger 완전 제거
-    drop: mode === 'production' ? ['console', 'debugger'] : []
+    // 프로덕션 빌드에서 debugger만 제거 (console.log는 디버깅용 유지)
+    drop: mode === 'production' ? ['debugger'] : []
   }
 }))

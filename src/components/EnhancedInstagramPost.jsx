@@ -337,17 +337,41 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     const video = videoRef.current;
 
     if (isVisible) {
-      // 부드러운 재생을 위한 지연
-      const playTimeout = setTimeout(() => {
-        video.play().then(() => {
-          setIsPlaying(true);
-          onVideoPlay && onVideoPlay(post.id);
-        }).catch((error) => {
-          // console.log('Auto-play failed:', error); // 디버깅용 로그 비활성화
-        });
-      }, 100);
+      // 동영상이 재생 가능한 상태인지 확인 후 재생
+      const attemptPlay = () => {
+        // muted 상태 확인 (자동재생 정책)
+        video.muted = true;
 
-      return () => clearTimeout(playTimeout);
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            setIsPlaying(true);
+            onVideoPlay && onVideoPlay(post.id);
+          }).catch(() => {
+            // 자동재생 실패 시 재시도 (사용자 인터랙션 후)
+            setIsPlaying(false);
+          });
+        }
+      };
+
+      // 동영상이 로드되어 있으면 바로 재생, 아니면 로드 후 재생
+      if (video.readyState >= 2) { // HAVE_CURRENT_DATA 이상
+        attemptPlay();
+      } else {
+        // 데이터 로드 대기
+        const handleCanPlay = () => {
+          attemptPlay();
+          video.removeEventListener('canplay', handleCanPlay);
+        };
+        video.addEventListener('canplay', handleCanPlay);
+
+        // 로드 시작
+        video.load();
+
+        return () => {
+          video.removeEventListener('canplay', handleCanPlay);
+        };
+      }
     } else {
       video.pause();
       setIsPlaying(false);
@@ -939,7 +963,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                       loop
                       muted
                       playsInline
-                      preload="metadata"
+                      preload="auto"
                       onError={handleVideoError}
                     >
                       <source src={normalizedMediaFiles[0]} />
