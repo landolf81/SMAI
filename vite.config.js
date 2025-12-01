@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     // React transform 수동 설정
     {
@@ -32,7 +32,7 @@ export default defineConfig({
     }
   },
   esbuild: {
-    // 개발 모드에서는 console.log 유지, production에서만 제거
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+    // 프로덕션 빌드에서 console과 debugger 완전 제거
+    drop: mode === 'production' ? ['console', 'debugger'] : []
   }
-})
+}))
