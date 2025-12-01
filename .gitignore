@@ -40,3 +40,4 @@ cookies.txt
 # Uploads (large files)
 public/uploads/posts/*
 !public/uploads/posts/.gitkeep
+.env*.local

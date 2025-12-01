@@ -33,6 +33,7 @@ const MediaModal = ({
   const mediaRef = useRef(null);
   const videoRef = useRef(null);
   const controlsTimeoutRef = useRef(null);
+  const scrollYRef = useRef(0);
 
   // 인덱스 초기화
   useEffect(() => {
@@ -61,22 +62,40 @@ const MediaModal = ({
     }
   }, [isOpen, currentIndex, initialTime, initialIndex]);
 
-  // ESC 키로 모달 닫기
+  // ESC 키로 모달 닫기 & 배경 스크롤 방지
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
+    const preventTouchMove = (e) => {
+      // 모달 내부 터치는 허용하되 배경 스크롤 방지
+      if (!containerRef.current?.contains(e.target)) {
+        e.preventDefault();
+      }
+    };
+
+    const preventScroll = (e) => {
+      e.preventDefault();
+    };
+
+    scrollYRef.current = window.scrollY;
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('wheel', preventScroll, { passive: false });
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('wheel', preventScroll);
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
     };
   }, [isOpen, onClose]);
 
@@ -264,8 +283,14 @@ const MediaModal = ({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center"
-      style={{ zIndex: 10001 }}
+      className="fixed top-0 left-0 right-0 bottom-0 bg-black flex items-center justify-center"
+      style={{
+        zIndex: 99999,
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        touchAction: 'none'
+      }}
       onClick={handleBackgroundClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
