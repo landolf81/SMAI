@@ -55,7 +55,7 @@ const MobileBottomNav = () => {
       path: "/community",
       icon: ForumIcon,
       label: "커뮤니티",
-      activeColor: "text-green-600"
+      activeColor: "text-[#FFC425]"
     },
     {
       path: "/secondhand",
