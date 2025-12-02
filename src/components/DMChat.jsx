@@ -159,11 +159,19 @@ const DMChat = ({ conversation, onClose }) => {
             <img
               src={
                 conversation.other_user_profile
-                  ? `/uploads/profiles/${conversation.other_user_profile}`
+                  ? conversation.other_user_profile.startsWith('http')
+                    ? conversation.other_user_profile
+                    : conversation.other_user_profile.startsWith('/uploads/')
+                      ? conversation.other_user_profile
+                      : `/uploads/profiles/${conversation.other_user_profile}`
                   : '/default/default_profile.png'
               }
               alt={conversation.other_user_username}
               className="w-10 h-10 rounded-full object-cover border-2 border-white shadow"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = '/default/default_profile.png';
+              }}
             />
             <div>
               <p className="font-semibold text-gray-900">

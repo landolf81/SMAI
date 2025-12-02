@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import PersonIcon from '@mui/icons-material/Person';
@@ -96,9 +97,9 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
     return `/uploads/profiles/${cover}`;
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
@@ -224,7 +225,8 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
           onClose={() => setShowDMChat(false)}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 
