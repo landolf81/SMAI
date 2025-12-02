@@ -176,7 +176,7 @@ const Profile = () => {
                       : "/default/default_profile.png"
                   }
                   alt="프로필 사진"
-                  className="w-24 h-24 rounded-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105"
+                  className="w-24 h-24 rounded-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105 object-cover"
                 />
                 {data.verified && (
                   <VerifiedIcon className="absolute -bottom-1 -right-1 text-blue-500 bg-white rounded-full" />
