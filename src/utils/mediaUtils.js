@@ -216,7 +216,7 @@ export const isBrowserCompatibleVideo = (file) => {
 };
 
 /**
- * 업로드 파일 유효성 검사 (브라우저 호환 동영상만 허용)
+ * 업로드 파일 유효성 검사 (모든 동영상 형식 허용 - 압축 시 변환됨)
  * @param {File} file - 검사할 파일
  * @returns {{ valid: boolean, message?: string }} 유효성 검사 결과
  */
@@ -232,15 +232,9 @@ export const validateUploadFile = (file) => {
     return { valid: true };
   }
 
-  // 동영상 파일은 브라우저 호환 형식만 허용
+  // 모든 동영상 파일 허용 (압축 시 WebM/MP4로 변환됨)
   if (mediaType.isVideo) {
-    if (isBrowserCompatibleVideo(file)) {
-      return { valid: true };
-    }
-    return {
-      valid: false,
-      message: `동영상은 MP4, WebM 형식만 업로드 가능합니다. (${file.name})`
-    };
+    return { valid: true };
   }
 
   return { valid: false, message: `지원하지 않는 파일 형식입니다. (${file.name})` };
@@ -251,7 +245,8 @@ export const validateUploadFile = (file) => {
  * @returns {string} input[type=file]의 accept 속성값
  */
 export const getAcceptedFileTypes = () => {
-  return 'image/*,video/mp4,video/webm,.mp4,.webm';
+  // 모든 동영상 형식 허용 (압축 시 WebM/MP4로 변환됨)
+  return 'image/*,video/*,.mp4,.webm,.mov,.avi,.mkv,.wmv,.flv,.m4v,.3gp';
 };
 
 export default {

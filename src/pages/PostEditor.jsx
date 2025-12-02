@@ -632,7 +632,7 @@ const PostEditor = () => {
                 <p className="mb-2 text-sm text-gray-500">
                   <span className="font-semibold">클릭하여 파일 업로드</span>
                 </p>
-                <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, WebM (최대 50MB)</p>
+                <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV 등 (최대 50MB)</p>
                 <p className="text-xs text-green-600 mt-1">아이폰 사진(HEIC) 자동 변환 + 동영상 720p 자동 압축</p>
               </div>
             </label>

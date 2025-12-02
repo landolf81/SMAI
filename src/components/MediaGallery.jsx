@@ -189,7 +189,7 @@ const MediaGallery = ({ adId, onMediaChange }) => {
               {uploading ? '업로드 중...' : '이미지 또는 동영상 선택'}
             </p>
             <p className="text-xs text-gray-500">
-              JPG, PNG, GIF, MP4, WebM (최대 50MB, 여러 파일 선택 가능)
+              JPG, PNG, GIF, MP4, MOV 등 (최대 50MB, 여러 파일 선택 가능)
             </p>
           </div>
         </label>
