@@ -1,63 +1,42 @@
 /**
  * Cloudflare R2 Storage Service
- * 이미지/동영상 업로드를 위한 서비스
+ * Worker 프록시를 통한 안전한 파일 업로드
  */
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
-// R2 설정
-const R2_ACCOUNT_ID = import.meta.env.VITE_R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = import.meta.env.VITE_R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = import.meta.env.VITE_R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = import.meta.env.VITE_R2_BUCKET_NAME;
-const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL;
-
-// S3 클라이언트 설정 (R2는 S3 호환)
-const s3Client = new S3Client({
-  region: 'auto',
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID,
-    secretAccessKey: R2_SECRET_ACCESS_KEY,
-  },
-});
+// Worker 프록시 URL
+const R2_WORKER_URL = import.meta.env.VITE_R2_WORKER_URL || 'https://smai-r2-proxy.landolf.workers.dev';
+const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-1d5977ce7cec48079bcd6f847b2f3dd1.r2.dev';
 
 /**
- * 파일을 R2에 업로드
+ * 파일을 R2에 업로드 (Worker 프록시 사용)
  * @param {File} file - 업로드할 파일
  * @param {string} folder - 저장할 폴더 경로 (예: 'posts', 'profiles')
  * @returns {Promise<{url: string, key: string}>} - 업로드된 파일의 퍼블릭 URL과 키
  */
 export const uploadToR2 = async (file, folder = 'uploads') => {
   try {
-    // 파일명 생성: timestamp_랜덤문자열_원본파일명
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const key = `${folder}/${timestamp}_${randomStr}_${sanitizedFileName}`;
+    // FormData 생성
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
 
-    // 파일을 ArrayBuffer로 변환
-    const arrayBuffer = await file.arrayBuffer();
-
-    // S3 PutObject 명령 생성
-    const command = new PutObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
-      Body: new Uint8Array(arrayBuffer),
-      ContentType: file.type,
-      // 캐시 설정 (1년)
-      CacheControl: 'public, max-age=31536000',
+    // Worker 프록시로 업로드
+    const response = await fetch(`${R2_WORKER_URL}/upload`, {
+      method: 'POST',
+      body: formData,
     });
 
-    // 업로드 실행
-    await s3Client.send(command);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `업로드 실패: ${response.status}`);
+    }
 
-    // 퍼블릭 URL 생성
-    const publicUrl = `${R2_PUBLIC_URL}/${key}`;
+    const result = await response.json();
 
-    console.log('✅ R2 업로드 성공:', publicUrl);
+    console.log('✅ R2 업로드 성공:', result.url);
     return {
-      url: publicUrl,
-      key: key,
+      url: result.url,
+      key: result.key,
     };
   } catch (error) {
     console.error('❌ R2 업로드 실패:', error);
@@ -83,17 +62,24 @@ export const uploadMultipleToR2 = async (files, folder = 'uploads') => {
 };
 
 /**
- * R2에서 파일 삭제
+ * R2에서 파일 삭제 (Worker 프록시 사용)
  * @param {string} key - 삭제할 파일의 키 (예: 'posts/123_abc_image.jpg')
  */
 export const deleteFromR2 = async (key) => {
   try {
-    const command = new DeleteObjectCommand({
-      Bucket: R2_BUCKET_NAME,
-      Key: key,
+    const response = await fetch(`${R2_WORKER_URL}/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ key }),
     });
 
-    await s3Client.send(command);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `삭제 실패: ${response.status}`);
+    }
+
     console.log('✅ R2 파일 삭제 성공:', key);
   } catch (error) {
     console.error('❌ R2 파일 삭제 실패:', error);
@@ -142,6 +128,7 @@ export const r2Service = {
   isSupabaseUrl,
   isR2Url,
   publicUrl: R2_PUBLIC_URL,
+  workerUrl: R2_WORKER_URL,
 };
 
 export default r2Service;

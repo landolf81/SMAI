@@ -8,6 +8,7 @@ import { getFirstLinkInfo } from '../utils/linkDetector';
 import { YouTubePreviewCard } from '../components/YouTubeEmbed';
 import { postService, storageService } from '../services';
 import { compressImage, validateVideoSize } from '../utils/imageCompression';
+import { compressVideo, checkVideoNeedsCompression, isVideoCompressionSupported } from '../utils/videoCompressor';
 import { getMediaType, validateUploadFile, getAcceptedFileTypes } from '../utils/mediaUtils';
 import { convertImageToPng, isImageFile, isHeicFile, formatFileSize } from '../utils/imageConverter';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,6 +38,7 @@ const PostEditor = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [gpsData, setGpsData] = useState(null); // GPS 정보 상태
   const [imageConvertProgress, setImageConvertProgress] = useState(null); // 이미지 변환 진행 상태
+  const [videoCompressProgress, setVideoCompressProgress] = useState(null); // 동영상 압축 진행 상태
 
   // 링크 미리보기 상태
   const [linkPreview, setLinkPreview] = useState(null);
@@ -403,8 +405,54 @@ const PostEditor = () => {
       setImageConvertProgress(null);
     }
 
-    // 변환된 이미지와 동영상 파일 합치기
-    const allProcessedFiles = [...convertedImages, ...videoFiles];
+    // 동영상 파일 720p 압축
+    const compressedVideos = [];
+    if (videoFiles.length > 0 && isVideoCompressionSupported()) {
+      for (let i = 0; i < videoFiles.length; i++) {
+        const file = videoFiles[i];
+        try {
+          const videoInfo = await checkVideoNeedsCompression(file);
+
+          if (videoInfo.needsCompression) {
+            console.log(`🎬 동영상 압축 시작: ${file.name} (${videoInfo.height}p, ${videoInfo.sizeMB.toFixed(1)}MB)`);
+            setVideoCompressProgress({
+              progress: 0,
+              status: `동영상 압축 준비 중...`,
+              fileName: file.name
+            });
+
+            const compressedVideo = await compressVideo(file, {
+              maxHeight: 720,
+              onProgress: (progress) => {
+                setVideoCompressProgress({
+                  progress,
+                  status: `동영상 압축 중... ${progress}%`,
+                  fileName: file.name
+                });
+              }
+            });
+
+            compressedVideos.push(compressedVideo);
+            const originalMB = (file.size / 1024 / 1024).toFixed(2);
+            const compressedMB = (compressedVideo.size / 1024 / 1024).toFixed(2);
+            console.log(`✅ 동영상 압축 완료: ${originalMB}MB → ${compressedMB}MB`);
+          } else {
+            compressedVideos.push(file);
+            console.log(`동영상 압축 불필요: ${file.name} (${videoInfo.height}p, ${videoInfo.sizeMB.toFixed(1)}MB)`);
+          }
+        } catch (error) {
+          console.error(`❌ 동영상 압축 실패: ${file.name}`, error);
+          compressedVideos.push(file); // 압축 실패 시 원본 사용
+        }
+      }
+      setVideoCompressProgress(null);
+    } else {
+      // 압축 미지원 시 원본 사용
+      compressedVideos.push(...videoFiles);
+    }
+
+    // 변환된 이미지와 압축된 동영상 파일 합치기
+    const allProcessedFiles = [...convertedImages, ...compressedVideos];
 
     setFiles(prev => [...prev, ...allProcessedFiles]);
 
@@ -585,7 +633,7 @@ const PostEditor = () => {
                   <span className="font-semibold">클릭하여 파일 업로드</span>
                 </p>
                 <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, WebM (최대 50MB)</p>
-                <p className="text-xs text-green-600 mt-1">✅ 아이폰 사진(HEIC) 자동 변환 지원</p>
+                <p className="text-xs text-green-600 mt-1">아이폰 사진(HEIC) 자동 변환 + 동영상 720p 자동 압축</p>
               </div>
             </label>
             <input
@@ -613,6 +661,29 @@ const PostEditor = () => {
                       <div
                         className="bg-blue-500 h-2 rounded-full transition-all duration-300"
                         style={{ width: `${(imageConvertProgress.current / imageConvertProgress.total) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 동영상 압축 진행 상태 표시 */}
+            {videoCompressProgress && (
+              <div className="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="loading loading-spinner loading-sm text-purple-500"></div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-purple-700">
+                      동영상 720p 압축 중...
+                    </div>
+                    <div className="text-xs text-purple-600 mt-1">
+                      {videoCompressProgress.fileName && `${videoCompressProgress.fileName} - `}{videoCompressProgress.status}
+                    </div>
+                    <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
+                      <div
+                        className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${videoCompressProgress.progress}%` }}
                       ></div>
                     </div>
                   </div>
@@ -761,6 +832,8 @@ const PostEditor = () => {
             }}
             disabled={
               loading ||
+              imageConvertProgress ||
+              videoCompressProgress ||
               !desc.trim() ||
               (postType === 'qna' && !title.trim()) ||
               (postType === 'qna' && desc.trim().length < 20) ||
@@ -768,6 +841,8 @@ const PostEditor = () => {
             }
             className={`w-full py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
               loading ||
+              imageConvertProgress ||
+              videoCompressProgress ||
               !desc.trim() ||
               (postType === 'qna' && !title.trim()) ||
               (postType === 'qna' && desc.trim().length < 20) ||
