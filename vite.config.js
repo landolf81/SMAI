@@ -23,10 +23,18 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     minify: 'esbuild',
+    chunkSizeWarningLimit: 1000, // 1MB로 제한 증가
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
+          // 핵심 라이브러리
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // UI 라이브러리
+          'vendor-ui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
+          // 데이터 라이브러리
+          'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
+          // 유틸리티
+          'vendor-utils': ['moment', 'axios'],
         }
       }
     }

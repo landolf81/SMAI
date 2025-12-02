@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy, useContext, useEffect } from 'react';
 import {
   createBrowserRouter,
   Navigate,
@@ -8,52 +8,57 @@ import {
 } from 'react-router-dom';
 import './App.css';
 
-
-// Pages
-import Login from './pages/Login';
-import Register from './pages/register';
-import Home from './pages/home';
-import Profile from './pages/profile';
-import AdminPage from './pages/AdminPage';
-import PostEditor from './pages/PostEditor';
-
-// Admin Pages
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminPosts from './pages/admin/AdminPosts';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
-import AdminAds from './pages/admin/AdminAds';
-import AdAnalytics from './pages/admin/AdAnalytics';
-import AdRevenue from './pages/admin/AdRevenue';
-import AdminTags from './pages/admin/AdminTags';
-import AdminTagGroups from './pages/admin/AdminTagGroups';
-import AdminBadgesNew from './pages/admin/AdminBadgesNew';
-import AdminReports from './pages/AdminReports';
-
-import Prices from './pages/Prices';
-import Community from './pages/Community';
-import Favorites from './pages/Favorites';
-import Alerts from './pages/Alerts';
-import Settings from './pages/Settings';
-import QnA from './pages/QnA';
-import QnAEditor from './pages/QnAEditor';
-import QnADetail from './components/QnADetail';
-import SecondHand from './pages/SecondHand';
-import PostDetail from './pages/PostDetail';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import Terms from './pages/Terms';
-
-// Components
+// Components (항상 필요한 것들은 즉시 로드)
 import Navbar from './components/Navbar';
 import Leftbar from './components/Leftbar';
 import MobileBottomNav from './components/MobileBottomNav';
-import { useContext, useEffect } from 'react';
 import { AuthContext } from './context/AuthContext';
 import { isMobileDevice } from './utils/deviceDetector';
 import {
   QueryClient,
   QueryClientProvider,
-  
 } from '@tanstack/react-query';
+
+// 로딩 컴포넌트
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[50vh]">
+    <div className="loading loading-spinner loading-lg text-orange-500"></div>
+  </div>
+);
+
+// Pages - Lazy Loading
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/register'));
+const Home = lazy(() => import('./pages/home'));
+const Profile = lazy(() => import('./pages/profile'));
+const AdminPage = lazy(() => import('./pages/AdminPage'));
+const PostEditor = lazy(() => import('./pages/PostEditor'));
+
+// Admin Pages - Lazy Loading
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminPosts = lazy(() => import('./pages/admin/AdminPosts'));
+const AdminAnalytics = lazy(() => import('./pages/admin/AdminAnalytics'));
+const AdminAds = lazy(() => import('./pages/admin/AdminAds'));
+const AdAnalytics = lazy(() => import('./pages/admin/AdAnalytics'));
+const AdRevenue = lazy(() => import('./pages/admin/AdRevenue'));
+const AdminTags = lazy(() => import('./pages/admin/AdminTags'));
+const AdminTagGroups = lazy(() => import('./pages/admin/AdminTagGroups'));
+const AdminBadgesNew = lazy(() => import('./pages/admin/AdminBadgesNew'));
+const AdminReports = lazy(() => import('./pages/AdminReports'));
+
+// Other Pages - Lazy Loading
+const Prices = lazy(() => import('./pages/Prices'));
+const Community = lazy(() => import('./pages/Community'));
+const Favorites = lazy(() => import('./pages/Favorites'));
+const Alerts = lazy(() => import('./pages/Alerts'));
+const Settings = lazy(() => import('./pages/Settings'));
+const QnA = lazy(() => import('./pages/QnA'));
+const QnAEditor = lazy(() => import('./pages/QnAEditor'));
+const QnADetail = lazy(() => import('./components/QnADetail'));
+const SecondHand = lazy(() => import('./pages/SecondHand'));
+const PostDetail = lazy(() => import('./pages/PostDetail'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const Terms = lazy(() => import('./pages/Terms'));
 
 function App() {
 
@@ -72,7 +77,7 @@ useEffect(() => {
   const Layout = () => {
     const location = useLocation();
     const isAdminPage = location.pathname.startsWith('/admin');
-    
+
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />
@@ -83,16 +88,18 @@ useEffect(() => {
               <Leftbar />
             </div>
           )}
-          
+
           {/* 메인 콘텐츠 */}
           <div className="flex-1 min-w-0">
             <div className="max-w-none mx-auto pb-20 lg:pb-4">
-              <Outlet />
+              <Suspense fallback={<PageLoader />}>
+                <Outlet />
+              </Suspense>
             </div>
           </div>
-          
+
         </div>
-        
+
         {/* 모바일용 하단 네비게이션 - 항상 표시 */}
         {(isMobileDevice() || window.innerWidth <= 768) && <MobileBottomNav />}
       </div>
@@ -230,11 +237,11 @@ useEffect(() => {
     },
     {
       path: '/login',
-      element: <Login />,
+      element: <Suspense fallback={<PageLoader />}><Login /></Suspense>,
     },
     {
       path: '/register',
-      element: <Register />,
+      element: <Suspense fallback={<PageLoader />}><Register /></Suspense>,
     },
   ]);
 
