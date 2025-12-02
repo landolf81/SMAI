@@ -1,13 +1,14 @@
 import { supabase } from '../config/supabase.js';
 import { v4 as uuidv4 } from 'uuid';
 import { API_BASE_URL } from '../config/api.js';
+import { uploadToR2, uploadMultipleToR2, deleteFromR2, isR2Url } from './r2Service.js';
 
 /**
  * Storage 서비스
- * Supabase Storage를 사용한 파일 업로드/다운로드/삭제
+ * Cloudflare R2를 기본으로 사용 (Supabase Storage는 레거시 지원)
  */
 
-// 버킷 이름 상수
+// 버킷 이름 상수 (R2 폴더명으로도 사용)
 export const BUCKETS = {
   AVATARS: 'avatars',
   POSTS: 'posts',
@@ -17,17 +18,32 @@ export const BUCKETS = {
   TRADES: 'trades'
 };
 
+// R2 사용 여부 (환경변수로 제어 가능)
+const USE_R2 = import.meta.env.VITE_R2_PUBLIC_URL ? true : false;
+
 export const storageService = {
   /**
-   * 파일 업로드
-   * @param {string} bucket - 버킷 이름
-   * @param {string} filePath - 저장할 경로
+   * 파일 업로드 (R2 우선 사용)
+   * @param {string} bucket - 버킷/폴더 이름
+   * @param {string} filePath - 저장할 경로 (R2에서는 폴더로 사용)
    * @param {File} file - 파일 객체
    * @param {Object} options - 업로드 옵션
    * @returns {Promise<Object>} 업로드 결과 (url, path)
    */
   async uploadFile(bucket, filePath, file, options = {}) {
     try {
+      // R2로 업로드
+      if (USE_R2) {
+        const result = await uploadToR2(file, bucket);
+        return {
+          success: true,
+          path: result.key,
+          url: result.url,
+          fullPath: result.key
+        };
+      }
+
+      // Supabase Storage (폴백)
       const { data, error } = await supabase.storage
         .from(bucket)
         .upload(filePath, file, {
@@ -56,7 +72,7 @@ export const storageService = {
   },
 
   /**
-   * 여러 파일 업로드
+   * 여러 파일 업로드 (R2 우선 사용)
    * @param {string} bucket - 버킷 이름
    * @param {string} folderPath - 폴더 경로
    * @param {File[]} files - 파일 배열
@@ -65,7 +81,19 @@ export const storageService = {
    */
   async uploadFiles(bucket, folderPath, files, options = {}) {
     try {
-      const uploadPromises = files.map((file, index) => {
+      // R2로 업로드
+      if (USE_R2) {
+        const results = await uploadMultipleToR2(files, bucket);
+        return results.map(result => ({
+          success: true,
+          path: result.key,
+          url: result.url,
+          fullPath: result.key
+        }));
+      }
+
+      // Supabase Storage (폴백)
+      const uploadPromises = files.map((file) => {
         const ext = file.name.split('.').pop();
         const filename = `${uuidv4()}.${ext}`;
         const filePath = `${folderPath}/${filename}`;
@@ -81,13 +109,21 @@ export const storageService = {
   },
 
   /**
-   * 파일 삭제
+   * 파일 삭제 (R2 또는 Supabase)
    * @param {string} bucket - 버킷 이름
-   * @param {string} filePath - 파일 경로
+   * @param {string} filePath - 파일 경로 또는 R2 키
+   * @param {string} url - 원본 URL (R2 여부 판단용)
    * @returns {Promise<boolean>} 성공 여부
    */
-  async deleteFile(bucket, filePath) {
+  async deleteFile(bucket, filePath, url = null) {
     try {
+      // R2 URL인 경우 R2에서 삭제
+      if (url && isR2Url(url)) {
+        await deleteFromR2(filePath);
+        return true;
+      }
+
+      // Supabase Storage에서 삭제
       const { error } = await supabase.storage
         .from(bucket)
         .remove([filePath]);
