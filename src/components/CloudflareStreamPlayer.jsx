@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faSpinner, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { getCloudflareStreamUid } from '../utils/mediaUtils';
 
 /**
@@ -11,9 +11,10 @@ import { getCloudflareStreamUid } from '../utils/mediaUtils';
 const CloudflareStreamPlayer = ({
   url,
   autoplay = false,
-  muted = true,
+  muted: initialMuted = true,
   loop = true,
   controls = false,
+  showMuteToggle = false,  // 음소거 토글 버튼 표시 여부
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
   onClick,
@@ -23,6 +24,7 @@ const CloudflareStreamPlayer = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [showPlayer, setShowPlayer] = useState(autoplay);
+  const [isMuted, setIsMuted] = useState(initialMuted);
   const iframeRef = useRef(null);
 
   const uid = getCloudflareStreamUid(url);
@@ -34,6 +36,12 @@ const CloudflareStreamPlayer = ({
     }
   }, [autoplay]);
 
+  // 음소거 토글 핸들러 (iframe 재로드)
+  const handleMuteToggle = (e) => {
+    e.stopPropagation();
+    setIsMuted(!isMuted);
+  };
+
   // Customer subdomain (from your Cloudflare account)
   const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
 
@@ -41,7 +49,7 @@ const CloudflareStreamPlayer = ({
   const getIframeSrc = () => {
     if (!uid) return '';
     const params = new URLSearchParams({
-      muted: muted ? 'true' : 'false',
+      muted: isMuted ? 'true' : 'false',
       autoplay: showPlayer ? 'true' : 'false',
       loop: loop ? 'true' : 'false',
       controls: controls ? 'true' : 'false',
@@ -131,14 +139,14 @@ const CloudflareStreamPlayer = ({
     return (
       <div className={`relative bg-gray-900 aspect-square overflow-hidden ${className}`}>
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
             <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin" />
           </div>
         )}
         <iframe
           ref={iframeRef}
           src={getIframeSrc()}
-          className="absolute"
+          className="absolute pointer-events-none"
           style={{
             width: '177.78%',
             height: '177.78%',
@@ -151,6 +159,33 @@ const CloudflareStreamPlayer = ({
           onLoad={handleIframeLoad}
           onError={handleIframeError}
         />
+
+        {/* 클릭 영역 (전체화면 모달 열기용) */}
+        {onClick && (
+          <div
+            className="absolute inset-0 z-10 cursor-pointer"
+            onClick={onClick}
+          />
+        )}
+
+        {/* 동영상 아이콘 */}
+        <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
+          <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+          <span>동영상</span>
+        </div>
+
+        {/* 음소거 토글 버튼 */}
+        {showMuteToggle && (
+          <button
+            onClick={handleMuteToggle}
+            className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
+          >
+            <FontAwesomeIcon
+              icon={isMuted ? faVolumeMute : faVolumeUp}
+              className="w-4 h-4"
+            />
+          </button>
+        )}
       </div>
     );
   }
@@ -159,20 +194,41 @@ const CloudflareStreamPlayer = ({
   return (
     <div className={`relative bg-gray-900 ${aspectRatioClass} ${className}`}>
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
           <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin" />
         </div>
       )}
       <iframe
         ref={iframeRef}
         src={getIframeSrc()}
-        className="w-full h-full"
+        className="w-full h-full pointer-events-none"
         style={{ border: 'none' }}
         allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
         allowFullScreen
         onLoad={handleIframeLoad}
         onError={handleIframeError}
       />
+
+      {/* 클릭 영역 (전체화면 모달 열기용) */}
+      {onClick && (
+        <div
+          className="absolute inset-0 z-10 cursor-pointer"
+          onClick={onClick}
+        />
+      )}
+
+      {/* 음소거 토글 버튼 */}
+      {showMuteToggle && (
+        <button
+          onClick={handleMuteToggle}
+          className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
+        >
+          <FontAwesomeIcon
+            icon={isMuted ? faVolumeMute : faVolumeUp}
+            className="w-4 h-4"
+          />
+        </button>
+      )}
     </div>
   );
 };

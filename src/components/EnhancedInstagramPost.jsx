@@ -945,6 +945,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   muted={true}
                   loop={true}
                   controls={false}
+                  showMuteToggle={true}
                   aspectRatio="square"
                   className="w-full h-full"
                   onClick={() => {
