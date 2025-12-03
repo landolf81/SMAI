@@ -197,6 +197,36 @@ export const compressVideo = async (videoFile, options = {}) => {
   });
 };
 
+// 브라우저 호환성이 낮은 동영상 포맷 (WebM으로 강제 변환 필요)
+const INCOMPATIBLE_FORMATS = [
+  'video/quicktime',      // .mov (iOS/macOS)
+  'video/x-msvideo',      // .avi
+  'video/x-matroska',     // .mkv
+  'video/x-ms-wmv',       // .wmv
+  'video/x-flv',          // .flv
+  'video/3gpp',           // .3gp
+  'video/3gpp2',          // .3g2
+];
+
+// 파일 확장자로도 체크 (MIME 타입이 정확하지 않을 수 있음)
+const INCOMPATIBLE_EXTENSIONS = ['.mov', '.avi', '.mkv', '.wmv', '.flv', '.3gp', '.3g2', '.f4v', '.m4v'];
+
+/**
+ * 브라우저 호환성이 낮은 포맷인지 확인
+ * @param {File} videoFile - 동영상 파일
+ * @returns {boolean}
+ */
+const isIncompatibleFormat = (videoFile) => {
+  // MIME 타입으로 확인
+  if (INCOMPATIBLE_FORMATS.includes(videoFile.type)) {
+    return true;
+  }
+
+  // 파일 확장자로 확인 (MIME 타입이 빈 경우 대비)
+  const fileName = videoFile.name.toLowerCase();
+  return INCOMPATIBLE_EXTENSIONS.some(ext => fileName.endsWith(ext));
+};
+
 /**
  * 동영상 압축이 필요한지 확인
  * @param {File} videoFile - 동영상 파일
@@ -204,10 +234,13 @@ export const compressVideo = async (videoFile, options = {}) => {
  */
 export const checkVideoNeedsCompression = async (videoFile) => {
   return new Promise((resolve) => {
-    if (!videoFile.type.startsWith('video/')) {
+    if (!videoFile.type.startsWith('video/') && !videoFile.name.match(/\.(mov|avi|mkv|wmv|flv|mp4|webm|3gp|m4v|f4v)$/i)) {
       resolve({ needsCompression: false, reason: '동영상 파일이 아님' });
       return;
     }
+
+    // 브라우저 비호환 포맷은 무조건 변환 필요
+    const incompatible = isIncompatibleFormat(videoFile);
 
     const video = document.createElement('video');
     video.muted = true;
@@ -222,8 +255,17 @@ export const checkVideoNeedsCompression = async (videoFile) => {
 
       URL.revokeObjectURL(url);
 
-      // 720p 초과이거나 50MB 이상이면 압축 필요
-      const needsCompression = height > 720 || sizeMB > 50;
+      // 브라우저 비호환 포맷이거나, 720p 초과이거나, 50MB 이상이면 압축 필요
+      const needsCompression = incompatible || height > 720 || sizeMB > 50;
+
+      let reason = '압축 불필요';
+      if (incompatible) {
+        reason = `브라우저 호환성을 위해 WebM으로 변환합니다 (${videoFile.name.split('.').pop().toUpperCase()})`;
+      } else if (height > 720) {
+        reason = `해상도가 720p를 초과합니다 (${height}p)`;
+      } else if (sizeMB > 50) {
+        reason = `파일 크기가 50MB를 초과합니다 (${sizeMB.toFixed(1)}MB)`;
+      }
 
       resolve({
         needsCompression,
@@ -231,15 +273,23 @@ export const checkVideoNeedsCompression = async (videoFile) => {
         height,
         duration,
         sizeMB,
-        reason: needsCompression
-          ? (height > 720 ? `해상도가 720p를 초과합니다 (${height}p)` : `파일 크기가 50MB를 초과합니다 (${sizeMB.toFixed(1)}MB)`)
-          : '압축 불필요'
+        incompatibleFormat: incompatible,
+        reason
       });
     };
 
     video.onerror = () => {
       URL.revokeObjectURL(url);
-      resolve({ needsCompression: false, reason: '동영상 로드 실패' });
+      // 로드 실패해도 비호환 포맷이면 변환 시도
+      if (incompatible) {
+        resolve({
+          needsCompression: true,
+          incompatibleFormat: true,
+          reason: `브라우저 호환성을 위해 WebM으로 변환합니다 (${videoFile.name.split('.').pop().toUpperCase()})`
+        });
+      } else {
+        resolve({ needsCompression: false, reason: '동영상 로드 실패' });
+      }
     };
   });
 };
