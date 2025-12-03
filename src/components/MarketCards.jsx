@@ -111,6 +111,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 가락공판장 - Green → Midnight Blue
       '가락': {
         bg: 'from-[#00B140] to-[#1D4F91]',
+        badgeColor: '#00B140', // Green (그라데이션 시작색)
         text: 'text-[#1D4F91]',
         light: 'bg-blue-50',
         gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
@@ -118,6 +119,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 선남농협 - Yellow → Green
       '선남': {
         bg: 'from-[#FFCC00] to-[#00B140]',
+        badgeColor: '#FFCC00', // Yellow (그라데이션 시작색)
         text: 'text-[#00B140]',
         light: 'bg-[#F5F9E0]',
         gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
@@ -125,6 +127,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 성주원예 - Midnight Blue → Yellow
       '성주원예': {
         bg: 'from-[#1D4F91] to-[#FFCC00]',
+        badgeColor: '#1D4F91', // Midnight Blue (그라데이션 시작색)
         text: 'text-[#1D4F91]',
         light: 'bg-yellow-50',
         gradient: 'linear-gradient(135deg, rgba(29, 79, 145, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
@@ -132,6 +135,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 성주조공 - Yellow → Midnight Blue
       '성주조공': {
         bg: 'from-[#FFCC00] to-[#1D4F91]',
+        badgeColor: '#FFCC00', // Yellow (그라데이션 시작색)
         text: 'text-[#1D4F91]',
         light: 'bg-blue-50',
         gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
@@ -139,6 +143,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 용암농협 - Green → Yellow
       '용암': {
         bg: 'from-[#00B140] to-[#FFCC00]',
+        badgeColor: '#00B140', // Green (그라데이션 시작색)
         text: 'text-[#00B140]',
         light: 'bg-yellow-50',
         gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
@@ -146,6 +151,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 초전농협 - Midnight Blue → Green
       '초전': {
         bg: 'from-[#1D4F91] to-[#00B140]',
+        badgeColor: '#1D4F91', // Midnight Blue (그라데이션 시작색)
         text: 'text-[#00B140]',
         light: 'bg-green-50',
         gradient: 'linear-gradient(135deg, rgba(29, 79, 145, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
@@ -153,6 +159,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       // 기본 성주 농협들 - Yellow → Green
       '성주': {
         bg: 'from-[#FFCC00] to-[#00B140]',
+        badgeColor: '#FFCC00', // Yellow (그라데이션 시작색)
         text: 'text-[#00B140]',
         light: 'bg-green-50',
         gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
@@ -340,9 +347,12 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 filter: `blur(${(1 - cardOpacity) * 2}px)`
               }}
             >
-              {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 (단색 배경) */}
+              {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 (공판장별 단색 배경) */}
               <div className="absolute -top-0 left-4 z-10">
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#00B140] text-white text-base font-bold rounded-full shadow-md">
+                <span
+                  className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md"
+                  style={{ backgroundColor: theme.badgeColor }}
+                >
                   <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
                   {market.name}
                 </span>
