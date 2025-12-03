@@ -255,16 +255,16 @@ export const checkVideoNeedsCompression = async (videoFile) => {
 
       URL.revokeObjectURL(url);
 
-      // 브라우저 비호환 포맷이거나, 720p 초과이거나, 50MB 이상이면 압축 필요
-      const needsCompression = incompatible || height > 720 || sizeMB > 50;
+      // 모든 동영상을 WebM으로 변환 (브라우저 호환성 보장)
+      const needsCompression = true;
 
-      let reason = '압축 불필요';
+      let reason = '브라우저 호환성을 위해 WebM으로 변환합니다';
       if (incompatible) {
         reason = `브라우저 호환성을 위해 WebM으로 변환합니다 (${videoFile.name.split('.').pop().toUpperCase()})`;
       } else if (height > 720) {
-        reason = `해상도가 720p를 초과합니다 (${height}p)`;
+        reason = `720p로 압축 및 WebM 변환 (${height}p → 720p)`;
       } else if (sizeMB > 50) {
-        reason = `파일 크기가 50MB를 초과합니다 (${sizeMB.toFixed(1)}MB)`;
+        reason = `용량 압축 및 WebM 변환 (${sizeMB.toFixed(1)}MB)`;
       }
 
       resolve({

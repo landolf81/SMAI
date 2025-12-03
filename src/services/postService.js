@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { deleteFromR2, isR2Url } from './r2Service.js';
 
 /**
  * 게시물 서비스
@@ -469,7 +470,7 @@ export const postService = {
   },
 
   /**
-   * 게시물 삭제
+   * 게시물 삭제 (첨부파일도 함께 삭제)
    * @param {string} postId - 게시물 ID
    */
   async deletePost(postId) {
@@ -477,6 +478,22 @@ export const postService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
+      // 1. 먼저 게시물 정보 조회 (첨부파일 URL 확인)
+      const { data: post, error: fetchError } = await supabase
+        .from('posts')
+        .select('media_files, image')
+        .eq('id', postId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // 2. 첨부파일 삭제
+      if (post) {
+        await this._deletePostMedia(post);
+      }
+
+      // 3. 게시물 삭제
       const { error } = await supabase
         .from('posts')
         .delete()
@@ -489,6 +506,54 @@ export const postService = {
     } catch (error) {
       console.error('게시물 삭제 오류:', error);
       throw error;
+    }
+  },
+
+  /**
+   * 게시물 첨부파일 삭제 (내부 헬퍼)
+   * @param {Object} post - 게시물 객체
+   */
+  async _deletePostMedia(post) {
+    try {
+      const mediaUrls = [];
+
+      // media_files 배열 처리
+      if (post.media_files && Array.isArray(post.media_files)) {
+        mediaUrls.push(...post.media_files);
+      }
+
+      // 단일 image 필드 처리
+      if (post.image && typeof post.image === 'string') {
+        mediaUrls.push(post.image);
+      }
+
+      // 각 미디어 파일 삭제
+      for (const url of mediaUrls) {
+        try {
+          if (isR2Url(url)) {
+            // R2 URL에서 키 추출 후 삭제
+            const key = url.split('.r2.dev/')[1] || url.split('r2.cloudflarestorage.com/')[1];
+            if (key) {
+              await deleteFromR2(key);
+              console.log('✅ R2 파일 삭제:', key);
+            }
+          } else if (url.includes('supabase.co/storage')) {
+            // Supabase Storage URL 처리
+            const match = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+            if (match) {
+              const [, bucket, path] = match;
+              const { error } = await supabase.storage.from(bucket).remove([path]);
+              if (!error) {
+                console.log('✅ Supabase Storage 파일 삭제:', path);
+              }
+            }
+          }
+        } catch (mediaError) {
+          console.warn('미디어 삭제 실패 (계속 진행):', url, mediaError);
+        }
+      }
+    } catch (error) {
+      console.warn('첨부파일 삭제 중 오류 (게시물 삭제는 계속):', error);
     }
   },
 
@@ -1094,7 +1159,7 @@ export const postService = {
   },
 
   /**
-   * 관리자 전용: 게시물 삭제 (권한 체크 없음)
+   * 관리자 전용: 게시물 삭제 (권한 체크 없음, 첨부파일도 삭제)
    * @param {string} postId - 게시물 ID
    */
   async deletePostAdmin(postId) {
@@ -1102,6 +1167,19 @@ export const postService = {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
+      // 1. 먼저 게시물 정보 조회 (첨부파일 URL 확인)
+      const { data: post, error: fetchError } = await supabase
+        .from('posts')
+        .select('media_files, image')
+        .eq('id', postId)
+        .single();
+
+      if (!fetchError && post) {
+        // 2. 첨부파일 삭제
+        await this._deletePostMedia(post);
+      }
+
+      // 3. 게시물 삭제
       const { error } = await supabase
         .from('posts')
         .delete()
