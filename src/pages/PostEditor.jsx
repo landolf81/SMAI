@@ -117,32 +117,19 @@ const PostEditor = () => {
               try {
                 const videoInfo = await checkVideoNeedsCompression(file);
                 if (videoInfo.needsCompression) {
-                  console.log(`🎬 동영상 WebM 변환 시작: ${file.name} - ${videoInfo.reason || ''}`);
-                  setVideoCompressProgress({
-                    progress: 0,
-                    status: `동영상 변환 준비 중...`,
-                    fileName: file.name
-                  });
+                  setVideoCompressProgress({ progress: 0 });
 
                   const compressedVideo = await compressVideo(file, {
                     maxHeight: 720,
                     onProgress: (progress) => {
-                      setVideoCompressProgress({
-                        progress,
-                        status: `동영상 변환 중... ${progress}%`,
-                        fileName: file.name
-                      });
+                      setVideoCompressProgress({ progress });
                     }
                   });
 
                   processedFiles.push(compressedVideo);
-                  const originalMB = (file.size / 1024 / 1024).toFixed(2);
-                  const compressedMB = (compressedVideo.size / 1024 / 1024).toFixed(2);
-                  console.log(`✅ 동영상 변환 완료: ${originalMB}MB → ${compressedMB}MB`);
                   setVideoCompressProgress(null);
                 } else {
                   processedFiles.push(file);
-                  console.log(`동영상 변환 불필요: ${file.name}`);
                 }
               } catch (videoError) {
                 console.error(`❌ 동영상 변환 실패: ${file.name}`, videoError);
@@ -455,35 +442,18 @@ const PostEditor = () => {
           const videoInfo = await checkVideoNeedsCompression(file);
 
           if (videoInfo.needsCompression) {
-            const heightInfo = videoInfo.height ? `${videoInfo.height}p` : '알 수 없음';
-            const sizeInfo = videoInfo.sizeMB ? `${videoInfo.sizeMB.toFixed(1)}MB` : `${(file.size / 1024 / 1024).toFixed(1)}MB`;
-            console.log(`🎬 동영상 압축 시작: ${file.name} (${heightInfo}, ${sizeInfo}) - ${videoInfo.reason || ''}`);
-            setVideoCompressProgress({
-              progress: 0,
-              status: `동영상 변환 준비 중...`,
-              fileName: file.name
-            });
+            setVideoCompressProgress({ progress: 0 });
 
             const compressedVideo = await compressVideo(file, {
               maxHeight: 720,
               onProgress: (progress) => {
-                setVideoCompressProgress({
-                  progress,
-                  status: `동영상 변환 중... ${progress}%`,
-                  fileName: file.name
-                });
+                setVideoCompressProgress({ progress });
               }
             });
 
             compressedVideos.push(compressedVideo);
-            const originalMB = (file.size / 1024 / 1024).toFixed(2);
-            const compressedMB = (compressedVideo.size / 1024 / 1024).toFixed(2);
-            console.log(`✅ 동영상 변환 완료: ${originalMB}MB → ${compressedMB}MB`);
           } else {
             compressedVideos.push(file);
-            const heightInfo = videoInfo.height ? `${videoInfo.height}p` : '알 수 없음';
-            const sizeInfo = videoInfo.sizeMB ? `${videoInfo.sizeMB.toFixed(1)}MB` : `${(file.size / 1024 / 1024).toFixed(1)}MB`;
-            console.log(`동영상 변환 불필요: ${file.name} (${heightInfo}, ${sizeInfo})`);
           }
         } catch (error) {
           console.error(`❌ 동영상 압축 실패: ${file.name}`, error);
@@ -733,10 +703,7 @@ const PostEditor = () => {
                   <div className="loading loading-spinner loading-sm text-purple-500"></div>
                   <div className="flex-1">
                     <div className="text-sm font-medium text-purple-700">
-                      동영상 720p 압축 중...
-                    </div>
-                    <div className="text-xs text-purple-600 mt-1">
-                      {videoCompressProgress.fileName && `${videoCompressProgress.fileName} - `}{videoCompressProgress.status}
+                      압축중 {videoCompressProgress.progress}%
                     </div>
                     <div className="w-full bg-purple-200 rounded-full h-2 mt-2">
                       <div

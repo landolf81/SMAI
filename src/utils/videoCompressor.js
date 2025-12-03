@@ -1,206 +1,151 @@
 /**
  * 동영상 720p 압축 유틸리티
- * MediaRecorder API를 사용하여 브라우저 내에서 동영상을 720p로 압축합니다.
+ * FFmpeg.wasm을 사용하여 브라우저 내에서 동영상을 720p로 압축합니다.
+ * 호환 포맷(MP4, WebM)은 압축하지 않고 원본 사용
  */
 
+import { FFmpeg } from '@ffmpeg/ffmpeg';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
+
+let ffmpeg = null;
+let ffmpegLoaded = false;
+let ffmpegLoading = false;
+
 /**
- * 동영상을 720p로 압축
+ * FFmpeg 인스턴스 로드
+ */
+const loadFFmpeg = async (onProgress) => {
+  if (ffmpegLoaded && ffmpeg) return ffmpeg;
+  if (ffmpegLoading) {
+    // 이미 로딩 중이면 완료될 때까지 대기
+    while (ffmpegLoading) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return ffmpeg;
+  }
+
+  ffmpegLoading = true;
+
+  try {
+    ffmpeg = new FFmpeg();
+
+    // 진행률 콜백
+    ffmpeg.on('progress', ({ progress }) => {
+      if (onProgress) {
+        onProgress(Math.round(progress * 100));
+      }
+    });
+
+    // CDN에서 FFmpeg 코어 로드
+    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+    await ffmpeg.load({
+      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+
+    ffmpegLoaded = true;
+    return ffmpeg;
+  } catch (error) {
+    console.error('FFmpeg 로드 실패:', error);
+    throw error;
+  } finally {
+    ffmpegLoading = false;
+  }
+};
+
+/**
+ * 동영상을 720p로 압축 (FFmpeg 사용)
  * @param {File} videoFile - 원본 동영상 파일
  * @param {Object} options - 압축 옵션
  * @param {number} options.maxHeight - 최대 세로 해상도 (기본: 720)
- * @param {number} options.videoBitrate - 비디오 비트레이트 (기본: 2.5Mbps)
  * @param {Function} options.onProgress - 진행률 콜백 (0-100)
  * @returns {Promise<File>} 압축된 동영상 파일
  */
 export const compressVideo = async (videoFile, options = {}) => {
   const {
     maxHeight = 720,
-    videoBitrate = 8000000, // 8 Mbps (품질 향상)
     onProgress = () => {}
   } = options;
 
-  return new Promise((resolve, reject) => {
-    // 동영상이 아니면 원본 반환
-    if (!videoFile.type.startsWith('video/')) {
-      resolve(videoFile);
-      return;
-    }
+  // 동영상이 아니면 원본 반환
+  if (!videoFile.type.startsWith('video/')) {
+    return videoFile;
+  }
 
-    // 원본 비디오 요소 생성
-    const video = document.createElement('video');
-    video.muted = true;
-    video.playsInline = true;
+  try {
+    onProgress(0);
 
-    const videoUrl = URL.createObjectURL(videoFile);
-    video.src = videoUrl;
+    // FFmpeg 로드
+    const ffmpegInstance = await loadFFmpeg(onProgress);
 
-    video.onloadedmetadata = async () => {
-      try {
-        const originalWidth = video.videoWidth;
-        const originalHeight = video.videoHeight;
-        const duration = video.duration;
+    // 입력 파일명
+    const inputName = 'input' + getExtension(videoFile.name);
+    const outputName = 'output.mp4';
 
-        // 720p 이하면 압축 불필요
-        if (originalHeight <= maxHeight && videoFile.size < 10 * 1024 * 1024) {
-          URL.revokeObjectURL(videoUrl);
-          resolve(videoFile);
-          return;
-        }
+    // 파일을 FFmpeg 파일시스템에 쓰기
+    await ffmpegInstance.writeFile(inputName, await fetchFile(videoFile));
 
-        // 새 해상도 계산 (비율 유지)
-        let newWidth, newHeight;
-        if (originalHeight > maxHeight) {
-          const ratio = maxHeight / originalHeight;
-          newHeight = maxHeight;
-          newWidth = Math.round(originalWidth * ratio);
-          // 짝수로 맞추기 (인코딩 호환성)
-          newWidth = newWidth % 2 === 0 ? newWidth : newWidth + 1;
-        } else {
-          newWidth = originalWidth;
-          newHeight = originalHeight;
-        }
+    // FFmpeg 명령 실행 (720p로 리사이즈, 원본 프레임레이트/비트레이트 유지)
+    // -vf scale=-2:720 : 높이 720px, 너비는 비율 유지 (짝수로)
+    // -c:v libx264 : H.264 코덱
+    // -preset fast : 빠른 인코딩
+    // -crf 23 : 품질 (낮을수록 고품질, 18-28 권장)
+    // -c:a aac : 오디오 AAC 코덱
+    // -movflags +faststart : 웹 스트리밍 최적화
+    await ffmpegInstance.exec([
+      '-i', inputName,
+      '-vf', `scale=-2:${maxHeight}`,
+      '-c:v', 'libx264',
+      '-preset', 'fast',
+      '-crf', '23',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      '-movflags', '+faststart',
+      '-y',
+      outputName
+    ]);
 
-        // Canvas 생성
-        const canvas = document.createElement('canvas');
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-        const ctx = canvas.getContext('2d');
+    // 출력 파일 읽기
+    const data = await ffmpegInstance.readFile(outputName);
 
-        // 이미지 품질 향상 설정
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+    // 임시 파일 정리
+    await ffmpegInstance.deleteFile(inputName);
+    await ffmpegInstance.deleteFile(outputName);
 
-        // 원본 프레임레이트 감지 (기본 60fps, 최소 30fps)
-        // captureStream(0)은 프레임이 변경될 때만 캡처 (원본 프레임레이트 유지)
-        const stream = canvas.captureStream(0); // 0 = 프레임 변경 시에만 캡처
+    // File 객체로 변환
+    const compressedFile = new File(
+      [data.buffer],
+      videoFile.name.replace(/\.[^/.]+$/, '.mp4'),
+      { type: 'video/mp4', lastModified: Date.now() }
+    );
 
-        // 오디오 트랙 추가 시도
-        try {
-          const audioContext = new AudioContext();
-          const source = audioContext.createMediaElementSource(video);
-          const destination = audioContext.createMediaStreamDestination();
-          source.connect(destination);
-          source.connect(audioContext.destination); // 재생을 위해
+    onProgress(100);
+    return compressedFile;
 
-          destination.stream.getAudioTracks().forEach(track => {
-            stream.addTrack(track);
-          });
-        } catch (audioError) {
-          console.warn('오디오 트랙 추가 실패 (무음 동영상):', audioError);
-        }
-
-        // 지원되는 MIME 타입 확인
-        const mimeTypes = [
-          'video/webm;codecs=vp9',
-          'video/webm;codecs=vp8',
-          'video/webm',
-          'video/mp4'
-        ];
-
-        let selectedMimeType = 'video/webm';
-        for (const mimeType of mimeTypes) {
-          if (MediaRecorder.isTypeSupported(mimeType)) {
-            selectedMimeType = mimeType;
-            break;
-          }
-        }
-
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: selectedMimeType,
-          videoBitsPerSecond: videoBitrate
-        });
-
-        const chunks = [];
-
-        mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
-            chunks.push(e.data);
-          }
-        };
-
-        mediaRecorder.onstop = () => {
-          URL.revokeObjectURL(videoUrl);
-
-          const blob = new Blob(chunks, { type: selectedMimeType });
-          const extension = selectedMimeType.includes('mp4') ? 'mp4' : 'webm';
-          const compressedFile = new File(
-            [blob],
-            videoFile.name.replace(/\.[^/.]+$/, `.${extension}`),
-            { type: selectedMimeType, lastModified: Date.now() }
-          );
-
-          onProgress(100);
-          resolve(compressedFile);
-        };
-
-        mediaRecorder.onerror = (e) => {
-          URL.revokeObjectURL(videoUrl);
-          reject(new Error(`MediaRecorder 오류: ${e.error?.message || '알 수 없는 오류'}`));
-        };
-
-        // 녹화 시작
-        mediaRecorder.start(50); // 50ms마다 데이터 수집 (더 부드러운 스트림)
-
-        // 비디오 재생 및 캔버스에 그리기
-        video.currentTime = 0;
-
-        let lastProgressUpdate = 0;
-        let animationId = null;
-
-        const drawFrame = (timestamp) => {
-          if (video.ended || video.paused) {
-            if (animationId) {
-              cancelAnimationFrame(animationId);
-            }
-            mediaRecorder.stop();
-            return;
-          }
-
-          // 캔버스에 현재 프레임 그리기
-          ctx.drawImage(video, 0, 0, newWidth, newHeight);
-
-          // 진행률 업데이트 (100ms마다)
-          if (timestamp - lastProgressUpdate > 100) {
-            const progress = Math.min(99, Math.round((video.currentTime / duration) * 100));
-            onProgress(progress);
-            lastProgressUpdate = timestamp;
-          }
-
-          // 다음 프레임 예약 (브라우저 최적화된 타이밍)
-          animationId = requestAnimationFrame(drawFrame);
-        };
-
-        video.onended = () => {
-          if (animationId) {
-            cancelAnimationFrame(animationId);
-          }
-          mediaRecorder.stop();
-        };
-
-        video.onplay = () => {
-          animationId = requestAnimationFrame(drawFrame);
-        };
-
-        // 재생 시작
-        video.play().catch(err => {
-          URL.revokeObjectURL(videoUrl);
-          reject(new Error(`동영상 재생 실패: ${err.message}`));
-        });
-
-      } catch (error) {
-        URL.revokeObjectURL(videoUrl);
-        reject(error);
-      }
-    };
-
-    video.onerror = () => {
-      URL.revokeObjectURL(videoUrl);
-      reject(new Error('동영상 로드 실패'));
-    };
-  });
+  } catch (error) {
+    console.error('동영상 압축 실패:', error);
+    throw error;
+  }
 };
 
-// 브라우저 호환성이 낮은 동영상 포맷 (WebM으로 강제 변환 필요)
+/**
+ * 파일 확장자 추출
+ */
+const getExtension = (filename) => {
+  const match = filename.match(/\.[^/.]+$/);
+  return match ? match[0].toLowerCase() : '.mp4';
+};
+
+// 브라우저 호환 포맷 (압축 불필요)
+const COMPATIBLE_FORMATS = [
+  'video/mp4',
+  'video/webm',
+];
+
+// 브라우저 호환 확장자
+const COMPATIBLE_EXTENSIONS = ['.mp4', '.webm'];
+
+// 브라우저 비호환 포맷 (압축 필요)
 const INCOMPATIBLE_FORMATS = [
   'video/quicktime',      // .mov (iOS/macOS)
   'video/x-msvideo',      // .avi
@@ -211,38 +156,48 @@ const INCOMPATIBLE_FORMATS = [
   'video/3gpp2',          // .3g2
 ];
 
-// 파일 확장자로도 체크 (MIME 타입이 정확하지 않을 수 있음)
 const INCOMPATIBLE_EXTENSIONS = ['.mov', '.avi', '.mkv', '.wmv', '.flv', '.3gp', '.3g2', '.f4v', '.m4v'];
 
 /**
- * 브라우저 호환성이 낮은 포맷인지 확인
- * @param {File} videoFile - 동영상 파일
- * @returns {boolean}
+ * 브라우저 호환 포맷인지 확인
+ */
+const isCompatibleFormat = (videoFile) => {
+  // MIME 타입으로 확인
+  if (COMPATIBLE_FORMATS.includes(videoFile.type)) {
+    return true;
+  }
+  // 확장자로 확인
+  const fileName = videoFile.name.toLowerCase();
+  return COMPATIBLE_EXTENSIONS.some(ext => fileName.endsWith(ext));
+};
+
+/**
+ * 브라우저 비호환 포맷인지 확인
  */
 const isIncompatibleFormat = (videoFile) => {
-  // MIME 타입으로 확인
   if (INCOMPATIBLE_FORMATS.includes(videoFile.type)) {
     return true;
   }
-
-  // 파일 확장자로 확인 (MIME 타입이 빈 경우 대비)
   const fileName = videoFile.name.toLowerCase();
   return INCOMPATIBLE_EXTENSIONS.some(ext => fileName.endsWith(ext));
 };
 
 /**
  * 동영상 압축이 필요한지 확인
- * @param {File} videoFile - 동영상 파일
- * @returns {Promise<Object>} { needsCompression, width, height, duration, sizeMB }
+ * - 호환 포맷(MP4, WebM) + 720p 이하: 압축 불필요
+ * - 비호환 포맷(MOV 등): 압축 필요
+ * - 720p 초과: 압축 필요
  */
 export const checkVideoNeedsCompression = async (videoFile) => {
   return new Promise((resolve) => {
-    if (!videoFile.type.startsWith('video/') && !videoFile.name.match(/\.(mov|avi|mkv|wmv|flv|mp4|webm|3gp|m4v|f4v)$/i)) {
+    // 동영상 파일인지 확인
+    if (!videoFile.type.startsWith('video/') &&
+        !videoFile.name.match(/\.(mov|avi|mkv|wmv|flv|mp4|webm|3gp|m4v|f4v)$/i)) {
       resolve({ needsCompression: false, reason: '동영상 파일이 아님' });
       return;
     }
 
-    // 브라우저 비호환 포맷은 무조건 변환 필요
+    const compatible = isCompatibleFormat(videoFile);
     const incompatible = isIncompatibleFormat(videoFile);
 
     const video = document.createElement('video');
@@ -258,40 +213,73 @@ export const checkVideoNeedsCompression = async (videoFile) => {
 
       URL.revokeObjectURL(url);
 
-      // 모든 동영상을 WebM으로 변환 (브라우저 호환성 보장)
-      const needsCompression = true;
-
-      let reason = '브라우저 호환성을 위해 WebM으로 변환합니다';
+      // 비호환 포맷은 무조건 압축 필요
       if (incompatible) {
-        reason = `브라우저 호환성을 위해 WebM으로 변환합니다 (${videoFile.name.split('.').pop().toUpperCase()})`;
-      } else if (height > 720) {
-        reason = `720p로 압축 및 WebM 변환 (${height}p → 720p)`;
-      } else if (sizeMB > 50) {
-        reason = `용량 압축 및 WebM 변환 (${sizeMB.toFixed(1)}MB)`;
+        resolve({
+          needsCompression: true,
+          width,
+          height,
+          duration,
+          sizeMB,
+          incompatibleFormat: true,
+          reason: `MP4로 변환 필요 (${videoFile.name.split('.').pop().toUpperCase()})`
+        });
+        return;
       }
 
+      // 호환 포맷이고 720p 이하면 압축 불필요
+      if (compatible && height <= 720) {
+        resolve({
+          needsCompression: false,
+          width,
+          height,
+          duration,
+          sizeMB,
+          reason: '호환 포맷 (원본 업로드)'
+        });
+        return;
+      }
+
+      // 720p 초과면 압축 필요
+      if (height > 720) {
+        resolve({
+          needsCompression: true,
+          width,
+          height,
+          duration,
+          sizeMB,
+          reason: `720p로 압축 (${height}p → 720p)`
+        });
+        return;
+      }
+
+      // 기타: 원본 사용
       resolve({
-        needsCompression,
+        needsCompression: false,
         width,
         height,
         duration,
         sizeMB,
-        incompatibleFormat: incompatible,
-        reason
+        reason: '원본 업로드'
       });
     };
 
     video.onerror = () => {
       URL.revokeObjectURL(url);
+
       // 로드 실패해도 비호환 포맷이면 변환 시도
       if (incompatible) {
         resolve({
           needsCompression: true,
           incompatibleFormat: true,
-          reason: `브라우저 호환성을 위해 WebM으로 변환합니다 (${videoFile.name.split('.').pop().toUpperCase()})`
+          reason: `MP4로 변환 필요 (${videoFile.name.split('.').pop().toUpperCase()})`
         });
       } else {
-        resolve({ needsCompression: false, reason: '동영상 로드 실패' });
+        // 호환 포맷이면 원본 사용
+        resolve({
+          needsCompression: false,
+          reason: '원본 업로드'
+        });
       }
     };
   });
@@ -299,12 +287,10 @@ export const checkVideoNeedsCompression = async (videoFile) => {
 
 /**
  * 동영상 압축 지원 여부 확인
- * @returns {boolean}
  */
 export const isVideoCompressionSupported = () => {
-  return typeof MediaRecorder !== 'undefined' &&
-         typeof HTMLCanvasElement !== 'undefined' &&
-         typeof HTMLCanvasElement.prototype.captureStream === 'function';
+  // SharedArrayBuffer 지원 확인 (FFmpeg.wasm 필수)
+  return typeof SharedArrayBuffer !== 'undefined';
 };
 
 export default {
