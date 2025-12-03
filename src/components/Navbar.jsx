@@ -39,7 +39,7 @@ const Navbar = () => {
       }`}>
         <div className="max-w-md mx-auto p-4">
           <div className="flex items-center justify-center">
-            <Link to="/" className="flex items-center text-xl font-bold text-green-600">
+            <Link to="/" className="flex items-center text-xl font-bold text-[#004225]">
               <AgricultureIcon className="mr-2" />
               성주참외 경락정보
             </Link>

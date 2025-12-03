@@ -1,25 +1,32 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import StoreIcon from '@mui/icons-material/Store';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import LocationOnIcon from '@mui/icons-material/LocationOn';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { marketService } from '../services';
 import MarketCards from '../components/MarketCards';
+import DatePickerModal from '../components/DatePickerModal';
 import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
+
+// 색상 정의
+const COLORS = {
+  mainGreen: '#154734',      // PANTONE 3435 C
+  lightGreen: '#6CC24A',     // 농협 라이트 그린
+  pointYellow: '#FFD400',    // 포인트 노랑
+  neutralBg: '#F7F7F7',      // 중립 배경
+  border: '#E1E4E8',         // 테두리
+};
 
 const Home = () => {
   const [marketData, setMarketData] = useState([]);
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+
+  // 날짜 선택기 모달 상태
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -447,51 +454,74 @@ const Home = () => {
   // 모바일 사용자를 위한 기존 화면
   return (
     <div className="min-h-screen bg-gray-50 pb-20 safe-area-bottom">
-      {/* 헤더 - 고정 날짜 선택기 */}
-      <div className="bg-white shadow-sm border-b sticky top-16 z-10 mobile-header safe-area-top">
-        <div className="w-full max-w-screen-xl mx-auto p-4">
-          <div className="flex items-center gap-2">
-            {/* 이전 날짜 버튼 */}
-            <button
-              onClick={goToPreviousDay}
-              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors haptic-feedback"
-              title="이전 날짜"
-            >
-              <ChevronLeftIcon fontSize="small" className="text-gray-600" />
-            </button>
+      {/* 헤더 - 새로운 날짜 선택기 디자인 */}
+      <div
+        className="shadow-sm border-b sticky top-16 z-10 mobile-header safe-area-top"
+        style={{ backgroundColor: COLORS.neutralBg, borderColor: COLORS.border }}
+      >
+        <div className="w-full max-w-screen-xl mx-auto px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            {/* 좌측: 날짜 네비게이션 */}
+            <div className="flex items-center gap-1 flex-1">
+              {/* 이전 날짜 버튼 */}
+              <button
+                onClick={goToPreviousDay}
+                className="p-2.5 rounded-lg hover:bg-white transition-colors haptic-feedback"
+                title="이전 날짜"
+                style={{ color: COLORS.mainGreen }}
+              >
+                <ChevronLeftIcon fontSize="medium" />
+              </button>
 
-            <CalendarTodayIcon fontSize="small" className="text-gray-500" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              max={getKoreanToday()}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 haptic-feedback flex-1"
-            />
+              {/* 날짜 표시 + 드롭다운 (클릭하면 DatePicker 열림) */}
+              <button
+                onClick={() => setIsDatePickerOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-white transition-colors haptic-feedback flex-1 justify-center"
+                style={{ color: COLORS.mainGreen }}
+              >
+                <span className="font-bold text-lg">
+                  {selectedDate}
+                </span>
+                <KeyboardArrowDownIcon />
+              </button>
 
-            {/* 다음 날짜 버튼 */}
-            <button
-              onClick={goToNextDay}
-              disabled={isToday}
-              className={`p-2 rounded-lg transition-colors haptic-feedback ${
-                isToday
-                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-              }`}
-              title="다음 날짜"
-            >
-              <ChevronRightIcon fontSize="small" />
-            </button>
+              {/* 다음 날짜 버튼 */}
+              <button
+                onClick={goToNextDay}
+                disabled={isToday}
+                className={`p-2.5 rounded-lg transition-colors haptic-feedback ${
+                  isToday ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white'
+                }`}
+                title="다음 날짜"
+                style={{ color: COLORS.mainGreen }}
+              >
+                <ChevronRightIcon fontSize="medium" />
+              </button>
+            </div>
 
+            {/* 우측: 조회 버튼 */}
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors haptic-feedback font-medium text-sm whitespace-nowrap"
+              className="px-5 py-2.5 rounded-lg transition-colors haptic-feedback font-medium text-base whitespace-nowrap bg-white border"
+              style={{ color: COLORS.mainGreen, borderColor: COLORS.border }}
             >
               조회
             </button>
           </div>
         </div>
       </div>
+
+      {/* DatePicker 모달 */}
+      <DatePickerModal
+        isOpen={isDatePickerOpen}
+        onClose={() => setIsDatePickerOpen(false)}
+        selectedDate={selectedDate}
+        onSelectDate={(date) => {
+          setSelectedDate(date);
+          fetchMarketData(date);
+        }}
+        maxDate={getKoreanToday()}
+      />
 
       {/* 메인 콘텐츠 - 스와이프 영역 */}
       <div
