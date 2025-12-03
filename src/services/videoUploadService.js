@@ -2,8 +2,17 @@
  * Cloudflare Stream 동영상 업로드 서비스
  */
 import { supabase } from '../config/supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 const MAX_DURATION_SECONDS = 120; // 2분
+
+/**
+ * 랜덤 파일명 생성
+ */
+const generateRandomFilename = (originalFilename) => {
+  const ext = originalFilename.split('.').pop()?.toLowerCase() || 'mp4';
+  return `${uuidv4()}.${ext}`;
+};
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 // 지원되는 동영상 형식 (Cloudflare Stream이 인코딩 처리)
@@ -103,9 +112,12 @@ export const uploadVideoToStream = async (file, onProgress) => {
     throw new Error('업로드 URL을 받지 못했습니다.');
   }
 
-  // 3. Cloudflare에 직접 업로드
+  // 3. Cloudflare에 직접 업로드 (랜덤 파일명으로 변환)
+  const randomFilename = generateRandomFilename(file.name);
+  const renamedFile = new File([file], randomFilename, { type: file.type });
+
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', renamedFile);
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();

@@ -3,9 +3,32 @@
  * Worker 프록시를 통한 안전한 파일 업로드
  */
 
+import { v4 as uuidv4 } from 'uuid';
+
 // Worker 프록시 URL
 const R2_WORKER_URL = import.meta.env.VITE_R2_WORKER_URL || 'https://smai-r2-proxy.landolf.workers.dev';
 const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-1d5977ce7cec48079bcd6f847b2f3dd1.r2.dev';
+
+/**
+ * 파일 확장자 추출
+ * @param {string} filename - 원본 파일명
+ * @returns {string} - 확장자 (소문자)
+ */
+const getFileExtension = (filename) => {
+  const ext = filename.split('.').pop()?.toLowerCase() || '';
+  return ext;
+};
+
+/**
+ * 랜덤 파일명 생성 (UUID 기반)
+ * @param {string} originalFilename - 원본 파일명
+ * @returns {string} - 랜덤 파일명
+ */
+const generateRandomFilename = (originalFilename) => {
+  const ext = getFileExtension(originalFilename);
+  const randomName = uuidv4();
+  return ext ? `${randomName}.${ext}` : randomName;
+};
 
 /**
  * 파일을 R2에 업로드 (Worker 프록시 사용)
@@ -15,9 +38,13 @@ const R2_PUBLIC_URL = import.meta.env.VITE_R2_PUBLIC_URL || 'https://pub-1d5977c
  */
 export const uploadToR2 = async (file, folder = 'uploads') => {
   try {
+    // 랜덤 파일명으로 새 File 객체 생성
+    const randomFilename = generateRandomFilename(file.name);
+    const renamedFile = new File([file], randomFilename, { type: file.type });
+
     // FormData 생성
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', renamedFile);
     formData.append('folder', folder);
 
     // Worker 프록시로 업로드
