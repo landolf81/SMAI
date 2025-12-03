@@ -43,10 +43,11 @@ const CloudflareStreamPlayer = ({
     return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?${params.toString()}`;
   };
 
-  // 썸네일 URL 생성
+  // 썸네일 URL 생성 (1:1 비율일 때 fit=crop 적용)
   const getThumbnailUrl = () => {
     if (!uid) return '';
-    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640`;
+    const fitParam = aspectRatio === 'square' ? '&fit=crop' : '';
+    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
   };
 
   const aspectRatioClass = {
@@ -118,6 +119,36 @@ const CloudflareStreamPlayer = ({
   }
 
   // iframe 플레이어
+  // 1:1 비율일 때 CSS로 중앙 크롭 적용 (16:9 → 1:1)
+  if (aspectRatio === 'square') {
+    return (
+      <div className={`relative bg-gray-900 aspect-square overflow-hidden ${className}`}>
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-10">
+            <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin" />
+          </div>
+        )}
+        <iframe
+          ref={iframeRef}
+          src={getIframeSrc()}
+          className="absolute"
+          style={{
+            width: '177.78%',
+            height: '177.78%',
+            left: '-38.89%',
+            top: '-38.89%',
+            border: 'none'
+          }}
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          onLoad={handleIframeLoad}
+          onError={handleIframeError}
+        />
+      </div>
+    );
+  }
+
+  // 기본 모드: 원본 비율 유지
   return (
     <div className={`relative bg-gray-900 ${aspectRatioClass} ${className}`}>
       {isLoading && (
