@@ -33,7 +33,6 @@ export const uploadToR2 = async (file, folder = 'uploads') => {
 
     const result = await response.json();
 
-    console.log('✅ R2 업로드 성공:', result.url);
     return {
       url: result.url,
       key: result.key,
@@ -80,9 +79,8 @@ export const deleteFromR2 = async (key) => {
       throw new Error(errorData.error || `삭제 실패: ${response.status}`);
     }
 
-    console.log('✅ R2 파일 삭제 성공:', key);
   } catch (error) {
-    console.error('❌ R2 파일 삭제 실패:', error);
+    console.error('R2 파일 삭제 실패:', error);
     throw new Error(`파일 삭제 실패: ${error.message}`);
   }
 };

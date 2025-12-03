@@ -106,13 +106,15 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   const mediaFiles = getMediaFiles();
   const hasMedia = mediaFiles.length > 0;
-  
+
   // 정규화된 미디어 파일 배열 생성
   const normalizedMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file));
-  
+
   // 첫 번째 미디어의 타입 정보 (하위 호환성)
   const firstMediaType = hasMedia ? getMediaType(mediaFiles[0]) : { isVideo: false, isImage: false };
   const isVideo = firstMediaType.isVideo;
+
+  // 미디어 타입 감지 로그 제거됨
 
   // 삭제 권한 확인 (로그인 안 된 상태에서는 false)
   const canDelete = currentUser && (post.userId === currentUser.id || featurePermissions.canDeleteAnyPost);
@@ -437,7 +439,6 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   };
 
   const handleDelete = () => {
-    console.log('🗑️ 삭제 버튼 클릭됨, postId:', post.id);
     setIsDeleteModalOpen(true);
   };
 
@@ -826,13 +827,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🗑️ 삭제 버튼 onClick 발생');
                     handleDelete();
                   }}
                   onTouchEnd={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('🗑️ 삭제 버튼 onTouchEnd 발생');
                     handleDelete();
                   }}
                   disabled={deleteMutation.isPending}
@@ -913,9 +912,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               className="rounded-lg"
               autoplay={false}  // 썸네일 표시, 클릭 시 자동 재생
               showThumbnail={true}
-              onPlay={(videoId) => {
-                console.log('YouTube 재생:', videoId);
-              }}
+              onPlay={() => {}}
             />
           ) : (
             <LinkPreview
@@ -950,6 +947,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     {/* 피드 동영상: 자동재생, 무음, 루프, 클릭시 모달 */}
                     <video
                       ref={videoRef}
+                      src={normalizedMediaFiles[0]}
                       className="w-full h-full object-cover cursor-pointer"
                       onClick={() => {
                         // 현재 재생 위치 저장 후 모달 열기
@@ -964,10 +962,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                       playsInline
                       preload="auto"
                       onError={handleVideoError}
-                    >
-                      <source src={normalizedMediaFiles[0]} />
-                      <track kind="captions" />
-                    </video>
+                    />
 
                     {/* 동영상 아이콘 표시 */}
                     <div className="absolute top-3 left-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">

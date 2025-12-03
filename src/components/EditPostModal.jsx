@@ -58,10 +58,6 @@ const EditPostModal = ({ post, isOpen, onClose }) => {
         // 이미지인 경우 압축
         if (mediaType.isImage) {
           processedFile = await compressImage(file);
-          console.log('이미지 압축 완료:', {
-            original: file.size,
-            compressed: processedFile.size
-          });
         }
         // 동영상인 경우 크기 검증
         else if (mediaType.isVideo) {
@@ -77,10 +73,6 @@ const EditPostModal = ({ post, isOpen, onClose }) => {
         imgUrl = uploadResult.url;
       }
 
-      console.log('게시물 수정 요청 데이터:', {
-        ...postData,
-        img: imgUrl
-      });
 
       return postService.updatePost(post.id, {
         content: postData.desc,

@@ -349,8 +349,6 @@ export const storageService = {
       const filename = `icon_${Date.now()}.png`;  // 항상 PNG로 저장
       const filePath = `${folderName}/${filename}`;
 
-      console.log('📁 배지 아이콘 업로드 경로:', filePath);
-
       return await this.uploadFile(BUCKETS.BADGES, filePath, file, {
         upsert: true
       });
@@ -374,28 +372,21 @@ export const storageService = {
 
     // 이미 완전한 URL인 경우 (Supabase Storage URL)
     if (profilePic.startsWith('http://') || profilePic.startsWith('https://')) {
-      console.log('🖼️ Profile URL: 완전한 URL -', profilePic);
       return profilePic;
     }
 
     // 레거시 백엔드 경로인 경우 (마이그레이션 중)
     if (profilePic.startsWith('/uploads/')) {
-      const url = `${API_BASE_URL}${profilePic}`;
-      console.log('🖼️ Profile URL: 레거시 경로 -', url);
-      return url;
+      return `${API_BASE_URL}${profilePic}`;
     }
 
     // 파일명만 있는 경우 - Supabase Storage URL 생성
     if (userId) {
-      const url = this.getPublicUrl(BUCKETS.AVATARS, `${userId}/profile.${profilePic.split('.').pop()}`);
-      console.log('🖼️ Profile URL: Supabase (파일명) -', url);
-      return url;
+      return this.getPublicUrl(BUCKETS.AVATARS, `${userId}/profile.${profilePic.split('.').pop()}`);
     }
 
     // profile_pic이 전체 경로인 경우 (userId/profile.ext)
-    const url = this.getPublicUrl(BUCKETS.AVATARS, profilePic);
-    console.log('🖼️ Profile URL: Supabase (전체경로) -', url);
-    return url;
+    return this.getPublicUrl(BUCKETS.AVATARS, profilePic);
   },
 
   /**

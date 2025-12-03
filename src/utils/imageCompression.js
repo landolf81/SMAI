@@ -65,7 +65,6 @@ export const compressImage = async (file, options = {}) => {
 
     if (!needsResize && file.size < 1024 * 1024) {
       // 1MB 이하이고 크기가 적절하면 원본 반환
-      console.log('이미지 압축 불필요:', file.name);
       return file;
     }
 
@@ -108,15 +107,6 @@ export const compressImage = async (file, options = {}) => {
         lastModified: Date.now()
       }
     );
-
-    const originalSizeMB = (file.size / 1024 / 1024).toFixed(2);
-    const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
-    const reduction = ((1 - compressedFile.size / file.size) * 100).toFixed(1);
-
-    console.log(`이미지 압축 완료:
-      원본: ${img.width}x${img.height} (${originalSizeMB}MB)
-      압축: ${width}x${height} (${compressedSizeMB}MB)
-      감소율: ${reduction}%`);
 
     return compressedFile;
 

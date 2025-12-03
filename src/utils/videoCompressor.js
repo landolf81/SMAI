@@ -40,11 +40,10 @@ export const compressVideo = async (videoFile, options = {}) => {
         const originalHeight = video.videoHeight;
         const duration = video.duration;
 
-        console.log(`원본 동영상: ${originalWidth}x${originalHeight}, ${duration.toFixed(1)}초`);
+        // 원본 동영상 정보
 
         // 720p 이하면 압축 불필요
         if (originalHeight <= maxHeight && videoFile.size < 10 * 1024 * 1024) {
-          console.log('동영상 압축 불필요: 이미 720p 이하이고 10MB 미만');
           URL.revokeObjectURL(videoUrl);
           resolve(videoFile);
           return;
@@ -62,8 +61,6 @@ export const compressVideo = async (videoFile, options = {}) => {
           newWidth = originalWidth;
           newHeight = originalHeight;
         }
-
-        console.log(`압축 목표: ${newWidth}x${newHeight}`);
 
         // Canvas 생성
         const canvas = document.createElement('canvas');
@@ -105,8 +102,6 @@ export const compressVideo = async (videoFile, options = {}) => {
           }
         }
 
-        console.log(`사용 MIME 타입: ${selectedMimeType}`);
-
         const mediaRecorder = new MediaRecorder(stream, {
           mimeType: selectedMimeType,
           videoBitsPerSecond: videoBitrate
@@ -130,15 +125,6 @@ export const compressVideo = async (videoFile, options = {}) => {
             videoFile.name.replace(/\.[^/.]+$/, `.${extension}`),
             { type: selectedMimeType, lastModified: Date.now() }
           );
-
-          const originalSizeMB = (videoFile.size / 1024 / 1024).toFixed(2);
-          const compressedSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
-          const reduction = ((1 - compressedFile.size / videoFile.size) * 100).toFixed(1);
-
-          console.log(`동영상 압축 완료:
-            원본: ${originalWidth}x${originalHeight} (${originalSizeMB}MB)
-            압축: ${newWidth}x${newHeight} (${compressedSizeMB}MB)
-            감소율: ${reduction}%`);
 
           onProgress(100);
           resolve(compressedFile);

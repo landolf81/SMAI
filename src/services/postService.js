@@ -227,29 +227,6 @@ export const postService = {
         postsWithDetails = [...pinnedPosts, ...topRecentPosts, ...algorithmPosts];
       }
 
-      // 디버깅: 첫 번째 게시물 데이터 확인
-      if (postsWithDetails.length > 0) {
-        const sample = postsWithDetails[0];
-        console.log('📝 게시물 샘플 데이터:', {
-          id: sample.id,
-          user_id: sample.user_id,
-          userId: sample.userId,
-          title: sample.title,
-          desc: sample.desc,
-          img: sample.img,
-          // 프로필 정보
-          username: sample.username,
-          name: sample.name,
-          profilePic: sample.profilePic,
-          user: sample.user,
-          // 태그 정보
-          tags: sample.tags,
-          primaryTag: sample.primaryTag,
-          likesCount: sample.likesCount,
-          commentsCount: sample.commentsCount
-        });
-      }
-
       // 태그 필터 (클라이언트 측)
       if (tagId) {
         return postsWithDetails.filter(post =>
@@ -481,15 +458,13 @@ export const postService = {
       // 1. 먼저 게시물 정보 조회 (첨부파일 URL 확인)
       const { data: post, error: fetchError } = await supabase
         .from('posts')
-        .select('media_files, image')
+        .select('photo')
         .eq('id', postId)
         .eq('user_id', user.id)
         .single();
 
-      if (fetchError) throw fetchError;
-
-      // 2. 첨부파일 삭제
-      if (post) {
+      if (!fetchError && post) {
+        // 2. 첨부파일 삭제
         await this._deletePostMedia(post);
       }
 
@@ -517,43 +492,49 @@ export const postService = {
     try {
       const mediaUrls = [];
 
-      // media_files 배열 처리
-      if (post.media_files && Array.isArray(post.media_files)) {
-        mediaUrls.push(...post.media_files);
-      }
-
-      // 단일 image 필드 처리
-      if (post.image && typeof post.image === 'string') {
-        mediaUrls.push(post.image);
+      // photo 필드 처리 (배열 또는 문자열)
+      if (post.photo) {
+        if (Array.isArray(post.photo)) {
+          mediaUrls.push(...post.photo);
+        } else if (typeof post.photo === 'string') {
+          // JSON 배열 문자열인 경우
+          try {
+            const parsed = JSON.parse(post.photo);
+            if (Array.isArray(parsed)) {
+              mediaUrls.push(...parsed);
+            } else {
+              mediaUrls.push(post.photo);
+            }
+          } catch {
+            mediaUrls.push(post.photo);
+          }
+        }
       }
 
       // 각 미디어 파일 삭제
       for (const url of mediaUrls) {
+        if (!url) continue;
         try {
           if (isR2Url(url)) {
             // R2 URL에서 키 추출 후 삭제
             const key = url.split('.r2.dev/')[1] || url.split('r2.cloudflarestorage.com/')[1];
             if (key) {
               await deleteFromR2(key);
-              console.log('✅ R2 파일 삭제:', key);
             }
           } else if (url.includes('supabase.co/storage')) {
             // Supabase Storage URL 처리
             const match = url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
             if (match) {
               const [, bucket, path] = match;
-              const { error } = await supabase.storage.from(bucket).remove([path]);
-              if (!error) {
-                console.log('✅ Supabase Storage 파일 삭제:', path);
-              }
+              await supabase.storage.from(bucket).remove([path]);
             }
           }
         } catch (mediaError) {
-          console.warn('미디어 삭제 실패 (계속 진행):', url, mediaError);
+          // 삭제 실패해도 계속 진행
         }
       }
     } catch (error) {
-      console.warn('첨부파일 삭제 중 오류 (게시물 삭제는 계속):', error);
+      // 첨부파일 삭제 실패해도 게시물 삭제는 계속
     }
   },
 
@@ -1170,7 +1151,7 @@ export const postService = {
       // 1. 먼저 게시물 정보 조회 (첨부파일 URL 확인)
       const { data: post, error: fetchError } = await supabase
         .from('posts')
-        .select('media_files, image')
+        .select('photo')
         .eq('id', postId)
         .single();
 

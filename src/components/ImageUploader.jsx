@@ -69,7 +69,6 @@ const ImageUploader = ({
             setUploadProgress(50); // 준비 완료
 
             // Supabase Storage에 업로드
-            console.log(`📁 이미지 업로드 시작 (타입: ${uploadType}, ID: ${id})`);
             const uploadMethod = getUploadMethod();
 
             let result;
@@ -83,7 +82,6 @@ const ImageUploader = ({
             }
 
             const imageUrl = result.url;
-            console.log('✅ 업로드 완료:', imageUrl);
 
             setPreviewUrl(imageUrl);
             setUploadProgress(100);
