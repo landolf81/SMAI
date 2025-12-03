@@ -10,6 +10,7 @@ const MobileAdDisplay = ({ ad }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [showLandingModal, setShowLandingModal] = useState(false);
   const [modalVideoMuted, setModalVideoMuted] = useState(false); // false = 음소거 해제
+  const [modalMediaIndex, setModalMediaIndex] = useState(0); // 모달 내 미디어 인덱스
   const [isVisible, setIsVisible] = useState(false);
   const videoRef = React.useRef(null);
   const adCardRef = React.useRef(null);
@@ -237,6 +238,36 @@ const MobileAdDisplay = ({ ad }) => {
     setIsVideoPlaying(false);
   };
 
+  // 모달 내 자동 순환 (이미지만, 동영상은 onEnded로 처리)
+  useEffect(() => {
+    if (showLandingModal) {
+      const allMedia = getAllMedia();
+      if (allMedia.length <= 1) return;
+
+      const currentMedia = allMedia[modalMediaIndex];
+
+      // 현재 미디어가 동영상이면 자동 순환 안 함 (동영상은 onEnded로 처리)
+      if (currentMedia?.type?.startsWith('video')) {
+        return;
+      }
+
+      // 이미지일 때 3초 후 다음으로
+      const timeout = setTimeout(() => {
+        setModalMediaIndex(prev => (prev + 1) % allMedia.length);
+      }, 3000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [showLandingModal, modalMediaIndex, adMedia]);
+
+  // 모달 동영상 종료 시 다음 미디어로 이동
+  const handleModalVideoEnded = () => {
+    const allMedia = getAllMedia();
+    if (allMedia.length > 1) {
+      setModalMediaIndex(prev => (prev + 1) % allMedia.length);
+    }
+  };
+
   // 광고 클릭 핸들러
   const handleAdClick = () => {
     if (!ad) return;
@@ -254,6 +285,7 @@ const MobileAdDisplay = ({ ad }) => {
 
     // 외부 링크가 없으면 모달로 열기
     setModalVideoMuted(false);
+    setModalMediaIndex(0); // 첫 번째 미디어부터 시작
     setShowLandingModal(true);
 
     // body 스크롤 방지
@@ -419,19 +451,21 @@ const MobileAdDisplay = ({ ad }) => {
 
             {/* 모달 콘텐츠 */}
             <div className="p-4 overflow-y-auto flex-1">
-              {/* 메인 이미지만 표시 (첫 번째 이미지) */}
-              {getModalMedia(0) && (
+              {/* 미디어 표시 (자동 순환) */}
+              {getModalMedia(modalMediaIndex) && (
                 <div className="mb-4">
-                  {getModalMedia(0).type?.startsWith('video') ? (
+                  {getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
                     <div className="relative">
                       <video
-                        src={getImageUrl(getModalMedia(0).path)}
+                        key={modalMediaIndex}
+                        src={getImageUrl(getModalMedia(modalMediaIndex).path)}
                         className="w-full h-auto object-contain rounded-lg"
                         controls
                         muted={modalVideoMuted}
                         autoPlay
                         playsInline
                         preload="metadata"
+                        onEnded={handleModalVideoEnded}
                         onLoadedData={(e) => {
                           e.target.muted = modalVideoMuted;
                           e.target.play().catch(() => {});
@@ -461,8 +495,9 @@ const MobileAdDisplay = ({ ad }) => {
                     </div>
                   ) : (
                     <img
-                      src={getImageUrl(getModalMedia(0).path)}
-                      alt={getModalMedia(0).alt || ad.title}
+                      key={modalMediaIndex}
+                      src={getImageUrl(getModalMedia(modalMediaIndex).path)}
+                      alt={getModalMedia(modalMediaIndex).alt || ad.title}
                       className="w-full h-auto object-contain rounded-lg"
                       onError={(e) => {
                         e.target.src = DEFAULT_AD_IMAGE;
