@@ -446,7 +446,20 @@ const PostEditor = () => {
           }
         } catch (error) {
           console.error(`❌ 동영상 압축 실패: ${file.name}`, error);
-          compressedVideos.push(file); // 압축 실패 시 원본 사용
+
+          // 비호환 포맷인지 확인
+          const fileName = file.name.toLowerCase();
+          const incompatibleExts = ['.mov', '.avi', '.mkv', '.wmv', '.flv', '.3gp', '.f4v', '.m4v'];
+          const isIncompatible = incompatibleExts.some(ext => fileName.endsWith(ext));
+
+          if (isIncompatible) {
+            // 비호환 포맷은 변환 실패 시 업로드 거부
+            const ext = file.name.split('.').pop().toUpperCase();
+            setError(`${ext} 형식은 이 브라우저에서 변환할 수 없습니다. MP4 또는 WebM 형식으로 변환 후 업로드해주세요.`);
+            // 해당 파일은 추가하지 않음
+          } else {
+            compressedVideos.push(file); // 호환 포맷은 원본 사용
+          }
         }
       }
       setVideoCompressProgress(null);
