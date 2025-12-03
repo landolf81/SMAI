@@ -104,57 +104,58 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     navigate(`/prices?market=${encodeURIComponent(marketName)}&date=${selectedDate}`);
   };
 
-  // 공판장별 색상 테마 정의
+  // 공판장별 색상 테마 정의 (PANTONE 색상표 기반 그라데이션)
+  // Yellow: PANTONE 7548 C (#FFCC00), Green: PANTONE 2271 C (#00B140), Midnight Blue: PANTONE 7701 C (#1D4F91)
   const getMarketTheme = (marketName) => {
     const themes = {
-      // 가락공판장 - 파란색
+      // 가락공판장 - Green → Midnight Blue
       '가락': {
-        bg: 'from-blue-500 to-blue-600',
-        text: 'text-blue-600',
+        bg: 'from-[#00B140] to-[#1D4F91]',
+        text: 'text-[#1D4F91]',
         light: 'bg-blue-50',
-        gradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)'
+        gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
       },
-      // 선남농협 - PANTONE 2271 C (라임/연두색 #C4D600)
+      // 선남농협 - Yellow → Green
       '선남': {
-        bg: 'from-[#C4D600] to-[#A8B800]',
-        text: 'text-[#8FA500]',
+        bg: 'from-[#FFCC00] to-[#00B140]',
+        text: 'text-[#00B140]',
         light: 'bg-[#F5F9E0]',
-        gradient: 'linear-gradient(135deg, rgba(196, 214, 0, 0.15) 0%, rgba(196, 214, 0, 0.05) 100%)'
+        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
       },
-      // 성주원예 - 주황색
+      // 성주원예 - Midnight Blue → Yellow
       '성주원예': {
-        bg: 'from-orange-500 to-orange-600',
-        text: 'text-orange-600',
-        light: 'bg-orange-50',
-        gradient: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%)'
-      },
-      // 성주조공 - 빨간색
-      '성주조공': {
-        bg: 'from-red-500 to-red-600',
-        text: 'text-red-600',
-        light: 'bg-red-50',
-        gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%)'
-      },
-      // 용암농협 - 노란색
-      '용암': {
-        bg: 'from-yellow-500 to-yellow-600',
-        text: 'text-yellow-600',
+        bg: 'from-[#1D4F91] to-[#FFCC00]',
+        text: 'text-[#1D4F91]',
         light: 'bg-yellow-50',
-        gradient: 'linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(234, 179, 8, 0.05) 100%)'
+        gradient: 'linear-gradient(135deg, rgba(29, 79, 145, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
       },
-      // 초전농협 - 핑크색
+      // 성주조공 - Yellow → Midnight Blue
+      '성주조공': {
+        bg: 'from-[#FFCC00] to-[#1D4F91]',
+        text: 'text-[#1D4F91]',
+        light: 'bg-blue-50',
+        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
+      },
+      // 용암농협 - Green → Yellow
+      '용암': {
+        bg: 'from-[#00B140] to-[#FFCC00]',
+        text: 'text-[#00B140]',
+        light: 'bg-yellow-50',
+        gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
+      },
+      // 초전농협 - Midnight Blue → Green
       '초전': {
-        bg: 'from-pink-500 to-pink-600',
-        text: 'text-pink-600',
-        light: 'bg-pink-50',
-        gradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0.05) 100%)'
-      },
-      // 기본 성주 농협들 - 녹색
-      '성주': {
-        bg: 'from-green-500 to-green-600',
-        text: 'text-green-600',
+        bg: 'from-[#1D4F91] to-[#00B140]',
+        text: 'text-[#00B140]',
         light: 'bg-green-50',
-        gradient: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%)'
+        gradient: 'linear-gradient(135deg, rgba(29, 79, 145, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
+      },
+      // 기본 성주 농협들 - Yellow → Green
+      '성주': {
+        bg: 'from-[#FFCC00] to-[#00B140]',
+        text: 'text-[#00B140]',
+        light: 'bg-green-50',
+        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
       }
     };
 
@@ -169,18 +170,18 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     return themes['성주'];
   };
 
-  // 카드 배경색 생성 함수
+  // 카드 배경색 생성 함수 (PANTONE 색상 기반)
   const getCardBackgroundColor = (theme) => {
     const colorMap = {
-      'from-blue-500 to-blue-600': 'rgba(59, 130, 246, 0.08)',      // 파란색
-      'from-green-500 to-green-600': 'rgba(34, 197, 94, 0.08)',     // 녹색
-      'from-orange-500 to-orange-600': 'rgba(249, 115, 22, 0.08)',  // 주황색
-      'from-red-500 to-red-600': 'rgba(239, 68, 68, 0.08)',         // 빨간색
-      'from-yellow-500 to-yellow-600': 'rgba(234, 179, 8, 0.08)',   // 노란색
-      'from-pink-500 to-pink-600': 'rgba(236, 72, 153, 0.08)',      // 핑크색
+      'from-[#00B140] to-[#1D4F91]': 'rgba(0, 177, 64, 0.08)',      // Green → Blue
+      'from-[#FFCC00] to-[#00B140]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Green
+      'from-[#1D4F91] to-[#FFCC00]': 'rgba(29, 79, 145, 0.08)',     // Blue → Yellow
+      'from-[#FFCC00] to-[#1D4F91]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Blue
+      'from-[#00B140] to-[#FFCC00]': 'rgba(0, 177, 64, 0.08)',      // Green → Yellow
+      'from-[#1D4F91] to-[#00B140]': 'rgba(29, 79, 145, 0.08)',     // Blue → Green
     };
-    
-    return colorMap[theme.bg] || 'rgba(34, 197, 94, 0.08)'; // 기본값: 녹색
+
+    return colorMap[theme.bg] || 'rgba(0, 177, 64, 0.08)'; // 기본값: Green
   };
 
   // 등락 계산 및 표시 함수 (금액차만 표시, 중앙 정렬)

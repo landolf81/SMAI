@@ -454,61 +454,25 @@ const Home = () => {
   // 모바일 사용자를 위한 기존 화면
   return (
     <div className="min-h-screen bg-gray-50 pb-20 safe-area-bottom">
-      {/* 헤더 - 새로운 날짜 선택기 디자인 */}
+      {/* 날짜 선택기 헤더 */}
       <div
-        className="shadow-sm border-b sticky top-16 z-10 mobile-header safe-area-top"
-        style={{ backgroundColor: COLORS.neutralBg, borderColor: COLORS.border }}
+        className="flex items-center justify-center gap-1 py-1.5 shadow-sm border-b sticky top-16 z-10 bg-white"
+        style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
       >
-        <div className="w-full max-w-screen-xl mx-auto px-3 py-3">
-          <div className="flex items-center justify-between gap-3">
-            {/* 좌측: 날짜 네비게이션 */}
-            <div className="flex items-center gap-1 flex-1">
-              {/* 이전 날짜 버튼 */}
-              <button
-                onClick={goToPreviousDay}
-                className="p-2.5 rounded-lg hover:bg-white transition-colors haptic-feedback"
-                title="이전 날짜"
-                style={{ color: COLORS.mainGreen }}
-              >
-                <ChevronLeftIcon fontSize="medium" />
-              </button>
-
-              {/* 날짜 표시 + 드롭다운 (클릭하면 DatePicker 열림) */}
-              <button
-                onClick={() => setIsDatePickerOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg hover:bg-white transition-colors haptic-feedback flex-1 justify-center"
-                style={{ color: COLORS.mainGreen }}
-              >
-                <span className="font-bold text-lg">
-                  {selectedDate}
-                </span>
-                <KeyboardArrowDownIcon />
-              </button>
-
-              {/* 다음 날짜 버튼 */}
-              <button
-                onClick={goToNextDay}
-                disabled={isToday}
-                className={`p-2.5 rounded-lg transition-colors haptic-feedback ${
-                  isToday ? 'opacity-30 cursor-not-allowed' : 'hover:bg-white'
-                }`}
-                title="다음 날짜"
-                style={{ color: COLORS.mainGreen }}
-              >
-                <ChevronRightIcon fontSize="medium" />
-              </button>
-            </div>
-
-            {/* 우측: 조회 버튼 */}
-            <button
-              onClick={handleRefresh}
-              className="px-5 py-2.5 rounded-lg transition-colors haptic-feedback font-medium text-base whitespace-nowrap bg-white border"
-              style={{ color: COLORS.mainGreen, borderColor: COLORS.border }}
-            >
-              조회
-            </button>
-          </div>
-        </div>
+        <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">
+          <ChevronLeftIcon style={{ fontSize: '20px' }} />
+        </button>
+        <button onClick={() => setIsDatePickerOpen(true)} className="flex items-center haptic-feedback">
+          <span className="font-bold text-lg">{selectedDate}</span>
+          <KeyboardArrowDownIcon style={{ fontSize: '22px' }} />
+        </button>
+        <button
+          onClick={goToNextDay}
+          disabled={isToday}
+          className={`p-0.5 haptic-feedback ${isToday ? 'opacity-30' : ''}`}
+        >
+          <ChevronRightIcon style={{ fontSize: '20px' }} />
+        </button>
       </div>
 
       {/* DatePicker 모달 */}
