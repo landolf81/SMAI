@@ -18,8 +18,8 @@ export const BUCKETS = {
   TRADES: 'trades'
 };
 
-// R2 사용 여부 (환경변수로 제어 가능)
-const USE_R2 = import.meta.env.VITE_R2_PUBLIC_URL ? true : false;
+// R2 사용 여부 (항상 R2 사용)
+const USE_R2 = true;
 
 export const storageService = {
   /**
