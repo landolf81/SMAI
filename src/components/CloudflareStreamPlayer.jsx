@@ -27,6 +27,13 @@ const CloudflareStreamPlayer = ({
 
   const uid = getCloudflareStreamUid(url);
 
+  // autoplay prop 변경 시 showPlayer 상태 동기화
+  useEffect(() => {
+    if (autoplay) {
+      setShowPlayer(true);
+    }
+  }, [autoplay]);
+
   // Customer subdomain (from your Cloudflare account)
   const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
 
