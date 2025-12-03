@@ -2,6 +2,8 @@
  * 동영상 720p 압축 유틸리티
  * FFmpeg.wasm을 사용하여 브라우저 내에서 동영상을 720p로 압축합니다.
  * 호환 포맷(MP4, WebM)은 압축하지 않고 원본 사용
+ *
+ * SharedArrayBuffer 미지원 환경에서는 싱글 스레드 버전 사용
  */
 
 import { FFmpeg } from '@ffmpeg/ffmpeg';
@@ -10,38 +12,57 @@ import { fetchFile, toBlobURL } from '@ffmpeg/util';
 let ffmpeg = null;
 let ffmpegLoaded = false;
 let ffmpegLoading = false;
+let currentProgressCallback = null;
 
 /**
  * FFmpeg 인스턴스 로드
+ * SharedArrayBuffer 지원 여부에 따라 멀티/싱글 스레드 버전 선택
  */
 const loadFFmpeg = async (onProgress) => {
-  if (ffmpegLoaded && ffmpeg) return ffmpeg;
+  if (ffmpegLoaded && ffmpeg) {
+    currentProgressCallback = onProgress;
+    return ffmpeg;
+  }
   if (ffmpegLoading) {
     // 이미 로딩 중이면 완료될 때까지 대기
     while (ffmpegLoading) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+    currentProgressCallback = onProgress;
     return ffmpeg;
   }
 
   ffmpegLoading = true;
+  currentProgressCallback = onProgress;
 
   try {
     ffmpeg = new FFmpeg();
 
     // 진행률 콜백
     ffmpeg.on('progress', ({ progress }) => {
-      if (onProgress) {
-        onProgress(Math.round(progress * 100));
+      if (currentProgressCallback) {
+        currentProgressCallback(Math.round(progress * 100));
       }
     });
 
-    // CDN에서 FFmpeg 코어 로드
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
-    await ffmpeg.load({
-      coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-      wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    });
+    // SharedArrayBuffer 지원 여부 확인
+    const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+
+    if (hasSharedArrayBuffer) {
+      // 멀티 스레드 버전 (더 빠름)
+      const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      });
+    } else {
+      // 싱글 스레드 버전 (SharedArrayBuffer 불필요)
+      const baseURL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/esm';
+      await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+      });
+    }
 
     ffmpegLoaded = true;
     return ffmpeg;
@@ -287,10 +308,11 @@ export const checkVideoNeedsCompression = async (videoFile) => {
 
 /**
  * 동영상 압축 지원 여부 확인
+ * 싱글 스레드 버전 사용으로 대부분의 브라우저에서 지원
  */
 export const isVideoCompressionSupported = () => {
-  // SharedArrayBuffer 지원 확인 (FFmpeg.wasm 필수)
-  return typeof SharedArrayBuffer !== 'undefined';
+  // WebAssembly 지원 확인 (거의 모든 최신 브라우저에서 지원)
+  return typeof WebAssembly !== 'undefined';
 };
 
 export default {
