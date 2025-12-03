@@ -112,13 +112,54 @@ const PostEditor = () => {
             processedFiles.push(compressedImage);
             console.log(`이미지 압축: ${file.name} (${file.size} → ${compressedImage.size})`);
           } else if (mediaType.isVideo) {
-            // 동영상 크기 검증 (50MB 제한)
-            const validation = validateVideoSize(file);
-            if (!validation.valid) {
-              throw new Error(validation.message);
+            // 동영상 WebM 변환 (모든 동영상)
+            if (isVideoCompressionSupported()) {
+              try {
+                const videoInfo = await checkVideoNeedsCompression(file);
+                if (videoInfo.needsCompression) {
+                  console.log(`🎬 동영상 WebM 변환 시작: ${file.name} - ${videoInfo.reason || ''}`);
+                  setVideoCompressProgress({
+                    progress: 0,
+                    status: `동영상 변환 준비 중...`,
+                    fileName: file.name
+                  });
+
+                  const compressedVideo = await compressVideo(file, {
+                    maxHeight: 720,
+                    onProgress: (progress) => {
+                      setVideoCompressProgress({
+                        progress,
+                        status: `동영상 변환 중... ${progress}%`,
+                        fileName: file.name
+                      });
+                    }
+                  });
+
+                  processedFiles.push(compressedVideo);
+                  const originalMB = (file.size / 1024 / 1024).toFixed(2);
+                  const compressedMB = (compressedVideo.size / 1024 / 1024).toFixed(2);
+                  console.log(`✅ 동영상 변환 완료: ${originalMB}MB → ${compressedMB}MB`);
+                  setVideoCompressProgress(null);
+                } else {
+                  processedFiles.push(file);
+                  console.log(`동영상 변환 불필요: ${file.name}`);
+                }
+              } catch (videoError) {
+                console.error(`❌ 동영상 변환 실패: ${file.name}`, videoError);
+                setVideoCompressProgress(null);
+                // 비호환 포맷인 경우 업로드 거부
+                const fileName = file.name.toLowerCase();
+                const incompatibleExts = ['.mov', '.avi', '.mkv', '.wmv', '.flv', '.3gp', '.f4v', '.m4v'];
+                if (incompatibleExts.some(ext => fileName.endsWith(ext))) {
+                  throw new Error(`${file.name.split('.').pop().toUpperCase()} 형식은 변환할 수 없습니다. MP4로 변환 후 업로드해주세요.`);
+                }
+                processedFiles.push(file);
+              }
+            } else {
+              // 압축 미지원 시 원본 사용
+              processedFiles.push(file);
+              console.log(`동영상 압축 미지원: ${file.name} (원본 사용)`);
             }
-            processedFiles.push(file);
-            console.log(`동영상 검증 통과: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
           } else {
             processedFiles.push(file);
           }
