@@ -715,39 +715,107 @@ const AdminAdsNew = () => {
                         className="file-input file-input-bordered w-full"
                       />
                       
-                      {/* 선택된 파일 목록 */}
+                      {/* 선택된 파일 목록 - 썸네일 미리보기 포함 */}
                       {selectedFiles.length > 0 && (
                         <div className="mt-3 space-y-2">
-                          <p className="text-sm font-medium">선택된 파일:</p>
-                          <div className="space-y-1">
+                          <p className="text-sm font-medium">선택된 파일 ({selectedFiles.length}개):</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                             {selectedFiles.map((file, index) => (
-                              <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                                <div>
-                                  <p className="text-sm font-medium">{file.name}</p>
-                                  <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)}MB</p>
+                              <div key={index} className="relative group">
+                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                                  {file.type.startsWith('image/') ? (
+                                    <img
+                                      src={URL.createObjectURL(file)}
+                                      alt={file.name}
+                                      className="w-full h-full object-cover"
+                                      onLoad={(e) => URL.revokeObjectURL(e.target.src)}
+                                    />
+                                  ) : file.type.startsWith('video/') ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center bg-gray-800 text-white">
+                                      <svg className="w-8 h-8 mb-1" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                      </svg>
+                                      <span className="text-xs">동영상</span>
+                                    </div>
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                      <span className="text-xs">파일</span>
+                                    </div>
+                                  )}
+                                  {/* 메인 이미지 표시 */}
+                                  {index === 0 && (
+                                    <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+                                      메인
+                                    </div>
+                                  )}
                                 </div>
+                                {/* 삭제 버튼 */}
                                 <button
                                   type="button"
                                   onClick={() => removeFile(index)}
-                                  className="btn btn-xs btn-circle btn-error"
+                                  className="absolute -top-2 -right-2 btn btn-xs btn-circle btn-error opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
                                   ✕
                                 </button>
+                                {/* 파일 정보 */}
+                                <p className="text-xs text-gray-500 mt-1 truncate">{file.name}</p>
+                                <p className="text-xs text-gray-400">{(file.size / 1024 / 1024).toFixed(1)}MB</p>
                               </div>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      {/* 기본 이미지 미리보기 (파일이 없을 때) */}
-                      {selectedFiles.length === 0 && formData.image_content && (
-                        <div className="mt-3">
-                          <p className="text-sm font-medium mb-2">현재 이미지:</p>
-                          <img 
-                            src={getImageUrl(formData.image_content)} 
-                            alt="미리보기"
-                            className="w-32 h-32 object-cover rounded-lg border"
-                          />
+                      {/* 수정 모드: 기존 미디어 미리보기 (새 파일 선택 없을 때) */}
+                      {selectedFiles.length === 0 && editingAd && (editingAd.image_url || (editingAd.media_urls && editingAd.media_urls.length > 0)) && (
+                        <div className="mt-3 space-y-2">
+                          <p className="text-sm font-medium">현재 등록된 미디어:</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            {/* 메인 이미지 */}
+                            {editingAd.image_url && (
+                              <div className="relative">
+                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-blue-300">
+                                  {isVideoFile(editingAd.image_url) ? (
+                                    <video
+                                      src={getImageUrl(editingAd.image_url)}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                    />
+                                  ) : (
+                                    <img
+                                      src={getImageUrl(editingAd.image_url)}
+                                      alt="메인 이미지"
+                                      className="w-full h-full object-cover"
+                                    />
+                                  )}
+                                  <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-2 py-0.5 rounded">
+                                    메인
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {/* 추가 미디어 */}
+                            {editingAd.media_urls && editingAd.media_urls.map((url, index) => (
+                              <div key={index} className="relative">
+                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                                  {isVideoFile(url) ? (
+                                    <video
+                                      src={getImageUrl(url)}
+                                      className="w-full h-full object-cover"
+                                      muted
+                                    />
+                                  ) : (
+                                    <img
+                                      src={getImageUrl(url)}
+                                      alt={`추가 미디어 ${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-xs text-gray-500">새 파일을 선택하면 기존 미디어가 교체됩니다.</p>
                         </div>
                       )}
                     </div>
@@ -766,11 +834,11 @@ const AdminAdsNew = () => {
                       />
                     </div>
 
-                    {/* 미디어 갤러리 버튼 */}
+                    {/* 미디어 갤러리 버튼 - 수정 모드에서만 */}
                     {editingAd && (
                       <div className="form-control">
                         <label className="label">
-                          <span className="label-text font-medium">추가 미디어 (다중 이미지/동영상)</span>
+                          <span className="label-text font-medium">미디어 갤러리 관리</span>
                         </label>
                         <button
                           type="button"
@@ -780,6 +848,9 @@ const AdminAdsNew = () => {
                           <PhotoLibraryIcon />
                           미디어 갤러리 열기
                         </button>
+                        <label className="label">
+                          <span className="label-text-alt text-gray-500">기존 미디어를 개별적으로 관리하려면 갤러리를 열어주세요</span>
+                        </label>
                       </div>
                     )}
                   </div>
