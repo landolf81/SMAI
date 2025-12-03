@@ -204,7 +204,7 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
               {/* 프로필 보기 버튼 */}
               <button
                 onClick={handleViewProfile}
-                className="w-full py-3 bg-orange-500 text-white rounded-lg font-medium hover:bg-orange-600 transition-colors"
+                className="w-full py-3 bg-[#00B140] text-white rounded-lg font-medium hover:bg-[#009930] transition-colors"
               >
                 프로필 보기
               </button>
