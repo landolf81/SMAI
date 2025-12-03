@@ -116,11 +116,12 @@ const loadImageFromBlob = (blob) => {
 };
 
 /**
- * Canvas를 PNG Blob으로 변환
+ * Canvas를 JPEG Blob으로 변환
  * @param {HTMLCanvasElement} canvas - Canvas 엘리먼트
+ * @param {number} quality - JPEG 품질 (0-1, 기본: 0.85)
  * @returns {Promise<Blob>}
  */
-const canvasToBlob = (canvas) => {
+const canvasToBlob = (canvas, quality = 0.85) => {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
@@ -130,22 +131,23 @@ const canvasToBlob = (canvas) => {
           reject(new Error('이미지 변환에 실패했습니다.'));
         }
       },
-      'image/png',
-      1.0 // PNG는 품질 설정이 무시되지만 명시적으로 지정
+      'image/jpeg',
+      quality
     );
   });
 };
 
 /**
- * 파일을 가로 1024px PNG로 변환
+ * 파일을 가로 1024px JPEG로 변환 (용량 최적화)
  * @param {File} file - 원본 이미지 파일
  * @param {Object} options - 옵션
  * @param {number} options.maxWidth - 최대 가로 크기 (기본: 1024)
+ * @param {number} options.quality - JPEG 품질 (기본: 0.85)
  * @param {Function} options.onProgress - 진행률 콜백
- * @returns {Promise<File>} 변환된 PNG 파일
+ * @returns {Promise<File>} 변환된 JPEG 파일
  */
 export const convertImageToPng = async (file, options = {}) => {
-  const { maxWidth = 1024, onProgress } = options;
+  const { maxWidth = 1024, quality = 0.85, onProgress } = options;
 
   try {
     onProgress?.(10, 'Processing...');
@@ -168,17 +170,17 @@ export const convertImageToPng = async (file, options = {}) => {
     // 3. 리사이즈
     const canvas = resizeImageToCanvas(img, maxWidth);
 
-    onProgress?.(80, 'PNG 변환 중...');
+    onProgress?.(80, 'JPEG 변환 중...');
 
-    // 4. PNG로 변환
-    const pngBlob = await canvasToBlob(canvas);
+    // 4. JPEG로 변환 (용량 최적화)
+    const jpegBlob = await canvasToBlob(canvas, quality);
 
-    // 5. File 객체로 변환 (원본 파일명 유지하되 확장자만 .png로)
+    // 5. File 객체로 변환 (원본 파일명 유지하되 확장자만 .jpg로)
     const originalName = file.name.replace(/\.[^.]+$/, '');
-    const newFileName = `${originalName}.png`;
+    const newFileName = `${originalName}.jpg`;
 
-    const convertedFile = new File([pngBlob], newFileName, {
-      type: 'image/png',
+    const convertedFile = new File([jpegBlob], newFileName, {
+      type: 'image/jpeg',
       lastModified: Date.now(),
     });
 

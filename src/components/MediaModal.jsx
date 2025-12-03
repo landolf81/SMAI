@@ -54,6 +54,22 @@ const MediaModal = ({
     }
   }, [isOpen, initialIndex]);
 
+  // 인접 이미지 프리로드 (현재 ±1)
+  useEffect(() => {
+    if (!isOpen || mediaFiles.length <= 1) return;
+
+    const preloadIndexes = [currentIndex - 1, currentIndex + 1]
+      .filter(i => i >= 0 && i < mediaFiles.length);
+
+    preloadIndexes.forEach(index => {
+      const url = mediaFiles[index];
+      if (!isVideoFile(url) && !isCloudflareStreamUrl(url)) {
+        const img = new Image();
+        img.src = url;
+      }
+    });
+  }, [isOpen, currentIndex, mediaFiles]);
+
   // 동영상 자동 재생
   useEffect(() => {
     if (isOpen && videoRef.current) {
