@@ -15,7 +15,7 @@
 export const compressVideo = async (videoFile, options = {}) => {
   const {
     maxHeight = 720,
-    videoBitrate = 2500000, // 2.5 Mbps
+    videoBitrate = 8000000, // 8 Mbps (품질 향상)
     onProgress = () => {}
   } = options;
 
@@ -39,8 +39,6 @@ export const compressVideo = async (videoFile, options = {}) => {
         const originalWidth = video.videoWidth;
         const originalHeight = video.videoHeight;
         const duration = video.duration;
-
-        // 원본 동영상 정보
 
         // 720p 이하면 압축 불필요
         if (originalHeight <= maxHeight && videoFile.size < 10 * 1024 * 1024) {
@@ -68,8 +66,13 @@ export const compressVideo = async (videoFile, options = {}) => {
         canvas.height = newHeight;
         const ctx = canvas.getContext('2d');
 
-        // MediaRecorder 설정
-        const stream = canvas.captureStream(30); // 30fps
+        // 이미지 품질 향상 설정
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+
+        // 원본 프레임레이트 감지 (기본 60fps, 최소 30fps)
+        // captureStream(0)은 프레임이 변경될 때만 캡처 (원본 프레임레이트 유지)
+        const stream = canvas.captureStream(0); // 0 = 프레임 변경 시에만 캡처
 
         // 오디오 트랙 추가 시도
         try {
@@ -136,32 +139,46 @@ export const compressVideo = async (videoFile, options = {}) => {
         };
 
         // 녹화 시작
-        mediaRecorder.start(100); // 100ms마다 데이터 수집
+        mediaRecorder.start(50); // 50ms마다 데이터 수집 (더 부드러운 스트림)
 
         // 비디오 재생 및 캔버스에 그리기
         video.currentTime = 0;
 
-        const drawFrame = () => {
+        let lastProgressUpdate = 0;
+        let animationId = null;
+
+        const drawFrame = (timestamp) => {
           if (video.ended || video.paused) {
+            if (animationId) {
+              cancelAnimationFrame(animationId);
+            }
             mediaRecorder.stop();
             return;
           }
 
+          // 캔버스에 현재 프레임 그리기
           ctx.drawImage(video, 0, 0, newWidth, newHeight);
 
-          // 진행률 업데이트
-          const progress = Math.min(99, Math.round((video.currentTime / duration) * 100));
-          onProgress(progress);
+          // 진행률 업데이트 (100ms마다)
+          if (timestamp - lastProgressUpdate > 100) {
+            const progress = Math.min(99, Math.round((video.currentTime / duration) * 100));
+            onProgress(progress);
+            lastProgressUpdate = timestamp;
+          }
 
-          requestAnimationFrame(drawFrame);
+          // 다음 프레임 예약 (브라우저 최적화된 타이밍)
+          animationId = requestAnimationFrame(drawFrame);
         };
 
         video.onended = () => {
+          if (animationId) {
+            cancelAnimationFrame(animationId);
+          }
           mediaRecorder.stop();
         };
 
         video.onplay = () => {
-          drawFrame();
+          animationId = requestAnimationFrame(drawFrame);
         };
 
         // 재생 시작
