@@ -268,13 +268,14 @@ export const marketService = {
   },
 
   /**
-   * 여러 시장의 경락가 정보 조회
+   * 여러 시장의 경락가 정보 조회 (전 경매일 비교 포함)
    * @param {Array<string>} markets - 시장명 배열
    * @param {string} date - 날짜 (YYYY-MM-DD)
    * @returns {Object} { success: boolean, markets: Array }
    */
   async getMultipleMarkets(markets, date) {
     try {
+      // 1. 현재 날짜의 시장 데이터 조회
       const { data, error } = await supabase
         .from('market_summary')
         .select('*')
@@ -284,35 +285,66 @@ export const marketService = {
 
       if (error) throw error;
 
-      // Home 페이지가 기대하는 형식으로 변환
-      // market_summary 테이블 구조:
-      // { market_date, market_name, total_boxes, avg_price, min_price, max_price, total_amount, created_at, updated_at }
-      const transformedMarkets = (data || []).map(market => ({
-        market_name: market.market_name,
-        success: true,
-        data: {
-          summary: {
-            overall_avg_price: market.avg_price,
-            total_boxes: market.total_boxes,
-            total_amount: market.total_amount
-          },
-          details: [
-            {
-              boxes: market.total_boxes,
-              min_price: market.min_price,
-              max_price: market.max_price,
-              avg_price: market.avg_price
+      // 2. 각 시장별로 전 경매일 찾기 및 비교 데이터 생성
+      const transformedMarkets = await Promise.all((data || []).map(async (market) => {
+        // 전 경매일 찾기 (현재 날짜보다 이전 날짜 중 가장 최근)
+        const { data: previousDateData } = await supabase
+          .from('market_summary')
+          .select('*')
+          .eq('market_name', market.market_name)
+          .lt('market_date', date)
+          .order('market_date', { ascending: false })
+          .limit(1)
+          .single();
+
+        // 전일 비교 계산
+        const currentAvgPrice = parseInt(market.avg_price) || 0;
+        const previousAvgPrice = previousDateData ? (parseInt(previousDateData.avg_price) || 0) : 0;
+        const avgChange = previousAvgPrice > 0 ? currentAvgPrice - previousAvgPrice : 0;
+        const avgChangePercent = previousAvgPrice > 0
+          ? Math.round((avgChange / previousAvgPrice) * 1000) / 10
+          : 0;
+
+        const currentMinPrice = parseInt(market.min_price) || 0;
+        const previousMinPrice = previousDateData ? (parseInt(previousDateData.min_price) || 0) : 0;
+
+        const currentMaxPrice = parseInt(market.max_price) || 0;
+        const previousMaxPrice = previousDateData ? (parseInt(previousDateData.max_price) || 0) : 0;
+
+        const currentVolume = parseInt(market.total_boxes) || 0;
+        const previousVolume = previousDateData ? (parseInt(previousDateData.total_boxes) || 0) : 0;
+
+        return {
+          market_name: market.market_name,
+          success: true,
+          data: {
+            summary: {
+              overall_avg_price: currentAvgPrice,
+              total_boxes: currentVolume,
+              total_amount: parseInt(market.total_amount) || 0
+            },
+            details: [
+              {
+                boxes: currentVolume,
+                min_price: currentMinPrice,
+                max_price: currentMaxPrice,
+                avg_price: currentAvgPrice
+              }
+            ],
+            previous_min_price: previousMinPrice,
+            previous_max_price: previousMaxPrice,
+            overall_comparison: {
+              comparison_available: previousAvgPrice > 0,
+              previousPrice: previousAvgPrice,
+              change: avgChange,
+              changePercent: avgChangePercent
+            },
+            volume_comparison: {
+              comparison_available: previousVolume > 0,
+              previousVolume: previousVolume
             }
-          ],
-          previous_min_price: 0, // 전일 데이터는 별도 조회 필요
-          previous_max_price: 0,
-          overall_comparison: {
-            comparison_available: false
-          },
-          volume_comparison: {
-            comparison_available: false
           }
-        }
+        };
       }));
 
       return {

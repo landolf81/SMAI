@@ -142,41 +142,22 @@ const Prices = () => {
       {/* 헤더 */}
       <div className="bg-white shadow-sm border-b sticky top-16 z-10">
         <div className="w-full max-w-screen-xl mx-auto p-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Link 
-                to="/"
-                className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                title="홈으로"
-              >
-                <ArrowBackIcon fontSize="small" />
-              </Link>
-              
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">
-                  {marketName}
-                </h1>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <CalendarTodayIcon fontSize="small" className="text-gray-500" />
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={handleDateChange}
-                  max={new Date().toISOString().split('T')[0]}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
-              <button
-                onClick={handleRefresh}
-                className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                title="새로고침"
-              >
-                <RefreshIcon fontSize="small" />
-              </button>
+          <div className="flex items-center justify-center relative">
+            {/* 뒤로가기 버튼 */}
+            <Link
+              to="/"
+              className="absolute left-0 text-[#004225] text-2xl font-bold hover:opacity-70 transition-opacity"
+              title="홈으로"
+            >
+              &lt;
+            </Link>
+
+            {/* 날짜 중앙 정렬 */}
+            <div className="flex items-center gap-2">
+              <CalendarTodayIcon fontSize="small" className="text-[#004225]" />
+              <span className="text-base font-medium text-gray-800">
+                {formatDate(selectedDate)}
+              </span>
             </div>
           </div>
         </div>
@@ -214,7 +195,7 @@ const Prices = () => {
                       newParams.set('date', newDate);
                       setSearchParams(newParams);
                     }}
-                    className="btn btn-sm btn-outline"
+                    className="btn btn-sm btn-outline border-[#004225] text-[#004225] hover:bg-[#004225] hover:text-white"
                   >
                     오늘 데이터 보기
                   </button>
@@ -228,14 +209,14 @@ const Prices = () => {
                       newParams.set('date', newDate);
                       setSearchParams(newParams);
                     }}
-                    className="btn btn-sm btn-primary"
+                    className="btn btn-sm bg-[#004225] text-white hover:bg-[#003018] border-none"
                   >
                     어제 데이터 보기
                   </button>
                 </div>
-                <Link 
+                <Link
                   to="/"
-                  className="btn btn-primary"
+                  className="btn bg-[#004225] text-white hover:bg-[#003018] border-none"
                 >
                   홈으로 돌아가기
                 </Link>
@@ -244,183 +225,134 @@ const Prices = () => {
           </div>
         ) : (
           <>
-            {/* 요약 정보 */}
+            {/* 요약 정보 - 카드 형태 */}
             {marketData.summary && (
-              <div className="bg-white rounded-lg shadow mb-6 overflow-hidden">
-                <div
-                  className="px-6 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white"
-                >
-                  <h2 className="text-xl font-semibold">
-                    {formatDate(selectedDate)} 거래 요약
-                  </h2>
+              <div className="relative pt-4 mb-6">
+                {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 */}
+                <div className="absolute -top-0 left-4 z-10">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#004225] text-white text-sm font-bold rounded-full shadow-md">
+                    <span className="w-2 h-2 bg-white rounded-full"></span>
+                    {marketName}
+                  </span>
                 </div>
-                
-                <div className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-gray-500 text-sm">총 출수량</p>
-                      <p className="text-2xl font-bold text-gray-800">
-                        {formatPrice(marketData.summary.total_boxes)} 상자
-                      </p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-gray-500 text-sm">총 거래금액</p>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {formatPrice(marketData.summary.total_amount)} 원
-                      </p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-gray-500 text-sm">전체 평균 가격</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {formatPrice(marketData.summary.overall_avg_price)} 원
-                      </p>
-                    </div>
-                    {/* 전체 평균 등락률 표시 */}
-                    {marketData.overall_comparison && marketData.overall_comparison.comparison_available && (
-                      <div className={`flex items-center justify-end text-sm ${
-                        Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-gray-600' :
-                        marketData.overall_comparison.change > 0 ? 'text-red-600' : 'text-blue-600'
-                      }`}>
-                        {Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? (
-                          <TrendingFlatIcon fontSize="small" />
-                        ) : marketData.overall_comparison.change > 0 ? (
-                          <TrendingUpIcon fontSize="small" />
-                        ) : (
-                          <TrendingDownIcon fontSize="small" />
-                        )}
-                        <span className="ml-1 font-medium">
-                          {Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? '변동 없음' :
-                           `${marketData.overall_comparison.change > 0 ? '+' : ''}${formatPrice(marketData.overall_comparison.change)}원 (${marketData.overall_comparison.changePercent > 0 ? '+' : ''}${marketData.overall_comparison.changePercent}%)`
-                          }
-                        </span>
-                      </div>
-                    )}
+
+                {/* 카드 본체 */}
+                <div className="bg-white rounded-2xl shadow-md border border-gray-100 pt-6 pb-4 px-4">
+                  {/* 날짜 정보 */}
+                  <div className="text-xs text-gray-500 mb-3">
+                    {formatDate(selectedDate)} 거래 요약
                   </div>
-                  
-                  {/* 전 경매일 정보 */}
-                  {marketData.previous_market_date && (
-                    <div className="mt-4 text-center">
-                      <div className="text-sm text-gray-500">
-                        전 경매일: {formatDate(marketData.previous_market_date)} 대비
+
+                  {/* 요약 정보 그리드 */}
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {/* 총 출하량 */}
+                    <div className="bg-gray-50 rounded-lg py-3 px-2">
+                      <div className="text-xs text-gray-500 mb-1">총 출하량</div>
+                      <div className="text-base font-bold text-gray-800">
+                        {formatPrice(marketData.summary.total_boxes)}상자
                       </div>
                     </div>
-                  )}
+
+                    {/* 평균가 */}
+                    <div className="bg-gray-50 rounded-lg py-3 px-2">
+                      <div className="text-xs text-gray-500 mb-1">평균가</div>
+                      <div className="text-base font-bold text-[#004225]">
+                        {formatPrice(marketData.summary.overall_avg_price)}원
+                      </div>
+                    </div>
+
+                    {/* 전일대비 */}
+                    <div className="bg-gray-50 rounded-lg py-3 px-2">
+                      <div className="text-xs text-gray-500 mb-1">전일대비</div>
+                      <div className={`text-base font-bold ${
+                        !marketData.overall_comparison?.comparison_available ? 'text-gray-400' :
+                        Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-gray-600' :
+                        marketData.overall_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'
+                      }`}>
+                        {!marketData.overall_comparison?.comparison_available ? '-' :
+                         Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? '0' :
+                         `${marketData.overall_comparison.change > 0 ? '▲' : '▼'} ${Math.abs(marketData.overall_comparison.change).toLocaleString()}`
+                        }
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* 상세 가격 정보 - 테이블 형태 */}
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <div className="divide-y">
-                {marketData.details.map((item, index) => {
-                  const priceComparison = item.price_comparison || {
-                    change: 0,
-                    changePercent: 0,
-                    comparison_available: false
-                  };
+            {/* 상세 가격 정보 - 카드 형태 */}
+            <div className="space-y-6">
+              {marketData.details.map((item, index) => {
+                const priceComparison = item.price_comparison || {
+                  change: 0,
+                  changePercent: 0,
+                  comparison_available: false
+                };
 
-                  return (
-                    <div
-                      key={index}
-                      className="p-4"
-                    >
-                      {/* 테이블 형태 레이아웃 */}
-                      <table className="w-full text-sm">
-                        <tbody>
-                          {/* 품목명 | 평균가격 */}
-                          <tr>
-                            <td className="py-1">
-                              <span className="text-lg font-bold text-gray-800">
-                                참외 {item.weight} {item.grade}
-                              </span>
-                            </td>
-                            <td className="py-1 text-right">
-                              <span className="text-xl font-bold text-gray-800">
-                                {formatPrice(item.avg_price)} 원
-                              </span>
-                            </td>
-                          </tr>
-                          {/* 전 경매일 데이터비교 (상승/하강 표시) */}
-                          <tr>
-                            <td className="py-1"></td>
-                            <td className="py-1 text-right">
-                              {priceComparison.comparison_available ? (
-                                <span className={`flex items-center justify-end gap-1 ${
-                                  Math.abs(priceComparison.changePercent) < 0.1 ? 'text-gray-600' :
-                                  priceComparison.change > 0 ? 'text-red-600' : 'text-blue-600'
-                                }`}>
-                                  {Math.abs(priceComparison.changePercent) < 0.1 ? (
-                                    <>
-                                      <TrendingFlatIcon fontSize="small" />
-                                      <span>변동없음</span>
-                                    </>
-                                  ) : priceComparison.change > 0 ? (
-                                    <>
-                                      <TrendingUpIcon fontSize="small" />
-                                      <span>+{formatPrice(priceComparison.change)}원</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <TrendingDownIcon fontSize="small" />
-                                      <span>{formatPrice(priceComparison.change)}원</span>
-                                    </>
-                                  )}
-                                </span>
-                              ) : (
-                                <span className="text-gray-400">전 경매일 데이터비교</span>
-                              )}
-                            </td>
-                          </tr>
-                          {/* 수량 */}
-                          <tr>
-                            <td className="py-1 text-gray-600">수량</td>
-                            <td className="py-1 text-right text-gray-800">
-                              {formatPrice(item.boxes)} 상자
-                            </td>
-                          </tr>
-                          {/* 최고가 */}
-                          <tr>
-                            <td className="py-1 text-gray-600">최고가</td>
-                            <td className="py-1 text-right text-red-600 font-medium">
-                              {formatPrice(item.max_price)} 원
-                            </td>
-                          </tr>
-                          {/* 최저가 */}
-                          <tr>
-                            <td className="py-1 text-gray-600">최저가</td>
-                            <td className="py-1 text-right text-blue-600 font-medium">
-                              {formatPrice(item.min_price)} 원
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                return (
+                  <div key={index} className="relative pt-4">
+                    {/* 등급 뱃지 - 카드 위에 걸쳐있는 형태 */}
+                    <div className="absolute -top-0 left-4 z-10">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#004225] text-white text-sm font-bold rounded-full shadow-md">
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                        {item.grade}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* 카드 본체 */}
+                    <div className="bg-white rounded-2xl shadow-md border border-gray-100 pt-6 pb-4 px-4">
+                      {/* 품목 정보 */}
+                      <div className="text-sm text-gray-600 mb-3">
+                        참외 {item.weight} · 수량 <span className="font-semibold text-gray-800">{formatPrice(item.boxes)}상자</span>
+                      </div>
+
+                      {/* 가격 정보 그리드 */}
+                      <div className="grid grid-cols-4 gap-2 text-center">
+                        {/* 평균가 */}
+                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                          <div className="text-xs text-gray-500 mb-1">평균가</div>
+                          <div className="text-base font-bold text-[#004225]">
+                            {formatPrice(item.avg_price)}원
+                          </div>
+                        </div>
+
+                        {/* 전일대비 */}
+                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                          <div className="text-xs text-gray-500 mb-1">전일대비</div>
+                          <div className={`text-base font-bold ${
+                            !priceComparison.comparison_available ? 'text-gray-400' :
+                            Math.abs(priceComparison.changePercent) < 0.1 ? 'text-gray-600' :
+                            priceComparison.change > 0 ? 'text-red-500' : 'text-blue-500'
+                          }`}>
+                            {!priceComparison.comparison_available ? '-' :
+                             Math.abs(priceComparison.changePercent) < 0.1 ? '0' :
+                             `${priceComparison.change > 0 ? '▲' : '▼'} ${Math.abs(priceComparison.change).toLocaleString()}`
+                            }
+                          </div>
+                        </div>
+
+                        {/* 최고가 */}
+                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                          <div className="text-xs text-gray-500 mb-1">최고가</div>
+                          <div className="text-base font-bold text-red-500">
+                            {formatPrice(item.max_price)}원
+                          </div>
+                        </div>
+
+                        {/* 최저가 */}
+                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                          <div className="text-xs text-gray-500 mb-1">최저가</div>
+                          <div className="text-base font-bold text-blue-500">
+                            {formatPrice(item.min_price)}원
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
-            {/* 하단 액션 */}
-            <div className="mt-6 text-center space-y-3">
-              <div className="flex justify-center gap-3">
-                <Link 
-                  to="/"
-                  className="btn btn-outline"
-                >
-                  홈으로 돌아가기
-                </Link>
-                <button 
-                  onClick={handleRefresh}
-                  className="btn btn-primary"
-                >
-                  새로고침
-                </button>
-              </div>
-              
-              <div className="text-sm text-gray-500">
-                {formatDate(selectedDate)} 기준 데이터
-              </div>
-            </div>
           </>
         )}
       </div>

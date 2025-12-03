@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adService } from '../services';
@@ -6,15 +6,82 @@ import MobileAdDisplay from './MobileAdDisplay';
 import { shouldShowAds, isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
 import { AuthContext } from '../context/AuthContext';
 
+// 스크롤 시 요소가 화면 중앙에 가까워지면 선명해지는 커스텀 훅
+const useScrollFadeIn = () => {
+  const [visibleItems, setVisibleItems] = useState({});
+  const observerRef = useRef(null);
+
+  useEffect(() => {
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = entry.target.dataset.cardId;
+          if (id) {
+            setVisibleItems((prev) => ({
+              ...prev,
+              [id]: entry.intersectionRatio
+            }));
+          }
+        });
+      },
+      {
+        threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1],
+        rootMargin: '-10% 0px -10% 0px'
+      }
+    );
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  const observe = useCallback((element) => {
+    if (element && observerRef.current) {
+      observerRef.current.observe(element);
+    }
+  }, []);
+
+  const unobserve = useCallback((element) => {
+    if (element && observerRef.current) {
+      observerRef.current.unobserve(element);
+    }
+  }, []);
+
+  return { visibleItems, observe, unobserve };
+};
+
 const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const { currentUser } = useContext(AuthContext);
   const [showLoginModal, setShowLoginModal] = useState(false);
 
+  // 스크롤 페이드 인 효과
+  const { visibleItems, observe, unobserve } = useScrollFadeIn();
+  const cardRefs = useRef({});
+
   // 순차적 렌더링을 위한 상태
   const [renderedCount, setRenderedCount] = useState(0);
   const renderIntervalRef = useRef(null);
+
+  // 카드 ref 설정 및 관찰
+  const setCardRef = useCallback((element, id) => {
+    if (element) {
+      cardRefs.current[id] = element;
+      observe(element);
+    }
+  }, [observe]);
+
+  // 컴포넌트 언마운트 시 관찰 해제
+  useEffect(() => {
+    return () => {
+      Object.values(cardRefs.current).forEach((element) => {
+        if (element) unobserve(element);
+      });
+    };
+  }, [unobserve]);
 
 
   // 활성 광고 데이터 가져오기 (모바일에서만)
@@ -41,46 +108,53 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
   const getMarketTheme = (marketName) => {
     const themes = {
       // 가락공판장 - 파란색
-      '가락': { 
-        bg: 'from-blue-500 to-blue-600', 
+      '가락': {
+        bg: 'from-blue-500 to-blue-600',
         text: 'text-blue-600',
-        light: 'bg-blue-50'
+        light: 'bg-blue-50',
+        gradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.05) 100%)'
       },
-      // 선남농협 - 녹색
-      '선남': { 
-        bg: 'from-green-500 to-green-600', 
-        text: 'text-green-600',
-        light: 'bg-green-50'
+      // 선남농협 - PANTONE 2271 C (라임/연두색 #C4D600)
+      '선남': {
+        bg: 'from-[#C4D600] to-[#A8B800]',
+        text: 'text-[#8FA500]',
+        light: 'bg-[#F5F9E0]',
+        gradient: 'linear-gradient(135deg, rgba(196, 214, 0, 0.15) 0%, rgba(196, 214, 0, 0.05) 100%)'
       },
       // 성주원예 - 주황색
-      '성주원예': { 
-        bg: 'from-orange-500 to-orange-600', 
+      '성주원예': {
+        bg: 'from-orange-500 to-orange-600',
         text: 'text-orange-600',
-        light: 'bg-orange-50'
+        light: 'bg-orange-50',
+        gradient: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15) 0%, rgba(249, 115, 22, 0.05) 100%)'
       },
       // 성주조공 - 빨간색
-      '성주조공': { 
-        bg: 'from-red-500 to-red-600', 
+      '성주조공': {
+        bg: 'from-red-500 to-red-600',
         text: 'text-red-600',
-        light: 'bg-red-50'
+        light: 'bg-red-50',
+        gradient: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.05) 100%)'
       },
       // 용암농협 - 노란색
-      '용암': { 
-        bg: 'from-yellow-500 to-yellow-600', 
+      '용암': {
+        bg: 'from-yellow-500 to-yellow-600',
         text: 'text-yellow-600',
-        light: 'bg-yellow-50'
+        light: 'bg-yellow-50',
+        gradient: 'linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(234, 179, 8, 0.05) 100%)'
       },
       // 초전농협 - 핑크색
-      '초전': { 
-        bg: 'from-pink-500 to-pink-600', 
+      '초전': {
+        bg: 'from-pink-500 to-pink-600',
         text: 'text-pink-600',
-        light: 'bg-pink-50'
+        light: 'bg-pink-50',
+        gradient: 'linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(236, 72, 153, 0.05) 100%)'
       },
       // 기본 성주 농협들 - 녹색
-      '성주': { 
-        bg: 'from-green-500 to-green-600', 
+      '성주': {
+        bg: 'from-green-500 to-green-600',
         text: 'text-green-600',
-        light: 'bg-green-50'
+        light: 'bg-green-50',
+        gradient: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%)'
       }
     };
 
@@ -109,24 +183,22 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     return colorMap[theme.bg] || 'rgba(34, 197, 94, 0.08)'; // 기본값: 녹색
   };
 
-  // 등락률 계산 및 표시 함수
+  // 등락 계산 및 표시 함수 (금액차만 표시, 중앙 정렬)
   const renderPriceChange = (currentPrice, previousPrice, unit = '원') => {
     if (!previousPrice || previousPrice === 0) return null;
-    
+
     const change = currentPrice - previousPrice;
-    const changePercent = (change / previousPrice) * 100;
     const isPositive = change > 0;
-    const isNegative = change < 0;
-    
+
     if (change === 0) return <span className="text-gray-500 text-xs">보합</span>;
 
     return (
-      <div className="flex items-center space-x-1 text-xs">
+      <div className="flex items-center justify-center space-x-1 text-xs">
         <span className={isPositive ? 'text-red-500' : 'text-blue-500'}>
           {isPositive ? '▲' : '▼'}
         </span>
         <span className={isPositive ? 'text-red-500' : 'text-blue-500'}>
-          {Math.abs(change).toLocaleString()}{unit} ({Math.abs(changePercent).toFixed(1)}%)
+          {Math.abs(change).toLocaleString()}{unit}
         </span>
       </div>
     );
@@ -221,121 +293,150 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     );
   }
 
+  // 카드 투명도 계산 (화면 중앙에 가까울수록 선명)
+  const getCardOpacity = (cardId, index) => {
+    const ratio = visibleItems[cardId];
+    if (ratio === undefined) {
+      // 첫 번째 카드는 기본적으로 보이게
+      return index === 0 ? 1 : 0.3;
+    }
+    // 최소 0.3, 최대 1의 투명도
+    return Math.max(0.3, ratio);
+  };
+
+  // 카드 스케일 계산 (화면 중앙에 가까울수록 크게)
+  const getCardScale = (cardId, index) => {
+    const ratio = visibleItems[cardId];
+    if (ratio === undefined) {
+      return index === 0 ? 1 : 0.95;
+    }
+    // 최소 0.95, 최대 1의 스케일
+    return 0.95 + (ratio * 0.05);
+  };
+
   return (
     <>
       {/* 모바일 전용 레이아웃 - 세로 스택 */}
-      <div className="space-y-4 flex flex-col items-center">
+      <div className="space-y-6 flex flex-col items-center">
         {marketData.slice(0, renderedCount).map((market, index) => {
           const theme = getMarketTheme(market.name);
+          const cardId = `card-${market.id}`;
+          const cardOpacity = getCardOpacity(cardId, index);
+          const cardScale = getCardScale(cardId, index);
+
           return (
           <React.Fragment key={market.id}>
+            {/* 카드 컨테이너 - 뱃지를 위한 상대 위치 */}
             <div
-              className="w-full max-w-md mx-auto bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 haptic-feedback no-select market-card cursor-pointer"
-              onClick={() => handleCardClick(market.name)}
+              ref={(el) => setCardRef(el, cardId)}
+              data-card-id={cardId}
+              className="w-full max-w-md mx-auto relative pt-4 transition-all duration-300 ease-out"
               style={{
-                boxShadow: `-4px 0 15px ${theme.bg.includes('blue') ? 'rgba(59, 130, 246, 0.25)' :
-                            theme.bg.includes('green') ? 'rgba(34, 197, 94, 0.25)' :
-                            theme.bg.includes('orange') ? 'rgba(249, 115, 22, 0.25)' :
-                            theme.bg.includes('red') ? 'rgba(239, 68, 68, 0.25)' :
-                            theme.bg.includes('yellow') ? 'rgba(234, 179, 8, 0.25)' :
-                            theme.bg.includes('pink') ? 'rgba(236, 72, 153, 0.25)' :
-                            'rgba(59, 130, 246, 0.25)'}, 0 4px 15px rgba(0, 0, 0, 0.1)`,
                 animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
                 animationDelay: navigationType !== 'POP' ? `${index * 50}ms` : '0ms',
-                opacity: navigationType !== 'POP' ? 0 : 1
+                opacity: cardOpacity,
+                transform: `scale(${cardScale})`,
+                filter: `blur(${(1 - cardOpacity) * 2}px)`
               }}
             >
-            {/* 농협명 헤더 - 간소화 */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-              <div className="flex items-center space-x-3">
-                <div className={`w-10 h-10 bg-gradient-to-r ${theme.bg} rounded-full flex items-center justify-center shadow-md`}>
-                  <span className="text-white text-sm font-bold">🏪</span>
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-900">{market.name}</h2>
-                  <span className="text-xs text-gray-500">경락 정보</span>
-                </div>
+              {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 */}
+              <div className="absolute -top-0 left-4 z-10">
+                <span className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${theme.bg} text-white text-base font-bold rounded-full shadow-md`}>
+                  <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
+                  {market.name}
+                </span>
               </div>
-            </div>
 
-            {/* 가격 정보 영역 - 카드 형태로 재구성 */}
-            <div className="p-4 bg-gray-50">
+              {/* 카드 본체 - 그라데이션 배경 적용 */}
+              <div
+                className="rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 haptic-feedback no-select market-card cursor-pointer"
+                style={{ background: theme.gradient }}
+                onClick={() => handleCardClick(market.name)}
+              >
+              {/* 가격 정보 영역 */}
+              <div className="p-4 pt-7">
               {market.error ? (
                 <div className="text-center py-8">
                   <div className="flex flex-col items-center space-y-3">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl">📊</span>
                     </div>
-                    <div className="text-gray-500 text-sm font-medium">경락가 정보가 없습니다</div>
+                    <div className="text-gray-500 text-base font-medium">경락가 정보가 없습니다</div>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {/* 총수량 */}
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-semibold text-gray-700">총수량</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-gray-900 text-base">
-                          {formatPrice(market.totalQuantity)} {market.unit}
-                        </span>
-                        {market.previousTotalQuantity && renderPriceChange(market.totalQuantity, market.previousTotalQuantity, '상자')}
-                      </div>
+                <>
+                  {/* 총 출하량 정보 */}
+                  <div className="flex items-center justify-between text-base text-gray-600 mb-2">
+                    <div>
+                      총 출하량 <span className="font-bold text-gray-800">{formatPrice(market.totalQuantity)}{market.unit}</span>
+                    </div>
+                    <div>
+                      {market.previousTotalQuantity ? (
+                        renderPriceChange(market.totalQuantity, market.previousTotalQuantity, '상자')
+                      ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                      )}
                     </div>
                   </div>
-                  
-                  {/* 평균가 */}
-                  <div className="bg-gray-50 rounded-lg p-3 shadow-sm border border-gray-200">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-semibold text-gray-700">평균가</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-gray-900 text-base">
-                          {formatPrice(market.averagePrice)} 원
-                        </span>
-                        {market.previousAveragePrice && renderPriceChange(market.averagePrice, market.previousAveragePrice)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* 최고가 */}
-                  <div className="bg-red-50 rounded-lg p-3 shadow-sm border border-red-200">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-semibold text-red-700">최고가</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-red-700 text-base">
-                          {formatPrice(market.maxPrice)} 원
-                        </span>
-                        {market.previousMaxPrice && renderPriceChange(market.maxPrice, market.previousMaxPrice)}
-                      </div>
-                    </div>
+                  {/* 총 출하금액 정보 (DB에서 제공하는 실제 거래금액) */}
+                  <div className="text-base text-gray-600 mb-4">
+                    총 출하금액 <span className="font-bold text-gray-800">{formatPrice(market.totalAmount)}원</span>
                   </div>
 
-                  {/* 최저가 */}
-                  <div className="bg-blue-50 rounded-lg p-3 shadow-sm border border-blue-200">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm font-semibold text-blue-700">최저가</span>
+                  {/* 가격 정보 그리드 - 3열 (평균가, 최고가, 최저가) + 각각 전일대비 */}
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {/* 평균가 */}
+                    <div className="bg-white rounded-lg py-3 px-2 shadow-sm">
+                      <div className="text-sm text-gray-500 mb-1">평균가</div>
+                      <div className={`text-lg font-bold ${theme.text}`}>
+                        {formatPrice(market.averagePrice)}원
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-blue-700 text-base">
-                          {formatPrice(market.minPrice)} 원
-                        </span>
-                        {market.previousMinPrice && renderPriceChange(market.minPrice, market.previousMinPrice)}
+                      <div className="mt-1 min-h-[20px]">
+                        {market.previousAveragePrice ? (
+                          renderPriceChange(market.averagePrice, market.previousAveragePrice)
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 최고가 */}
+                    <div className="bg-white rounded-lg py-3 px-2 shadow-sm">
+                      <div className="text-sm text-gray-500 mb-1">최고가</div>
+                      <div className="text-lg font-bold text-red-500">
+                        {formatPrice(market.maxPrice)}원
+                      </div>
+                      <div className="mt-1 min-h-[20px]">
+                        {market.previousMaxPrice ? (
+                          renderPriceChange(market.maxPrice, market.previousMaxPrice)
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 최저가 */}
+                    <div className="bg-white rounded-lg py-3 px-2 shadow-sm">
+                      <div className="text-sm text-gray-500 mb-1">최저가</div>
+                      <div className="text-lg font-bold text-blue-500">
+                        {formatPrice(market.minPrice)}원
+                      </div>
+                      <div className="mt-1 min-h-[20px]">
+                        {market.previousMinPrice ? (
+                          renderPriceChange(market.minPrice, market.previousMinPrice)
+                        ) : (
+                          <span className="text-xs text-gray-400">-</span>
+                        )}
                       </div>
                     </div>
                   </div>
-                </div>
+                </>
               )}
               
               {/* 액션 버튼 - 광고 카드 스타일과 일관성 */}
               <div className="mt-4">
-                <button 
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCardClick(market.name);
@@ -344,6 +445,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 >
                   상세 가격 보기
                 </button>
+              </div>
               </div>
             </div>
             </div>

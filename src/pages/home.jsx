@@ -167,10 +167,14 @@ const Home = () => {
               maxPrice: market.data.previous_max_price || 0,
             } : null;
 
+            // DB에서 제공하는 실제 총 거래금액 사용
+            const totalAmount = market.data.summary?.total_amount || 0;
+
             return {
               id: index + 1,
               name: market.market_name,
               totalQuantity,
+              totalAmount, // 실제 DB 거래금액
               averagePrice: avgPrice,
               minPrice,
               maxPrice,
@@ -230,17 +234,36 @@ const Home = () => {
     }
   };
 
-  // 초기 로드 시 마지막 경락일 데이터 가져오기
+  // 초기 로드 시 데이터 가져오기
   useEffect(() => {
-    const loadLatestMarketData = async () => {
+    const loadMarketData = async () => {
+      // 저장된 날짜가 있고 유효한 경우 (1시간 이내) 해당 날짜로 조회
+      const savedDate = getSavedDate();
+      const today = getKoreanToday();
+
+      // localStorage에 저장된 날짜가 있으면 해당 날짜 사용
+      const hasSavedDate = localStorage.getItem('market_selected_date') &&
+                           localStorage.getItem('market_selected_date_time');
+
+      if (hasSavedDate) {
+        const savedTime = parseInt(localStorage.getItem('market_selected_date_time'));
+        const oneHour = 60 * 60 * 1000;
+
+        // 1시간 이내에 저장된 날짜가 있으면 해당 날짜로 조회
+        if (Date.now() - savedTime < oneHour) {
+          setSelectedDate(savedDate);
+          fetchMarketData(savedDate);
+          return;
+        }
+      }
+
+      // 저장된 날짜가 없거나 만료된 경우, DB에서 마지막 경락일 조회
       try {
-        // DB에서 마지막 경락일 조회
         const latestDate = await marketService.getLatestMarketDate();
         if (latestDate) {
           setSelectedDate(latestDate);
           fetchMarketData(latestDate);
         } else {
-          // 마지막 경락일이 없으면 저장된 날짜로 시도
           fetchMarketData(selectedDate);
         }
       } catch (error) {
@@ -248,7 +271,7 @@ const Home = () => {
         fetchMarketData(selectedDate);
       }
     };
-    loadLatestMarketData();
+    loadMarketData();
   }, []); // 최초 로드 시에만 실행
 
   // 날짜 변경 시 로컬 스토리지에 저장 (타임스탬프와 함께)
