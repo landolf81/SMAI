@@ -414,10 +414,12 @@ const PostEditor = () => {
           const videoInfo = await checkVideoNeedsCompression(file);
 
           if (videoInfo.needsCompression) {
-            console.log(`🎬 동영상 압축 시작: ${file.name} (${videoInfo.height}p, ${videoInfo.sizeMB.toFixed(1)}MB)`);
+            const heightInfo = videoInfo.height ? `${videoInfo.height}p` : '알 수 없음';
+            const sizeInfo = videoInfo.sizeMB ? `${videoInfo.sizeMB.toFixed(1)}MB` : `${(file.size / 1024 / 1024).toFixed(1)}MB`;
+            console.log(`🎬 동영상 압축 시작: ${file.name} (${heightInfo}, ${sizeInfo}) - ${videoInfo.reason || ''}`);
             setVideoCompressProgress({
               progress: 0,
-              status: `동영상 압축 준비 중...`,
+              status: `동영상 변환 준비 중...`,
               fileName: file.name
             });
 
@@ -426,7 +428,7 @@ const PostEditor = () => {
               onProgress: (progress) => {
                 setVideoCompressProgress({
                   progress,
-                  status: `동영상 압축 중... ${progress}%`,
+                  status: `동영상 변환 중... ${progress}%`,
                   fileName: file.name
                 });
               }
@@ -435,10 +437,12 @@ const PostEditor = () => {
             compressedVideos.push(compressedVideo);
             const originalMB = (file.size / 1024 / 1024).toFixed(2);
             const compressedMB = (compressedVideo.size / 1024 / 1024).toFixed(2);
-            console.log(`✅ 동영상 압축 완료: ${originalMB}MB → ${compressedMB}MB`);
+            console.log(`✅ 동영상 변환 완료: ${originalMB}MB → ${compressedMB}MB`);
           } else {
             compressedVideos.push(file);
-            console.log(`동영상 압축 불필요: ${file.name} (${videoInfo.height}p, ${videoInfo.sizeMB.toFixed(1)}MB)`);
+            const heightInfo = videoInfo.height ? `${videoInfo.height}p` : '알 수 없음';
+            const sizeInfo = videoInfo.sizeMB ? `${videoInfo.sizeMB.toFixed(1)}MB` : `${(file.size / 1024 / 1024).toFixed(1)}MB`;
+            console.log(`동영상 변환 불필요: ${file.name} (${heightInfo}, ${sizeInfo})`);
           }
         } catch (error) {
           console.error(`❌ 동영상 압축 실패: ${file.name}`, error);
