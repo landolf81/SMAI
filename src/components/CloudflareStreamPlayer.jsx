@@ -28,7 +28,7 @@ const CloudflareStreamPlayer = ({
   const uid = getCloudflareStreamUid(url);
 
   // Customer subdomain (from your Cloudflare account)
-  const customerSubdomain = 'customer-91fe46eef7b97939176dd0e43747409a';
+  const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
 
   // Cloudflare Stream iframe URL 생성
   const getIframeSrc = () => {

@@ -122,9 +122,9 @@ export const uploadVideoToStream = async (file, onProgress) => {
         resolve({
           uid,
           // Cloudflare Stream 재생 URL 형식
-          playbackUrl: `https://customer-91fe46eef7b97939176dd0e43747409a.cloudflarestream.com/${uid}/manifest/video.m3u8`,
-          thumbnailUrl: `https://customer-91fe46eef7b97939176dd0e43747409a.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg`,
-          iframeUrl: `https://customer-91fe46eef7b97939176dd0e43747409a.cloudflarestream.com/${uid}/iframe`,
+          playbackUrl: `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/manifest/video.m3u8`,
+          thumbnailUrl: `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg`,
+          iframeUrl: `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/iframe`,
         });
       } else {
         reject(new Error(`업로드 실패 (${xhr.status})`));
@@ -151,7 +151,7 @@ export const isStreamVideo = (url) => {
  * Stream UID에서 재생 URL 생성
  */
 export const getStreamPlaybackUrl = (uid) => {
-  return `https://customer-91fe46eef7b97939176dd0e43747409a.cloudflarestream.com/${uid}/manifest/video.m3u8`;
+  return `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/manifest/video.m3u8`;
 };
 
 /**
@@ -159,14 +159,14 @@ export const getStreamPlaybackUrl = (uid) => {
  */
 export const getStreamThumbnailUrl = (uid, options = {}) => {
   const { time = '0s', width = 640, height = 360 } = options;
-  return `https://customer-91fe46eef7b97939176dd0e43747409a.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=${time}&width=${width}&height=${height}`;
+  return `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=${time}&width=${width}&height=${height}`;
 };
 
 /**
  * Stream UID에서 iframe URL 생성
  */
 export const getStreamIframeUrl = (uid) => {
-  return `https://customer-91fe46eef7b97939176dd0e43747409a.cloudflarestream.com/${uid}/iframe`;
+  return `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/iframe`;
 };
 
 export default {

@@ -285,7 +285,7 @@ const MediaModal = ({
   const getCloudflareStreamIframeUrl = (url) => {
     const uid = getCloudflareStreamUid(url);
     if (!uid) return '';
-    const customerSubdomain = 'customer-91fe46eef7b97939176dd0e43747409a';
+    const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
     return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?autoplay=true&loop=true&controls=true`;
   };
 
