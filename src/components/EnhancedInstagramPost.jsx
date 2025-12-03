@@ -28,7 +28,7 @@ import CommentsPreview from './CommentsPreview';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import ReportModal from './ReportModal';
 import ReportDetailsModal from './ReportDetailsModal';
-import { isVideoFile, normalizeMediaUrl, getMediaType, isCloudflareStreamUrl } from '../utils/mediaUtils';
+import { isVideoFile, normalizeMediaUrl, getMediaType, isCloudflareStreamUrl, isR2VideoUrl } from '../utils/mediaUtils';
 import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 import YouTubeEmbed from './YouTubeEmbed';
 import LinkPreview from './LinkPreview';
@@ -115,6 +115,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const firstMediaType = hasMedia ? getMediaType(mediaFiles[0]) : { isVideo: false, isImage: false };
   const isVideo = firstMediaType.isVideo;
   const isCloudflareStream = hasMedia && isCloudflareStreamUrl(mediaFiles[0]);
+  const isR2Video = hasMedia && isR2VideoUrl(mediaFiles[0]);
 
   // 미디어 타입 감지 로그 제거됨
 
@@ -953,7 +954,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     setShowMediaModal(true);
                   }}
                 />
-              ) : isVideo ? (
+              ) : (isVideo || isR2Video) ? (
                 mediaLoadError ? (
                   <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500">
                     <div className="text-4xl mb-2">🎥</div>

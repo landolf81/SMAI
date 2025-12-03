@@ -9,7 +9,7 @@ import { YouTubePreviewCard } from '../components/YouTubeEmbed';
 import { postService, storageService } from '../services';
 import { compressImage } from '../utils/imageCompression';
 import { getMediaType, getAcceptedFileTypes } from '../utils/mediaUtils';
-import { uploadVideoToStream, validateVideo } from '../services/videoUploadService';
+import { uploadVideo, validateVideo } from '../services/videoUploadService';
 import { convertImageToPng, isImageFile, isHeicFile, formatFileSize } from '../utils/imageConverter';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -106,8 +106,8 @@ const PostEditor = () => {
         imageUrls = uploadResults.map(result => result.url);
       }
 
-      // Cloudflare Stream 동영상 URL 추가
-      const videoUrls = uploadedVideos.map(v => v.iframeUrl);
+      // 동영상 URL 추가 (R2 또는 Stream)
+      const videoUrls = uploadedVideos.map(v => v.type === 'r2' ? v.url : v.iframeUrl);
       const allMediaUrls = [...imageUrls, ...videoUrls];
 
       let finalContent = newPost.desc;
@@ -232,7 +232,20 @@ const PostEditor = () => {
       setImageConvertProgress(null);
     }
 
-    // 동영상 Cloudflare Stream 업로드
+    // 동영상 업로드 (1개만 허용)
+    // 이미 동영상이 있으면 새 동영상 추가 불가
+    if (videoFiles.length > 0 && uploadedVideos.length > 0) {
+      setError('동영상은 1개만 업로드할 수 있습니다. 기존 동영상을 삭제 후 다시 시도해주세요.');
+      setVideoUploadProgress(null);
+      return;
+    }
+
+    // 여러 동영상 선택 시 첫 번째만 사용
+    if (videoFiles.length > 1) {
+      setError('동영상은 1개만 업로드할 수 있습니다. 첫 번째 동영상만 업로드됩니다.');
+      videoFiles.splice(1); // 첫 번째만 유지
+    }
+
     for (const videoFile of videoFiles) {
       try {
         // 검증
@@ -244,20 +257,32 @@ const PostEditor = () => {
 
         setVideoUploadProgress({ progress: 0, fileName: videoFile.name });
 
-        const result = await uploadVideoToStream(videoFile, (progress) => {
+        // 통합 업로드 함수 사용 (MP4/WebM → R2, 그 외 → Stream)
+        const result = await uploadVideo(videoFile, (progress) => {
           setVideoUploadProgress({ progress, fileName: videoFile.name });
         });
 
         setUploadedVideos(prev => [...prev, result]);
 
         // 미리보기 추가
-        setPreviewImages(prev => [...prev, {
-          url: result.thumbnailUrl,
-          type: 'video/stream',
-          name: videoFile.name,
-          streamUid: result.uid,
-          iframeUrl: result.iframeUrl,
-        }]);
+        if (result.type === 'r2') {
+          // R2 동영상: 직접 URL 사용
+          setPreviewImages(prev => [...prev, {
+            url: result.url,
+            type: 'video/r2',
+            name: videoFile.name,
+            videoUrl: result.url,
+          }]);
+        } else {
+          // Stream 동영상: 썸네일 및 iframe URL 사용
+          setPreviewImages(prev => [...prev, {
+            url: result.thumbnailUrl,
+            type: 'video/stream',
+            name: videoFile.name,
+            streamUid: result.uid,
+            iframeUrl: result.iframeUrl,
+          }]);
+        }
 
       } catch (err) {
         console.error('동영상 업로드 실패:', err);
@@ -287,6 +312,9 @@ const PostEditor = () => {
     // Cloudflare Stream 동영상인 경우
     if (preview?.streamUid) {
       setUploadedVideos(prev => prev.filter(v => v.uid !== preview.streamUid));
+    } else if (preview?.type === 'video/r2') {
+      // R2 동영상인 경우
+      setUploadedVideos(prev => prev.filter(v => v.url !== preview.videoUrl));
     } else if (index >= existingImages.length) {
       // 새로 추가한 이미지 파일
       const newFileIndex = index - existingImages.length;
@@ -398,8 +426,8 @@ const PostEditor = () => {
             >
               <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-gray-400" />
               <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 파일 업로드</span></p>
-              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 2분)</p>
-              <p className="text-xs text-green-600 mt-1">동영상은 Cloudflare Stream으로 자동 변환됩니다</p>
+              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
+              <p className="text-xs text-green-600 mt-1">MP4/WebM은 빠른 업로드, 그 외는 자동 변환</p>
             </label>
             <input
               id="imageInput"
@@ -450,6 +478,7 @@ const PostEditor = () => {
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {previewImages.map((preview, index) => {
                   const isStream = preview?.type === 'video/stream';
+                  const isR2Video = preview?.type === 'video/r2';
                   const isVideo = typeof preview === 'object' && preview.type?.startsWith('video/');
                   const previewUrl = typeof preview === 'string' ? preview : preview.url;
 
@@ -475,6 +504,18 @@ const PostEditor = () => {
                             <span className="text-white text-xs text-center px-2">인코딩 중...</span>
                           </div>
                         </div>
+                      ) : isR2Video ? (
+                        <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
+                          <video
+                            src={previewUrl}
+                            className="w-full h-full object-cover rounded-lg"
+                            muted
+                            playsInline
+                          />
+                          <div className="absolute bottom-2 left-2 bg-green-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
+                            R2 동영상
+                          </div>
+                        </div>
                       ) : isVideo ? (
                         <video src={previewUrl} className="w-full h-auto rounded-lg" controls muted />
                       ) : (
@@ -487,9 +528,9 @@ const PostEditor = () => {
                       >
                         <FontAwesomeIcon icon={faTimes} className="w-3 h-3" />
                       </button>
-                      {(isStream || isVideo) && (
-                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded text-xs">
-                          {isStream ? 'Stream' : '동영상'}
+                      {isStream && (
+                        <div className="absolute bottom-2 left-2 bg-purple-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
+                          Stream
                         </div>
                       )}
                     </div>

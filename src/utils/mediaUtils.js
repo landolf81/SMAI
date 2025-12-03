@@ -46,6 +46,21 @@ export const isCloudflareStreamUrl = (url) => {
 };
 
 /**
+ * R2 동영상 URL 여부를 판단
+ * @param {string} url - URL
+ * @returns {boolean} R2 동영상 URL 여부
+ */
+export const isR2VideoUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  // R2 URL이면서 동영상 확장자를 가진 경우
+  const isR2 = url.includes('r2.dev') || url.includes('r2.cloudflarestorage.com');
+  if (!isR2) return false;
+
+  const lowercaseUrl = url.toLowerCase();
+  return VIDEO_EXTENSIONS.some(ext => lowercaseUrl.endsWith(ext));
+};
+
+/**
  * Cloudflare Stream iframe URL에서 UID 추출
  * @param {string} url - iframe URL
  * @returns {string|null} UID 또는 null
@@ -293,5 +308,6 @@ export default {
   validateUploadFile,
   getAcceptedFileTypes,
   isCloudflareStreamUrl,
+  isR2VideoUrl,
   getCloudflareStreamUid
 };

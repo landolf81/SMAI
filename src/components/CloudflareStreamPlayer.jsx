@@ -1,12 +1,14 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faSpinner, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { getCloudflareStreamUid } from '../utils/mediaUtils';
+import Hls from 'hls.js';
 
 /**
  * Cloudflare Stream 동영상 플레이어 컴포넌트
- * iframe 방식으로 HLS 스트리밍 재생
+ * HLS.js를 사용하여 video 태그로 직접 재생
+ * object-fit: cover 적용으로 확대 없이 크롭
  */
 const CloudflareStreamPlayer = ({
   url,
@@ -14,7 +16,7 @@ const CloudflareStreamPlayer = ({
   muted: initialMuted = true,
   loop = true,
   controls = false,
-  showMuteToggle = false,  // 음소거 토글 버튼 표시 여부
+  showMuteToggle = false,
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
   onClick,
@@ -25,9 +27,23 @@ const CloudflareStreamPlayer = ({
   const [hasError, setHasError] = useState(false);
   const [showPlayer, setShowPlayer] = useState(autoplay);
   const [isMuted, setIsMuted] = useState(initialMuted);
-  const iframeRef = useRef(null);
+  const videoRef = useRef(null);
+  const hlsRef = useRef(null);
 
   const uid = getCloudflareStreamUid(url);
+
+  // Customer subdomain (from your Cloudflare account)
+  const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
+
+  // HLS playback URL
+  const playbackUrl = uid ? `https://${customerSubdomain}.cloudflarestream.com/${uid}/manifest/video.m3u8` : '';
+
+  // 썸네일 URL 생성
+  const getThumbnailUrl = useCallback(() => {
+    if (!uid) return '';
+    const fitParam = aspectRatio === 'square' ? '&fit=crop' : '';
+    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
+  }, [uid, aspectRatio]);
 
   // autoplay prop 변경 시 showPlayer 상태 동기화
   useEffect(() => {
@@ -36,33 +52,76 @@ const CloudflareStreamPlayer = ({
     }
   }, [autoplay]);
 
-  // 음소거 토글 핸들러 (iframe 재로드)
+  // HLS.js 초기화 및 재생
+  useEffect(() => {
+    if (!showPlayer || !videoRef.current || !uid) return;
+
+    const video = videoRef.current;
+
+    // Safari는 네이티브 HLS 지원
+    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = playbackUrl;
+      video.addEventListener('loadedmetadata', () => {
+        setIsLoading(false);
+        if (onReady) onReady();
+        if (autoplay) {
+          video.play().catch(() => {});
+        }
+      });
+      video.addEventListener('error', () => {
+        setHasError(true);
+        setIsLoading(false);
+        if (onError) onError();
+      });
+    } else if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
+
+      hlsRef.current = hls;
+
+      hls.loadSource(playbackUrl);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setIsLoading(false);
+        if (onReady) onReady();
+        if (autoplay) {
+          video.play().catch(() => {});
+        }
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          setHasError(true);
+          setIsLoading(false);
+          if (onError) onError();
+        }
+      });
+
+      return () => {
+        hls.destroy();
+        hlsRef.current = null;
+      };
+    } else {
+      // HLS not supported
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [showPlayer, uid, playbackUrl, autoplay, onReady, onError]);
+
+  // 음소거 상태 변경
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, [isMuted]);
+
+  // 음소거 토글 핸들러
   const handleMuteToggle = (e) => {
     e.stopPropagation();
     setIsMuted(!isMuted);
-  };
-
-  // Customer subdomain (from your Cloudflare account)
-  const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
-
-  // Cloudflare Stream iframe URL 생성
-  const getIframeSrc = () => {
-    if (!uid) return '';
-    const params = new URLSearchParams({
-      muted: isMuted ? 'true' : 'false',
-      autoplay: showPlayer ? 'true' : 'false',
-      loop: loop ? 'true' : 'false',
-      controls: controls ? 'true' : 'false',
-      preload: 'auto',
-    });
-    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?${params.toString()}`;
-  };
-
-  // 썸네일 URL 생성 (1:1 비율일 때 fit=crop 적용)
-  const getThumbnailUrl = () => {
-    if (!uid) return '';
-    const fitParam = aspectRatio === 'square' ? '&fit=crop' : '';
-    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
   };
 
   const aspectRatioClass = {
@@ -77,17 +136,6 @@ const CloudflareStreamPlayer = ({
     if (onClick) onClick(e);
   };
 
-  const handleIframeLoad = () => {
-    setIsLoading(false);
-    if (onReady) onReady();
-  };
-
-  const handleIframeError = () => {
-    setIsLoading(false);
-    setHasError(true);
-    if (onError) onError();
-  };
-
   if (!uid) {
     return (
       <div className={`bg-gray-800 flex items-center justify-center ${aspectRatioClass} ${className}`}>
@@ -96,13 +144,23 @@ const CloudflareStreamPlayer = ({
     );
   }
 
-  // 에러 상태
+  // 에러 상태 - 썸네일 + 인코딩 중 오버레이
   if (hasError) {
     return (
-      <div className={`bg-gray-800 flex flex-col items-center justify-center ${aspectRatioClass} ${className}`}>
-        <div className="text-4xl mb-2">🎥</div>
-        <span className="text-white text-sm">동영상 인코딩 중...</span>
-        <span className="text-gray-400 text-xs mt-1">잠시 후 다시 시도해주세요</span>
+      <div className={`relative bg-gray-900 ${aspectRatioClass} ${className}`}>
+        {/* 썸네일 배경 */}
+        <img
+          src={getThumbnailUrl()}
+          alt="동영상 썸네일"
+          className="w-full h-full object-cover"
+          onError={(e) => { e.target.style.display = 'none'; }}
+        />
+        {/* 인코딩 중 오버레이 */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60">
+          <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin mb-2" />
+          <span className="text-white text-sm">동영상 인코딩 중...</span>
+          <span className="text-gray-400 text-xs mt-1">잠시 후 다시 시도해주세요</span>
+        </div>
       </div>
     );
   }
@@ -119,7 +177,6 @@ const CloudflareStreamPlayer = ({
           alt="동영상 썸네일"
           className="w-full h-full object-cover"
           onError={(e) => {
-            // 썸네일 로드 실패 시 대체 UI
             e.target.style.display = 'none';
           }}
         />
@@ -133,89 +190,38 @@ const CloudflareStreamPlayer = ({
     );
   }
 
-  // iframe 플레이어
-  // 1:1 비율일 때 CSS로 중앙 크롭 적용 (16:9 → 1:1)
-  if (aspectRatio === 'square') {
-    return (
-      <div className={`relative bg-gray-900 aspect-square overflow-hidden ${className}`}>
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
-            <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin" />
-          </div>
-        )}
-        <iframe
-          ref={iframeRef}
-          src={getIframeSrc()}
-          className="absolute pointer-events-none"
-          style={{
-            width: '177.78%',
-            height: '177.78%',
-            left: '-38.89%',
-            top: '-38.89%',
-            border: 'none'
-          }}
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          onLoad={handleIframeLoad}
-          onError={handleIframeError}
-        />
-
-        {/* 클릭 영역 (전체화면 모달 열기용) */}
-        {onClick && (
-          <div
-            className="absolute inset-0 z-10 cursor-pointer"
-            onClick={onClick}
-          />
-        )}
-
-        {/* 동영상 아이콘 */}
-        <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
-          <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
-          <span>동영상</span>
-        </div>
-
-        {/* 음소거 토글 버튼 */}
-        {showMuteToggle && (
-          <button
-            onClick={handleMuteToggle}
-            className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
-          >
-            <FontAwesomeIcon
-              icon={isMuted ? faVolumeMute : faVolumeUp}
-              className="w-4 h-4"
-            />
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // 기본 모드: 원본 비율 유지
+  // video 태그 플레이어 (object-fit: cover로 크롭)
   return (
-    <div className={`relative bg-gray-900 ${aspectRatioClass} ${className}`}>
+    <div className={`relative bg-gray-900 ${aspectRatioClass} overflow-hidden ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
           <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin" />
         </div>
       )}
-      <iframe
-        ref={iframeRef}
-        src={getIframeSrc()}
-        className="w-full h-full pointer-events-none"
-        style={{ border: 'none' }}
-        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        onLoad={handleIframeLoad}
-        onError={handleIframeError}
+
+      <video
+        ref={videoRef}
+        className="w-full h-full object-cover"
+        autoPlay={autoplay}
+        muted={isMuted}
+        loop={loop}
+        playsInline
+        controls={controls}
       />
 
       {/* 클릭 영역 (전체화면 모달 열기용) */}
-      {onClick && (
+      {onClick && !controls && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
           onClick={onClick}
         />
       )}
+
+      {/* 동영상 아이콘 */}
+      <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
+        <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+        <span>동영상</span>
+      </div>
 
       {/* 음소거 토글 버튼 */}
       {showMuteToggle && (
