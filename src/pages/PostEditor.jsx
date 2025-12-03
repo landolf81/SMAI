@@ -91,10 +91,9 @@ const PostEditor = () => {
         for (const file of files) {
           const mediaType = getMediaType(file);
           if (mediaType.isImage) {
-            // convertImageToPng에서 PNG 변환 + 리사이징 + 압축 한 번에 처리
+            // convertImageToPng에서 PNG 변환 + 리사이징 처리
             const processedImage = await convertImageToPng(file, {
-              maxWidth: 2048,
-              quality: 0.85
+              maxWidth: 1024
             });
             processedFiles.push(processedImage);
           }
@@ -221,7 +220,7 @@ const PostEditor = () => {
               total: imageFiles.length,
               status: `${file.name} 변환 중...`
             });
-            const convertedFile = await convertImageToPng(file, { maxWidth: 2048 });
+            const convertedFile = await convertImageToPng(file, { maxWidth: 1024 });
             processedImages.push(convertedFile);
           } else {
             // 일반 이미지는 원본 유지 (업로드 시 처리)

@@ -65,7 +65,7 @@ const convertHeicToBlob = async (file) => {
  * @param {number} maxWidth - 최대 가로 크기
  * @returns {HTMLCanvasElement}
  */
-const resizeImageToCanvas = (img, maxWidth = 2048) => {
+const resizeImageToCanvas = (img, maxWidth = 1024) => {
   let width = img.width;
   let height = img.height;
 
@@ -145,7 +145,7 @@ const canvasToBlob = (canvas) => {
  * @returns {Promise<File>} 변환된 PNG 파일
  */
 export const convertImageToPng = async (file, options = {}) => {
-  const { maxWidth = 2048, onProgress } = options;
+  const { maxWidth = 1024, onProgress } = options;
 
   try {
     onProgress?.(10, 'Processing...');
@@ -200,7 +200,7 @@ export const convertImageToPng = async (file, options = {}) => {
  * @returns {Promise<File[]>} 변환된 PNG 파일 배열
  */
 export const convertImagesToPng = async (files, options = {}) => {
-  const { maxWidth = 2048, onProgress } = options;
+  const { maxWidth = 1024, onProgress } = options;
   const convertedFiles = [];
 
   for (let i = 0; i < files.length; i++) {
