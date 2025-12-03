@@ -10,12 +10,9 @@ const MobileAdDisplay = ({ ad }) => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [showLandingModal, setShowLandingModal] = useState(false);
   const [modalVideoMuted, setModalVideoMuted] = useState(false); // false = 음소거 해제
-  const [modalMediaIndex, setModalMediaIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [isModalAutoCycling, setIsModalAutoCycling] = useState(true); // 모달 자동 순환 상태
   const videoRef = React.useRef(null);
   const adCardRef = React.useRef(null);
-  const modalAutoPlayRef = React.useRef(null);
 
   // 추가 미디어 불러오기
   useEffect(() => {
@@ -231,14 +228,6 @@ const MobileAdDisplay = ({ ad }) => {
     }
   }, [showLandingModal, ad, adMedia, currentMediaIndex]);
 
-  // 모달에서 동영상 종료 시 다음 미디어로 이동
-  const handleModalVideoEnded = () => {
-    const allMedia = getAllMedia();
-    if (allMedia.length > 1) {
-      setModalMediaIndex(prev => (prev + 1) % allMedia.length);
-    }
-  };
-
   // 외부 광고(카드)에서 동영상 종료 시 다음 미디어로 이동
   const handleCardVideoEnded = () => {
     const totalCount = getTotalMediaCount();
@@ -246,42 +235,6 @@ const MobileAdDisplay = ({ ad }) => {
       setCurrentMediaIndex(prev => (prev + 1) % totalCount);
     }
     setIsVideoPlaying(false);
-  };
-
-  // 모달 자동 순환 (이미지만, 동영상은 onEnded로 처리)
-  useEffect(() => {
-    if (showLandingModal && isModalAutoCycling) {
-      const allMedia = getAllMedia();
-      const currentMedia = allMedia[modalMediaIndex];
-
-      // 현재 미디어가 동영상이면 자동 순환 안 함 (동영상은 onEnded로 처리)
-      if (currentMedia?.type?.startsWith('video')) {
-        return;
-      }
-
-      // 이미지일 때만 3초 후 다음으로
-      if (allMedia.length > 1) {
-        modalAutoPlayRef.current = setTimeout(() => {
-          setModalMediaIndex(prev => (prev + 1) % allMedia.length);
-        }, 3000);
-
-        return () => {
-          if (modalAutoPlayRef.current) {
-            clearTimeout(modalAutoPlayRef.current);
-          }
-        };
-      }
-    }
-  }, [showLandingModal, modalMediaIndex, isModalAutoCycling, adMedia]);
-
-  // 모달 썸네일 클릭 핸들러 (일시정지 기능)
-  const handleModalThumbnailClick = (index) => {
-    setIsModalAutoCycling(false);
-    setModalMediaIndex(index);
-    // 5초 후 자동 순환 재개
-    setTimeout(() => {
-      setIsModalAutoCycling(true);
-    }, 5000);
   };
 
   // 광고 클릭 핸들러
@@ -301,8 +254,6 @@ const MobileAdDisplay = ({ ad }) => {
 
     // 외부 링크가 없으면 모달로 열기
     setModalVideoMuted(false);
-    setModalMediaIndex(currentMediaIndex);
-    setIsModalAutoCycling(true);
     setShowLandingModal(true);
 
     // body 스크롤 방지
@@ -320,10 +271,6 @@ const MobileAdDisplay = ({ ad }) => {
     });
     // 다음 모달 열 때를 위해 음소거 해제 상태로 초기화
     setModalVideoMuted(false);
-    // 자동 순환 타이머 정리
-    if (modalAutoPlayRef.current) {
-      clearTimeout(modalAutoPlayRef.current);
-    }
 
     // body 스크롤 복원
     document.body.style.overflow = 'auto';
@@ -472,20 +419,19 @@ const MobileAdDisplay = ({ ad }) => {
 
             {/* 모달 콘텐츠 */}
             <div className="p-4 overflow-y-auto flex-1">
-              {/* 미디어 표시 (동영상 포함) */}
-              {getModalMedia(modalMediaIndex) && (
-                <div className="mb-4 relative">
-                  {getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
+              {/* 메인 이미지만 표시 (첫 번째 이미지) */}
+              {getModalMedia(0) && (
+                <div className="mb-4">
+                  {getModalMedia(0).type?.startsWith('video') ? (
                     <div className="relative">
                       <video
-                        src={getImageUrl(getModalMedia(modalMediaIndex).path)}
+                        src={getImageUrl(getModalMedia(0).path)}
                         className="w-full h-auto object-contain rounded-lg"
                         controls
                         muted={modalVideoMuted}
                         autoPlay
                         playsInline
                         preload="metadata"
-                        onEnded={handleModalVideoEnded}
                         onLoadedData={(e) => {
                           e.target.muted = modalVideoMuted;
                           e.target.play().catch(() => {});
@@ -495,7 +441,7 @@ const MobileAdDisplay = ({ ad }) => {
                           e.target.play().catch(() => {});
                         }}
                       />
-                      
+
                       {/* 음소거 토글 버튼 */}
                       <button
                         onClick={() => setModalVideoMuted(!modalVideoMuted)}
@@ -514,92 +460,15 @@ const MobileAdDisplay = ({ ad }) => {
                       </button>
                     </div>
                   ) : (
-                    <img 
-                      src={getImageUrl(getModalMedia(modalMediaIndex).path)}
-                      alt={getModalMedia(modalMediaIndex).alt || ad.title}
+                    <img
+                      src={getImageUrl(getModalMedia(0).path)}
+                      alt={getModalMedia(0).alt || ad.title}
                       className="w-full h-auto object-contain rounded-lg"
                       onError={(e) => {
                         e.target.src = DEFAULT_AD_IMAGE;
                       }}
                     />
                   )}
-                  
-                  {/* 모달 미디어 네비게이션 버튼 */}
-                  {getAllMedia().length > 1 && (
-                    <>
-                      <button 
-                        className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setModalMediaIndex(prev => 
-                            prev === 0 ? getAllMedia().length - 1 : prev - 1
-                          );
-                        }}
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
-                      <button 
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setModalMediaIndex(prev => 
-                            (prev + 1) % getAllMedia().length
-                          );
-                        }}
-                      >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-
-              {/* 썸네일 선택기 */}
-              {getAllMedia().length > 1 && (
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-gray-500">
-                      {modalMediaIndex + 1} / {getAllMedia().length}
-                    </span>
-                    <div className={`flex-shrink-0 text-xs px-2 py-1 rounded ${isModalAutoCycling ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                      {isModalAutoCycling ? '▶ 자동' : '⏸ 일시정지'}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {getAllMedia().map((media, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleModalThumbnailClick(index)}
-                        className={`flex-shrink-0 relative ${
-                          index === modalMediaIndex ? 'ring-2 ring-orange-500' : ''
-                        }`}
-                      >
-                        {media.type?.startsWith('video') ? (
-                          <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                            <svg className="w-5 h-5 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z"/>
-                            </svg>
-                          </div>
-                        ) : (
-                          <img
-                            src={getImageUrl(media.path)}
-                            alt={`썸네일 ${index + 1}`}
-                            className="w-12 h-12 object-cover rounded"
-                            onError={(e) => {
-                              e.target.src = DEFAULT_AD_IMAGE;
-                            }}
-                          />
-                        )}
-                        {index === modalMediaIndex && (
-                          <div className="absolute inset-0 bg-orange-500/20 rounded"></div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
                 </div>
               )}
 

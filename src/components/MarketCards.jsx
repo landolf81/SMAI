@@ -340,9 +340,9 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 filter: `blur(${(1 - cardOpacity) * 2}px)`
               }}
             >
-              {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 */}
+              {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 (단색 배경) */}
               <div className="absolute -top-0 left-4 z-10">
-                <span className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${theme.bg} text-white text-base font-bold rounded-full shadow-md`}>
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-[#00B140] text-white text-base font-bold rounded-full shadow-md">
                   <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
                   {market.name}
                 </span>
