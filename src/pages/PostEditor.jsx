@@ -7,10 +7,9 @@ import { faImage, faPaperPlane, faTimes, faArrowLeft, faLink } from '@fortawesom
 import { getFirstLinkInfo } from '../utils/linkDetector';
 import { YouTubePreviewCard } from '../components/YouTubeEmbed';
 import { postService, storageService } from '../services';
-import { compressImage } from '../utils/imageCompression';
 import { getMediaType, getAcceptedFileTypes } from '../utils/mediaUtils';
 import { uploadVideo, validateVideo } from '../services/videoUploadService';
-import { convertImageToPng, isImageFile, isHeicFile, formatFileSize } from '../utils/imageConverter';
+import { convertImageToPng, isImageFile, isHeicFile } from '../utils/imageConverter';
 import { v4 as uuidv4 } from 'uuid';
 
 const PostEditor = () => {
@@ -86,14 +85,18 @@ const PostEditor = () => {
       console.log('=== 게시물 작성 시작 ===');
       const postId = uuidv4();
 
-      // 이미지만 처리 (동영상은 이미 Cloudflare Stream에 업로드됨)
+      // 이미지 PNG 변환 + 압축 (업로드 시점에 처리)
       let processedFiles = [];
       if (files.length > 0) {
         for (const file of files) {
           const mediaType = getMediaType(file);
           if (mediaType.isImage) {
-            const compressedImage = await compressImage(file);
-            processedFiles.push(compressedImage);
+            // convertImageToPng에서 PNG 변환 + 리사이징 + 압축 한 번에 처리
+            const processedImage = await convertImageToPng(file, {
+              maxWidth: 2048,
+              quality: 0.85
+            });
+            processedFiles.push(processedImage);
           }
           // 동영상은 이미 uploadedVideos에 있으므로 건너뜀
         }
@@ -204,26 +207,30 @@ const PostEditor = () => {
       }
     }
 
-    // 이미지 변환
-    const convertedImages = [];
+    // HEIC 파일만 미리보기용으로 변환 (브라우저에서 표시 불가하므로)
+    // 일반 이미지는 원본 유지, 업로드 시점에 PNG 변환 + 압축 처리
+    const processedImages = [];
     if (imageFiles.length > 0) {
-      setImageConvertProgress({ current: 0, total: imageFiles.length, status: '이미지 변환 준비 중...' });
-
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         try {
-          setImageConvertProgress({
-            current: i + 1,
-            total: imageFiles.length,
-            status: `${file.name} 변환 중...`
-          });
-
-          const convertedFile = await convertImageToPng(file, { maxWidth: 1024 });
-          convertedImages.push(convertedFile);
+          if (isHeicFile(file)) {
+            // HEIC는 미리보기를 위해 변환 필요
+            setImageConvertProgress({
+              current: i + 1,
+              total: imageFiles.length,
+              status: `${file.name} 변환 중...`
+            });
+            const convertedFile = await convertImageToPng(file, { maxWidth: 2048 });
+            processedImages.push(convertedFile);
+          } else {
+            // 일반 이미지는 원본 유지 (업로드 시 처리)
+            processedImages.push(file);
+          }
         } catch (err) {
-          console.error(`이미지 변환 실패: ${file.name}`, err);
+          console.error(`이미지 처리 실패: ${file.name}`, err);
           if (!isHeicFile(file)) {
-            convertedImages.push(file);
+            processedImages.push(file);
           } else {
             setError(`${file.name} 변환에 실패했습니다.`);
           }
@@ -292,8 +299,8 @@ const PostEditor = () => {
     setVideoUploadProgress(null);
 
     // 이미지 파일 추가
-    setFiles(prev => [...prev, ...convertedImages]);
-    const newPreviews = convertedImages.map(file => ({
+    setFiles(prev => [...prev, ...processedImages]);
+    const newPreviews = processedImages.map(file => ({
       url: URL.createObjectURL(file),
       type: file.type,
       name: file.name

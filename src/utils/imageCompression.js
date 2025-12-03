@@ -29,21 +29,21 @@ const loadImage = (file) => {
 
 /**
  * 이미지 압축 및 리사이징
- * Instagram 규정에 맞춰 최대 1080px로 리사이징하고 품질 80%로 압축
+ * 핑거줌 시 고품질 유지를 위해 2048px로 리사이징하고 품질 85%로 압축
  *
  * @param {File} file - 원본 이미지 파일
  * @param {Object} options - 압축 옵션
- * @param {number} options.maxWidth - 최대 가로 크기 (기본: 1080px)
- * @param {number} options.maxHeight - 최대 세로 크기 (기본: 1350px, 4:5 비율)
- * @param {number} options.quality - 압축 품질 0-1 (기본: 0.8)
+ * @param {number} options.maxWidth - 최대 가로 크기 (기본: 2048px)
+ * @param {number} options.maxHeight - 최대 세로 크기 (기본: 2560px, 4:5 비율)
+ * @param {number} options.quality - 압축 품질 0-1 (기본: 0.85)
  * @param {string} options.outputFormat - 출력 포맷 (기본: image/jpeg)
  * @returns {Promise<File>} 압축된 이미지 파일
  */
 export const compressImage = async (file, options = {}) => {
   const {
-    maxWidth = 1080,
-    maxHeight = 1350,
-    quality = 0.8,
+    maxWidth = 2048,
+    maxHeight = 2560,
+    quality = 0.85,
     outputFormat = 'image/jpeg'
   } = options;
 

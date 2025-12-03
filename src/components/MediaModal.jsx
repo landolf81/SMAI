@@ -9,13 +9,9 @@ const MediaModal = ({
   onClose,
   mediaFiles = [],
   initialIndex = 0,
-  initialTime = 0  // 동영상 시작 시간 (초)
+  initialTime = 0
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [scale, setScale] = useState(1);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // 동영상 상태
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,8 +22,6 @@ const MediaModal = ({
   // 터치/스와이프 상태
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
   const [touchEnd, setTouchEnd] = useState({ x: 0, y: 0 });
-  const [initialDistance, setInitialDistance] = useState(0);
-  const [initialScale, setInitialScale] = useState(1);
 
   const containerRef = useRef(null);
   const mediaRef = useRef(null);
@@ -35,22 +29,34 @@ const MediaModal = ({
   const controlsTimeoutRef = useRef(null);
   const scrollYRef = useRef(0);
 
+  // 핀치줌 상태 (ref로 관리하여 리렌더링 방지)
+  const scaleRef = useRef(1);
+  const positionRef = useRef({ x: 0, y: 0 });
+  const initialDistanceRef = useRef(0);
+  const initialScaleRef = useRef(1);
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const imageRef = useRef(null);
+
   // 인덱스 초기화
   useEffect(() => {
     if (isOpen) {
       setCurrentIndex(initialIndex);
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
+      scaleRef.current = 1;
+      positionRef.current = { x: 0, y: 0 };
       setIsMuted(false);
       setProgress(0);
       setShowControls(true);
+      // 초기 transform 적용
+      if (imageRef.current) {
+        imageRef.current.style.transform = 'scale(1) translate(0px, 0px)';
+      }
     }
   }, [isOpen, initialIndex]);
 
-  // 동영상 자동 재생 (모달 열릴 때 & 인덱스 변경 시)
+  // 동영상 자동 재생
   useEffect(() => {
     if (isOpen && videoRef.current) {
-      // 피드에서 전달받은 재생 위치로 이동
       if (initialTime > 0 && currentIndex === initialIndex) {
         videoRef.current.currentTime = initialTime;
       }
@@ -69,13 +75,6 @@ const MediaModal = ({
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
         onClose();
-      }
-    };
-
-    const preventTouchMove = (e) => {
-      // 모달 내부 터치는 허용하되 배경 스크롤 방지
-      if (!containerRef.current?.contains(e.target)) {
-        e.preventDefault();
       }
     };
 
@@ -118,22 +117,33 @@ const MediaModal = ({
     return Math.sqrt(dx * dx + dy * dy);
   };
 
+  // transform 직접 적용 (리렌더링 없이)
+  const applyTransform = useCallback(() => {
+    if (imageRef.current) {
+      const scale = scaleRef.current;
+      const pos = positionRef.current;
+      imageRef.current.style.transform = `scale(${scale}) translate(${pos.x / scale}px, ${pos.y / scale}px)`;
+    }
+  }, []);
+
   // 터치 시작
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
       // 핀치 줌 시작
       const distance = getDistance(e.touches);
-      setInitialDistance(distance);
-      setInitialScale(scale);
+      initialDistanceRef.current = distance;
+      initialScaleRef.current = scaleRef.current;
     } else if (e.touches.length === 1) {
-      // 스와이프 또는 드래그 시작
       const touch = e.touches[0];
       setTouchStart({ x: touch.clientX, y: touch.clientY });
       setTouchEnd({ x: touch.clientX, y: touch.clientY });
 
-      if (scale > 1) {
-        setIsDragging(true);
-        setDragStart({ x: touch.clientX - position.x, y: touch.clientY - position.y });
+      if (scaleRef.current > 1) {
+        isDraggingRef.current = true;
+        dragStartRef.current = {
+          x: touch.clientX - positionRef.current.x,
+          y: touch.clientY - positionRef.current.y
+        };
       }
     }
 
@@ -141,64 +151,67 @@ const MediaModal = ({
     hideControlsAfterDelay();
   };
 
-  // 터치 이동
+  // 터치 이동 (ref 직접 조작으로 성능 최적화)
   const handleTouchMove = (e) => {
     if (e.touches.length === 2) {
       // 핀치 줌
       const distance = getDistance(e.touches);
-      const newScale = Math.min(Math.max(initialScale * (distance / initialDistance), 1), 4);
-      setScale(newScale);
+      const newScale = Math.min(Math.max(initialScaleRef.current * (distance / initialDistanceRef.current), 1), 4);
+      scaleRef.current = newScale;
 
       if (newScale <= 1) {
-        setPosition({ x: 0, y: 0 });
+        positionRef.current = { x: 0, y: 0 };
       }
-    } else if (e.touches.length === 1) {
+
+      applyTransform();
+    } else if (e.touches.length === 1 && isDraggingRef.current && scaleRef.current > 1) {
       const touch = e.touches[0];
       setTouchEnd({ x: touch.clientX, y: touch.clientY });
 
-      if (isDragging && scale > 1) {
-        // 확대 상태에서 드래그
-        const newX = touch.clientX - dragStart.x;
-        const newY = touch.clientY - dragStart.y;
-        setPosition({ x: newX, y: newY });
-      }
+      // 확대 상태에서 드래그
+      const newX = touch.clientX - dragStartRef.current.x;
+      const newY = touch.clientY - dragStartRef.current.y;
+      positionRef.current = { x: newX, y: newY };
+
+      applyTransform();
+    } else if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      setTouchEnd({ x: touch.clientX, y: touch.clientY });
     }
   };
 
   // 터치 종료
   const handleTouchEnd = () => {
-    if (scale <= 1 && !isDragging) {
-      // 스와이프 감지 (확대 상태가 아닐 때만)
+    if (scaleRef.current <= 1 && !isDraggingRef.current) {
+      // 스와이프 감지
       const deltaX = touchStart.x - touchEnd.x;
       const deltaY = touchStart.y - touchEnd.y;
       const absDeltaX = Math.abs(deltaX);
       const absDeltaY = Math.abs(deltaY);
 
-      // 수평 스와이프가 더 크고 최소 거리 이상일 때
       if (absDeltaX > absDeltaY && absDeltaX > 50) {
         if (deltaX > 0 && currentIndex < mediaFiles.length - 1) {
-          // 왼쪽 스와이프 - 다음
           goToNext();
         } else if (deltaX < 0 && currentIndex > 0) {
-          // 오른쪽 스와이프 - 이전
           goToPrev();
         }
       }
     }
 
-    setIsDragging(false);
-    setInitialDistance(0);
+    isDraggingRef.current = false;
+    initialDistanceRef.current = 0;
   };
 
   // 더블탭 줌
   const handleDoubleTap = (e) => {
     e.preventDefault();
-    if (scale > 1) {
-      setScale(1);
-      setPosition({ x: 0, y: 0 });
+    if (scaleRef.current > 1) {
+      scaleRef.current = 1;
+      positionRef.current = { x: 0, y: 0 };
     } else {
-      setScale(2);
+      scaleRef.current = 2;
     }
+    applyTransform();
   };
 
   // 다음/이전 미디어
@@ -222,10 +235,14 @@ const MediaModal = ({
   };
 
   const resetMediaState = () => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
+    scaleRef.current = 1;
+    positionRef.current = { x: 0, y: 0 };
     setIsPlaying(false);
     setProgress(0);
+    // transform 초기화
+    if (imageRef.current) {
+      imageRef.current.style.transform = 'scale(1) translate(0px, 0px)';
+    }
   };
 
   // 동영상 컨트롤
@@ -294,7 +311,7 @@ const MediaModal = ({
       ref={containerRef}
       className="fixed inset-0 bg-black flex items-center justify-center"
       style={{
-        zIndex: 2147483647, // 최대 z-index 값으로 모든 요소 위에 표시
+        zIndex: 2147483647,
         width: '100vw',
         height: '100vh',
         position: 'fixed',
@@ -327,7 +344,6 @@ const MediaModal = ({
         onDoubleClick={handleDoubleTap}
       >
         {isCloudflareStream ? (
-          // Cloudflare Stream iframe 플레이어
           <div className="relative w-full h-full flex items-center justify-center">
             <iframe
               src={getCloudflareStreamIframeUrl(currentMedia)}
@@ -342,10 +358,8 @@ const MediaModal = ({
             <video
               ref={videoRef}
               src={currentMedia}
-              className="max-w-full max-h-full object-contain transition-transform duration-200"
-              style={{
-                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
-              }}
+              className="max-w-full max-h-full object-contain"
+              style={{ willChange: 'transform' }}
               autoPlay
               loop
               playsInline
@@ -355,7 +369,7 @@ const MediaModal = ({
               onPause={() => setIsPlaying(false)}
             />
 
-            {/* 동영상 컨트롤 오버레이 - 재생/일시정지 버튼 */}
+            {/* 재생/일시정지 버튼 */}
             <div
               className="absolute inset-0 flex items-center justify-center cursor-pointer"
               onClick={togglePlay}
@@ -367,7 +381,7 @@ const MediaModal = ({
               )}
             </div>
 
-            {/* 음소거/음소거해제 버튼 - 항상 보이게 */}
+            {/* 음소거 버튼 */}
             <button
               onClick={toggleMute}
               className="absolute top-4 right-16 w-10 h-10 bg-black bg-opacity-50 rounded-full flex items-center justify-center text-white"
@@ -375,31 +389,33 @@ const MediaModal = ({
               <FontAwesomeIcon icon={isMuted ? faVolumeMute : faVolumeUp} className="w-5 h-5" />
             </button>
 
-            {/* 진행률 바 - 항상 보이게 */}
+            {/* 진행률 바 */}
             <div
               className="absolute bottom-20 left-4 right-4 h-2 bg-white bg-opacity-30 rounded-full cursor-pointer"
               onClick={handleProgressClick}
             >
               <div
-                className="h-full bg-white rounded-full transition-all duration-100"
+                className="h-full bg-white rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
         ) : (
           <img
+            ref={imageRef}
             src={currentMedia}
             alt={`미디어 ${currentIndex + 1}`}
-            className="max-w-full max-h-full object-contain transition-transform duration-200"
+            className="max-w-full max-h-full object-contain"
             style={{
-              transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+              willChange: 'transform',
+              transform: 'scale(1) translate(0px, 0px)'
             }}
             draggable={false}
           />
         )}
       </div>
 
-      {/* 인디케이터 (다중 미디어) */}
+      {/* 인디케이터 */}
       {mediaFiles.length > 1 && (
         <div className="absolute bottom-8 left-0 right-0 flex justify-center items-center gap-2">
           {mediaFiles.map((_, index) => (
