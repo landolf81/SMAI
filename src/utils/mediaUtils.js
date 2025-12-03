@@ -36,13 +36,38 @@ const IMAGE_MIME_TYPES = [
 ];
 
 /**
+ * Cloudflare Stream URL 여부를 판단
+ * @param {string} url - URL
+ * @returns {boolean} Cloudflare Stream URL 여부
+ */
+export const isCloudflareStreamUrl = (url) => {
+  if (!url || typeof url !== 'string') return false;
+  return url.includes('cloudflarestream.com');
+};
+
+/**
+ * Cloudflare Stream iframe URL에서 UID 추출
+ * @param {string} url - iframe URL
+ * @returns {string|null} UID 또는 null
+ */
+export const getCloudflareStreamUid = (url) => {
+  if (!isCloudflareStreamUrl(url)) return null;
+  // URL 형식: https://customer-xxx.cloudflarestream.com/{uid}/iframe
+  const match = url.match(/cloudflarestream\.com\/([a-zA-Z0-9]+)\//);
+  return match ? match[1] : null;
+};
+
+/**
  * 파일명/URL로 동영상 여부를 판단
  * @param {string} filename - 파일명 또는 URL
  * @returns {boolean} 동영상 파일 여부
  */
 export const isVideoFile = (filename) => {
   if (!filename || typeof filename !== 'string') return false;
-  
+
+  // Cloudflare Stream URL도 동영상으로 인식
+  if (isCloudflareStreamUrl(filename)) return true;
+
   const lowercaseFilename = filename.toLowerCase();
   return VIDEO_EXTENSIONS.some(ext => lowercaseFilename.includes(ext));
 };
@@ -107,6 +132,11 @@ export const getMediaType = (file) => {
     }
   }
   
+  // Cloudflare Stream URL인 경우
+  if (isCloudflareStreamUrl(filename)) {
+    return { isVideo: true, isImage: false, type: 'cloudflare-stream' };
+  }
+
   // MIME 타입이 없거나 판단되지 않으면 파일명으로 판단
   if (isVideoFile(filename)) {
     return { isVideo: true, isImage: false, type: 'video' };
@@ -114,7 +144,7 @@ export const getMediaType = (file) => {
   if (isImageFile(filename)) {
     return { isVideo: false, isImage: true, type: 'image' };
   }
-  
+
   return { isVideo: false, isImage: false, type: 'unknown' };
 };
 
@@ -261,5 +291,7 @@ export default {
   getMediaIcon,
   isBrowserCompatibleVideo,
   validateUploadFile,
-  getAcceptedFileTypes
+  getAcceptedFileTypes,
+  isCloudflareStreamUrl,
+  getCloudflareStreamUid
 };

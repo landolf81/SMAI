@@ -28,7 +28,8 @@ import CommentsPreview from './CommentsPreview';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import ReportModal from './ReportModal';
 import ReportDetailsModal from './ReportDetailsModal';
-import { isVideoFile, normalizeMediaUrl, getMediaType } from '../utils/mediaUtils';
+import { isVideoFile, normalizeMediaUrl, getMediaType, isCloudflareStreamUrl } from '../utils/mediaUtils';
+import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 import YouTubeEmbed from './YouTubeEmbed';
 import LinkPreview from './LinkPreview';
 import BadgeDisplay from './BadgeDisplay';
@@ -113,6 +114,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   // 첫 번째 미디어의 타입 정보 (하위 호환성)
   const firstMediaType = hasMedia ? getMediaType(mediaFiles[0]) : { isVideo: false, isImage: false };
   const isVideo = firstMediaType.isVideo;
+  const isCloudflareStream = hasMedia && isCloudflareStreamUrl(mediaFiles[0]);
 
   // 미디어 타입 감지 로그 제거됨
 
@@ -935,7 +937,22 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           <div className="relative w-full aspect-square overflow-hidden">
             {mediaFiles.length === 1 ? (
               // 단일 미디어
-              isVideo ? (
+              isCloudflareStream ? (
+                // Cloudflare Stream 동영상
+                <CloudflareStreamPlayer
+                  url={mediaFiles[0]}
+                  autoplay={isVisible}
+                  muted={true}
+                  loop={true}
+                  controls={false}
+                  aspectRatio="square"
+                  className="w-full h-full"
+                  onClick={() => {
+                    setMediaModalIndex(0);
+                    setShowMediaModal(true);
+                  }}
+                />
+              ) : isVideo ? (
                 mediaLoadError ? (
                   <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500">
                     <div className="text-4xl mb-2">🎥</div>

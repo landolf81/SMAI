@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faPlay, faPause, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
-import { isVideoFile } from '../utils/mediaUtils';
+import { isVideoFile, isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
 
 const MediaModal = ({
   isOpen,
@@ -279,13 +279,22 @@ const MediaModal = ({
 
   const currentMedia = mediaFiles[currentIndex];
   const isVideo = isVideoFile(currentMedia);
+  const isCloudflareStream = isCloudflareStreamUrl(currentMedia);
+
+  // Cloudflare Stream iframe URL 생성
+  const getCloudflareStreamIframeUrl = (url) => {
+    const uid = getCloudflareStreamUid(url);
+    if (!uid) return '';
+    const customerSubdomain = 'customer-91fe46eef7b97939176dd0e43747409a';
+    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?autoplay=true&loop=true&controls=true`;
+  };
 
   return (
     <div
       ref={containerRef}
-      className="fixed top-0 left-0 right-0 bottom-0 bg-black flex items-center justify-center"
+      className="fixed inset-0 bg-black flex items-center justify-center"
       style={{
-        zIndex: 99999,
+        zIndex: 2147483647, // 최대 z-index 값으로 모든 요소 위에 표시
         width: '100vw',
         height: '100vh',
         position: 'fixed',
@@ -317,7 +326,18 @@ const MediaModal = ({
         className="w-full h-full flex items-center justify-center overflow-hidden"
         onDoubleClick={handleDoubleTap}
       >
-        {isVideo ? (
+        {isCloudflareStream ? (
+          // Cloudflare Stream iframe 플레이어
+          <div className="relative w-full h-full flex items-center justify-center">
+            <iframe
+              src={getCloudflareStreamIframeUrl(currentMedia)}
+              className="w-full h-full max-w-4xl max-h-[80vh]"
+              style={{ border: 'none' }}
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : isVideo ? (
           <div className="relative w-full h-full flex items-center justify-center">
             <video
               ref={videoRef}
