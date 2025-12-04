@@ -42,6 +42,16 @@ const Register = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  // 회원가입 성공 시 커뮤니티로 이동
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        window.location.href = "/community";
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
   // Intersection Observer로 스크롤 애니메이션
   useEffect(() => {
     const observerOptions = {
@@ -81,9 +91,6 @@ const Register = () => {
     try {
       await registerUser(inputs);
       setSuccess(true);
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
     } catch (error) {
       console.error('회원가입 오류:', error);
       const errorMessage = error.message || "회원가입 중 오류가 발생했습니다.";
@@ -100,7 +107,7 @@ const Register = () => {
           <CheckCircleIcon className="text-6xl text-green-500 mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">회원가입 완료!</h2>
           <p className="text-gray-600 mb-4">성주참외 경락정보에 오신 것을 환영합니다.</p>
-          <p className="text-sm text-gray-500">잠시 후 로그인 페이지로 이동됩니다...</p>
+          <p className="text-sm text-gray-500">잠시 후 커뮤니티 화면으로 이동됩니다...</p>
         </div>
       </div>
     );
