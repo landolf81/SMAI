@@ -456,7 +456,7 @@ const Home = () => {
     <div className="min-h-screen bg-gray-50 pb-20 safe-area-bottom">
       {/* 날짜 선택기 헤더 */}
       <div
-        className="flex items-center justify-center gap-1 py-1.5 shadow-sm border-b sticky top-16 z-10 bg-white"
+        className="flex items-center justify-center gap-1 py-0.5 shadow-sm border-b sticky top-16 z-10 bg-white"
         style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
       >
         <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">

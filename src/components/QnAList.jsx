@@ -32,6 +32,9 @@ const QnAList = () => {
   const [renderedCount, setRenderedCount] = useState(0);
   const renderIntervalRef = useRef(null);
 
+  // 글쓰기 버튼 회전 애니메이션 상태
+  const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
+
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
   useScrollRestore('qna', statusFilter, searchTerm);
 
@@ -244,15 +247,9 @@ const QnAList = () => {
       {/* 고정 헤더 (검색창 포함) */}
       <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
         <div className="p-4">
-          {/* 타이틀 + 질문하기 버튼 */}
+          {/* 타이틀 */}
           <div className="flex items-center justify-between mb-3">
             <h1 className="text-xl font-bold text-gray-900">Q&A 질문답변</h1>
-            <button
-              onClick={() => navigate('/post/new?type=qna')}
-              className="px-4 py-2 bg-market-600 text-white rounded-lg hover:bg-market-700 transition-colors text-sm"
-            >
-              질문하기
-            </button>
           </div>
 
           {/* 검색바 */}
@@ -480,6 +477,35 @@ const QnAList = () => {
             />
           </div>
         </div>
+      )}
+
+      {/* 플로팅 글쓰기 버튼 (모바일용) */}
+      {isMobile && (
+        <button
+          onClick={() => {
+            if (isWriteButtonSpinning) return;
+            setIsWriteButtonSpinning(true);
+            setTimeout(() => {
+              navigate('/post/new?type=qna');
+            }, 300);
+          }}
+          className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"
+          style={{
+            background: 'linear-gradient(135deg, #FFCC00 0%, #06b6d4 100%)',
+            boxShadow: '0 4px 15px rgba(255, 204, 0, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
+          }}
+          title="질문하기"
+        >
+          <svg
+            className="w-6 h-6 transition-transform duration-300"
+            style={{ transform: isWriteButtonSpinning ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       )}
     </div>
   );
