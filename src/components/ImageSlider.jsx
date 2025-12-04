@@ -37,6 +37,21 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
         }
     }, [currentIndex, normalizedImages]);
 
+    // 다중 이미지 자동 전환 (3초) - 이미지일 때만 (동영상은 제외)
+    useEffect(() => {
+        // 이미지가 2개 이상이고, 현재 미디어가 동영상이 아닐 때만 자동 전환
+        if (normalizedImages.length <= 1) return;
+        if (isVideoFile(normalizedImages[currentIndex])) return;
+
+        const autoTransitionTimer = setInterval(() => {
+            setCurrentIndex((prevIndex) =>
+                prevIndex === normalizedImages.length - 1 ? 0 : prevIndex + 1
+            );
+        }, 3000);
+
+        return () => clearInterval(autoTransitionTimer);
+    }, [currentIndex, normalizedImages]);
+
     // 동영상 제어 함수들
     const toggleVideoPlay = (index) => {
         const video = videoRefs.current[index];

@@ -336,8 +336,12 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   });
 
   // 동영상 자동재생 관리 (개선된 버전)
+  // Cloudflare Stream은 CloudflareStreamPlayer가 자체 관리하므로 제외
   useEffect(() => {
-    if (!videoRef.current || !isVideo) return;
+    // Cloudflare Stream은 자체 컴포넌트에서 관리
+    if (isCloudflareStream) return;
+    // 일반 동영상 또는 R2 동영상만 처리
+    if (!videoRef.current || (!isVideo && !isR2Video)) return;
 
     const video = videoRef.current;
 
@@ -382,14 +386,16 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       setIsPlaying(false);
       onVideoPause && onVideoPause(post.id);
     }
-  }, [isVisible, isVideo, post.id, onVideoPlay, onVideoPause]);
+  }, [isVisible, isVideo, isR2Video, isCloudflareStream, post.id, onVideoPlay, onVideoPause]);
 
   // 동영상 진행률 및 버퍼링 상태 업데이트
   useEffect(() => {
-    if (!videoRef.current || !isVideo) return;
+    // Cloudflare Stream은 자체 컴포넌트에서 관리
+    if (isCloudflareStream) return;
+    if (!videoRef.current || (!isVideo && !isR2Video)) return;
 
     const video = videoRef.current;
-    
+
     const updateProgress = () => {
       if (video.duration) {
         setProgress((video.currentTime / video.duration) * 100);
@@ -410,7 +416,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       video.removeEventListener('canplay', handleBufferingEnd);
       video.removeEventListener('playing', handleBufferingEnd);
     };
-  }, [isVideo]);
+  }, [isVideo, isR2Video, isCloudflareStream]);
 
   // 핸들러 함수들
   const handleLike = (animate = false) => {

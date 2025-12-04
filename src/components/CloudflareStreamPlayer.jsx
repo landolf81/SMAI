@@ -45,12 +45,44 @@ const CloudflareStreamPlayer = ({
     return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
   }, [uid, aspectRatio]);
 
-  // autoplay prop 변경 시 showPlayer 상태 동기화
+  // 이전 autoplay 상태를 추적하기 위한 ref
+  const prevAutoplayRef = useRef(autoplay);
+
+  // autoplay prop 변경 시 재생/정지 제어
   useEffect(() => {
+    const wasAutoplay = prevAutoplayRef.current;
+    prevAutoplayRef.current = autoplay;
+
     if (autoplay) {
       setShowPlayer(true);
+      // 다시 화면에 들어올 때 재생 시작
+      if (videoRef.current && !wasAutoplay) {
+        // 화면 복귀 시 항상 음소거 상태로 재생 + 아이콘도 동기화
+        videoRef.current.muted = true;
+        setIsMuted(true); // 아이콘 상태도 음소거로 동기화
+        videoRef.current.play().catch(() => {});
+      }
+    } else if (videoRef.current) {
+      // 화면 밖으로 나가면 (autoplay가 false가 되면) 동영상 정지 + 음소거
+      videoRef.current.pause();
+      videoRef.current.muted = true;
+      setIsMuted(true);
     }
   }, [autoplay]);
+
+  // 컴포넌트 언마운트 시 HLS 정리 및 동영상 정지
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.src = '';
+      }
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, []);
 
   // HLS.js 초기화 및 재생
   useEffect(() => {

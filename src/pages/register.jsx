@@ -1,9 +1,9 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import AgricultureIcon from '@mui/icons-material/Agriculture';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MobileBottomNav from '../components/MobileBottomNav';
+import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
 
 const Register = () => {
   const { register: registerUser } = useContext(AuthContext);
@@ -16,11 +16,57 @@ const Register = () => {
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const navigate = useNavigate();
+
+  // 스크롤 애니메이션을 위한 ref
+  const section1Ref = useRef(null);
+  const section2Ref = useRef(null);
+  const section3Ref = useRef(null);
+  const section4Ref = useRef(null);
+
+  // 디바이스 감지
+  useEffect(() => {
+    const checkDevice = () => {
+      setIsMobile(isMobileDevice() || isTabletDevice() || window.innerWidth <= 768);
+    };
+
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
 
   // 페이지 진입 시 스크롤 최상단으로 이동
   useEffect(() => {
     window.scrollTo(0, 0);
+  }, []);
+
+  // Intersection Observer로 스크롤 애니메이션
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.15
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fade-in-up');
+          entry.target.classList.remove('opacity-0', 'translate-y-16');
+        }
+      });
+    }, observerOptions);
+
+    const sections = [section1Ref, section2Ref, section3Ref, section4Ref];
+    sections.forEach(ref => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   const handleChange = (e) => {
@@ -33,7 +79,6 @@ const Register = () => {
     setErr(null);
 
     try {
-      // AuthContext의 register 함수를 통해 Supabase Auth 사용
       await registerUser(inputs);
       setSuccess(true);
       setTimeout(() => {
@@ -41,7 +86,6 @@ const Register = () => {
       }, 2000);
     } catch (error) {
       console.error('회원가입 오류:', error);
-      // Supabase 에러 메시지 처리
       const errorMessage = error.message || "회원가입 중 오류가 발생했습니다.";
       setErr(errorMessage);
     } finally {
@@ -51,9 +95,9 @@ const Register = () => {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-market-50 via-white to-produce-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <CheckCircleIcon className="text-6xl text-market-500 mb-4" />
+          <CheckCircleIcon className="text-6xl text-green-500 mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">회원가입 완료!</h2>
           <p className="text-gray-600 mb-4">성주참외 경락정보에 오신 것을 환영합니다.</p>
           <p className="text-sm text-gray-500">잠시 후 로그인 페이지로 이동됩니다...</p>
@@ -63,101 +107,148 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-market-50 via-white to-produce-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-        
-        {/* 좌측 브랜딩 섹션 */}
-        <div className="text-center lg:text-left space-y-6">
-          <div className="flex items-center justify-center lg:justify-start gap-3 mb-8">
-            <AgricultureIcon className="text-4xl text-market-500" />
-            <h1 className="text-4xl font-bold text-gray-800">성주참외 경락정보</h1>
+    <div className="min-h-screen bg-gradient-to-b from-yellow-50 via-white to-green-50">
+      {/* 커스텀 애니메이션 스타일 */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(60px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fade-in-up {
+          animation: fadeInUp 0.8s ease-out forwards;
+        }
+      `}</style>
+
+      {/* 섹션 1: 히어로 - 상단 30% 정도에서 시작 */}
+      <section
+        ref={section1Ref}
+        className="min-h-[70vh] flex flex-col items-center justify-start pt-[15vh] px-6 pb-20 opacity-0 translate-y-16 transition-all duration-700"
+      >
+        <div className="text-center max-w-3xl mx-auto">
+          {/* 로고 이미지 */}
+          <img
+            src="https://pub-1d5977ce7cec48079bcd6f847b2f3dd1.r2.dev/assets/1764817602223_c2z6dm_seongju-chamoe-logo.png"
+            alt="성주참외 로고"
+            className="h-24 md:h-32 mx-auto mb-8 object-contain"
+          />
+          <p className="text-xl md:text-2xl text-gray-600 font-light">
+            성주 참외 시세를 쉽게 확인하는 페이지
+          </p>
+        </div>
+
+        {/* 스크롤 안내 */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
+          <div className="w-8 h-12 border-2 border-gray-400 rounded-full flex justify-center pt-2">
+            <div className="w-1.5 h-3 bg-gray-400 rounded-full animate-pulse"></div>
           </div>
-          
-          <div className="space-y-4">
-            <h2 className="text-2xl lg:text-3xl font-bold text-gray-800">
-              <span className="text-market-600">무료 회원가입</span>하고
-              <br />다양한 서비스를 이용하세요
+        </div>
+      </section>
+
+      {/* 섹션 2: 소개 */}
+      <section
+        ref={section2Ref}
+        className="min-h-screen flex flex-col items-center justify-center px-6 py-20 opacity-0 translate-y-16 transition-all duration-700"
+      >
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-2xl md:text-3xl text-gray-700 leading-relaxed font-light">
+            이 페이지는 <span className="font-semibold text-yellow-600">성주 지역 공판장</span>에서
+            거래된 참외 경락 가격을 편하게 확인할 수 있도록 만들어졌습니다.
+          </p>
+          <div className="mt-12 h-px w-24 bg-yellow-400 mx-auto"></div>
+          <p className="mt-12 text-xl md:text-2xl text-gray-600 leading-relaxed font-light">
+            참외 재배 농가와 구매자가 참고할 수 있는<br />
+            <span className="font-medium">기본적인 시세 정보</span>를 제공합니다.
+          </p>
+        </div>
+      </section>
+
+      {/* 섹션 3: 기능 소개 */}
+      <section
+        ref={section3Ref}
+        className="min-h-screen flex flex-col items-center justify-center px-6 py-20 opacity-0 translate-y-16 transition-all duration-700"
+      >
+        <div className="max-w-4xl mx-auto w-full">
+          {/* 참외 경락 정보 */}
+          <div className="mb-20 text-center">
+            <div className="text-5xl mb-6">📊</div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              참외 경락 정보
             </h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              성주 참외 경락가격 정보부터 농업 커뮤니티까지, 
-              농민과 구매자를 위한 모든 서비스를 제공합니다.
+            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-light max-w-xl mx-auto">
+              성주 공판장에서 나온<br />
+              <span className="font-medium">일자별 · 등급별 · 중량별</span><br />
+              참외 가격을 확인할 수 있습니다.
+            </p>
+            <p className="mt-8 text-lg text-gray-500">
+              참외 시세만 간단하게 볼 수 있도록 구성했습니다.
             </p>
           </div>
 
-          {/* 혜택 목록 */}
-          <div className="space-y-4 mt-8">
-            <h3 className="font-semibold text-gray-800 mb-4">회원 혜택</h3>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="text-market-500 mt-0.5" fontSize="small" />
-                <div>
-                  <div className="font-medium text-gray-800">실시간 가격 알림</div>
-                  <div className="text-sm text-gray-600">관심 품목의 가격 변동을 즉시 알려드립니다</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="text-market-500 mt-0.5" fontSize="small" />
-                <div>
-                  <div className="font-medium text-gray-800">시장 정보 즐겨찾기</div>
-                  <div className="text-sm text-gray-600">자주 확인하는 시장을 저장하고 빠르게 접근</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="text-market-500 mt-0.5" fontSize="small" />
-                <div>
-                  <div className="font-medium text-gray-800">커뮤니티 참여</div>
-                  <div className="text-sm text-gray-600">농업 정보 공유 및 직거래 게시판 이용</div>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircleIcon className="text-market-500 mt-0.5" fontSize="small" />
-                <div>
-                  <div className="font-medium text-gray-800">개인화된 대시보드</div>
-                  <div className="text-sm text-gray-600">나만의 맞춤형 시장 정보 화면</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* 구분선 */}
+          <div className="h-px w-32 bg-green-300 mx-auto mb-20"></div>
 
-          {/* 이미 계정이 있는 경우 */}
-          <div className="mt-8 p-4 bg-market-50 rounded-lg border border-market-200">
-            <p className="text-market-800 text-center lg:text-left">
-              이미 계정이 있으신가요? 
-              <Link to="/login" className="font-semibold text-market-600 hover:text-market-700 ml-2">
-                로그인하기 →
-              </Link>
+          {/* 농업 커뮤니티 */}
+          <div className="text-center">
+            <div className="text-5xl mb-6">👨‍🌾</div>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              농업 커뮤니티
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-light max-w-xl mx-auto">
+              참외 농사와 관련된 이야기나 정보를<br />
+              가볍게 나눌 수 있는 공간입니다.
+            </p>
+            <p className="mt-8 text-lg text-gray-500">
+              누구나 자유롭게 소통할 수 있습니다.
             </p>
           </div>
         </div>
+      </section>
 
-        {/* 우측 회원가입 폼 */}
-        <div className="w-full max-w-md mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-            <div className="text-center mb-8">
-              <PersonAddIcon className="text-4xl text-market-500 mb-3" />
-              <h3 className="text-2xl font-bold text-gray-800">회원가입</h3>
-              <p className="text-gray-600 mt-2">새 계정을 만들어 서비스를 시작하세요</p>
-            </div>
+      {/* 섹션 4: 회원가입 폼 */}
+      <section
+        ref={section4Ref}
+        className="min-h-screen flex flex-col items-center justify-center px-6 py-20 opacity-0 translate-y-16 transition-all duration-700"
+      >
+        <div className="max-w-md mx-auto w-full">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              회원가입 안내
+            </h2>
+            <p className="text-xl text-gray-600 font-light">
+              아직 계정이 없으신가요?
+            </p>
+            <p className="text-lg text-gray-500 mt-2">
+              회원가입 후 시세 조회와 커뮤니티 이용이 가능합니다.
+            </p>
+          </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 회원가입 폼 */}
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  사용자명 *
+                  사용자명
                 </label>
                 <input
                   type="text"
                   name="username"
                   value={inputs.username}
                   onChange={handleChange}
-                  placeholder="영문, 숫자로 구성된 사용자명"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 transition-colors"
+                  placeholder="영문, 숫자로 구성"
+                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이름 *
+                  이름
                 </label>
                 <input
                   type="text"
@@ -165,14 +256,14 @@ const Register = () => {
                   value={inputs.name}
                   onChange={handleChange}
                   placeholder="실명을 입력하세요"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 transition-colors"
+                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이메일 *
+                  이메일
                 </label>
                 <input
                   type="email"
@@ -180,69 +271,56 @@ const Register = () => {
                   value={inputs.email}
                   onChange={handleChange}
                   placeholder="example@email.com"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 transition-colors"
+                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
                   required
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  비밀번호 *
+                  비밀번호
                 </label>
                 <input
                   type="password"
                   name="password"
                   value={inputs.password}
                   onChange={handleChange}
-                  placeholder="8자 이상의 안전한 비밀번호"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 transition-colors"
+                  placeholder="8자 이상"
+                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
                   required
                   minLength={8}
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  영문, 숫자, 특수문자를 포함하여 8자 이상 입력하세요
-                </p>
               </div>
 
               {/* 이용약관 동의 */}
-              <div className="space-y-3">
-                <label className="flex items-start gap-3">
+              <div className="space-y-3 pt-2">
+                <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     required
-                    className="mt-1 rounded border-gray-300 text-market-600 focus:ring-market-500"
+                    className="w-5 h-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
                   />
-                  <span className="text-sm text-gray-700">
-                    <span className="font-medium">[필수]</span> 이용약관에 동의합니다
-                    <Link to="/terms" target="_blank" className="text-market-600 hover:text-market-700 ml-1">보기</Link>
+                  <span className="text-sm text-gray-600">
+                    <span className="font-medium text-gray-800">[필수]</span> 이용약관 동의
+                    <Link to="/terms" target="_blank" className="text-yellow-600 hover:text-yellow-700 ml-1 underline">보기</Link>
                   </span>
                 </label>
 
-                <label className="flex items-start gap-3">
+                <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     required
-                    className="mt-1 rounded border-gray-300 text-market-600 focus:ring-market-500"
+                    className="w-5 h-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
                   />
-                  <span className="text-sm text-gray-700">
-                    <span className="font-medium">[필수]</span> 개인정보 처리방침에 동의합니다
-                    <Link to="/privacy" target="_blank" className="text-market-600 hover:text-market-700 ml-1">보기</Link>
-                  </span>
-                </label>
-
-                <label className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    className="mt-1 rounded border-gray-300 text-market-600 focus:ring-market-500"
-                  />
-                  <span className="text-sm text-gray-700">
-                    [선택] 마케팅 정보 수신에 동의합니다
+                  <span className="text-sm text-gray-600">
+                    <span className="font-medium text-gray-800">[필수]</span> 개인정보 처리방침 동의
+                    <Link to="/privacy" target="_blank" className="text-yellow-600 hover:text-yellow-700 ml-1 underline">보기</Link>
                   </span>
                 </label>
               </div>
 
               {err && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
                   {err}
                 </div>
               )}
@@ -250,12 +328,12 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-market-500 hover:bg-market-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-4 px-4 rounded-xl transition-all text-lg shadow-lg shadow-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
-                    <div className="loading-spinner mr-2"></div>
-                    회원가입 중...
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    가입 중...
                   </div>
                 ) : (
                   '회원가입'
@@ -263,34 +341,24 @@ const Register = () => {
               </button>
             </form>
 
-            {/* 카카오톡 회원가입 */}
-            <div className="mt-8">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">또는</span>
-                </div>
-              </div>
-
-              <button className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-3 px-4 rounded-lg transition-colors">
-                카카오톡으로 간편가입 (준비중)
-              </button>
+            {/* 로그인 링크 */}
+            <div className="mt-6 text-center">
+              <p className="text-gray-500">
+                이미 계정이 있으신가요?
+                <Link to="/login" className="text-yellow-600 hover:text-yellow-700 font-semibold ml-2">
+                  로그인 →
+                </Link>
+              </p>
             </div>
           </div>
-
-          {/* 추가 링크 */}
-          <div className="text-center mt-6 text-sm text-gray-600">
-            <p>
-              계정이 이미 있으신가요? 
-              <Link to="/login" className="text-market-600 hover:text-market-700 font-medium ml-1">
-                로그인
-              </Link>
-            </p>
-          </div>
         </div>
-      </div>
+      </section>
+
+      {/* 푸터 여백 */}
+      <div className="h-20"></div>
+
+      {/* 모바일에서만 하단 네비게이션 표시 */}
+      {isMobile && <MobileBottomNav />}
     </div>
   );
 };

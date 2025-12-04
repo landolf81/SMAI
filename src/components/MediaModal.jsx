@@ -1,5 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faPlay, faPause, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { isVideoFile, isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
@@ -322,7 +323,8 @@ const MediaModal = ({
     return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?autoplay=true&loop=true&controls=true`;
   };
 
-  return (
+  // Portal을 사용하여 body에 직접 렌더링 (부모의 transform/will-change 영향 방지)
+  return createPortal(
     <div
       ref={containerRef}
       className="fixed inset-0 bg-black flex items-center justify-center"
@@ -447,7 +449,8 @@ const MediaModal = ({
           ))}
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 };
 

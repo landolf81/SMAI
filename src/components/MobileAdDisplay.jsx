@@ -189,8 +189,8 @@ const MobileAdDisplay = ({ ad }) => {
         const videoElement = document.querySelector('video');
         if (videoElement) {
           videoElement.currentTime = 0;
-          videoElement.play().catch(error => {
-            console.log('다음 비디오 자동 재생 실패:', error);
+          videoElement.play().catch(() => {
+            // AbortError는 정상적인 상황 (스크롤/전환 중 발생)
           });
         }
       }, 100);

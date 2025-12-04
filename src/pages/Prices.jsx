@@ -21,6 +21,11 @@ const Prices = () => {
     urlDate || new Date().toISOString().split('T')[0]
   );
 
+  // 페이지 진입 시 스크롤 최상단으로 이동
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // 경락가 데이터 가져오기
   const fetchMarketData = async (market, date) => {
     try {
