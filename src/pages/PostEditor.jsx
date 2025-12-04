@@ -3,7 +3,8 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faPaperPlane, faTimes, faArrowLeft, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faPaperPlane, faTimes, faLink } from '@fortawesome/free-solid-svg-icons';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getFirstLinkInfo } from '../utils/linkDetector';
 import { YouTubePreviewCard } from '../components/YouTubeEmbed';
 import { postService, storageService } from '../services';
@@ -372,8 +373,8 @@ const PostEditor = () => {
       {/* 헤더 */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800">
-            <FontAwesomeIcon icon={faArrowLeft} className="w-5 h-5" />
+          <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 p-1">
+            <ArrowBackIcon fontSize="small" />
           </button>
           <h1 className="text-lg font-semibold text-gray-800">
             {isEditMode ? '게시물 수정' : postType === 'qna' ? '새 질문 작성' : postType === 'secondhand' ? '중고거래 글쓰기' : '새 게시물'}
@@ -389,9 +390,11 @@ const PostEditor = () => {
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-orange-400 p-0.5">
               <img
-                src={currentUser.profilePic
-                  ? (currentUser.profilePic.startsWith('http') ? currentUser.profilePic : `/uploads/profiles/${currentUser.profilePic}`)
-                  : "/default/default_profile.png"}
+                src={(() => {
+                  const pic = currentUser.profilePic || currentUser.profile_pic;
+                  if (!pic) return "/default/default_profile.png";
+                  return pic.startsWith('http') ? pic : `/uploads/profiles/${pic}`;
+                })()}
                 alt="프로필"
                 className="w-full h-full object-cover rounded-full"
               />
