@@ -1,9 +1,6 @@
 import { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import AgricultureIcon from '@mui/icons-material/Agriculture';
-import StoreIcon from '@mui/icons-material/Store';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import Navbar from '../components/Navbar';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
@@ -204,60 +201,13 @@ const Login = () => {
               </button>
             </div>
           </div>
-          {/* 추가 링크 */}
-          <div className="text-center mt-6 text-sm text-gray-600">
-            <p>
-              처음 방문하시나요? 
-              <Link to="/register" className="text-market-600 hover:text-market-700 font-medium ml-1">
-                회원가입
-              </Link>
-            </p>
-          </div>
         </div>
 
-        {/* 브랜딩/소개 섹션 */}
-        <div className={`text-center lg:text-left space-y-6 ${isMobile ? 'order-2' : 'order-1'}`}>
-          <div className="flex items-center justify-center lg:justify-start gap-3 mb-8">
-            <AgricultureIcon className="text-4xl text-market-500" />
-            <h1 className="text-4xl font-bold text-gray-800">성주참외 경락정보</h1>
-          </div>
-          <div className="space-y-4">
-            <h2 className="text-2xl lg:text-3xl font-bold text-gray-800">
-              실시간 농산물 가격 정보를
-              <span className="text-market-600"> 한눈에</span>
-            </h2>
-            <p className="text-lg text-gray-600 leading-relaxed">
-              성주 지역 참외 경락가격을 실시간으로 확인하고, 
-              농민과 구매자를 위한 투명한 거래 정보를 제공합니다.
-            </p>
-          </div>
-          {/* 특징 카드들 */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-            <div className="bg-white rounded-lg p-4 shadow-md border border-market-100">
-              <TrendingUpIcon className="text-market-500 mb-2" />
-              <h3 className="font-semibold text-gray-800">실시간 가격</h3>
-              <p className="text-sm text-gray-600">최신 경락가격 정보</p>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow-md border border-produce-100">
-              <StoreIcon className="text-produce-500 mb-2" />
-              <h3 className="font-semibold text-gray-800">시장 정보</h3>
-              <p className="text-sm text-gray-600">다양한 공판장 데이터</p>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow-md border border-fresh-100">
-              <AgricultureIcon className="text-fresh-500 mb-2" />
-              <h3 className="font-semibold text-gray-800">농업 커뮤니티</h3>
-              <p className="text-sm text-gray-600">정보 공유 및 소통</p>
-            </div>
-          </div>
-          {/* 계정이 없는 경우 안내 */}
-          <div className="mt-8 p-4 bg-market-50 rounded-lg border border-market-200">
-            <p className="text-market-800 text-center lg:text-left">
-              아직 계정이 없으신가요?
-              <Link to="/register" className="font-semibold text-market-600 hover:text-market-700 ml-2">
-                회원가입하기 →
-              </Link>
-            </p>
-          </div>
+        {/* 회원가입 링크 */}
+        <div className="text-center mt-6">
+          <Link to="/register" className="font-semibold text-market-600 hover:text-market-700">
+            회원가입하기 →
+          </Link>
         </div>
       </div>
       </div>

@@ -389,7 +389,9 @@ const PostEditor = () => {
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-orange-400 p-0.5">
               <img
-                src={currentUser.profilePic ? `/uploads/posts/${currentUser.profilePic}` : "/default/default_profile.png"}
+                src={currentUser.profilePic
+                  ? (currentUser.profilePic.startsWith('http') ? currentUser.profilePic : `/uploads/profiles/${currentUser.profilePic}`)
+                  : "/default/default_profile.png"}
                 alt="프로필"
                 className="w-full h-full object-cover rounded-full"
               />
