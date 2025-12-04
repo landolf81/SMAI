@@ -14,7 +14,6 @@ const CloudflareStreamPlayer = ({
   url,
   autoplay = false,
   muted: initialMuted = true,
-  loop = true,
   controls = false,
   showMuteToggle = false,
   className = '',
@@ -27,8 +26,10 @@ const CloudflareStreamPlayer = ({
   const [hasError, setHasError] = useState(false);
   const [showPlayer, setShowPlayer] = useState(autoplay);
   const [isMuted, setIsMuted] = useState(initialMuted);
+  const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
+  const replayTimeoutRef = useRef(null);
 
   const uid = getCloudflareStreamUid(url);
 
@@ -67,6 +68,13 @@ const CloudflareStreamPlayer = ({
       videoRef.current.pause();
       videoRef.current.muted = true;
       setIsMuted(true);
+
+      // replay 타이머 클리어
+      if (replayTimeoutRef.current) {
+        clearTimeout(replayTimeoutRef.current);
+        replayTimeoutRef.current = null;
+      }
+      setIsWaitingToReplay(false);
     }
   }, [autoplay]);
 
@@ -80,6 +88,9 @@ const CloudflareStreamPlayer = ({
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
+      }
+      if (replayTimeoutRef.current) {
+        clearTimeout(replayTimeoutRef.current);
       }
     };
   }, []);
@@ -154,6 +165,25 @@ const CloudflareStreamPlayer = ({
   const handleMuteToggle = (e) => {
     e.stopPropagation();
     setIsMuted(!isMuted);
+  };
+
+  // 동영상 재생 완료 시 3초 후 다시 재생
+  const handleVideoEnded = () => {
+    setIsWaitingToReplay(true);
+
+    // 기존 타이머 클리어
+    if (replayTimeoutRef.current) {
+      clearTimeout(replayTimeoutRef.current);
+    }
+
+    // 3초 후 처음부터 재생
+    replayTimeoutRef.current = setTimeout(() => {
+      if (videoRef.current && autoplay) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().catch(() => {});
+      }
+      setIsWaitingToReplay(false);
+    }, 3000);
   };
 
   const aspectRatioClass = {
@@ -236,9 +266,9 @@ const CloudflareStreamPlayer = ({
         className="w-full h-full object-cover"
         autoPlay={autoplay}
         muted={isMuted}
-        loop={loop}
         playsInline
         controls={controls}
+        onEnded={handleVideoEnded}
       />
 
       {/* 클릭 영역 (전체화면 모달 열기용) */}
