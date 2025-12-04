@@ -22,6 +22,9 @@ const SecondHand = () => {
   const [renderedCount, setRenderedCount] = useState(0);
   const renderIntervalRef = useRef(null);
 
+  // 글쓰기 버튼 회전 애니메이션 상태
+  const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
+
   // 중고거래 페이지 스크롤 위치 복원 (검색어 고려)
   const { resetScrollPosition, scrollToTop } = useScrollRestore(
     'secondhand',
@@ -242,10 +245,26 @@ const SecondHand = () => {
         {/* 글쓰기 버튼 (모바일) */}
         {isMobile && (
           <button
-            onClick={() => navigate('/post/new?type=secondhand')}
-            className="fixed bottom-20 right-4 w-14 h-14 bg-orange-500 text-white rounded-full shadow-lg hover:bg-orange-600 transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center"
+            onClick={() => {
+              if (isWriteButtonSpinning) return;
+              setIsWriteButtonSpinning(true);
+              setTimeout(() => {
+                navigate('/post/new?type=secondhand');
+              }, 300);
+            }}
+            className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"
+            style={{
+              background: 'linear-gradient(135deg, #f97316 0%, #06b6d4 100%)',
+              boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
+            }}
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-6 h-6 transition-transform duration-300"
+              style={{ transform: isWriteButtonSpinning ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
             </svg>
           </button>
