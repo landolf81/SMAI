@@ -58,6 +58,17 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [showControls, setShowControls] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
+  const replayTimeoutRef = useRef(null);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (replayTimeoutRef.current) {
+        clearTimeout(replayTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // UI 상태 관리
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
@@ -385,6 +396,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       video.pause();
       setIsPlaying(false);
       onVideoPause && onVideoPause(post.id);
+
+      // 화면 밖으로 나가면 replay 타이머 클리어
+      if (replayTimeoutRef.current) {
+        clearTimeout(replayTimeoutRef.current);
+        replayTimeoutRef.current = null;
+      }
+      setIsWaitingToReplay(false);
     }
   }, [isVisible, isVideo, isR2Video, isCloudflareStream, post.id, onVideoPlay, onVideoPause]);
 
@@ -588,6 +606,30 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     // 동영상 로딩 실패 로그 제거
     setMediaLoadError(true);
     setIsBuffering(false);
+  };
+
+  // 동영상 재생 완료 시 3초 후 다시 재생
+  const handleVideoEnded = () => {
+    setIsPlaying(false);
+    setIsWaitingToReplay(true);
+
+    // 기존 타이머 클리어
+    if (replayTimeoutRef.current) {
+      clearTimeout(replayTimeoutRef.current);
+    }
+
+    // 3초 후 처음부터 재생
+    replayTimeoutRef.current = setTimeout(() => {
+      if (videoRef.current && isVisible) {
+        videoRef.current.currentTime = 0;
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => {
+          setIsPlaying(false);
+        });
+      }
+      setIsWaitingToReplay(false);
+    }, 3000);
   };
 
   const handleImageError = () => {
@@ -969,7 +1011,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   </div>
                 ) : (
                   <>
-                    {/* 피드 동영상: 자동재생, 무음, 루프, 클릭시 모달 */}
+                    {/* 피드 동영상: 자동재생, 무음, 재생 완료 후 3초 대기 후 재시작, 클릭시 모달 */}
                     <video
                       ref={videoRef}
                       src={normalizedMediaFiles[0]}
@@ -982,11 +1024,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                         setShowMediaModal(true);
                       }}
                       autoPlay
-                      loop
                       muted
                       playsInline
                       preload="auto"
                       onError={handleVideoError}
+                      onEnded={handleVideoEnded}
                     />
 
                     {/* 동영상 아이콘 표시 */}
