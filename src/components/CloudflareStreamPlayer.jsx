@@ -64,9 +64,10 @@ const CloudflareStreamPlayer = ({
         videoRef.current.play().catch(() => {});
       }
     } else if (videoRef.current) {
-      // 화면 밖으로 나가면 (autoplay가 false가 되면) 동영상 정지 + 음소거
+      // 화면 밖으로 나가면 (autoplay가 false가 되면) 동영상 정지 + 음소거 + 재생위치 리셋
       videoRef.current.pause();
       videoRef.current.muted = true;
+      videoRef.current.currentTime = 0;  // 재생 위치 리셋
       setIsMuted(true);
 
       // replay 타이머 클리어
@@ -169,6 +170,12 @@ const CloudflareStreamPlayer = ({
 
   // 동영상 재생 완료 시 3초 후 다시 재생
   const handleVideoEnded = () => {
+    // 화면 밖이면(autoplay=false) 재생하지 않음
+    if (!autoplay) {
+      setIsWaitingToReplay(false);
+      return;
+    }
+
     setIsWaitingToReplay(true);
 
     // 기존 타이머 클리어
@@ -178,7 +185,9 @@ const CloudflareStreamPlayer = ({
 
     // 3초 후 처음부터 재생
     replayTimeoutRef.current = setTimeout(() => {
+      // 타이머 실행 시점에도 autoplay 재확인
       if (videoRef.current && autoplay) {
+        videoRef.current.muted = true;  // 음소거 보장
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
       }

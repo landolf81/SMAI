@@ -397,7 +397,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         };
       }
     } else {
+      // 동영상 정지 및 상태 초기화
       video.pause();
+      video.muted = true;  // 음소거 확인 (오디오 재생 방지)
+      video.currentTime = 0;  // 재생 위치 리셋
+
       setIsPlaying(false);
       onVideoPause && onVideoPause(post.id);
 
@@ -614,6 +618,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 동영상 재생 완료 시 3초 후 다시 재생
   const handleVideoEnded = () => {
+    // 화면 밖이면 재생하지 않음
+    if (!isVisible) {
+      setIsPlaying(false);
+      setIsWaitingToReplay(false);
+      return;
+    }
+
     setIsPlaying(false);
     setIsWaitingToReplay(true);
 
@@ -624,7 +635,9 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
     // 3초 후 처음부터 재생
     replayTimeoutRef.current = setTimeout(() => {
+      // 타이머 실행 시점에도 isVisible 재확인
       if (videoRef.current && isVisible) {
+        videoRef.current.muted = true;  // 음소거 보장
         videoRef.current.currentTime = 0;
         videoRef.current.play().then(() => {
           setIsPlaying(true);

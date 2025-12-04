@@ -220,8 +220,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: enableSnapScroll ? '0px' : '-10% 0px -10% 0px',
-      threshold: enableSnapScroll ? [0.5, 0.75, 1.0] : [0.6]
+      rootMargin: enableSnapScroll ? '0px' : '0px',  // rootMargin 제거하여 조기 invisible 방지
+      threshold: enableSnapScroll ? [0.5, 0.75, 1.0] : [0.3]  // 30% 이상 보이면 visible 유지
     };
 
     observerRef.current = new IntersectionObserver((entries) => {
