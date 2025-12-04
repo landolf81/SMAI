@@ -24,12 +24,12 @@ const PostEditor = () => {
 
   const urlParams = new URLSearchParams(location.search);
   const postTypeParam = urlParams.get('type');
-  const [postType, setPostType] = useState(postTypeParam || 'general');
+  // QnA는 QnAForm 사용, 여기서는 general/secondhand만 지원
+  const [postType, setPostType] = useState(postTypeParam === 'secondhand' ? 'secondhand' : 'general');
 
   // 상태 관리
   const [files, setFiles] = useState([]);
   const [desc, setDesc] = useState('');
-  const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewImages, setPreviewImages] = useState([]);
@@ -84,29 +84,49 @@ const PostEditor = () => {
   const createMutation = useMutation({
     mutationFn: async (newPost) => {
       console.log('=== 게시물 작성 시작 ===');
+      console.log('파일 개수:', files.length);
       const postId = uuidv4();
 
       // 이미지 PNG 변환 + 압축 (업로드 시점에 처리)
       let processedFiles = [];
       if (files.length > 0) {
-        for (const file of files) {
+        console.log('이미지 처리 시작...');
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          console.log(`파일 ${i + 1}/${files.length}: ${file.name}, 타입: ${file.type}`);
           const mediaType = getMediaType(file);
           if (mediaType.isImage) {
-            // convertImageToPng에서 PNG 변환 + 리사이징 처리
-            const processedImage = await convertImageToPng(file, {
-              maxWidth: 1024
-            });
-            processedFiles.push(processedImage);
+            try {
+              // convertImageToPng에서 PNG 변환 + 리사이징 처리
+              console.log(`이미지 변환 시작: ${file.name}`);
+              const processedImage = await convertImageToPng(file, {
+                maxWidth: 1024
+              });
+              console.log(`이미지 변환 완료: ${processedImage.name}, 크기: ${processedImage.size}`);
+              processedFiles.push(processedImage);
+            } catch (convertError) {
+              console.error(`이미지 변환 실패: ${file.name}`, convertError);
+              throw convertError;
+            }
           }
           // 동영상은 이미 uploadedVideos에 있으므로 건너뜀
         }
+        console.log(`이미지 처리 완료: ${processedFiles.length}개`);
       }
 
       // 이미지를 Supabase Storage에 업로드
       let imageUrls = [];
       if (processedFiles.length > 0) {
-        const uploadResults = await storageService.uploadPostImages(postId, processedFiles);
-        imageUrls = uploadResults.map(result => result.url);
+        console.log('이미지 업로드 시작...');
+        try {
+          const uploadResults = await storageService.uploadPostImages(postId, processedFiles);
+          console.log('업로드 결과:', uploadResults);
+          imageUrls = uploadResults.map(result => result.url);
+          console.log('이미지 URL:', imageUrls);
+        } catch (uploadError) {
+          console.error('이미지 업로드 실패:', uploadError);
+          throw uploadError;
+        }
       }
 
       // 동영상 URL 추가 (R2 또는 Stream)
@@ -114,8 +134,9 @@ const PostEditor = () => {
       const allMediaUrls = [...imageUrls, ...videoUrls];
 
       let finalContent = newPost.desc;
-      let finalTitle = newPost.title;
+      let finalTitle = '';
 
+      // 중고거래: 첫 줄을 제목으로 사용
       if (postType === 'secondhand' && newPost.desc) {
         const lines = newPost.desc.split('\n');
         finalTitle = lines[0].trim();
@@ -133,10 +154,7 @@ const PostEditor = () => {
         video_uid: uploadedVideos.length > 0 ? uploadedVideos[0].uid : null,
       };
 
-      if (postType === 'qna' && newPost.title) {
-        postDataObj.title = newPost.title;
-        postDataObj.content = `[Q&A] ${newPost.title}\n\n${newPost.desc}`;
-      } else if (postType === 'secondhand' && finalTitle) {
+      if (postType === 'secondhand' && finalTitle) {
         postDataObj.title = finalTitle;
       }
 
@@ -165,10 +183,7 @@ const PostEditor = () => {
       await queryClient.invalidateQueries({ queryKey: ['enhanced-instagram-posts'] });
       await queryClient.invalidateQueries({ queryKey: ['user-posts'] });
 
-      let redirectPath = '/community';
-      if (postType === 'qna') redirectPath = '/qna';
-      else if (postType === 'secondhand') redirectPath = '/secondhand';
-
+      const redirectPath = postType === 'secondhand' ? '/secondhand' : '/community';
       setTimeout(() => navigate(redirectPath), 100);
     },
     onError: (error) => {
@@ -338,29 +353,19 @@ const PostEditor = () => {
     e.preventDefault();
     setError('');
 
-    if (postType === 'qna' && !title.trim()) {
-      setError('질문 제목을 입력해주세요.');
-      return;
-    }
-
     if (!desc.trim()) {
       setError('내용을 입력해주세요.');
       return;
     }
 
-    if (postType === 'qna' && desc.trim().length < 20) {
-      setError('질문 내용을 최소 20자 이상 작성해주세요.');
-      return;
-    }
-
-    if (postType !== 'qna' && previewImages.length === 0 && uploadedVideos.length === 0 && !linkPreview) {
+    if (previewImages.length === 0 && uploadedVideos.length === 0 && !linkPreview) {
       setError('이미지, 동영상 또는 링크를 추가해주세요.');
       return;
     }
 
     setLoading(true);
     try {
-      await createMutation.mutateAsync({ desc: desc.trim(), title: title.trim() });
+      await createMutation.mutateAsync({ desc: desc.trim() });
     } catch (err) {
       console.error('Mutation 에러:', err);
     } finally {
@@ -377,7 +382,7 @@ const PostEditor = () => {
             <ArrowBackIcon fontSize="small" />
           </button>
           <h1 className="text-lg font-semibold text-gray-800">
-            {isEditMode ? '게시물 수정' : postType === 'qna' ? '새 질문 작성' : postType === 'secondhand' ? '중고거래 글쓰기' : '새 게시물'}
+            {isEditMode ? '게시물 수정' : postType === 'secondhand' ? '중고거래 글쓰기' : '새 게시물'}
           </h1>
           <div className="w-5 h-5" />
         </div>
@@ -405,30 +410,12 @@ const PostEditor = () => {
             </div>
           </div>
 
-          {/* QnA 제목 */}
-          {postType === 'qna' && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                질문 제목 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="예: 참외 재배 시 물 주기는 어떻게 해야 하나요?"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                maxLength={200}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
-              <div className="text-sm text-gray-500 mt-1">{title.length}/200자</div>
-            </div>
-          )}
-
           {/* 파일 업로드 */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
               <FontAwesomeIcon icon={faImage} className="mr-2 text-orange-500" />
               이미지 또는 동영상
-              {postType === 'qna' ? <span className="text-gray-500 ml-1">(선택)</span> : !linkPreview && <span className="text-red-500 ml-1">*</span>}
+              {!linkPreview && <span className="text-red-500 ml-1">*</span>}
             </label>
 
             <label
@@ -554,15 +541,14 @@ const PostEditor = () => {
           {/* 내용 입력 */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              {postType === 'qna' ? '질문 내용' : '내용'} <span className="text-red-500">*</span>
+              내용 <span className="text-red-500">*</span>
             </label>
             <textarea
-              placeholder={postType === 'qna' ? '질문에 대해 자세히 설명해주세요.' : postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
+              placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
               className="w-full min-h-[200px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
             />
-            {postType === 'qna' && <div className="text-sm text-gray-500 mt-1">최소 20자 이상. 현재: {desc.length}자</div>}
 
             {gpsData && (
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -594,7 +580,7 @@ const PostEditor = () => {
           {/* 제출 버튼 */}
           <button
             type="submit"
-            disabled={loading || imageConvertProgress || videoUploadProgress || !desc.trim() || (postType === 'qna' && !title.trim())}
+            disabled={loading || imageConvertProgress || videoUploadProgress || !desc.trim()}
             className={`w-full py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
               loading || imageConvertProgress || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
             }`}

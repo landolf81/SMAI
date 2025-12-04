@@ -37,6 +37,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
   const [answerContent, setAnswerContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAnswerFormOpen, setIsAnswerFormOpen] = useState(false);
 
   // 프로필 모달 상태
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -266,7 +267,15 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       try {
         await qnaService.deleteQuestion(questionId);
         alert('질문이 삭제되었습니다.');
-        navigate('/qna');
+        // 쿼리 캐시 무효화하여 목록 리프레쉬
+        queryClient.invalidateQueries({ queryKey: ['qna-questions'] });
+        queryClient.invalidateQueries({ queryKey: ['qna-trending'] });
+        // 모달 모드면 onClose 호출, 아니면 navigate
+        if (isModal && onClose) {
+          onClose();
+        } else {
+          navigate('/qna');
+        }
       } catch (error) {
         alert('삭제 실패: ' + error.message);
       }
@@ -316,17 +325,9 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      {/* 헤더 */}
-      <div className="mb-6">
-        {isModal ? (
-          <button
-            onClick={onClose}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
-          >
-            <CloseIcon fontSize="small" />
-            닫기
-          </button>
-        ) : (
+      {/* 헤더 (페이지 모드일 때만 표시) */}
+      {!isModal && (
+        <div className="mb-6">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
@@ -334,8 +335,8 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
             <ArrowBackIcon fontSize="small" />
             질문 목록으로
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* 질문 카드 */}
       <div className="bg-white rounded-lg p-6 border shadow-sm mb-6">
@@ -379,14 +380,14 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 <FontAwesomeIcon icon={faEllipsisH} />
               </button>
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border hidden group-hover:block z-10">
-                <button 
+                <button
                   onClick={() => handleOpenEditModal(question)}
                   className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-2"
                 >
                   <EditIcon fontSize="small" />
                   수정
                 </button>
-                <button 
+                <button
                   onClick={() => handleDeleteQuestion()}
                   className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
                 >
@@ -419,26 +420,41 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
         </div>
 
         {/* 질문 이미지 */}
-        {(question.photo || question.img) && (
-          <div className="mb-6">
-            <img
-              src={question.photo || question.img}
-              alt="질문 이미지"
-              className="max-w-full h-auto rounded-lg border hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => window.open(question.photo || question.img, '_blank')}
-              onError={(e) => {
-                console.error('이미지 로드 실패:', question.photo || question.img);
-                e.target.parentElement.innerHTML = `
-                  <div class="w-full bg-gray-200 flex flex-col items-center justify-center text-gray-500 rounded-lg border p-8">
-                    <div class="text-4xl mb-2">🖼️</div>
-                    <div class="text-sm">이미지를 로드할 수 없습니다</div>
-                    <div class="text-xs mt-1 opacity-75">파일이 존재하지 않거나 손상되었습니다</div>
-                  </div>
-                `;
-              }}
-            />
-          </div>
-        )}
+        {(question.photo || question.img) && (() => {
+          // 이미지 URL 배열 또는 단일 URL 처리 (JSON 문자열 파싱 포함)
+          const imageSource = question.photo || question.img;
+          let images = [];
+
+          if (Array.isArray(imageSource)) {
+            images = imageSource;
+          } else if (typeof imageSource === 'string') {
+            try {
+              const parsed = JSON.parse(imageSource);
+              images = Array.isArray(parsed) ? parsed : [imageSource];
+            } catch {
+              images = [imageSource];
+            }
+          }
+
+          if (images.length === 0) return null;
+
+          return (
+            <div className="mb-6 space-y-3">
+              {images.map((imgUrl, index) => (
+                <img
+                  key={index}
+                  src={imgUrl}
+                  alt={`질문 이미지 ${index + 1}`}
+                  className="max-w-full h-auto rounded-lg border hover:shadow-lg transition-shadow cursor-pointer"
+                  onClick={() => window.open(imgUrl, '_blank')}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ))}
+            </div>
+          );
+        })()}
 
         {/* 질문 메타 정보 */}
         <div className="flex items-center gap-4 pt-4 border-t text-sm text-gray-500">
@@ -547,28 +563,47 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
       {/* 답변 작성 폼 */}
       {currentUser && question.question_status !== 'closed' ? (
-        <div className="bg-white rounded-lg p-6 border shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">답변 작성</h3>
-          <form onSubmit={handleSubmitAnswer}>
-            <textarea
-              value={answerContent}
-              onChange={(e) => setAnswerContent(e.target.value)}
-              placeholder="도움이 되는 답변을 작성해주세요..."
-              rows="6"
-              className="w-full p-4 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
-              disabled={isSubmitting}
-            />
-            <div className="flex justify-end mt-4">
-              <button
-                type="submit"
-                disabled={!answerContent.trim() || isSubmitting}
-                className="flex items-center gap-2 px-6 py-2 bg-market-600 text-white rounded-lg hover:bg-market-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <SendIcon fontSize="small" />
-                {isSubmitting ? '답변 등록 중...' : '답변 등록'}
-              </button>
-            </div>
-          </form>
+        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+          {/* 클릭 영역 - 항상 표시 */}
+          <button
+            type="button"
+            onClick={() => setIsAnswerFormOpen(!isAnswerFormOpen)}
+            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+          >
+            <span className="font-medium text-gray-900">답변 작성</span>
+            <svg
+              className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isAnswerFormOpen ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* 펼쳐지는 영역 */}
+          {isAnswerFormOpen && (
+            <form onSubmit={handleSubmitAnswer} className="px-4 pb-4">
+              <textarea
+                value={answerContent}
+                onChange={(e) => setAnswerContent(e.target.value)}
+                placeholder="도움이 되는 답변을 작성해주세요..."
+                rows="4"
+                className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
+                disabled={isSubmitting}
+              />
+              <div className="flex justify-end mt-3">
+                <button
+                  type="submit"
+                  disabled={!answerContent.trim() || isSubmitting}
+                  className="flex items-center gap-2 px-5 py-2 bg-market-600 text-white rounded-lg hover:bg-market-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                >
+                  <SendIcon fontSize="small" />
+                  {isSubmitting ? '등록 중...' : '답변 등록'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       ) : !currentUser ? (
         <div className="bg-gray-50 rounded-lg p-6 border text-center">
@@ -618,8 +653,10 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                   onChange={(e) => setEditTitle(e.target.value)}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
                   placeholder="질문 제목을 입력하세요"
+                  maxLength={20}
                   required
                 />
+                <div className="text-sm text-gray-500 mt-1">{editTitle.length}/20자</div>
               </div>
               
               <div>

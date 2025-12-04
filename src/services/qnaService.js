@@ -352,9 +352,9 @@ export const qnaService = {
         .insert([{
           user_id: user.id,
           title: questionData.title,
-          content: questionData.content,
-          tag_id: questionData.tagId,
+          description: questionData.content,  // posts 테이블은 'description' 컬럼 사용
           post_type: 'qna',
+          photo: questionData.images && questionData.images.length > 0 ? JSON.stringify(questionData.images) : null,
           created_at: new Date().toISOString()
         }])
         .select()

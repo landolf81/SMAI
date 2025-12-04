@@ -8,6 +8,7 @@ import moment from 'moment';
 import 'moment/locale/ko';
 import MobileAdDisplay from './MobileAdDisplay';
 import { isMobileDevice } from '../utils/deviceDetector';
+import ProfileModal from './ProfileModal';
 
 // 아이콘
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
@@ -22,7 +23,8 @@ moment.locale('ko');
 const QnAList = () => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState(''); // 입력값
+  const [searchTerm, setSearchTerm] = useState(''); // 실제 검색어 (엔터 시 적용)
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [isMobile] = useState(() => isMobileDevice());
@@ -32,8 +34,15 @@ const QnAList = () => {
   const [renderedCount, setRenderedCount] = useState(0);
   const renderIntervalRef = useRef(null);
 
+  // 스크롤 애니메이션을 위한 ref
+  const questionRefs = useRef({});
+
   // 글쓰기 버튼 회전 애니메이션 상태
   const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
+
+  // 프로필 모달 상태
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [selectedProfileUser, setSelectedProfileUser] = useState(null);
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
   useScrollRestore('qna', statusFilter, searchTerm);
@@ -175,8 +184,34 @@ const QnAList = () => {
     };
   }, [isLoading, questionsWithAds.length, navigationType]);
 
+  // 스크롤 시 애니메이션 효과 (IntersectionObserver)
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.15
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fade-in-up');
+          entry.target.classList.remove('opacity-0', 'translate-y-8');
+        }
+      });
+    }, observerOptions);
+
+    // 각 질문 카드 관찰
+    Object.values(questionRefs.current).forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [questionsWithAds, renderedCount]);
+
   const handleSearch = (e) => {
     e.preventDefault();
+    setSearchTerm(searchInput); // 엔터 시에만 검색어 적용
     setPage(0); // 검색 시 첫 페이지로 이동
   };
 
@@ -254,58 +289,35 @@ const QnAList = () => {
 
           {/* 검색바 */}
           <form onSubmit={handleSearch}>
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10" fontSize="small" />
-              <input
-                type="text"
-                placeholder=""
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent bg-white"
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="검색어 입력 후 엔터"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent bg-white"
+            />
           </form>
         </div>
       </div>
 
       <div className="p-4">
 
-      {/* 인기 질문 (최상단) */}
+      {/* 인기 질문 (최상단) - 타이틀만 표시 */}
       {trending && trending.length > 0 && (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-5 mb-6 border border-yellow-200 shadow-sm">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🔥</span>
-            <h2 className="text-lg font-bold text-gray-900">인기 질문</h2>
-            <span className="text-xs text-gray-500 ml-1">(최근 7일)</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {trending.map((question, index) => (
-              <div
-                key={question.id}
-                className="bg-white rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow border border-gray-200"
-                onClick={() => setSelectedQuestionId(question.id)}
-              >
-                <div className="flex items-start gap-2 mb-2">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-yellow-500 text-white text-xs font-bold flex items-center justify-center">
-                    {index + 1}
-                  </span>
-                  <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 flex-1">
-                    {question.title}
-                  </h3>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500 mt-3">
-                  <span className="flex items-center gap-1">
-                    <ChatBubbleOutlineIcon fontSize="inherit" />
-                    {question.answers_count}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <VisibilityIcon fontSize="inherit" />
-                    {question.views_count || 0}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-6 border border-yellow-200">
+          <p className="flex items-center gap-2 text-base font-bold text-gray-900 mb-2">
+            <span>🔥</span> 인기 질문 <span className="text-xs text-gray-500 font-normal">(최근 7일)</span>
+          </p>
+          {trending.map((question, index) => (
+            <p
+              key={question.id}
+              className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-white/50 rounded px-2 -mx-2"
+              onClick={() => setSelectedQuestionId(question.id)}
+            >
+              <span className="w-5 h-5 rounded-full bg-yellow-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{index + 1}</span>
+              <span className="text-base text-gray-800 line-clamp-1">{question.title}</span>
+            </p>
+          ))}
         </div>
       )}
 
@@ -335,24 +347,35 @@ const QnAList = () => {
                 return (
                   <div
                     key={item.key}
-                    className={`rounded-lg p-6 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                    ref={(el) => { questionRefs.current[item.key] = el; }}
+                    className={`rounded-lg p-6 border shadow-sm hover:shadow-md transition-shadow cursor-pointer opacity-0 translate-y-8 ${
                       question.question_status === 'closed' ? 'bg-green-50/30' :
                       question.question_status === 'answered' ? 'bg-yellow-50/30' :
                       'bg-blue-50/30'
                     }`}
                     onClick={() => setSelectedQuestionId(question.id)}
-                    style={{
-                      animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
-                      animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
-                      opacity: navigationType !== 'POP' ? 0 : 1
-                    }}
                   >
                   <div className="flex items-start gap-4">
                     {/* 질문 내용 */}
                     <div className="flex-1 min-w-0">
                       {/* 최상단: 프로필과 상태 배지 */}
                       <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
+                        <div
+                          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedProfileUser({
+                              userId: question.user_id,
+                              user_id: question.user_id,
+                              id: question.user_id,
+                              name: question.user_name || question.username,
+                              username: question.username,
+                              profilePic: question.profilePic,
+                              profile_pic: question.profilePic
+                            });
+                            setShowProfileModal(true);
+                          }}
+                        >
                           <img
                             src={question.profilePic ?
                               (question.profilePic.startsWith('http') ? question.profilePic : `/uploads/profiles/${question.profilePic}`) :
@@ -367,10 +390,12 @@ const QnAList = () => {
                           <span className="text-sm font-medium text-gray-700">{question.user_name || question.username}</span>
                         </div>
 
-                        {/* 상태 배지 */}
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(question.question_status)}`}>
-                          {getStatusText(question.question_status)}
-                        </span>
+                        {/* 상태 배지 (답변대기 제외) */}
+                        {question.question_status !== 'open' && (
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(question.question_status)}`}>
+                            {getStatusText(question.question_status)}
+                          </span>
+                        )}
                       </div>
 
                       {/* 제목 */}
@@ -383,19 +408,43 @@ const QnAList = () => {
                         {question.desc}
                       </p>
 
-                      {/* 이미지 미리보기 */}
-                      {question.img && (
-                        <div className="mb-3">
-                          <img
-                            src={question.img}
-                            alt="첨부 이미지"
-                            className="max-w-full h-auto max-h-60 object-contain rounded-lg border"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
+                      {/* 이미지 미리보기 - 첫 번째 이미지만 표시 */}
+                      {question.img && (() => {
+                        // JSON 배열 파싱 처리
+                        let images = [];
+                        try {
+                          const parsed = JSON.parse(question.img);
+                          images = Array.isArray(parsed) ? parsed : [question.img];
+                        } catch {
+                          images = [question.img];
+                        }
+
+                        if (images.length === 0) return null;
+
+                        return (
+                          <div className="mb-3 flex justify-center">
+                            <div className="relative inline-block">
+                              <img
+                                src={images[0]}
+                                alt="첨부 이미지"
+                                className="max-w-full h-auto max-h-60 object-contain rounded-lg border"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                }}
+                              />
+                              {/* 다중 이미지 개수 배지 */}
+                              {images.length > 1 && (
+                                <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  <span>1/{images.length}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
 
                       {/* 메타 정보 */}
                       <div className="flex items-center justify-between">
@@ -460,22 +509,34 @@ const QnAList = () => {
 
       </div>{/* p-4 닫기 */}
 
-      {/* QnA 상세보기 모달 */}
+      {/* QnA 상세보기 모달 (전체화면) */}
       {selectedQuestionId && (
-        <div
-          className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4"
-          onClick={() => setSelectedQuestionId(null)}
-        >
-          <div
-            className="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto relative"
-            onClick={(e) => e.stopPropagation()}
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          <QnADetail
+            questionId={selectedQuestionId}
+            onClose={() => setSelectedQuestionId(null)}
+            isModal={true}
+          />
+
+          {/* 플로팅 닫기 버튼 - 왼쪽 하단, 짙은 그라데이션 */}
+          <button
+            onClick={() => setSelectedQuestionId(null)}
+            className="fixed bottom-20 left-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-[60] flex items-center justify-center border-2 border-white/30"
+            style={{
+              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4), 0 8px 25px rgba(15, 52, 96, 0.3)'
+            }}
+            title="닫기"
           >
-            <QnADetail
-              questionId={selectedQuestionId}
-              onClose={() => setSelectedQuestionId(null)}
-              isModal={true}
-            />
-          </div>
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
 
@@ -486,7 +547,7 @@ const QnAList = () => {
             if (isWriteButtonSpinning) return;
             setIsWriteButtonSpinning(true);
             setTimeout(() => {
-              navigate('/post/new?type=qna');
+              navigate('/qna/ask');
             }, 300);
           }}
           className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"
@@ -507,6 +568,13 @@ const QnAList = () => {
           </svg>
         </button>
       )}
+
+      {/* 프로필 모달 */}
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={selectedProfileUser}
+      />
     </div>
   );
 };
