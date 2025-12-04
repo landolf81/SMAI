@@ -80,7 +80,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showCommentForm, setShowCommentForm] = useState(false);
-  const [viewCountIncreased, setViewCountIncreased] = useState(false);
+  // sessionStorage에서 이미 조회한 게시물인지 확인 (컴포넌트 재마운트 시에도 유지)
+  const [viewCountIncreased, setViewCountIncreased] = useState(() => {
+    const viewedKey = `post_viewed_${post.id}`;
+    return sessionStorage.getItem(viewedKey) === 'true';
+  });
   const [showReportModal, setShowReportModal] = useState(false);
   const [showReportDetailsModal, setShowReportDetailsModal] = useState(false);
   const [showMediaModal, setShowMediaModal] = useState(false);
@@ -672,17 +676,29 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     }
   }, [isLiked, likeCount, likesData, currentUser?.id, post.id]);
 
-  // 조회수 증가 및 열람 기록 저장 (게시물이 보일 때 한 번만)
+  // 조회수 증가 및 열람 기록 저장 (게시물이 보일 때 한 번만, 세션 내 중복 방지)
   useEffect(() => {
     if (isVisible && !viewCountIncreased) {
+      const viewedKey = `post_viewed_${post.id}`;
+
+      // 이미 이 세션에서 조회한 게시물이면 스킵
+      if (sessionStorage.getItem(viewedKey) === 'true') {
+        setViewCountIncreased(true);
+        return;
+      }
+
       const increaseViewCount = async () => {
         try {
           // 조회수 증가 (로그인/비로그인 모두)
-          await postService.incrementViewCount(post.id);
+          const result = await postService.incrementViewCount(post.id);
+
           // 피드 알고리즘용 열람 기록 저장 (로그인 사용자만)
           if (currentUser?.id) {
             await postService.recordPostView(post.id);
           }
+
+          // sessionStorage에 저장하여 컴포넌트 재마운트 시에도 중복 방지
+          sessionStorage.setItem(viewedKey, 'true');
           setViewCountIncreased(true);
         } catch (error) {
           console.error('조회수 증가 실패:', error);
