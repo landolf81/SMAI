@@ -47,7 +47,7 @@ const AdminUsers = () => {
       if (result) {
         const { users: userList = [], pagination: paginationData } = result;
 
-        // 사용자 데이터 정규화 및 관리자 우선 정렬
+        // 사용자 데이터 정규화 (가입일자 역순 정렬은 서버에서 처리됨)
         const processedUsers = userList.map(user => ({
           ...user,
           role: user.role || 'member',
@@ -58,33 +58,13 @@ const AdminUsers = () => {
           profilePic: user.profile_pic
         }));
 
-        // 관리자 우선 정렬: super_admin > market_admin > content_admin > advertiser > member
-        const sortedUsers = processedUsers.sort((a, b) => {
-          const roleOrder = {
-            super_admin: 5,
-            market_admin: 4,
-            content_admin: 3,
-            advertiser: 2,
-            member: 1
-          };
-          const aOrder = roleOrder[a.role] || 0;
-          const bOrder = roleOrder[b.role] || 0;
-
-          if (aOrder !== bOrder) {
-            return bOrder - aOrder; // 내림차순으로 관리자가 먼저
-          }
-
-          // 같은 역할일 경우 ID 오름차순
-          return a.id - b.id;
-        });
-
-        setUsers(sortedUsers);
+        setUsers(processedUsers);
 
         if (paginationData) {
           setPagination({
             page: paginationData.page || page,
             limit: paginationData.limit || 20,
-            total: paginationData.total || sortedUsers.length,
+            total: paginationData.total || processedUsers.length,
             totalPages: paginationData.totalPages || Math.ceil(paginationData.total / 20)
           });
         }
@@ -447,11 +427,18 @@ const UserListContent = ({
                       <div className="avatar">
                         <div className="w-12 h-12 rounded-full">
                           <img
-                            src={user.profilePic
-                              ? `/uploads/profiles/${user.profilePic}`
-                              : user.avatar || "/default/default_profile.png"
-                            }
+                            src={(() => {
+                              const pic = user.profilePic || user.profile_pic;
+                              if (!pic) return user.avatar || "/default/default_profile.png";
+                              if (pic.startsWith('http')) return pic;
+                              if (pic.startsWith('/uploads/')) return pic;
+                              return `/uploads/profiles/${pic}`;
+                            })()}
                             alt="프로필"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = '/default/default_profile.png';
+                            }}
                           />
                         </div>
                       </div>

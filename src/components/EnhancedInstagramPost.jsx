@@ -38,7 +38,7 @@ import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
 
 const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, isBanned } = useContext(AuthContext);
   const navigate = useNavigate();
   const featurePermissions = useFeaturePermissions();
   const videoRef = useRef(null);
@@ -165,13 +165,9 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 좋아요 토글
   const likeMutation = useMutation({
-    mutationFn: async (liked) => {
+    mutationFn: async () => {
       try {
-        if (liked) {
-          await postService.unlikePost(post.id);
-        } else {
-          await postService.likePost(post.id);
-        }
+        await postService.toggleLike(post.id);
       } catch (error) {
         // 개발 모드에서만 상세 로그 출력
         if (process.env.NODE_ENV === 'development') {
@@ -468,9 +464,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       setTimeout(() => setIsLikeAnimating(false), 1000);
     }
 
-    // 서버 요청 (서버 상태를 기준으로)
-    const serverLikedState = likesData?.includes(currentUser.id);
-    likeMutation.mutate(serverLikedState);
+    // 서버 요청 (toggleLike가 DB에서 상태 확인 후 처리)
+    likeMutation.mutate();
   };
 
   const handleDelete = () => {
@@ -772,11 +767,18 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       {isLikeAnimating && (
         <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
           <div className="animate-ping">
-            <FontAwesomeIcon 
-              icon={faHeart} 
+            <FontAwesomeIcon
+              icon={faHeart}
               className="w-20 h-20 text-red-500 opacity-80"
             />
           </div>
+        </div>
+      )}
+
+      {/* 숨김 처리 알림 배너 (본인 게시물에만) */}
+      {post.is_hidden && currentUser?.id === post.userId && (
+        <div className="bg-red-500 text-white text-center py-2 px-4">
+          <span className="text-sm font-medium">⚠️ 이 게시물은 신고로 인해 숨김 처리되었습니다. 본인만 볼 수 있습니다.</span>
         </div>
       )}
 
@@ -852,8 +854,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           </div>
         )}
 
-        {/* 더보기 메뉴 - 로그인 시에만 표시 */}
-        {currentUser && (
+        {/* 더보기 메뉴 - 로그인 시에만 표시, 차단 사용자는 본인 글/관리자만 */}
+        {currentUser && (!isBanned || post.userId === currentUser.id || featurePermissions.canPinPosts) && (
         <div className="dropdown dropdown-end">
           <button
             tabIndex={0}
@@ -933,10 +935,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               </li>
             )}
             
-            {/* 신고 - 본인 게시글이 아닌 경우에만 */}
-            {post.userId !== currentUser.id && (
+            {/* 신고 - 본인 게시글이 아니고, 차단되지 않은 경우에만 */}
+            {post.userId !== currentUser.id && !isBanned && (
               <li>
-                <button 
+                <button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
@@ -1013,6 +1015,15 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         >
           {/* 1:1 비율 컨테이너 */}
           <div className="relative w-full aspect-square overflow-hidden">
+            {/* 숨김 처리된 게시물 오버레이 (본인에게만 표시) */}
+            {post.is_hidden && currentUser?.id === post.userId && (
+              <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                <div className="bg-red-500/80 text-white px-6 py-3 rounded-lg transform -rotate-12 shadow-lg border-4 border-red-600">
+                  <div className="text-2xl font-bold tracking-wider">숨김 처리됨</div>
+                  <div className="text-xs text-center mt-1 opacity-90">커뮤니티 가이드라인 위반</div>
+                </div>
+              </div>
+            )}
             {mediaFiles.length === 1 ? (
               // 단일 미디어
               isCloudflareStream ? (

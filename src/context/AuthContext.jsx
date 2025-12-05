@@ -175,9 +175,13 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  // 차단된 사용자인지 확인
+  const isBanned = currentUser?.status === 'banned';
+
   const value = {
     currentUser,
     loading,
+    isBanned,
     login,
     logout,
     register,

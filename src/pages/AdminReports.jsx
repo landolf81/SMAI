@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { reportService, postService, commentService } from '../services';
+import { reportService, postService, commentService, userService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import { useAdminPermissions } from '../hooks/usePermissions';
 import PostDetailModal from '../components/PostDetailModal';
@@ -43,6 +43,7 @@ import {
   OpenInNew as OpenInNewIcon,
   Article as ArticleIcon
 } from '@mui/icons-material';
+import { SUPABASE_URL } from '../config/supabase';
 
 const AdminReports = () => {
   const { currentUser } = useContext(AuthContext);
@@ -61,6 +62,17 @@ const AdminReports = () => {
   // 게시물 상세 모달 상태
   const [showPostModal, setShowPostModal] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
+
+  // 작성자 경고 통계 조회
+  const targetAuthorId = selectedReport?.comment_id
+    ? selectedReport?.comment_author_id
+    : selectedReport?.post_author_id;
+
+  const { data: authorWarningStats } = useQuery({
+    queryKey: ['authorWarningStats', targetAuthorId],
+    queryFn: () => reportService.getUserWarningStats(targetAuthorId),
+    enabled: !!targetAuthorId && showProcessModal,
+  });
 
   // 신고 목록 조회
   const { data: reportsData, isLoading, error } = useQuery({
@@ -102,7 +114,7 @@ const AdminReports = () => {
 
       if (action === 'approve' || action === 'hide_post' || action === 'hide_comment' ||
           action === 'delete_post' || action === 'delete_comment' ||
-          action === 'warn_user' || action === 'suspend_user') {
+          action === 'warn_user' || action === 'suspend_user' || action === 'ban_user') {
         status = 'resolved';
       } else if (action === 'dismiss' || action === 'no_action') {
         status = 'dismissed';
@@ -199,6 +211,30 @@ const AdminReports = () => {
         await postService.deletePost(selectedReport.post_id);
       } else if (processAction === 'delete_comment' && selectedReport.comment_id) {
         await commentService.deleteCommentAdmin(selectedReport.comment_id);
+      } else if (processAction === 'suspend_user' || processAction === 'ban_user') {
+        // 사용자 정지 (7일 정지와 영구 정지 모두 banned 상태로 변경)
+        const targetUserId = selectedReport.comment_id
+          ? selectedReport.comment_author_id
+          : selectedReport.post_author_id;
+        if (targetUserId) {
+          await userService.updateUserStatus(targetUserId, 'banned');
+        }
+      }
+
+      // 신고 처리 결과 DM 발송 (조치 없음 제외)
+      if (processAction !== 'no_action') {
+        const receiverId = selectedReport.comment_id
+          ? selectedReport.comment_author_id
+          : selectedReport.post_author_id;
+        const contentType = selectedReport.comment_id ? 'comment' : 'post';
+
+        await reportService.sendReportResultDM({
+          receiverId,
+          action: processAction,
+          contentType,
+          reason: selectedReport.category_name || selectedReport.custom_reason,
+          adminId: currentUser?.id
+        });
       }
 
       // 신고 상태 업데이트
@@ -254,6 +290,60 @@ const AdminReports = () => {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('ko-KR');
+  };
+
+  // 이미지 URL 처리 함수
+  const getImageUrl = (photo) => {
+    if (!photo) return null;
+
+    // 이미 전체 URL인 경우
+    if (photo.startsWith('http://') || photo.startsWith('https://')) {
+      return photo;
+    }
+
+    // Supabase Storage URL 구성
+    if (photo.startsWith('posts/') || photo.startsWith('profiles/')) {
+      return `${SUPABASE_URL}/storage/v1/object/public/${photo}`;
+    }
+
+    // 기본 경로 추가
+    return `${SUPABASE_URL}/storage/v1/object/public/posts/${photo}`;
+  };
+
+  // 게시물 이미지 배열 추출
+  const getPostImages = (imageData) => {
+    if (!imageData) return [];
+
+    // JSON 배열 문자열인 경우
+    if (typeof imageData === 'string') {
+      try {
+        const parsed = JSON.parse(imageData);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch {
+        // JSON 파싱 실패 시
+      }
+      // 쉼표로 구분된 경우
+      if (imageData.includes(',')) {
+        return imageData.split(',').map(s => s.trim());
+      }
+      return [imageData];
+    }
+
+    if (Array.isArray(imageData)) {
+      return imageData;
+    }
+
+    return [];
+  };
+
+  // 비디오 파일 여부 확인
+  const isVideoFile = (filename) => {
+    if (!filename) return false;
+    const videoExtensions = ['.mp4', '.webm', '.mov', '.avi', '.mkv', '.m4v'];
+    const lowered = filename.toLowerCase();
+    return videoExtensions.some(ext => lowered.endsWith(ext) || lowered.includes(ext + '?'));
   };
 
   if (!adminPermissions.isAdmin) {
@@ -399,12 +489,12 @@ const AdminReports = () => {
                   <Box display="flex" gap={1}>
                     <Button
                       size="small"
-                      variant="outlined"
+                      variant={report.status === 'resolved' ? 'text' : 'outlined'}
+                      color={report.status === 'resolved' ? 'success' : 'primary'}
                       startIcon={<ViewIcon />}
                       onClick={() => handleProcessReport(report)}
-                      disabled={report.status === 'resolved'}
                     >
-                      {report.status === 'resolved' ? '처리완료' : '처리하기'}
+                      {report.status === 'resolved' ? '결과보기' : '처리하기'}
                     </Button>
                     {report.post_id && (
                       <Button
@@ -443,7 +533,7 @@ const AdminReports = () => {
       {/* 신고 처리 모달 */}
       <Dialog open={showProcessModal} onClose={() => setShowProcessModal(false)} maxWidth="md" fullWidth>
         <DialogTitle>
-          신고 처리 - #{selectedReport?.id}
+          {selectedReport?.status === 'resolved' ? '처리 결과 조회' : '신고 처리'} - #{selectedReport?.id}
         </DialogTitle>
         <DialogContent>
           {selectedReport && (
@@ -518,10 +608,37 @@ const AdminReports = () => {
                     <Box>
                       <Typography variant="body2" color="text.secondary">대상 작성자</Typography>
                       <Typography variant="body1">
-                        {selectedReport.comment_id 
+                        {selectedReport.comment_id
                           ? selectedReport.comment_author_username
                           : selectedReport.post_author_username}
                       </Typography>
+                      {/* 작성자 경고 통계 */}
+                      {authorWarningStats && authorWarningStats.totalActions > 0 && (
+                        <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          {authorWarningStats.warningCount > 0 && (
+                            <Chip
+                              size="small"
+                              color="warning"
+                              label={`경고 ${authorWarningStats.warningCount}회`}
+                            />
+                          )}
+                          {authorWarningStats.suspensionCount > 0 && (
+                            <Chip
+                              size="small"
+                              color="error"
+                              label={`정지 ${authorWarningStats.suspensionCount}회`}
+                            />
+                          )}
+                          {authorWarningStats.banCount > 0 && (
+                            <Chip
+                              size="small"
+                              color="error"
+                              variant="filled"
+                              label={`영구정지 ${authorWarningStats.banCount}회`}
+                            />
+                          )}
+                        </Box>
+                      )}
                     </Box>
                     <Box>
                       <Typography variant="body2" color="text.secondary">신고일</Typography>
@@ -556,45 +673,50 @@ const AdminReports = () => {
                       신고된 {selectedReport.comment_id ? '댓글' : '게시물'} 내용
                     </Typography>
                     
-                    {/* 게시물 이미지 표시 */}
+                    {/* 게시물 이미지/동영상 표시 */}
                     {!selectedReport.comment_id && selectedReport.post_image && (
                       <Box mb={2}>
-                        {selectedReport.post_image.includes(',') ? (
-                          // 여러 이미지가 있는 경우
-                          <Box display="flex" gap={1} flexWrap="wrap">
-                            {selectedReport.post_image.split(',').map((img, index) => (
+                        <Box display="flex" gap={1} flexWrap="wrap">
+                          {getPostImages(selectedReport.post_image).map((media, index) => {
+                            const mediaUrl = getImageUrl(media);
+                            const isVideo = isVideoFile(media);
+
+                            return (
                               <Box key={index} sx={{ maxWidth: 200, maxHeight: 200 }}>
-                                <img 
-                                  src={`/uploads/posts/${img.trim()}`}
-                                  alt={`Post image ${index + 1}`}
-                                  style={{ 
-                                    width: '100%', 
-                                    height: '100%', 
-                                    objectFit: 'cover',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer'
-                                  }}
-                                  onClick={() => window.open(`/uploads/posts/${img.trim()}`, '_blank')}
-                                />
+                                {isVideo ? (
+                                  <video
+                                    src={`${mediaUrl}?t=${Date.now()}`}
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      borderRadius: '8px'
+                                    }}
+                                    controls
+                                    muted
+                                    playsInline
+                                  />
+                                ) : (
+                                  <img
+                                    src={mediaUrl}
+                                    alt={`Post image ${index + 1}`}
+                                    style={{
+                                      width: '100%',
+                                      height: '100%',
+                                      objectFit: 'cover',
+                                      borderRadius: '8px',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => window.open(mediaUrl, '_blank')}
+                                    onError={(e) => {
+                                      e.target.style.display = 'none';
+                                    }}
+                                  />
+                                )}
                               </Box>
-                            ))}
-                          </Box>
-                        ) : (
-                          // 단일 이미지
-                          <Box sx={{ maxWidth: 400 }}>
-                            <img 
-                              src={`/uploads/posts/${selectedReport.post_image}`}
-                              alt="Post image"
-                              style={{ 
-                                width: '100%', 
-                                height: 'auto', 
-                                borderRadius: '8px',
-                                cursor: 'pointer'
-                              }}
-                              onClick={() => window.open(`/uploads/posts/${selectedReport.post_image}`, '_blank')}
-                            />
-                          </Box>
-                        )}
+                            );
+                          })}
+                        </Box>
                       </Box>
                     )}
                     
@@ -616,107 +738,161 @@ const AdminReports = () => {
 
               <Divider sx={{ my: 3 }} />
 
-              {/* 처리 옵션 */}
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  처리 방법
-                </Typography>
-                
-                <FormControl fullWidth sx={{ mb: 2 }}>
-                  <InputLabel required>조치 선택</InputLabel>
-                  <Select
-                    value={processAction}
-                    label="조치 선택"
-                    onChange={(e) => setProcessAction(e.target.value)}
-                    required
-                  >
-                    <MenuItem value="no_action">조치 없음</MenuItem>
-                    {selectedReport.comment_id ? (
-                      <>
-                        <MenuItem value="hide_comment">댓글 숨김</MenuItem>
-                        <MenuItem value="delete_comment">댓글 삭제</MenuItem>
-                      </>
-                    ) : (
-                      <>
-                        <MenuItem value="hide_post">게시물 숨김</MenuItem>
-                        <MenuItem value="delete_post">게시물 삭제</MenuItem>
-                      </>
-                    )}
-                    <MenuItem value="warn_user">사용자 경고</MenuItem>
-                    <MenuItem value="suspend_user">사용자 정지 (7일)</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  label="처리 메모"
-                  placeholder="처리 사유나 추가 설명을 입력하세요..."
-                  value={processNotes}
-                  onChange={(e) => setProcessNotes(e.target.value)}
-                  sx={{ mb: 2 }}
-                />
-
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={isFalseReport}
-                      onChange={(e) => {
-                        setIsFalseReport(e.target.checked);
-                        if (!e.target.checked) {
-                          setDisableReporterOnFalse(false);
-                        }
-                      }}
-                    />
-                  }
-                  label="허위 신고로 판단"
-                />
-
-                {isFalseReport && (
-                  <Box ml={4} mt={1}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={disableReporterOnFalse}
-                          onChange={(e) => setDisableReporterOnFalse(e.target.checked)}
-                          color="error"
-                        />
-                      }
-                      label={
+              {/* 처리 완료된 경우 결과 표시 */}
+              {selectedReport?.status === 'resolved' ? (
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    처리 결과
+                  </Typography>
+                  <Card sx={{ bgcolor: 'success.50', border: '1px solid', borderColor: 'success.main' }}>
+                    <CardContent>
+                      <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
                         <Box>
-                          <Typography variant="body2" color="error">
-                            신고자의 신고 기능 비활성화
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            해당 사용자는 더 이상 신고할 수 없게 됩니다
+                          <Typography variant="body2" color="text.secondary">처리 상태</Typography>
+                          <Chip label="처리 완료" color="success" size="small" sx={{ mt: 0.5 }} />
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">처리 조치</Typography>
+                          <Typography variant="body1" fontWeight="medium">
+                            {selectedReport.admin_action === 'no_action' && '조치 없음'}
+                            {selectedReport.admin_action === 'hide_post' && '게시물 숨김'}
+                            {selectedReport.admin_action === 'delete_post' && '게시물 삭제'}
+                            {selectedReport.admin_action === 'hide_comment' && '댓글 숨김'}
+                            {selectedReport.admin_action === 'delete_comment' && '댓글 삭제'}
+                            {selectedReport.admin_action === 'warn_user' && '사용자 경고'}
+                            {selectedReport.admin_action === 'suspend_user' && '사용자 정지 (7일)'}
+                            {selectedReport.admin_action === 'ban_user' && '사용자 영구 정지'}
+                            {!selectedReport.admin_action && '기록 없음'}
                           </Typography>
                         </Box>
-                      }
-                    />
-                    {selectedReport?.reporter_can_report === false && (
-                      <Alert severity="info" sx={{ mt: 1 }}>
-                        이 신고자는 이미 신고 기능이 비활성화되어 있습니다.
-                      </Alert>
-                    )}
-                  </Box>
-                )}
-              </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">처리일시</Typography>
+                          <Typography variant="body1">
+                            {selectedReport.processed_at ? formatDate(selectedReport.processed_at) : '-'}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">처리자</Typography>
+                          <Typography variant="body1">
+                            {selectedReport.processed_by_username || selectedReport.processed_by || '-'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {selectedReport.admin_notes && (
+                        <Box mt={2}>
+                          <Typography variant="body2" color="text.secondary">처리 메모</Typography>
+                          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mt: 0.5 }}>
+                            {selectedReport.admin_notes}
+                          </Typography>
+                        </Box>
+                      )}
+                      {selectedReport.is_false_report && (
+                        <Alert severity="warning" sx={{ mt: 2 }}>
+                          허위 신고로 판단되었습니다.
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Box>
+              ) : (
+                /* 처리 옵션 */
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    처리 방법
+                  </Typography>
+
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel required>조치 선택</InputLabel>
+                    <Select
+                      value={processAction}
+                      label="조치 선택"
+                      onChange={(e) => setProcessAction(e.target.value)}
+                      required
+                    >
+                      <MenuItem value="no_action">조치 없음</MenuItem>
+                      <MenuItem value="hide_post" disabled={!!selectedReport?.comment_id}>게시물 숨김</MenuItem>
+                      <MenuItem value="delete_post" disabled={!!selectedReport?.comment_id}>게시물 삭제</MenuItem>
+                      <MenuItem value="hide_comment" disabled={!selectedReport?.comment_id}>댓글 숨김</MenuItem>
+                      <MenuItem value="delete_comment" disabled={!selectedReport?.comment_id}>댓글 삭제</MenuItem>
+                      <MenuItem value="warn_user">사용자 경고</MenuItem>
+                      <MenuItem value="suspend_user">사용자 정지 (7일)</MenuItem>
+                      <MenuItem value="ban_user">사용자 영구 정지</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={3}
+                    label="처리 메모"
+                    placeholder="처리 사유나 추가 설명을 입력하세요..."
+                    value={processNotes}
+                    onChange={(e) => setProcessNotes(e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={isFalseReport}
+                        onChange={(e) => {
+                          setIsFalseReport(e.target.checked);
+                          if (!e.target.checked) {
+                            setDisableReporterOnFalse(false);
+                          }
+                        }}
+                      />
+                    }
+                    label="허위 신고로 판단"
+                  />
+
+                  {isFalseReport && (
+                    <Box ml={4} mt={1}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={disableReporterOnFalse}
+                            onChange={(e) => setDisableReporterOnFalse(e.target.checked)}
+                            color="error"
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body2" color="error">
+                              신고자의 신고 기능 비활성화
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              해당 사용자는 더 이상 신고할 수 없게 됩니다
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                      {selectedReport?.reporter_can_report === false && (
+                        <Alert severity="info" sx={{ mt: 1 }}>
+                          이 신고자는 이미 신고 기능이 비활성화되어 있습니다.
+                        </Alert>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowProcessModal(false)}>
-            취소
+            {selectedReport?.status === 'resolved' ? '닫기' : '취소'}
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleSubmitProcess}
-            disabled={!processAction || processReportMutation.isPending}
-            startIcon={processReportMutation.isPending ? <CircularProgress size={16} /> : <CheckIcon />}
-          >
-            {processReportMutation.isPending ? '처리 중...' : '처리 완료'}
-          </Button>
+          {selectedReport?.status !== 'resolved' && (
+            <Button
+              variant="contained"
+              onClick={handleSubmitProcess}
+              disabled={!processAction || processReportMutation.isPending}
+              startIcon={processReportMutation.isPending ? <CircularProgress size={16} /> : <CheckIcon />}
+            >
+              {processReportMutation.isPending ? '처리 중...' : '처리 완료'}
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 

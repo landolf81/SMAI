@@ -10,7 +10,7 @@ import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import ReportModal from './ReportModal';
 
 const CommentsSection = ({ postId, postTag, post }) => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, isBanned } = useContext(AuthContext);
   const queryClient = useQueryClient();
   
   const [newComment, setNewComment] = useState('');
@@ -203,8 +203,8 @@ const CommentsSection = ({ postId, postTag, post }) => {
 
   return (
     <div className="border-t border-gray-100 animate-fadeIn bg-gray-50">
-      {/* 댓글 작성 폼 - 로그인 시에만 표시 */}
-      {currentUser ? (
+      {/* 댓글 작성 폼 - 로그인 시에만 표시, 차단 사용자는 제외 */}
+      {currentUser && !isBanned ? (
         <form onSubmit={handleSubmitComment} className="p-4 border-b border-gray-200">
           <div className="flex items-start space-x-3">
             <img
@@ -250,6 +250,10 @@ const CommentsSection = ({ postId, postTag, post }) => {
             </div>
           </div>
         </form>
+      ) : isBanned ? (
+        <div className="p-4 border-b border-gray-200 text-center bg-red-50">
+          <p className="text-red-600 text-sm">계정이 정지되어 댓글을 작성할 수 없습니다.</p>
+        </div>
       ) : (
         <div className="p-4 border-b border-gray-200 text-center">
           <p className="text-gray-500 text-sm mb-2">댓글을 작성하려면 로그인이 필요합니다.</p>
@@ -310,7 +314,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                           </li>
                         </>
                       )}
-                      {comment.userId !== currentUser?.id && (
+                      {comment.userId !== currentUser?.id && !isBanned && (
                         <li>
                           <button
                             onClick={() => handleReportComment(comment)}
@@ -381,20 +385,22 @@ const CommentsSection = ({ postId, postTag, post }) => {
                           <span>{comment.likes_count}</span>
                         )}
                       </button>
-                      {/* 답글 버튼 */}
-                      <button
-                        onClick={() => {
-                          if (!currentUser) {
-                            setShowLoginModal(true);
-                            return;
-                          }
-                          setReplyTo(replyTo === comment.id ? null : comment.id);
-                        }}
-                        className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"
-                      >
-                        <FontAwesomeIcon icon={faReply} className="w-3 h-3" />
-                        <span>답글</span>
-                      </button>
+                      {/* 답글 버튼 - 차단 사용자에게는 숨김 */}
+                      {!isBanned && (
+                        <button
+                          onClick={() => {
+                            if (!currentUser) {
+                              setShowLoginModal(true);
+                              return;
+                            }
+                            setReplyTo(replyTo === comment.id ? null : comment.id);
+                          }}
+                          className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"
+                        >
+                          <FontAwesomeIcon icon={faReply} className="w-3 h-3" />
+                          <span>답글</span>
+                        </button>
+                      )}
                     </div>
                   </>
                 )}
@@ -507,7 +513,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                                 </li>
                               </>
                             )}
-                            {reply.userId !== currentUser?.id && (
+                            {reply.userId !== currentUser?.id && !isBanned && (
                               <li>
                                 <button
                                   onClick={() => handleReportComment(reply)}

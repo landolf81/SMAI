@@ -327,7 +327,9 @@ export const reportService = {
           ...report,
           reporter_username: reporter?.username || '알 수 없음',
           reporter_can_report: reporter?.can_report !== false,
+          post_author_id: post?.user_id || null,
           post_author_username: postAuthor?.username || '알 수 없음',
+          comment_author_id: comment?.user_id || null,
           comment_author_username: commentAuthor?.username || '알 수 없음',
           // posts 테이블: content 또는 description 컬럼 지원
           post_content: post?.content || post?.description,
@@ -436,6 +438,165 @@ export const reportService = {
     } catch (error) {
       console.error('허위 신고 처리 오류:', error);
       throw error;
+    }
+  },
+
+  /**
+   * 신고 처리 결과를 게시물/댓글 작성자에게 DM으로 알림
+   * @param {Object} params - DM 파라미터
+   * @param {string} params.receiverId - 수신자 ID (게시물/댓글 작성자)
+   * @param {string} params.action - 처리 액션 (hide_post, delete_post, warn_user, suspend_user, ban_user 등)
+   * @param {string} params.contentType - 콘텐츠 타입 ('post' 또는 'comment')
+   * @param {string} params.reason - 신고 사유 (선택)
+   */
+  async sendReportResultDM({ receiverId, action, contentType, reason, adminId }) {
+    try {
+      if (!receiverId) {
+        console.warn('DM 수신자 ID가 없습니다.');
+        return null;
+      }
+
+      // 현재 로그인한 관리자 ID 가져오기
+      let senderId = adminId;
+      if (!senderId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        senderId = user?.id;
+      }
+
+      if (!senderId) {
+        console.warn('관리자 ID를 가져올 수 없습니다.');
+        return null;
+      }
+
+      // 액션에 따른 메시지 생성
+      const actionMessages = {
+        hide_post: '게시물이 커뮤니티 가이드라인 위반으로 숨김 처리되었습니다.',
+        delete_post: '게시물이 커뮤니티 가이드라인 위반으로 삭제되었습니다.',
+        hide_comment: '댓글이 커뮤니티 가이드라인 위반으로 숨김 처리되었습니다.',
+        delete_comment: '댓글이 커뮤니티 가이드라인 위반으로 삭제되었습니다.',
+        warn_user: '커뮤니티 가이드라인 위반으로 경고 조치가 내려졌습니다. 반복 시 계정이 정지될 수 있습니다.',
+        suspend_user: '커뮤니티 가이드라인 위반으로 계정이 7일간 정지되었습니다.',
+        ban_user: '커뮤니티 가이드라인 심각한 위반으로 계정이 영구 정지되었습니다.'
+      };
+
+      const message = actionMessages[action] || `${contentType === 'comment' ? '댓글' : '게시물'}에 대한 신고가 처리되었습니다.`;
+
+      // 전체 메시지 구성
+      let fullMessage = `[시스템 알림]\n\n${message}`;
+      if (reason) {
+        fullMessage += `\n\n신고 사유: ${reason}`;
+      }
+      fullMessage += '\n\n문의사항이 있으시면 고객센터로 연락해 주세요.';
+
+      // DM 전송 (messages 테이블에 직접 삽입)
+      // 현재 로그인한 관리자를 발신자로 설정
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([{
+          sender_id: senderId, // 관리자 ID
+          receiver_id: receiverId,
+          content: fullMessage,
+          is_read: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        // DM 테이블이 없거나 스키마가 다른 경우 무시
+        if (error.code === '42703' || error.code === '42P01') {
+          console.log('DM 기능이 비활성화되어 있습니다.');
+          return null;
+        }
+        console.error('신고 결과 DM 전송 실패:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      // DM 전송 실패해도 신고 처리는 정상 진행
+      console.error('신고 결과 DM 전송 오류:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 특정 사용자가 받은 경고 횟수 조회
+   * @param {string} userId - 사용자 ID
+   * @returns {Promise<Object>} 경고 통계 { warningCount, suspensionCount, banCount, totalActions }
+   */
+  async getUserWarningStats(userId) {
+    try {
+      if (!userId) return { warningCount: 0, suspensionCount: 0, banCount: 0, totalActions: 0 };
+
+      // 해당 사용자의 게시물 ID 조회
+      const { data: userPosts } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('user_id', userId);
+
+      // 해당 사용자의 댓글 ID 조회
+      const { data: userComments } = await supabase
+        .from('comments')
+        .select('id')
+        .eq('user_id', userId);
+
+      const postIds = (userPosts || []).map(p => p.id);
+      const commentIds = (userComments || []).map(c => c.id);
+
+      if (postIds.length === 0 && commentIds.length === 0) {
+        return { warningCount: 0, suspensionCount: 0, banCount: 0, totalActions: 0 };
+      }
+
+      // 신고 처리 기록에서 해당 사용자의 콘텐츠에 대한 조치 조회
+      let query = supabase
+        .from('reports')
+        .select('admin_action, resolved_at')
+        .eq('status', 'resolved')
+        .in('admin_action', ['warn_user', 'suspend_user', 'ban_user']);
+
+      // 게시물 또는 댓글 필터
+      if (postIds.length > 0 && commentIds.length > 0) {
+        query = query.or(`post_id.in.(${postIds.join(',')}),comment_id.in.(${commentIds.join(',')})`);
+      } else if (postIds.length > 0) {
+        query = query.in('post_id', postIds);
+      } else {
+        query = query.in('comment_id', commentIds);
+      }
+
+      const { data: reports, error } = await query.order('resolved_at', { ascending: false });
+
+      if (error) {
+        console.error('경고 통계 조회 오류:', error);
+        return { warningCount: 0, suspensionCount: 0, banCount: 0, totalActions: 0 };
+      }
+
+      // 액션별 횟수 계산
+      const stats = {
+        warningCount: 0,
+        suspensionCount: 0,
+        banCount: 0,
+        totalActions: 0,
+        history: []
+      };
+
+      (reports || []).forEach(report => {
+        stats.totalActions++;
+        if (report.admin_action === 'warn_user') stats.warningCount++;
+        else if (report.admin_action === 'suspend_user') stats.suspensionCount++;
+        else if (report.admin_action === 'ban_user') stats.banCount++;
+
+        stats.history.push({
+          action: report.admin_action,
+          date: report.resolved_at
+        });
+      });
+
+      return stats;
+    } catch (error) {
+      console.error('사용자 경고 통계 조회 오류:', error);
+      return { warningCount: 0, suspensionCount: 0, banCount: 0, totalActions: 0 };
     }
   }
 };

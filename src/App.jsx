@@ -63,7 +63,7 @@ const Terms = lazy(() => import('./pages/Terms'));
 
 function App() {
 
-const { currentUser } = useContext(AuthContext);
+const { currentUser, isBanned } = useContext(AuthContext);
 
 const queryClient = new QueryClient()
 
@@ -115,6 +115,18 @@ useEffect(() => {
     return children;
   };
 
+  // 차단된 사용자 접근 제한 (글쓰기, 사고팔고 등)
+  // eslint-disable-next-line react/prop-types
+  const BannedRestrictedRoute = ({ children }) => {
+    if (currentUser === null) {
+      return <Navigate to="/login" />;
+    }
+    if (isBanned) {
+      return <Navigate to="/community" state={{ banned: true }} />;
+    }
+    return children;
+  };
+
   
 
   const router = createBrowserRouter([
@@ -138,15 +150,15 @@ useEffect(() => {
         },
         {
           path: '/secondhand',
-          element: <SecondHand />,
+          element: isBanned ? <Navigate to="/community" state={{ banned: true }} /> : <SecondHand />,
         },
         {
           path: '/secondhand/new',
-          element: <ProtectedRoute><SecondHandEditor /></ProtectedRoute>,
+          element: <BannedRestrictedRoute><SecondHandEditor /></BannedRestrictedRoute>,
         },
         {
           path: '/secondhand/edit/:id',
-          element: <ProtectedRoute><SecondHandEditor /></ProtectedRoute>,
+          element: <BannedRestrictedRoute><SecondHandEditor /></BannedRestrictedRoute>,
         },
         {
           path: '/qna',
@@ -175,15 +187,15 @@ useEffect(() => {
         },
         {
           path: '/post/new',
-          element: <ProtectedRoute><PostEditor /></ProtectedRoute>,
+          element: <BannedRestrictedRoute><PostEditor /></BannedRestrictedRoute>,
         },
         {
           path: '/post/edit/:id',
-          element: <ProtectedRoute><PostEditor /></ProtectedRoute>,
+          element: <BannedRestrictedRoute><PostEditor /></BannedRestrictedRoute>,
         },
         {
           path: '/qna/ask',
-          element: <ProtectedRoute><QnAEditor /></ProtectedRoute>,
+          element: <BannedRestrictedRoute><QnAEditor /></BannedRestrictedRoute>,
         },
         {
           path: '/favorites',

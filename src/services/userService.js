@@ -593,7 +593,7 @@ export const userService = {
         status = 'all'
       } = options;
 
-      // 기본 쿼리
+      // 기본 쿼리 - 가입일자 역순 정렬
       let query = supabase
         .from('users')
         .select(`
@@ -609,7 +609,7 @@ export const userService = {
           )
         `, { count: 'exact' });
 
-      // 검색 조건
+      // 검색 조건 (검색어가 있을 때만 필터링)
       if (search) {
         query = query.or(`username.ilike.%${search}%,email.ilike.%${search}%,name.ilike.%${search}%`);
       }
@@ -619,14 +619,47 @@ export const userService = {
         query = query.eq('status', status);
       }
 
-      // 데이터 가져오기
+      // 데이터 가져오기 - 가입일자 역순 (최신순)
       const { data: users, error, count } = await query
         .order('created_at', { ascending: false })
         .range((page - 1) * limit, page * limit - 1);
 
       if (error) throw error;
 
-      // 역할 정보 추가 및 필터링
+      // 사용자 ID 목록
+      const userIds = users.map(u => u.id);
+
+      // 게시글 수 조회
+      let postsCounts = {};
+      if (userIds.length > 0) {
+        const { data: postsData } = await supabase
+          .from('posts')
+          .select('user_id')
+          .in('user_id', userIds);
+
+        if (postsData) {
+          postsData.forEach(p => {
+            postsCounts[p.user_id] = (postsCounts[p.user_id] || 0) + 1;
+          });
+        }
+      }
+
+      // 댓글 수 조회
+      let commentsCounts = {};
+      if (userIds.length > 0) {
+        const { data: commentsData } = await supabase
+          .from('comments')
+          .select('user_id')
+          .in('user_id', userIds);
+
+        if (commentsData) {
+          commentsData.forEach(c => {
+            commentsCounts[c.user_id] = (commentsCounts[c.user_id] || 0) + 1;
+          });
+        }
+      }
+
+      // 역할 정보 및 게시글/댓글 수 추가
       let processedUsers = users.map(user => {
         // Supabase는 1:1 관계일 때 객체를 반환, 1:N 관계일 때 배열을 반환
         const adminRole = Array.isArray(user.admin_roles)
@@ -636,8 +669,8 @@ export const userService = {
         return {
           ...user,
           role: adminRole?.role || 'member',
-          posts_count: 0, // 클라이언트에서 별도 조회 또는 집계 쿼리 필요
-          comments_count: 0
+          posts_count: postsCounts[user.id] || 0,
+          comments_count: commentsCounts[user.id] || 0
         };
       });
 
@@ -668,6 +701,25 @@ export const userService = {
    */
   async updateUserStatus(userId, status) {
     try {
+      // 먼저 RPC 함수 시도 (RLS 우회)
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('admin_update_user_status', {
+          target_user_id: userId,
+          new_status: status
+        });
+
+      if (!rpcError && rpcData) {
+        console.log('RPC로 사용자 상태 변경 성공:', rpcData);
+        return rpcData;
+      }
+
+      // RPC 함수가 없으면 직접 업데이트 시도
+      if (rpcError?.code === '42883') {
+        console.log('RPC 함수 없음, 직접 업데이트 시도...');
+      } else if (rpcError) {
+        console.warn('RPC 에러:', rpcError);
+      }
+
       const { data, error } = await supabase
         .from('users')
         .update({
@@ -675,12 +727,22 @@ export const userService = {
           updated_at: new Date().toISOString()
         })
         .eq('id', userId)
-        .select()
-        .single();
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase 업데이트 에러:', error);
+        if (error.code === '42501' || error.message?.includes('permission')) {
+          throw new Error('권한이 없습니다. Supabase RLS 정책을 확인해주세요.');
+        }
+        throw error;
+      }
 
-      return data;
+      // 업데이트된 행이 없는 경우 (RLS 정책으로 인해)
+      if (!data || data.length === 0) {
+        throw new Error('RLS 정책으로 인해 업데이트가 차단되었습니다. Supabase Dashboard에서 users 테이블의 UPDATE 정책에 관리자 권한을 추가해주세요.');
+      }
+
+      return data[0];
     } catch (error) {
       console.error('사용자 상태 변경 오류:', error);
       throw error;
