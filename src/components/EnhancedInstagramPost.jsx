@@ -1243,63 +1243,25 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           <div className="mb-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="flex items-center mb-2">
-                  <svg className="w-4 h-4 mr-2 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                  </svg>
-                  <h4 className="font-semibold text-orange-700">{post.tradeInfo.item_name}</h4>
+                {/* 제목 */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                    post.tradeInfo.status === 'completed' || post.tradeInfo.status === 'sold'
+                      ? 'bg-gray-200 text-gray-600'
+                      : 'bg-green-100 text-green-700'
+                  }`}>
+                    {post.tradeInfo.status === 'completed' || post.tradeInfo.status === 'sold' ? '판매완료' : '판매중'}
+                  </span>
+                  <h4 className="font-semibold text-gray-900">{post.tradeInfo.item_name}</h4>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-2 text-sm text-gray-700 mb-2">
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-1">💰</span>
-                    <span className="font-medium">{post.tradeInfo.price}원</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-1">📦</span>
-                    <span>{post.tradeInfo.quantity || '1'}개</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-gray-500 mr-1">⭐</span>
-                    <span>
-                      {post.tradeInfo.condition === 'new' ? '새 상품' : 
-                       post.tradeInfo.condition === 'good' ? '양호' : '보통'}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className={`w-2 h-2 rounded-full mr-2 ${
-                      post.tradeInfo.status === 'completed' ? 'bg-gray-400' : 'bg-green-400'
-                    }`}></span>
-                    <span className={`font-medium ${
-                      post.tradeInfo.status === 'completed' ? 'text-gray-600' : 'text-green-600'
-                    }`}>
-                      {post.tradeInfo.status === 'completed' ? '거래완료' : '거래가능'}
-                    </span>
-                  </div>
-                </div>
+
+                {/* 본문 */}
+                {(post.content || post.Desc || post.desc) && (
+                  <p className="text-sm text-gray-700 line-clamp-2">
+                    {post.content || post.Desc || post.desc}
+                  </p>
+                )}
               </div>
-              
-              {/* 거래 완료 토글 버튼 (작성자/관리자만) */}
-              {canManageTrade && (
-                <button
-                  onClick={handleTradeStatusToggle}
-                  disabled={tradeStatusMutation.isPending}
-                  className={`ml-3 px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 ${
-                    post.tradeInfo.status === 'completed'
-                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  } ${tradeStatusMutation.isPending ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'}`}
-                >
-                  {tradeStatusMutation.isPending ? (
-                    <span className="loading loading-spinner loading-xs mr-1"></span>
-                  ) : (
-                    <span className="mr-1">
-                      {post.tradeInfo.status === 'completed' ? '🔄' : '✅'}
-                    </span>
-                  )}
-                  {post.tradeInfo.status === 'completed' ? '재개' : '완료'}
-                </button>
-              )}
             </div>
           </div>
         )}

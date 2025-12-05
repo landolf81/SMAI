@@ -57,7 +57,7 @@ const SecondHandCard = ({ post }) => {
 
   // 제목과 내용에서 가격/위치 정보 추출
   const title = post.title || post.name || '';
-  const description = post.desc || post.description || '';
+  const description = post.content || post.desc || post.description || '';
 
   const price = extractPrice(title, description);
   const location = extractLocation(description) || (post.username ? post.username.split(' ')[0] : null);
@@ -146,16 +146,16 @@ const SecondHandCard = ({ post }) => {
       <div className="p-3">
         {/* 제목 */}
         {title && (
-          <h3 className="text-gray-900 font-semibold text-base line-clamp-2 mb-2 min-h-[2.5rem]">
+          <h3 className="text-gray-900 font-semibold text-sm line-clamp-2 mb-1">
             {title}
           </h3>
         )}
 
-        {/* 가격 */}
-        {price && (
-          <div className="text-orange-600 font-bold text-base mb-1">
-            {price}
-          </div>
+        {/* 본문 미리보기 */}
+        {description && (
+          <p className="text-gray-500 text-xs line-clamp-2 mb-2">
+            {description}
+          </p>
         )}
 
         {/* 위치 및 시간 */}

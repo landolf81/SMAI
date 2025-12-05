@@ -56,6 +56,7 @@ const QnA = lazy(() => import('./pages/QnA'));
 const QnAEditor = lazy(() => import('./pages/QnAEditor'));
 const QnADetail = lazy(() => import('./components/QnADetail'));
 const SecondHand = lazy(() => import('./pages/SecondHand'));
+const SecondHandEditor = lazy(() => import('./pages/SecondHandEditor'));
 const PostDetail = lazy(() => import('./pages/PostDetail'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Terms = lazy(() => import('./pages/Terms'));
@@ -138,6 +139,14 @@ useEffect(() => {
         {
           path: '/secondhand',
           element: <SecondHand />,
+        },
+        {
+          path: '/secondhand/new',
+          element: <ProtectedRoute><SecondHandEditor /></ProtectedRoute>,
+        },
+        {
+          path: '/secondhand/edit/:id',
+          element: <ProtectedRoute><SecondHandEditor /></ProtectedRoute>,
         },
         {
           path: '/qna',

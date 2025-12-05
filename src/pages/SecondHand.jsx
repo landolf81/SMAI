@@ -7,7 +7,6 @@ import MobileAdDisplay from '../components/MobileAdDisplay';
 import { AuthContext } from '../context/AuthContext';
 import { isMobileDevice } from '../utils/deviceDetector';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import SearchIcon from '@mui/icons-material/Search';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,10 +31,10 @@ const SecondHand = () => {
     searchTerm || null
   );
 
-  // post_type = 'secondhand'로 필터링된 게시물 조회
+  // post_type = 'secondhand'로 필터링된 게시물 조회 (단순 시간순)
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['secondHandPosts', searchTerm],
-    queryFn: () => postService.getPosts({ postType: 'secondhand', search: searchTerm }),
+    queryFn: () => postService.getPosts({ postType: 'secondhand', search: searchTerm, sortBy: 'latest' }),
     enabled: !!currentUser
   });
 
@@ -160,24 +159,20 @@ const SecondHand = () => {
       <div className="max-w-2xl mx-auto">
         {/* 헤더 */}
         <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-4 py-4">
-            <div className="flex items-center mb-4">
-              <ShoppingBagIcon className="text-2xl text-orange-500 mr-3" />
-              <div>
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center">
+                <ShoppingBagIcon className="text-2xl text-orange-500 mr-2" />
                 <h1 className="text-xl font-bold text-gray-900">사고팔고</h1>
-                <p className="text-sm text-gray-600">농업용품 중고거래 마켓</p>
               </div>
-            </div>
 
-            {/* 검색바 */}
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none z-10" />
+              {/* 검색바 */}
               <input
                 type="text"
-                placeholder=""
+                placeholder="검색"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white"
+                className="flex-1 pl-4 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white"
               />
             </div>
           </div>
@@ -233,7 +228,7 @@ const SecondHand = () => {
               <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 상품이 없습니다</h3>
               <p className="text-gray-500 mb-4">첫 번째 상품을 등록해보세요!</p>
               <button
-                onClick={() => navigate('/post/new?type=secondhand')}
+                onClick={() => navigate('/secondhand/new')}
                 className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
               >
                 상품 등록하기
@@ -249,7 +244,7 @@ const SecondHand = () => {
               if (isWriteButtonSpinning) return;
               setIsWriteButtonSpinning(true);
               setTimeout(() => {
-                navigate('/post/new?type=secondhand');
+                navigate('/secondhand/new');
               }, 300);
             }}
             className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"

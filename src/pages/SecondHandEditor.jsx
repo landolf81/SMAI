@@ -1,51 +1,41 @@
 import { useState, useContext, useEffect } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faPaperPlane, faTimes, faLink } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { getFirstLinkInfo } from '../utils/linkDetector';
-import { YouTubePreviewCard } from '../components/YouTubeEmbed';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { postService, storageService } from '../services';
 import { getMediaType, getAcceptedFileTypes } from '../utils/mediaUtils';
 import { uploadVideo, validateVideo } from '../services/videoUploadService';
 import { convertImageToPng, isImageFile, isHeicFile } from '../utils/imageConverter';
 import { v4 as uuidv4 } from 'uuid';
+import { API_BASE_URL } from '../config/api';
 
-const PostEditor = () => {
+const SecondHandEditor = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const { id } = useParams();
-  const location = useLocation();
   const queryClient = useQueryClient();
 
   const isEditMode = !!id;
 
-  const urlParams = new URLSearchParams(location.search);
-  const postTypeParam = urlParams.get('type');
-  // QnA는 QnAForm 사용, 여기서는 general/secondhand만 지원
-  const [postType, setPostType] = useState(postTypeParam === 'secondhand' ? 'secondhand' : 'general');
-
   // 상태 관리
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
-  const [desc, setDesc] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewImages, setPreviewImages] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [existingImages, setExistingImages] = useState([]); // 기존 이미지 URL들
   const [gpsData, setGpsData] = useState(null);
   const [imageConvertProgress, setImageConvertProgress] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(null);
-  const [uploadedVideos, setUploadedVideos] = useState([]); // Cloudflare Stream 동영상 정보
-
-  // 링크 미리보기 상태
-  const [linkPreview, setLinkPreview] = useState(null);
-  const [showLinkPreview, setShowLinkPreview] = useState(true);
+  const [uploadedVideos, setUploadedVideos] = useState([]);
 
   // 수정 모드일 때 기존 게시글 데이터 불러오기
-  const { data: postData } = useQuery({
+  const { data: postData, isLoading: postLoading } = useQuery({
     queryKey: ['post', id],
     queryFn: () => postService.getPost(id),
     enabled: isEditMode
@@ -54,141 +44,192 @@ const PostEditor = () => {
   // 게시글 데이터로 폼 초기화
   useEffect(() => {
     if (postData && isEditMode) {
-      setDesc(postData.Desc || postData.desc || '');
-      const images = postData.images || (postData.img ? [postData.img] : []);
-      setExistingImages(images);
-      setPreviewImages(images.map(img => img.startsWith('/uploads/posts/') ? img : `/uploads/posts/${img}`));
+      setTitle(postData.title || '');
+      setContent(postData.content || postData.Desc || postData.desc || '');
+
+      // 이미지 URL 파싱
+      let imageUrls = [];
+      if (postData.img) {
+        try {
+          const parsed = JSON.parse(postData.img);
+          if (Array.isArray(parsed)) {
+            imageUrls = parsed;
+          }
+        } catch {
+          // JSON이 아니면 단일 URL로 처리
+          imageUrls = [postData.img];
+        }
+      }
+
+      // 기존 이미지 설정
+      setExistingImages(imageUrls);
+
+      // 미리보기 설정
+      const previews = imageUrls.map(url => {
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+        // 동영상인지 확인
+        if (url.includes('iframe') || url.includes('stream') || url.includes('.mp4') || url.includes('.mov')) {
+          return {
+            url: fullUrl,
+            type: url.includes('iframe') || url.includes('stream') ? 'video/stream' : 'video/r2',
+            isExisting: true
+          };
+        }
+        return {
+          url: fullUrl,
+          type: 'image',
+          isExisting: true
+        };
+      });
+      setPreviewImages(previews);
     }
   }, [postData, isEditMode]);
 
-  // 텍스트 입력 시 링크 감지
-  useEffect(() => {
-    if (!desc || !showLinkPreview) {
-      setLinkPreview(null);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      const linkInfo = getFirstLinkInfo(desc);
-      if (linkInfo) {
-        setLinkPreview(linkInfo);
-      } else {
-        setLinkPreview(null);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [desc, showLinkPreview]);
-
   // 게시물 생성 mutation
   const createMutation = useMutation({
-    mutationFn: async (newPost) => {
-      console.log('=== 게시물 작성 시작 ===');
-      console.log('파일 개수:', files.length);
+    mutationFn: async () => {
       const postId = uuidv4();
 
-      // 이미지 PNG 변환 + 압축 (업로드 시점에 처리)
+      // 이미지 PNG 변환 + 압축
       let processedFiles = [];
       if (files.length > 0) {
-        console.log('이미지 처리 시작...');
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          console.log(`파일 ${i + 1}/${files.length}: ${file.name}, 타입: ${file.type}`);
           const mediaType = getMediaType(file);
           if (mediaType.isImage) {
             try {
-              // convertImageToPng에서 PNG 변환 + 리사이징 처리
-              console.log(`이미지 변환 시작: ${file.name}`);
               const processedImage = await convertImageToPng(file, {
                 maxWidth: 1024
               });
-              console.log(`이미지 변환 완료: ${processedImage.name}, 크기: ${processedImage.size}`);
               processedFiles.push(processedImage);
             } catch (convertError) {
               console.error(`이미지 변환 실패: ${file.name}`, convertError);
               throw convertError;
             }
           }
-          // 동영상은 이미 uploadedVideos에 있으므로 건너뜀
         }
-        console.log(`이미지 처리 완료: ${processedFiles.length}개`);
       }
 
       // 이미지를 Supabase Storage에 업로드
       let imageUrls = [];
       if (processedFiles.length > 0) {
-        console.log('이미지 업로드 시작...');
         try {
           const uploadResults = await storageService.uploadPostImages(postId, processedFiles);
-          console.log('업로드 결과:', uploadResults);
           imageUrls = uploadResults.map(result => result.url);
-          console.log('이미지 URL:', imageUrls);
         } catch (uploadError) {
           console.error('이미지 업로드 실패:', uploadError);
           throw uploadError;
         }
       }
 
-      // 동영상 URL 추가 (R2 또는 Stream)
+      // 동영상 URL 추가
       const videoUrls = uploadedVideos.map(v => v.type === 'r2' ? v.url : v.iframeUrl);
       const allMediaUrls = [...imageUrls, ...videoUrls];
 
-      let finalContent = newPost.desc;
-      let finalTitle = '';
-
-      // 중고거래: 첫 줄을 제목으로 사용
-      if (postType === 'secondhand' && newPost.desc) {
-        const lines = newPost.desc.split('\n');
-        finalTitle = lines[0].trim();
-        finalContent = lines.slice(1).join('\n').trim();
-      }
-
-      const postDataObj = {
-        content: finalContent,
+      const postData = {
+        title: title.trim(),
+        content: content.trim(),
         img: allMediaUrls.length > 0 ? JSON.stringify(allMediaUrls) : null,
         images: allMediaUrls,
-        post_type: postType,
-        link_url: linkPreview?.url || null,
-        link_type: linkPreview?.type || null,
-        // Cloudflare Stream 동영상 정보 저장
+        post_type: 'secondhand',
         video_uid: uploadedVideos.length > 0 ? uploadedVideos[0].uid : null,
       };
 
-      if (postType === 'secondhand' && finalTitle) {
-        postDataObj.title = finalTitle;
-      }
-
       if (gpsData) {
-        postDataObj.latitude = gpsData.latitude;
-        postDataObj.longitude = gpsData.longitude;
-        postDataObj.location_accuracy = gpsData.accuracy;
-        postDataObj.location_timestamp = gpsData.timestamp;
-        postDataObj.location_source = gpsData.source;
+        postData.latitude = gpsData.latitude;
+        postData.longitude = gpsData.longitude;
+        postData.location_accuracy = gpsData.accuracy;
+        postData.location_timestamp = gpsData.timestamp;
+        postData.location_source = gpsData.source;
       }
 
-      if (linkPreview) {
-        postDataObj.link_url = linkPreview.url;
-        postDataObj.link_type = linkPreview.type;
-        if (linkPreview.type === 'youtube' && linkPreview.videoId) {
-          postDataObj.link_video_id = linkPreview.videoId;
-          postDataObj.link_thumbnail = linkPreview.thumbnailUrl;
-        }
-      }
-
-      const createdPost = await postService.createPost(postDataObj);
+      const createdPost = await postService.createPost(postData);
       return createdPost;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['posts'] });
       await queryClient.invalidateQueries({ queryKey: ['enhanced-instagram-posts'] });
       await queryClient.invalidateQueries({ queryKey: ['user-posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['secondHandPosts'] });
 
-      const redirectPath = postType === 'secondhand' ? '/secondhand' : '/community';
-      setTimeout(() => navigate(redirectPath), 100);
+      setTimeout(() => navigate('/secondhand'), 100);
     },
     onError: (error) => {
       console.error('게시물 작성 실패:', error);
       setError(error.message || '게시물 작성에 실패했습니다.');
+    }
+  });
+
+  // 게시물 수정 mutation
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      // 새로 추가된 이미지 PNG 변환 + 압축
+      let processedFiles = [];
+      if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const mediaType = getMediaType(file);
+          if (mediaType.isImage) {
+            try {
+              const processedImage = await convertImageToPng(file, {
+                maxWidth: 1024
+              });
+              processedFiles.push(processedImage);
+            } catch (convertError) {
+              console.error(`이미지 변환 실패: ${file.name}`, convertError);
+              throw convertError;
+            }
+          }
+        }
+      }
+
+      // 새 이미지를 Supabase Storage에 업로드
+      let newImageUrls = [];
+      if (processedFiles.length > 0) {
+        try {
+          const uploadResults = await storageService.uploadPostImages(id, processedFiles);
+          newImageUrls = uploadResults.map(result => result.url);
+        } catch (uploadError) {
+          console.error('이미지 업로드 실패:', uploadError);
+          throw uploadError;
+        }
+      }
+
+      // 기존 이미지 + 새 이미지 + 동영상 URL 합치기
+      const videoUrls = uploadedVideos.map(v => v.type === 'r2' ? v.url : v.iframeUrl);
+      const allMediaUrls = [...existingImages, ...newImageUrls, ...videoUrls];
+
+      const updateData = {
+        title: title.trim(),
+        content: content.trim(),
+        img: allMediaUrls.length > 0 ? JSON.stringify(allMediaUrls) : null,
+        images: allMediaUrls,
+        video_uid: uploadedVideos.length > 0 ? uploadedVideos[0].uid : null,
+      };
+
+      if (gpsData) {
+        updateData.latitude = gpsData.latitude;
+        updateData.longitude = gpsData.longitude;
+        updateData.location_accuracy = gpsData.accuracy;
+        updateData.location_timestamp = gpsData.timestamp;
+        updateData.location_source = gpsData.source;
+      }
+
+      const updatedPost = await postService.updatePost(id, updateData);
+      return updatedPost;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['enhanced-instagram-posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['secondHandPosts'] });
+      await queryClient.invalidateQueries({ queryKey: ['post', id] });
+
+      setTimeout(() => navigate('/secondhand'), 100);
+    },
+    onError: (error) => {
+      console.error('게시물 수정 실패:', error);
+      setError(error.message || '게시물 수정에 실패했습니다.');
     }
   });
 
@@ -222,15 +263,13 @@ const PostEditor = () => {
       }
     }
 
-    // HEIC 파일만 미리보기용으로 변환 (브라우저에서 표시 불가하므로)
-    // 일반 이미지는 원본 유지, 업로드 시점에 PNG 변환 + 압축 처리
+    // HEIC 파일만 미리보기용으로 변환
     const processedImages = [];
     if (imageFiles.length > 0) {
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         try {
           if (isHeicFile(file)) {
-            // HEIC는 미리보기를 위해 변환 필요
             setImageConvertProgress({
               current: i + 1,
               total: imageFiles.length,
@@ -239,7 +278,6 @@ const PostEditor = () => {
             const convertedFile = await convertImageToPng(file, { maxWidth: 1024 });
             processedImages.push(convertedFile);
           } else {
-            // 일반 이미지는 원본 유지 (업로드 시 처리)
             processedImages.push(file);
           }
         } catch (err) {
@@ -255,22 +293,19 @@ const PostEditor = () => {
     }
 
     // 동영상 업로드 (1개만 허용)
-    // 이미 동영상이 있으면 새 동영상 추가 불가
     if (videoFiles.length > 0 && uploadedVideos.length > 0) {
       setError('동영상은 1개만 업로드할 수 있습니다. 기존 동영상을 삭제 후 다시 시도해주세요.');
       setVideoUploadProgress(null);
       return;
     }
 
-    // 여러 동영상 선택 시 첫 번째만 사용
     if (videoFiles.length > 1) {
       setError('동영상은 1개만 업로드할 수 있습니다. 첫 번째 동영상만 업로드됩니다.');
-      videoFiles.splice(1); // 첫 번째만 유지
+      videoFiles.splice(1);
     }
 
     for (const videoFile of videoFiles) {
       try {
-        // 검증
         const validation = await validateVideo(videoFile);
         if (!validation.valid) {
           setError(validation.message);
@@ -279,16 +314,13 @@ const PostEditor = () => {
 
         setVideoUploadProgress({ progress: 0, fileName: videoFile.name });
 
-        // 통합 업로드 함수 사용 (MP4/WebM → R2, 그 외 → Stream)
         const result = await uploadVideo(videoFile, (progress) => {
           setVideoUploadProgress({ progress, fileName: videoFile.name });
         });
 
         setUploadedVideos(prev => [...prev, result]);
 
-        // 미리보기 추가
         if (result.type === 'r2') {
-          // R2 동영상: 직접 URL 사용
           setPreviewImages(prev => [...prev, {
             url: result.url,
             type: 'video/r2',
@@ -296,7 +328,6 @@ const PostEditor = () => {
             videoUrl: result.url,
           }]);
         } else {
-          // Stream 동영상: 썸네일 및 iframe URL 사용
           setPreviewImages(prev => [...prev, {
             url: result.thumbnailUrl,
             type: 'video/stream',
@@ -323,27 +354,25 @@ const PostEditor = () => {
     setPreviewImages(prev => [...prev, ...newPreviews]);
   };
 
-  const removeLinkPreview = () => {
-    setLinkPreview(null);
-    setShowLinkPreview(false);
-  };
-
   const removeImage = (index) => {
     const preview = previewImages[index];
 
-    // Cloudflare Stream 동영상인 경우
     if (preview?.streamUid) {
       setUploadedVideos(prev => prev.filter(v => v.uid !== preview.streamUid));
     } else if (preview?.type === 'video/r2') {
-      // R2 동영상인 경우
       setUploadedVideos(prev => prev.filter(v => v.url !== preview.videoUrl));
-    } else if (index >= existingImages.length) {
-      // 새로 추가한 이미지 파일
-      const newFileIndex = index - existingImages.length;
-      setFiles(prev => prev.filter((_, i) => i !== newFileIndex));
+    } else if (preview?.isExisting) {
+      // 기존 이미지 삭제 - existingImages에서 해당 URL 제거
+      const urlToRemove = preview.url;
+      setExistingImages(prev => prev.filter(url => {
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+        return fullUrl !== urlToRemove;
+      }));
     } else {
-      // 기존 이미지
-      setExistingImages(prev => prev.filter((_, i) => i !== index));
+      // 새로 추가한 이미지 파일 삭제
+      // previewImages에서 isExisting이 아닌 것들의 인덱스 계산
+      const newImageIndex = previewImages.slice(0, index).filter(p => !p?.isExisting).length;
+      setFiles(prev => prev.filter((_, i) => i !== newImageIndex));
     }
 
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
@@ -353,19 +382,28 @@ const PostEditor = () => {
     e.preventDefault();
     setError('');
 
-    if (!desc.trim()) {
+    if (!title.trim()) {
+      setError('제목을 입력해주세요.');
+      return;
+    }
+
+    if (!content.trim()) {
       setError('내용을 입력해주세요.');
       return;
     }
 
-    if (previewImages.length === 0 && uploadedVideos.length === 0 && !linkPreview) {
-      setError('이미지, 동영상 또는 링크를 추가해주세요.');
+    if (previewImages.length === 0 && uploadedVideos.length === 0 && existingImages.length === 0) {
+      setError('이미지 또는 동영상을 추가해주세요.');
       return;
     }
 
     setLoading(true);
     try {
-      await createMutation.mutateAsync({ desc: desc.trim() });
+      if (isEditMode) {
+        await updateMutation.mutateAsync();
+      } else {
+        await createMutation.mutateAsync();
+      }
     } catch (err) {
       console.error('Mutation 에러:', err);
     } finally {
@@ -375,25 +413,12 @@ const PostEditor = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 p-1">
-            <ArrowBackIcon fontSize="small" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-800">
-            {isEditMode ? '게시물 수정' : postType === 'secondhand' ? '중고거래 글쓰기' : '새 게시물'}
-          </h1>
-          <div className="w-5 h-5" />
-        </div>
-      </div>
-
       {/* 메인 컨텐츠 */}
       <div className="max-w-2xl mx-auto p-4">
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
           {/* 사용자 정보 */}
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-orange-400 p-0.5">
+            <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-orange-400 p-0.5">
               <img
                 src={(() => {
                   const pic = currentUser.profilePic || currentUser.profile_pic;
@@ -405,17 +430,34 @@ const PostEditor = () => {
               />
             </div>
             <div>
-              <p className="font-semibold text-gray-800">{currentUser.name}</p>
-              <p className="text-sm text-gray-500">{isEditMode ? '게시물 수정 중' : '게시물 작성 중'}</p>
+              <p className="font-semibold text-gray-800 text-sm">{currentUser.name}</p>
+              <p className="text-xs text-gray-500">
+                {isEditMode ? '수정 중' : '중고거래 글쓰기'}
+              </p>
             </div>
           </div>
 
+          {/* 제목 입력 */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              제목 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="상품 제목을 입력하세요"
+              className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={100}
+            />
+            <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/100</p>
+          </div>
+
           {/* 파일 업로드 */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               <FontAwesomeIcon icon={faImage} className="mr-2 text-orange-500" />
-              이미지 또는 동영상
-              {!linkPreview && <span className="text-red-500 ml-1">*</span>}
+              이미지 또는 동영상 <span className="text-red-500">*</span>
             </label>
 
             <label
@@ -424,8 +466,7 @@ const PostEditor = () => {
             >
               <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-gray-400" />
               <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 파일 업로드</span></p>
-              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
-              <p className="text-xs text-green-600 mt-1">MP4/WebM은 빠른 업로드, 그 외는 자동 변환</p>
+              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB)</p>
             </label>
             <input
               id="imageInput"
@@ -477,7 +518,6 @@ const PostEditor = () => {
                 {previewImages.map((preview, index) => {
                   const isStream = preview?.type === 'video/stream';
                   const isR2Video = preview?.type === 'video/r2';
-                  const isVideo = typeof preview === 'object' && preview.type?.startsWith('video/');
                   const previewUrl = typeof preview === 'string' ? preview : preview.url;
 
                   return (
@@ -489,7 +529,6 @@ const PostEditor = () => {
                             alt="동영상 썸네일"
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
-                              // 썸네일 로드 실패 시 대체 UI 표시 (인코딩 중)
                               e.target.style.display = 'none';
                             }}
                           />
@@ -511,11 +550,9 @@ const PostEditor = () => {
                             playsInline
                           />
                           <div className="absolute bottom-2 left-2 bg-green-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
-                            R2 동영상
+                            동영상
                           </div>
                         </div>
-                      ) : isVideo ? (
-                        <video src={previewUrl} className="w-full h-auto rounded-lg" controls muted />
                       ) : (
                         <img src={previewUrl} alt={`미리보기 ${index + 1}`} className="w-full h-auto rounded-lg" />
                       )}
@@ -526,11 +563,6 @@ const PostEditor = () => {
                       >
                         <FontAwesomeIcon icon={faTimes} className="w-3 h-3" />
                       </button>
-                      {isStream && (
-                        <div className="absolute bottom-2 left-2 bg-purple-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
-                          Stream
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -540,14 +572,14 @@ const PostEditor = () => {
 
           {/* 내용 입력 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               내용 <span className="text-red-500">*</span>
             </label>
             <textarea
-              placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
-              className="w-full min-h-[200px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
+              placeholder="상품에 대해 자세히 설명해주세요.&#10;(가격, 상태, 거래 방법 등)"
+              className="w-full min-h-[150px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
             />
 
             {gpsData && (
@@ -560,16 +592,6 @@ const PostEditor = () => {
             )}
           </div>
 
-          {/* YouTube 링크 미리보기 */}
-          {linkPreview?.type === 'youtube' && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                <FontAwesomeIcon icon={faLink} className="mr-2 text-blue-500" />링크 미리보기
-              </label>
-              <YouTubePreviewCard url={linkPreview.url} onRemove={removeLinkPreview} className="max-w-md" />
-            </div>
-          )}
-
           {/* 에러 */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
@@ -577,21 +599,38 @@ const PostEditor = () => {
             </div>
           )}
 
-          {/* 제출 버튼 */}
-          <button
-            type="submit"
-            disabled={loading || imageConvertProgress || videoUploadProgress || !desc.trim()}
-            className={`w-full py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
-              loading || imageConvertProgress || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
-            }`}
-          >
-            {loading ? <span className="loading loading-spinner w-2 h-2 mr-2"></span> : <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />}
-            {isEditMode ? '수정 완료' : '게시하기'}
-          </button>
+          {/* 버튼 영역 */}
+          <div className="flex gap-3">
+            {/* 취소 버튼 */}
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              disabled={loading}
+              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all disabled:opacity-50"
+            >
+              취소
+            </button>
+
+            {/* 제출 버튼 */}
+            <button
+              type="submit"
+              disabled={loading || imageConvertProgress || videoUploadProgress || !title.trim() || !content.trim()}
+              className={`flex-1 py-3 bg-orange-500 text-white rounded-xl font-medium transition-all flex items-center justify-center ${
+                loading || imageConvertProgress || videoUploadProgress || !title.trim() || !content.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
+              }`}
+            >
+              {loading ? (
+                <span className="loading loading-spinner w-2 h-2 mr-2"></span>
+              ) : (
+                <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />
+              )}
+              <span>{isEditMode ? '수정 완료' : '게시하기'}</span>
+            </button>
+          </div>
         </form>
       </div>
     </div>
   );
 };
 
-export default PostEditor;
+export default SecondHandEditor;

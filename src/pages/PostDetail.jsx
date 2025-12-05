@@ -28,6 +28,7 @@ import SendIcon from '@mui/icons-material/Send';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import LockIcon from '@mui/icons-material/Lock';
+import CloseIcon from '@mui/icons-material/Close';
 
 moment.locale('ko');
 
@@ -191,7 +192,12 @@ const PostDetail = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/post/edit/${postId}`);
+    // 사고팔고 게시글은 SecondHandEditor로 이동
+    if (post?.post_type === 'secondhand') {
+      navigate(`/secondhand/edit/${postId}`);
+    } else {
+      navigate(`/post/edit/${postId}`);
+    }
   };
 
   const handleDelete = () => {
@@ -264,22 +270,6 @@ const PostDetail = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <div className="max-w-4xl mx-auto">
-        {/* 헤더 */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-          <div className="px-4 py-4 flex items-center justify-between">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ArrowBackIcon />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">
-              {isSecondHand ? '사고팔고 상세' : '게시물 상세'}
-            </h1>
-            <div className="w-10"></div>
-          </div>
-        </div>
-
         {/* 게시물 내용 */}
         <div className="bg-white border-b border-gray-200">
           {/* 작성자 정보 */}
@@ -344,23 +334,57 @@ const PostDetail = () => {
               </div>
             </div>
 
-            {/* 수정/삭제 버튼 */}
-            {isOwner && (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleEdit}
-                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                >
-                  <EditIcon fontSize="small" />
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <DeleteIcon fontSize="small" />
-                </button>
-              </div>
-            )}
+            {/* 오른쪽 영역: 판매완료 버튼 + 수정/삭제 버튼 */}
+            <div className="flex items-center gap-2">
+              {/* 거래 상태 변경 버튼 (작성자/관리자만) */}
+              {canChangeTradeStatus && (
+                <>
+                  {tradeStatus !== 'sold' ? (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('판매완료로 변경하시겠습니까?')) {
+                          tradeStatusMutation.mutate('sold');
+                        }
+                      }}
+                      disabled={tradeStatusMutation.isPending}
+                      className="py-1.5 px-3 bg-gray-800 text-white text-sm font-semibold rounded-lg hover:bg-gray-900 disabled:opacity-50 transition-colors"
+                    >
+                      {tradeStatusMutation.isPending ? '처리중...' : '판매완료'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (window.confirm('다시 판매중으로 변경하시겠습니까?')) {
+                          tradeStatusMutation.mutate('available');
+                        }
+                      }}
+                      disabled={tradeStatusMutation.isPending}
+                      className="py-1.5 px-3 bg-orange-500 text-white text-sm font-semibold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors"
+                    >
+                      {tradeStatusMutation.isPending ? '처리중...' : '다시 판매'}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* 수정/삭제 버튼 */}
+              {isOwner && (
+                <div className="flex gap-1">
+                  <button
+                    onClick={handleEdit}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <EditIcon fontSize="small" />
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 제목 (중고거래) */}
@@ -390,38 +414,6 @@ const PostDetail = () => {
                 <div className="flex items-center gap-1 text-gray-600 mt-2">
                   <LocationOnIcon fontSize="small" />
                   <span>{location}</span>
-                </div>
-              )}
-
-              {/* 거래 상태 변경 버튼 (작성자/관리자만) */}
-              {canChangeTradeStatus && (
-                <div className="flex gap-2 mt-4">
-                  {tradeStatus !== 'sold' && (
-                    <button
-                      onClick={() => {
-                        if (window.confirm('판매완료로 변경하시겠습니까?')) {
-                          tradeStatusMutation.mutate('sold');
-                        }
-                      }}
-                      disabled={tradeStatusMutation.isPending}
-                      className="flex-1 py-2 px-4 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 disabled:opacity-50 transition-colors"
-                    >
-                      {tradeStatusMutation.isPending ? '처리중...' : '판매완료'}
-                    </button>
-                  )}
-                  {tradeStatus === 'sold' && (
-                    <button
-                      onClick={() => {
-                        if (window.confirm('다시 판매중으로 변경하시겠습니까?')) {
-                          tradeStatusMutation.mutate('available');
-                        }
-                      }}
-                      disabled={tradeStatusMutation.isPending}
-                      className="flex-1 py-2 px-4 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 disabled:opacity-50 transition-colors"
-                    >
-                      {tradeStatusMutation.isPending ? '처리중...' : '다시 판매하기'}
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -465,7 +457,7 @@ const PostDetail = () => {
           {/* 내용 */}
           <div className="px-4 py-4">
             <p className="text-gray-700 whitespace-pre-wrap">
-              {post.description || post.desc || post.content}
+              {post.content || post.description || post.desc}
             </p>
           </div>
 
@@ -488,10 +480,9 @@ const PostDetail = () => {
             </span>
           </div>
 
-          {/* 좋아요/댓글 버튼 */}
-          <div className="px-4 py-3 border-t border-gray-100 flex gap-2">
-            {/* 중고거래가 아닌 경우에만 좋아요 버튼 표시 */}
-            {!isSecondHand && (
+          {/* 좋아요 버튼 (중고거래가 아닌 경우에만) */}
+          {!isSecondHand && (
+            <div className="px-4 py-3 border-t border-gray-100 flex gap-2">
               <button
                 onClick={handleLike}
                 className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors"
@@ -505,25 +496,12 @@ const PostDetail = () => {
                   좋아요
                 </span>
               </button>
-            )}
-            <button
-              onClick={() => document.getElementById('comment-input')?.focus()}
-              className={`${isSecondHand ? 'w-full' : 'flex-1'} flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors`}
-            >
-              <ChatBubbleOutlineIcon fontSize="small" />
-              <span className="text-gray-700">댓글</span>
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
         {/* 댓글 섹션 */}
         <div className="bg-white mt-2">
-          <div className="px-4 py-3 border-b border-gray-200">
-            <h3 className="font-semibold text-gray-900">
-              댓글 {comments.length}
-            </h3>
-          </div>
-
           {/* 댓글 로딩 상태 */}
           {commentsLoading && (
             <div className="px-4 py-8 text-center">
@@ -663,6 +641,19 @@ const PostDetail = () => {
           )}
         </div>
       </div>
+
+      {/* 플로팅 닫기 버튼 (왼쪽 하단) */}
+      <button
+        onClick={() => navigate(-1)}
+        className="fixed bottom-20 left-4 w-14 h-14 text-white rounded-full z-10 flex items-center justify-center border-2 border-white shadow-lg transition-all duration-200 hover:scale-110"
+        style={{
+          background: 'linear-gradient(135deg, #6B7280 0%, #374151 100%)',
+          boxShadow: '0 4px 15px rgba(107, 114, 128, 0.4), 0 8px 25px rgba(55, 65, 81, 0.3)'
+        }}
+        title="닫기"
+      >
+        <CloseIcon />
+      </button>
 
       {/* 프로필 모달 */}
       <ProfileModal

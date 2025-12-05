@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
@@ -425,12 +426,12 @@ const MobileAdDisplay = ({ ad }) => {
         </div>
       </div>
 
-      {/* 랜딩페이지 모달 */}
-      {showLandingModal && (
+      {/* 랜딩페이지 모달 - Portal로 document.body에 렌더링 */}
+      {showLandingModal && createPortal(
         <>
           {/* 하단 메뉴 비활성화를 위한 오버레이 */}
           <div className="fixed bottom-0 left-0 right-0 h-20 bg-transparent z-[9999] pointer-events-none"></div>
-          
+
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] landing-modal">
             <div className="bg-white w-full h-full flex flex-col overflow-hidden sm:rounded-lg sm:max-w-md sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:mx-4">
             {/* 모달 헤더 */}
@@ -545,7 +546,8 @@ const MobileAdDisplay = ({ ad }) => {
             </div>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
