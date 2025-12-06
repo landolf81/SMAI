@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { deleteFromR2, isR2Url } from './r2Service.js';
 
 /**
  * 광고 서비스
@@ -185,10 +186,51 @@ export const adService = {
   },
 
   /**
-   * 광고 삭제
+   * 광고 삭제 (Storage 파일도 함께 삭제)
    */
   async deleteAd(adId) {
     try {
+      // 1. 광고 정보 조회 (이미지 URL 확인)
+      const { data: ad, error: fetchError } = await supabase
+        .from('ads')
+        .select('image_url')
+        .eq('id', adId)
+        .single();
+
+      if (fetchError) {
+        console.warn('광고 조회 실패:', fetchError);
+      }
+
+      // 2. 이미지 파일 삭제
+      if (ad?.image_url) {
+        try {
+          if (isR2Url(ad.image_url)) {
+            // R2 URL에서 키 추출 후 삭제
+            const key = ad.image_url.split('.r2.dev/')[1] || ad.image_url.split('r2.cloudflarestorage.com/')[1];
+            if (key) {
+              await deleteFromR2(key);
+              console.log('✅ R2 광고 이미지 삭제:', key);
+            }
+          } else if (ad.image_url.includes('supabase.co/storage')) {
+            // Supabase Storage URL 처리
+            const match = ad.image_url.match(/\/storage\/v1\/object\/public\/([^/]+)\/(.+)/);
+            if (match) {
+              const [, bucket, path] = match;
+              const { error: storageError } = await supabase.storage.from(bucket).remove([path]);
+              if (storageError) {
+                console.warn('Supabase Storage 삭제 실패:', storageError);
+              } else {
+                console.log('✅ Supabase Storage 광고 이미지 삭제:', path);
+              }
+            }
+          }
+        } catch (mediaError) {
+          // 이미지 삭제 실패해도 DB 삭제는 진행
+          console.warn('광고 이미지 삭제 실패:', mediaError);
+        }
+      }
+
+      // 3. DB에서 광고 레코드 삭제
       const { error } = await supabase
         .from('ads')
         .delete()
