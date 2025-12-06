@@ -10,6 +10,7 @@ import { shouldShowAds } from '../utils/deviceDetector';
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
   const navigationType = useNavigationType();
   const [visiblePosts, setVisiblePosts] = useState(new Set());
+  const [animatedPosts, setAnimatedPosts] = useState(new Set()); // 애니메이션 완료된 게시물
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
@@ -211,8 +212,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: enableSnapScroll ? '0px' : '0px',  // rootMargin 제거하여 조기 invisible 방지
-      threshold: enableSnapScroll ? [0.5, 0.75, 1.0] : [0.3]  // 30% 이상 보이면 visible 유지
+      rootMargin: enableSnapScroll ? '0px' : '200px 0px',  // 화면 진입 200px 전에 트리거 (더 빠른 애니메이션)
+      threshold: enableSnapScroll ? [0.5, 0.75, 1.0] : [0]  // 조금이라도 보이면 트리거
     };
 
     observerRef.current = new IntersectionObserver((entries) => {
@@ -236,6 +237,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
             }
 
             newVisiblePosts.add(postId);
+
+            // 애니메이션 트리거 (한 번만)
+            setAnimatedPosts(prev => {
+              if (!prev.has(postId)) {
+                const newSet = new Set(prev);
+                newSet.add(postId);
+                return newSet;
+              }
+              return prev;
+            });
           } else {
             newVisiblePosts.delete(postId);
           }
@@ -315,12 +326,19 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       clearInterval(renderIntervalRef.current);
     }
 
-    // 첫 번째 아이템 즉시 표시
+    // 첫 번째 아이템 즉시 표시 + 처음 3개 애니메이션 즉시 시작
     if (renderedCount === 0) {
       setRenderedCount(1);
+      // 처음 3개 게시물은 애니메이션 대기 없이 바로 표시
+      const initialAnimated = new Set();
+      postsWithAds.slice(0, 3).forEach(item => {
+        const itemId = item.type === 'ad' ? `ad-${item.data.id}` : item.data.id.toString();
+        initialAnimated.add(itemId);
+      });
+      setAnimatedPosts(prev => new Set([...prev, ...initialAnimated]));
     }
 
-    // 나머지 아이템 순차적 표시 (50ms 간격)
+    // 나머지 아이템 순차적 표시 (30ms 간격 - 더 빠르게)
     renderIntervalRef.current = setInterval(() => {
       setRenderedCount(prev => {
         if (prev >= postsWithAds.length) {
@@ -329,7 +347,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         }
         return prev + 1;
       });
-    }, 50);
+    }, 30);
 
     return () => {
       if (renderIntervalRef.current) {
@@ -601,18 +619,28 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 p-4">
-          {postsWithAds.slice(0, renderedCount).map((item, index) => (
+          {postsWithAds.slice(0, renderedCount).map((item, index) => {
+            // 광고는 애니메이션 적용 안 함 (자체 Intersection Observer 사용)
+            const isAd = item.type === 'ad';
+            const itemId = isAd ? `ad-${item.data.id}` : item.data.id.toString();
+            const isAnimated = isAd ? true : animatedPosts.has(itemId);
+            const isPOP = navigationType === 'POP';
+            // 순차 애니메이션을 위한 지연 (렌더링된 순서 기준)
+            // 첫 3개는 딜레이 없이 즉시, 나머지는 50ms 간격으로 순차적 애니메이션
+            const animationDelay = index < 3 ? 0 : (index - 3) * 0.05;
+
+            return (
             <div
               key={item.key}
-              data-post-id={item.data.id}
-              data-ad-id={item.type === 'ad' ? item.data.id : undefined}
+              data-post-id={itemId}
+              data-ad-id={isAd ? item.data.id : undefined}
               className={`relative ${enableSnapScroll ? 'snap-start' : ''} ${
                 isScrolling && enableSnapScroll ? 'transition-opacity duration-200' : ''
-              }`}
+              } feed-item-animation`}
               style={{
-                animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
-                animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
-                opacity: navigationType !== 'POP' ? 0 : 1
+                opacity: (isPOP || isAd) ? 1 : (isAnimated ? 1 : 0),
+                transform: (isPOP || isAd) ? 'none' : (isAnimated ? 'translateY(0)' : 'translateY(40px)'),
+                transition: (isPOP || isAd) ? 'none' : `opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${animationDelay}s, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${animationDelay}s`
               }}
             >
               {item.type === 'post' ? (
@@ -626,7 +654,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                 <MobileAdDisplay ad={item.data} />
               )}
             </div>
-          ))}
+            );
+          })}
 
           {/* 로딩 인디케이터 */}
           {isFetchingNextPage && (

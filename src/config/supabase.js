@@ -91,8 +91,9 @@ export const supabaseHelpers = {
       if (error.code === 'PGRST116') {
         console.warn('⚠️ users 테이블에 프로필이 없습니다. 자동 생성 시도...');
 
-        // Auth에서 사용자 정보 가져오기
-        const { data: { user } } = await supabase.auth.getUser();
+        // Session에서 사용자 정보 가져오기 (getUser보다 가벼움)
+        const { data: { session } } = await supabase.auth.getSession();
+        const user = session?.user;
 
         if (user) {
           // users 테이블에 기본 프로필 생성

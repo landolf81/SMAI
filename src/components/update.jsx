@@ -526,7 +526,10 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold">프로필 설정 수정</h1>
             <button
-              onClick={() => setOpenUpdate(false)}
+              onClick={() => {
+                setOpenUpdate(false);
+                setIsUpdating(false);
+              }}
               className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -748,7 +751,10 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
               {isLoading ? '업데이트 중...' : '수정 완료'}
             </button>
             <button
-              onClick={() => setOpenUpdate(false)}
+              onClick={() => {
+                setOpenUpdate(false);
+                setIsUpdating(false);
+              }}
               className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               disabled={isLoading}
             >

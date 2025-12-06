@@ -820,7 +820,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           
           {/* 사용자 정보 - 클릭 불가 */}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-xs text-gray-900 truncate leading-tight">
+            <p className="font-semibold text-sm text-gray-900 truncate leading-tight">
               {post.name || post.username}
             </p>
             <div className="flex items-center space-x-1 text-[10px] text-gray-500">

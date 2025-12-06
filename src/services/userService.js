@@ -151,8 +151,9 @@ export const userService = {
    */
   async updateProfile(userData) {
     try {
-      // 현재 로그인한 사용자 확인
-      const { data: { user } } = await supabase.auth.getUser();
+      // 현재 로그인한 사용자 확인 (getSession이 getUser보다 가벼움)
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       console.log('🔄 프로필 업데이트 시작:', { userId: user.id, userData });
@@ -344,7 +345,8 @@ export const userService = {
    */
   async getCurrentUserPermissions() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       return await this.getUser(user.id);
@@ -361,7 +363,8 @@ export const userService = {
    */
   async checkTagPermission(tagId, permissionType = 'write') {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return false;
 
       // 관리자 권한 확인
@@ -393,7 +396,8 @@ export const userService = {
    */
   async getWritableTags() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return [];
 
       // 관리자는 모든 태그에 쓰기 가능
@@ -438,7 +442,8 @@ export const userService = {
    */
   async grantTagPermission(permissionData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 권한 부여 권한 확인
@@ -510,7 +515,8 @@ export const userService = {
    */
   async bulkGrantTagPermissions(data) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 권한 부여 권한 확인
@@ -549,7 +555,8 @@ export const userService = {
    */
   async revokeTagPermission(permissionId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 권한 부여 권한 확인
