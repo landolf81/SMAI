@@ -55,6 +55,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   // 동영상 상태 관리
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const isMutedRef = useRef(true);  // setTimeout에서 최신 값 참조용
   const [showControls, setShowControls] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -603,6 +604,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
     videoRef.current.muted = !videoRef.current.muted;
     setIsMuted(videoRef.current.muted);
+    isMutedRef.current = videoRef.current.muted;  // ref도 동기화
   };
 
   const handleVideoError = () => {
@@ -632,7 +634,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     replayTimeoutRef.current = setTimeout(() => {
       // 타이머 실행 시점에도 isVisible 재확인
       if (videoRef.current && isVisible) {
-        videoRef.current.muted = true;  // 음소거 보장
+        videoRef.current.muted = isMutedRef.current;  // ref로 최신 음소거 상태 유지
         videoRef.current.currentTime = 0;
         videoRef.current.play().then(() => {
           setIsPlaying(true);

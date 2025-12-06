@@ -160,7 +160,7 @@ const SecondHand = () => {
         {/* 헤더 */}
         <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
           <div className="px-4 py-3">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2">
               <div className="flex items-center">
                 <ShoppingBagIcon className="text-2xl text-orange-500 mr-2" />
                 <h1 className="text-xl font-bold text-gray-900">사고팔고</h1>
@@ -172,7 +172,7 @@ const SecondHand = () => {
                 placeholder="검색"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="flex-1 pl-4 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white"
+                className="w-full pl-4 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white"
               />
             </div>
           </div>

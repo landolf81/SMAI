@@ -43,6 +43,11 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
 
+  // 답변 메뉴/수정/삭제 상태
+  const [answerMenuOpen, setAnswerMenuOpen] = useState(null); // 열린 답변 ID
+  const [editingAnswerId, setEditingAnswerId] = useState(null);
+  const [editingAnswerContent, setEditingAnswerContent] = useState('');
+
   // 수정 관련 상태
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editTitle, setEditTitle] = useState('');
@@ -73,6 +78,17 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       window.scrollTo({ top: 0, behavior: 'instant' });
     }
   }, [questionId, isModal]);
+
+  // 메뉴 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (answerMenuOpen) {
+        setAnswerMenuOpen(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [answerMenuOpen]);
 
   // 조회수 증가 및 열람 기록 (페이지 로드 시 1회만, 병렬 처리)
   useEffect(() => {
@@ -111,6 +127,32 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       if (error.message?.includes('인증')) {
         alert('로그인이 필요합니다.');
       }
+    }
+  });
+
+  // 답변 수정 뮤테이션
+  const updateAnswerMutation = useMutation({
+    mutationFn: ({ answerId, content }) => commentService.updateComment(answerId, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['qna-question', questionId]);
+      setEditingAnswerId(null);
+      setEditingAnswerContent('');
+    },
+    onError: (error) => {
+      console.error('답변 수정 실패:', error);
+      alert('답변 수정에 실패했습니다: ' + error.message);
+    }
+  });
+
+  // 답변 삭제 뮤테이션
+  const deleteAnswerMutation = useMutation({
+    mutationFn: (answerId) => commentService.deleteComment(answerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['qna-question', questionId]);
+    },
+    onError: (error) => {
+      console.error('답변 삭제 실패:', error);
+      alert('답변 삭제에 실패했습니다: ' + error.message);
     }
   });
 
@@ -196,6 +238,42 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       return;
     }
     toggleLikeMutation.mutate(answerId);
+  };
+
+  // 답변 메뉴 토글
+  const handleAnswerMenuToggle = (e, answerId) => {
+    e.stopPropagation();
+    setAnswerMenuOpen(answerMenuOpen === answerId ? null : answerId);
+  };
+
+  // 답변 수정 시작
+  const handleStartEditAnswer = (answer) => {
+    setEditingAnswerId(answer.id);
+    setEditingAnswerContent(answer.content);
+    setAnswerMenuOpen(null);
+  };
+
+  // 답변 수정 취소
+  const handleCancelEditAnswer = () => {
+    setEditingAnswerId(null);
+    setEditingAnswerContent('');
+  };
+
+  // 답변 수정 제출
+  const handleSubmitEditAnswer = (answerId) => {
+    if (!editingAnswerContent.trim()) {
+      alert('답변 내용을 입력해주세요.');
+      return;
+    }
+    updateAnswerMutation.mutate({ answerId, content: editingAnswerContent.trim() });
+  };
+
+  // 답변 삭제
+  const handleDeleteAnswer = (answerId) => {
+    if (window.confirm('답변을 삭제하시겠습니까?')) {
+      deleteAnswerMutation.mutate(answerId);
+    }
+    setAnswerMenuOpen(null);
   };
 
   // 질문 수정 모달 열기
@@ -489,35 +567,95 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
             answers.map((answer) => (
               <div
                 key={answer.id}
-                className="bg-white rounded-lg p-6 border shadow-sm"
+                className="bg-white rounded-lg p-6 border shadow-sm relative"
               >
-                {/* 답변 내용 */}
-                <div className="prose max-w-none mb-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
-                </div>
-
-                {/* 답변 액션 및 메타 정보 */}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-4">
-                    {/* 좋아요 버튼 */}
-                    <button
-                      onClick={() => handleToggleLike(answer.id)}
-                      disabled={!currentUser}
-                      className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
-                        answer.user_liked
-                          ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
-                          : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
-                      } ${!currentUser ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                    >
-                      {answer.user_liked ? (
-                        <ThumbUpIcon fontSize="small" />
-                      ) : (
-                        <ThumbUpOutlinedIcon fontSize="small" />
-                      )}
-                      {answer.likes_count}
-                    </button>
-
+                {/* 수정 모드일 때 */}
+                {editingAnswerId === answer.id ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={editingAnswerContent}
+                      onChange={(e) => setEditingAnswerContent(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 resize-none"
+                      rows={4}
+                      placeholder="답변 내용을 입력하세요..."
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={handleCancelEditAnswer}
+                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={() => handleSubmitEditAnswer(answer.id)}
+                        disabled={updateAnswerMutation.isLoading}
+                        className="px-4 py-2 bg-market-600 text-white rounded-lg hover:bg-market-700 transition-colors disabled:opacity-50"
+                      >
+                        {updateAnswerMutation.isLoading ? '저장 중...' : '저장'}
+                      </button>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    {/* ... 메뉴 버튼 (본인 답변일 때만) */}
+                    {currentUser && currentUser.id === answer.user_id && (
+                      <div className="absolute top-4 right-4">
+                        <button
+                          onClick={(e) => handleAnswerMenuToggle(e, answer.id)}
+                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <FontAwesomeIcon icon={faEllipsisH} />
+                        </button>
+
+                        {/* 드롭다운 메뉴 */}
+                        {answerMenuOpen === answer.id && (
+                          <div className="absolute right-0 top-10 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
+                            <button
+                              onClick={() => handleStartEditAnswer(answer)}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <EditIcon fontSize="small" />
+                              수정
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAnswer(answer.id)}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <DeleteIcon fontSize="small" />
+                              삭제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 답변 내용 */}
+                    <div className="prose max-w-none mb-4 pr-10">
+                      <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
+                    </div>
+
+                    {/* 답변 액션 및 메타 정보 */}
+                    <div className="flex items-center justify-between pt-4 border-t">
+                      <div className="flex items-center gap-4">
+                        {/* 좋아요 버튼 */}
+                        <button
+                          onClick={() => handleToggleLike(answer.id)}
+                          disabled={!currentUser}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
+                            answer.user_liked
+                              ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
+                              : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                          } ${!currentUser ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                        >
+                          {answer.user_liked ? (
+                            <ThumbUpIcon fontSize="small" />
+                          ) : (
+                            <ThumbUpOutlinedIcon fontSize="small" />
+                          )}
+                          {answer.likes_count}
+                        </button>
+
+                      </div>
 
                   {/* 답변자 정보 */}
                   <div
@@ -550,7 +688,9 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                       </div>
                     </div>
                   </div>
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
             ))
           ) : (

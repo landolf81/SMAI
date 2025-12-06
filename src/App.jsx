@@ -264,7 +264,11 @@ useEffect(() => {
       path: '/register',
       element: <Suspense fallback={<PageLoader />}><Register /></Suspense>,
     },
-  ]);
+  ], {
+    future: {
+      v7_startTransition: true,
+    },
+  });
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -136,6 +136,7 @@ const Login = () => {
                 <input
                   type="text"
                   name="username"
+                  autoComplete="username"
                   value={inputs.username}
                   onChange={handleChange}
                   placeholder="사용자명을 입력하세요"
@@ -150,6 +151,7 @@ const Login = () => {
                 <input
                   type="password"
                   name="password"
+                  autoComplete="current-password"
                   value={inputs.password}
                   onChange={handleChange}
                   placeholder="비밀번호를 입력하세요"

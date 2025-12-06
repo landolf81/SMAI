@@ -245,6 +245,7 @@ const Register = () => {
                 <input
                   type="text"
                   name="username"
+                  autoComplete="username"
                   value={inputs.username}
                   onChange={handleChange}
                   placeholder="영문, 숫자로 구성"
@@ -275,6 +276,7 @@ const Register = () => {
                 <input
                   type="email"
                   name="email"
+                  autoComplete="email"
                   value={inputs.email}
                   onChange={handleChange}
                   placeholder="example@email.com"
@@ -290,6 +292,7 @@ const Register = () => {
                 <input
                   type="password"
                   name="password"
+                  autoComplete="new-password"
                   value={inputs.password}
                   onChange={handleChange}
                   placeholder="8자 이상"
