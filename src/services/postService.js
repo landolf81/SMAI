@@ -21,8 +21,9 @@ export const postService = {
    */
   async getPosts({ tagId, userId, postType, search, limit = 20, offset = 0, sortBy = 'algorithm' } = {}) {
     try {
-      // 현재 로그인 사용자 확인
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      // 현재 로그인 사용자 확인 (읽기 전용 - 캐시된 세션 사용)
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user;
 
       // 1. 게시물 기본 정보 + 사용자 정보 조회
       let query = supabase
@@ -262,8 +263,9 @@ export const postService = {
       if (postError) throw postError;
       if (!post) throw new Error('게시물을 찾을 수 없습니다.');
 
-      // 3. 현재 사용자 정보 가져오기
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      // 3. 현재 사용자 정보 가져오기 (읽기 전용 - 캐시된 세션 사용)
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user;
 
       // 4. 좋아요 수 및 현재 사용자의 좋아요 여부 조회
       const { data: likes, error: likesError } = await supabase
@@ -736,7 +738,9 @@ export const postService = {
    */
   async incrementViewCount(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // 읽기 전용 - 캐시된 세션 사용
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       // postId를 정수로 변환 (posts.id가 bigint인 경우)
       const postIdInt = parseInt(postId, 10);

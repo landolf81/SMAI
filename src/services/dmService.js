@@ -53,7 +53,9 @@ export const dmService = {
         return [];
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      // 읽기 전용 - 캐시된 세션 사용
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // messages 테이블에서 현재 사용자가 참여한 대화 조회
@@ -146,7 +148,9 @@ export const dmService = {
         return [];
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      // 읽기 전용 - 캐시된 세션 사용
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 메시지 조회

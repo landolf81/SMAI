@@ -37,11 +37,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // 헬퍼 함수들
 export const supabaseHelpers = {
-  // 현재 사용자 조회
+  // 현재 사용자 조회 (캐시된 세션 사용 - 읽기 전용)
   getCurrentUser: async () => {
-    const { data: { user }, error } = await supabase.auth.getUser()
+    const { data: { session }, error } = await supabase.auth.getSession()
     if (error) throw error
-    return user
+    return session?.user || null
   },
 
   // 현재 세션 조회

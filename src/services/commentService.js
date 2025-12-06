@@ -16,9 +16,9 @@ export const commentService = {
    */
   async getComments(postId, { limit, offset, includeHidden = false, postOwnerId = null } = {}) {
     try {
-      // 현재 로그인한 사용자 정보 조회
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      const currentUserId = currentUser?.id;
+      // 현재 로그인한 사용자 정보 조회 (읽기 전용 - 캐시된 세션 사용)
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUserId = session?.user?.id;
 
       // 관리자 권한 체크는 댓글 조회 시 불필요 (삭제/수정 버튼은 프론트엔드에서 처리)
 
@@ -387,7 +387,9 @@ export const commentService = {
    */
   async getUserCommentLikes(commentIds) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // 읽기 전용 - 캐시된 세션 사용
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user || !commentIds.length) return {};
 
       const { data, error } = await supabase
