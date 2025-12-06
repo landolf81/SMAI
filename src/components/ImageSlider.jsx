@@ -78,6 +78,8 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
 
         const isMuted = !video.muted;
         video.muted = isMuted;
+        // iOS에서 볼륨도 함께 설정해야 벨소리가 아닌 미디어 볼륨 사용
+        video.volume = isMuted ? 0 : 1;
 
         setVideoStates(prev => ({
             ...prev,
@@ -129,6 +131,10 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         muted
                         playsInline
                         autoPlay
+                        onLoadedData={(e) => {
+                            // iOS에서 볼륨 0으로 설정 (벨소리가 아닌 미디어 볼륨 사용)
+                            e.target.volume = 0;
+                        }}
                         onClick={() => {
                             const currentTime = singleVideoRef.current?.currentTime || 0;
                             onMediaClick && onMediaClick(0, currentTime);
@@ -280,6 +286,10 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                             muted
                             playsInline
                             autoPlay
+                            onLoadedData={(e) => {
+                                // iOS에서 볼륨 0으로 설정 (벨소리가 아닌 미디어 볼륨 사용)
+                                e.target.volume = 0;
+                            }}
                             onClick={() => {
                                 const currentTime = videoRefs.current[currentIndex]?.currentTime || 0;
                                 onMediaClick && onMediaClick(currentIndex, currentTime);

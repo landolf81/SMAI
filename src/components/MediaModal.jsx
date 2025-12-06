@@ -279,8 +279,11 @@ const MediaModal = ({
   const toggleMute = (e) => {
     e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const newMuted = !isMuted;
+      videoRef.current.muted = newMuted;
+      // iOS에서 볼륨도 함께 설정해야 벨소리가 아닌 미디어 볼륨 사용
+      videoRef.current.volume = newMuted ? 0 : 1;
+      setIsMuted(newMuted);
     }
   };
 

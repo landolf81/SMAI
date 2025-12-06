@@ -245,8 +245,11 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
     e.stopPropagation();
     if (!videoRef.current) return;
 
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
+    const newMuted = !videoRef.current.muted;
+    videoRef.current.muted = newMuted;
+    // iOS에서 볼륨도 함께 설정해야 벨소리가 아닌 미디어 볼륨 사용
+    videoRef.current.volume = newMuted ? 0 : 1;
+    setIsMuted(newMuted);
   };
 
   // 더블탭 좋아요 처리
@@ -550,6 +553,10 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                     muted={isMuted}
                     playsInline
                     preload="metadata"
+                    onLoadedData={(e) => {
+                      // iOS에서 볼륨 0으로 설정 (벨소리가 아닌 미디어 볼륨 사용)
+                      e.target.volume = isMuted ? 0 : 1;
+                    }}
                   >
                     <source src={normalizedMediaFiles[0]} />
                     <track kind="captions" />

@@ -361,7 +361,9 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       // 동영상이 재생 가능한 상태인지 확인 후 재생
       const attemptPlay = () => {
         // muted 상태 확인 (자동재생 정책)
+        // iOS에서 볼륨도 0으로 설정해야 벨소리가 아닌 미디어 볼륨 사용
         video.muted = true;
+        video.volume = 0;
 
         const playPromise = video.play();
         if (playPromise !== undefined) {
@@ -397,6 +399,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       // 동영상 정지 및 상태 초기화
       video.pause();
       video.muted = true;  // 음소거 확인 (오디오 재생 방지)
+      video.volume = 0;    // iOS 볼륨도 0으로 설정
       video.currentTime = 0;  // 재생 위치 리셋
 
       setIsPlaying(false);
@@ -602,9 +605,12 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     e.stopPropagation();
     if (!videoRef.current) return;
 
-    videoRef.current.muted = !videoRef.current.muted;
-    setIsMuted(videoRef.current.muted);
-    isMutedRef.current = videoRef.current.muted;  // ref도 동기화
+    const newMuted = !videoRef.current.muted;
+    videoRef.current.muted = newMuted;
+    // iOS에서 볼륨 제어: 음소거 시 volume=0, 해제 시 volume=1
+    videoRef.current.volume = newMuted ? 0 : 1;
+    setIsMuted(newMuted);
+    isMutedRef.current = newMuted;  // ref도 동기화
   };
 
   const handleVideoError = () => {
@@ -635,6 +641,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       // 타이머 실행 시점에도 isVisible 재확인
       if (videoRef.current && isVisible) {
         videoRef.current.muted = isMutedRef.current;  // ref로 최신 음소거 상태 유지
+        videoRef.current.volume = isMutedRef.current ? 0 : 1;  // iOS 볼륨도 동기화
         videoRef.current.currentTime = 0;
         videoRef.current.play().then(() => {
           setIsPlaying(true);

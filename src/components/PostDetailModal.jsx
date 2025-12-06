@@ -280,6 +280,10 @@ const PostDetailModal = ({ isOpen, onClose, postId }) => {
                       controls
                       className="w-full h-auto max-h-[400px] object-contain"
                       playsInline
+                      onLoadedData={(e) => {
+                        // iOS에서 미디어 볼륨 사용하도록 초기 볼륨 설정
+                        e.target.volume = 1;
+                      }}
                     />
                   ) : (
                     <img
@@ -306,6 +310,10 @@ const PostDetailModal = ({ isOpen, onClose, postId }) => {
                             controls
                             className="w-full h-auto max-h-[400px] object-contain bg-gray-100"
                             playsInline
+                            onLoadedData={(e) => {
+                              // iOS에서 미디어 볼륨 사용하도록 초기 볼륨 설정
+                              e.target.volume = 1;
+                            }}
                           />
                         ) : (
                           <img
