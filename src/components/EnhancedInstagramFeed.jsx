@@ -371,6 +371,14 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     if (postsWithAds.length > renderedCount && renderedCount > 0) {
       // 새로운 페이지 로드 시 바로 모두 표시
       setRenderedCount(postsWithAds.length);
+
+      // 새로 추가된 아이템들도 즉시 animated 상태로 설정 (딜레이 없이 바로 보이게)
+      const newAnimated = new Set();
+      postsWithAds.slice(renderedCount).forEach(item => {
+        const itemId = item.type === 'ad' ? `ad-${item.data.id}` : item.data.id.toString();
+        newAnimated.add(itemId);
+      });
+      setAnimatedPosts(prev => new Set([...prev, ...newAnimated]));
     }
   }, [postsWithAds.length]);
 
@@ -635,9 +643,11 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
             const itemId = isAd ? `ad-${item.data.id}` : item.data.id.toString();
             const isAnimated = isAd ? true : animatedPosts.has(itemId);
             const isPOP = navigationType === 'POP';
-            // 순차 애니메이션을 위한 지연 (렌더링된 순서 기준)
-            // 첫 3개는 딜레이 없이 즉시, 나머지는 50ms 간격으로 순차적 애니메이션
-            const animationDelay = index < 3 ? 0 : (index - 3) * 0.05;
+            // 순차 애니메이션을 위한 지연 (페이지 단위로 리셋)
+            // 5개씩 로드하므로 페이지 내 인덱스로 계산 (딜레이 누적 방지)
+            // 첫 3개는 딜레이 없이 즉시, 나머지는 50ms 간격 (최대 0.1초)
+            const pageIndex = index % 5;
+            const animationDelay = pageIndex < 3 ? 0 : (pageIndex - 3) * 0.05;
 
             return (
             <div
