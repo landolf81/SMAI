@@ -132,14 +132,12 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      // 컴포넌트 언마운트 시: 마운트 시점의 navigationType이 POP일 때만 저장
-      // (PUSH 이동으로 들어온 페이지에서는 클릭으로 인한 스크롤 변경이 저장될 수 있음)
-      const mountNavType = mountNavigationTypeRef.current;
-      if (mountNavType === 'POP') {
-        console.log(`📤 [${boardType}] 언마운트 시 스크롤 저장 (마운트 시 POP)`);
-        saveCurrentScrollPosition();
-      } else {
-        console.log(`⏭️ [${boardType}] 언마운트 시 스크롤 저장 생략 (마운트 시 ${mountNavType})`);
+      // 컴포넌트 언마운트 시: 마지막으로 기록된 스크롤 위치 저장
+      // (스크롤 이벤트에서 추적한 위치 사용 - 현재 window.scrollY는 이미 변경되었을 수 있음)
+      if (!isRestoringRef.current && enabled && lastScrollPositionRef.current > 0) {
+        console.log(`📤 [${boardType}] 언마운트 시 스크롤 저장`);
+        scrollManager.saveScrollPosition(boardType, lastScrollPositionRef.current, tag, search, userId);
+        console.log(`💾 [${boardType}] 스크롤 위치 저장됨:`, lastScrollPositionRef.current);
       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -150,19 +148,29 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
     if (!enabled) return;
 
     let ticking = false;
-    
+
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
-          // 스크롤 저장을 디바운스 처리
+          // 스크롤 복원 중에는 무시
+          if (isRestoringRef.current) {
+            ticking = false;
+            return;
+          }
+
+          // 현재 스크롤 위치를 즉시 ref에 저장 (언마운트 시 사용)
+          const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+          lastScrollPositionRef.current = scrollTop;
+
+          // localStorage 저장은 디바운스 처리
           if (scrollTimeoutRef.current) {
             clearTimeout(scrollTimeoutRef.current);
           }
-          
+
           scrollTimeoutRef.current = setTimeout(() => {
             saveCurrentScrollPosition();
           }, 300); // 300ms 후에 저장
-          
+
           ticking = false;
         });
         ticking = true;
@@ -170,7 +178,7 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       if (scrollTimeoutRef.current) {

@@ -1,10 +1,9 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faPaperPlane, faTimes, faLink } from '@fortawesome/free-solid-svg-icons';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { faImage, faPaperPlane, faTimes, faLink, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import { getFirstLinkInfo } from '../utils/linkDetector';
 import { YouTubePreviewCard } from '../components/YouTubeEmbed';
 import { postService, storageService } from '../services';
@@ -39,6 +38,71 @@ const PostEditor = () => {
   const [imageConvertProgress, setImageConvertProgress] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(null);
   const [uploadedVideos, setUploadedVideos] = useState([]); // Cloudflare Stream 동영상 정보
+
+  // 음성 인식 상태
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef(null);
+
+  // 음성 인식 초기화
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        if (finalTranscript) {
+          setDesc(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('음성 인식 오류:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // 음성 인식 토글
+  const toggleSpeechRecognition = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
 
   // 링크 미리보기 상태
   const [linkPreview, setLinkPreview] = useState(null);
@@ -375,21 +439,8 @@ const PostEditor = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 p-1">
-            <ArrowBackIcon fontSize="small" />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-800">
-            {isEditMode ? '게시물 수정' : postType === 'secondhand' ? '중고거래 글쓰기' : '새 게시물'}
-          </h1>
-          <div className="w-5 h-5" />
-        </div>
-      </div>
-
       {/* 메인 컨텐츠 */}
-      <div className="max-w-2xl mx-auto p-4">
+      <div className="max-w-2xl mx-auto p-4 pt-6">
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
           {/* 사용자 정보 */}
           <div className="flex items-center space-x-3 mb-6">
@@ -540,15 +591,41 @@ const PostEditor = () => {
 
           {/* 내용 입력 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              내용 <span className="text-red-500">*</span>
-            </label>
-            <textarea
-              placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
-              className="w-full min-h-[200px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-            />
+            <div className="flex items-center justify-between mb-3">
+              <label className="block text-sm font-medium text-gray-700">
+                내용 <span className="text-red-500">*</span>
+              </label>
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                    isListening
+                      ? 'bg-red-500 text-white animate-pulse'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} />
+                  {isListening ? '중지' : '음성입력'}
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <textarea
+                placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
+                className={`w-full min-h-[200px] p-4 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                  isListening ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                }`}
+                value={desc}
+                onChange={(e) => setDesc(e.target.value)}
+              />
+              {isListening && (
+                <div className="absolute bottom-4 left-4 flex items-center gap-2 text-red-500 text-sm">
+                  <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                  음성 인식 중...
+                </div>
+              )}
+            </div>
 
             {gpsData && (
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -577,17 +654,26 @@ const PostEditor = () => {
             </div>
           )}
 
-          {/* 제출 버튼 */}
-          <button
-            type="submit"
-            disabled={loading || imageConvertProgress || videoUploadProgress || !desc.trim()}
-            className={`w-full py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
-              loading || imageConvertProgress || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
-            }`}
-          >
-            {loading ? <span className="loading loading-spinner w-2 h-2 mr-2"></span> : <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />}
-            {isEditMode ? '수정 완료' : '게시하기'}
-          </button>
+          {/* 버튼 영역 */}
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium transition-all hover:bg-gray-300"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={loading || imageConvertProgress || videoUploadProgress || !desc.trim()}
+              className={`flex-1 py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
+                loading || imageConvertProgress || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
+              }`}
+            >
+              {loading ? <span className="loading loading-spinner w-2 h-2 mr-2"></span> : <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />}
+              {isEditMode ? '수정 완료' : '게시하기'}
+            </button>
+          </div>
         </form>
       </div>
     </div>

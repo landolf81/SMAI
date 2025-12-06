@@ -803,6 +803,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 }
                 alt={`${post.username} 프로필`}
                 className="w-full h-full object-cover object-center"
+                loading="lazy"
                 onError={(e) => {
                   e.target.src = "/default/default_profile.png";
                 }}
@@ -1103,6 +1104,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     src={normalizedMediaFiles[0]}
                     alt="게시물 이미지"
                     className="w-full h-full object-cover cursor-pointer"
+                    loading="lazy"
                     onClick={() => {
                       setMediaModalIndex(0);
                       setShowMediaModal(true);

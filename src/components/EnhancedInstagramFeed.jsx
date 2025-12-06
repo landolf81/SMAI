@@ -47,28 +47,18 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         search: search,
         userId: userId,
         postType: userId ? undefined : 'general', // 사용자 프로필에서는 모든 타입, 커뮤니티에서는 general만
-        limit: 10,
-        offset: pageParam * 10,
+        limit: 5,
+        offset: pageParam * 5,
         sortBy: userId ? 'latest' : 'algorithm' // 프로필: 최신순, 커뮤니티: 알고리즘
       });
-
-      // YouTube 게시물 디버깅
-      const youtubePost = posts.find(post => post.link_type === 'youtube');
-      if (youtubePost) {
-        console.log('Supabase에서 받은 YouTube 게시물 데이터:', {
-          id: youtubePost.id,
-          content: youtubePost.content,
-          link_url: youtubePost.link_url
-        });
-      }
 
       return posts;
     },
     getNextPageParam: (lastPage, pages) => {
-      return lastPage.length === 10 ? pages.length : undefined;
+      return lastPage.length === 5 ? pages.length : undefined;
     },
-    staleTime: 1 * 60 * 1000,
-    gcTime: 5 * 60 * 1000,
+    staleTime: 5 * 60 * 1000,  // 5분 캐시
+    gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
   });
 
   // 광고 노출 기록 관리 (로컬 스토리지)

@@ -148,6 +148,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         src={normalizedImages[0]}
                         alt="게시물 이미지"
                         className={`${mediaClass} cursor-pointer`}
+                        loading="lazy"
                         onClick={() => onMediaClick && onMediaClick(0)}
                     />
                 </div>
@@ -296,6 +297,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         src={normalizedImages[currentIndex]}
                         alt={`게시물 이미지 ${currentIndex + 1}`}
                         className={`${mediaClass} cursor-pointer transition-opacity duration-300`}
+                        loading="lazy"
                         onClick={() => onMediaClick && onMediaClick(currentIndex)}
                         onError={(e) => {
                             console.error('이미지 로드 실패:', e.target.src);

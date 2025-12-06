@@ -1,8 +1,8 @@
 /**
  * 이미지 변환 유틸리티
  * - HEIC/HEIF (아이폰 기본 사진 형식) 지원
- * - 모든 이미지를 가로 2048px PNG로 변환 (핑거줌 고품질)
- * - WebP, BMP, TIFF 등 다양한 형식 지원
+ * - 모든 이미지를 가로 1024px WebP로 변환 (용량 최적화)
+ * - PNG, JPEG, BMP, TIFF 등 다양한 입력 형식 지원
  */
 
 import heic2any from 'heic2any';
@@ -116,9 +116,9 @@ const loadImageFromBlob = (blob) => {
 };
 
 /**
- * Canvas를 JPEG Blob으로 변환
+ * Canvas를 WebP Blob으로 변환
  * @param {HTMLCanvasElement} canvas - Canvas 엘리먼트
- * @param {number} quality - JPEG 품질 (0-1, 기본: 0.85)
+ * @param {number} quality - WebP 품질 (0-1, 기본: 0.85)
  * @returns {Promise<Blob>}
  */
 const canvasToBlob = (canvas, quality = 0.85) => {
@@ -131,20 +131,20 @@ const canvasToBlob = (canvas, quality = 0.85) => {
           reject(new Error('이미지 변환에 실패했습니다.'));
         }
       },
-      'image/jpeg',
+      'image/webp',
       quality
     );
   });
 };
 
 /**
- * 파일을 가로 1024px JPEG로 변환 (용량 최적화)
+ * 파일을 가로 1024px WebP로 변환 (용량 최적화)
  * @param {File} file - 원본 이미지 파일
  * @param {Object} options - 옵션
  * @param {number} options.maxWidth - 최대 가로 크기 (기본: 1024)
- * @param {number} options.quality - JPEG 품질 (기본: 0.85)
+ * @param {number} options.quality - WebP 품질 (기본: 0.85)
  * @param {Function} options.onProgress - 진행률 콜백
- * @returns {Promise<File>} 변환된 JPEG 파일
+ * @returns {Promise<File>} 변환된 WebP 파일
  */
 export const convertImageToPng = async (file, options = {}) => {
   const { maxWidth = 1024, quality = 0.85, onProgress } = options;
@@ -170,17 +170,17 @@ export const convertImageToPng = async (file, options = {}) => {
     // 3. 리사이즈
     const canvas = resizeImageToCanvas(img, maxWidth);
 
-    onProgress?.(80, 'JPEG 변환 중...');
+    onProgress?.(80, 'WebP 변환 중...');
 
-    // 4. JPEG로 변환 (용량 최적화)
-    const jpegBlob = await canvasToBlob(canvas, quality);
+    // 4. WebP로 변환 (용량 최적화)
+    const webpBlob = await canvasToBlob(canvas, quality);
 
-    // 5. File 객체로 변환 (원본 파일명 유지하되 확장자만 .jpg로)
+    // 5. File 객체로 변환 (원본 파일명 유지하되 확장자만 .webp로)
     const originalName = file.name.replace(/\.[^.]+$/, '');
-    const newFileName = `${originalName}.jpg`;
+    const newFileName = `${originalName}.webp`;
 
-    const convertedFile = new File([jpegBlob], newFileName, {
-      type: 'image/jpeg',
+    const convertedFile = new File([webpBlob], newFileName, {
+      type: 'image/webp',
       lastModified: Date.now(),
     });
 

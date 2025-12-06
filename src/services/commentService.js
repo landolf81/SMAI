@@ -20,18 +20,9 @@ export const commentService = {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       const currentUserId = currentUser?.id;
 
-      // 현재 사용자의 역할 조회 (관리자 여부 확인)
-      let isAdmin = false;
-      if (currentUserId) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', currentUserId)
-          .single();
-        isAdmin = userData?.role === 'admin' || userData?.role === 'super_admin';
-      }
+      // 관리자 권한 체크는 댓글 조회 시 불필요 (삭제/수정 버튼은 프론트엔드에서 처리)
 
-      // 1. 부모 댓글만 조회 (parent_id가 null인 댓글)
+      // 1. 부모 댓글 쿼리 준비
       let parentQuery = supabase
         .from('comments')
         .select(`
@@ -57,11 +48,7 @@ export const commentService = {
         parentQuery = parentQuery.range(offset, offset + limit - 1);
       }
 
-      const { data: parentComments, error: parentError } = await parentQuery;
-
-      if (parentError) throw parentError;
-
-      // 2. 답글 조회 (parent_id가 있는 댓글)
+      // 2. 답글 쿼리 준비
       let repliesQuery = supabase
         .from('comments')
         .select(`
@@ -82,41 +69,14 @@ export const commentService = {
         repliesQuery = repliesQuery.or('is_hidden.is.null,is_hidden.eq.false');
       }
 
-      const { data: replies, error: repliesError } = await repliesQuery;
+      // 부모 댓글과 답글을 병렬로 조회
+      const [parentResult, repliesResult] = await Promise.all([parentQuery, repliesQuery]);
 
-      if (repliesError) throw repliesError;
+      if (parentResult.error) throw parentResult.error;
+      if (repliesResult.error) throw repliesResult.error;
 
-      /**
-       * 비공개 댓글 권한 체크 함수
-       * 열람 가능 조건:
-       * 1. 댓글 작성자 본인
-       * 2. 게시물 작성자 (판매자)
-       * 3. 관리자
-       */
-      const canViewSecretComment = (comment) => {
-        if (!comment.is_secret) return true; // 공개 댓글은 모두 열람 가능
-        if (!currentUserId) return false; // 비로그인 사용자는 비공개 댓글 열람 불가
-        if (isAdmin) return true; // 관리자는 모든 비공개 댓글 열람 가능
-        if (comment.user_id === currentUserId) return true; // 댓글 작성자 본인
-        if (postOwnerId && postOwnerId === currentUserId) return true; // 게시물 작성자
-        return false;
-      };
-
-      /**
-       * 비공개 댓글 마스킹 함수
-       * 열람 권한이 없는 경우 내용을 숨김
-       */
-      const maskSecretComment = (comment) => {
-        if (canViewSecretComment(comment)) {
-          return comment;
-        }
-        // 열람 권한이 없는 경우 내용 마스킹
-        return {
-          ...comment,
-          description: '🔒 비밀 댓글입니다.',
-          isMasked: true // 마스킹 여부 표시
-        };
-      };
+      const parentComments = parentResult.data || [];
+      const replies = repliesResult.data || [];
 
       // 3. 모든 댓글 ID 수집 (좋아요 정보 조회용)
       const allCommentIds = [
@@ -124,65 +84,75 @@ export const commentService = {
         ...replies.map(r => r.id)
       ];
 
-      // 4. 댓글 좋아요 수 조회
-      const { data: likesData } = await supabase
-        .from('comment_likes')
-        .select('comment_id')
-        .in('comment_id', allCommentIds);
+      // 댓글이 없으면 빈 배열 반환
+      if (allCommentIds.length === 0) {
+        return [];
+      }
+
+      // 4. 좋아요 관련 쿼리 병렬 실행
+      const likesPromises = [
+        // 전체 좋아요 수
+        supabase
+          .from('comment_likes')
+          .select('comment_id')
+          .in('comment_id', allCommentIds)
+      ];
+
+      // 로그인 사용자인 경우 본인 좋아요 여부도 조회
+      if (currentUserId) {
+        likesPromises.push(
+          supabase
+            .from('comment_likes')
+            .select('comment_id')
+            .eq('user_id', currentUserId)
+            .in('comment_id', allCommentIds)
+        );
+      }
+
+      const likesResults = await Promise.all(likesPromises);
 
       // 좋아요 수 카운트 맵 생성
       const likesCountMap = {};
-      likesData?.forEach(like => {
+      likesResults[0].data?.forEach(like => {
         likesCountMap[like.comment_id] = (likesCountMap[like.comment_id] || 0) + 1;
       });
 
-      // 5. 현재 사용자의 좋아요 여부 조회
-      let userLikesMap = {};
-      if (currentUserId) {
-        const { data: userLikes } = await supabase
-          .from('comment_likes')
-          .select('comment_id')
-          .eq('user_id', currentUserId)
-          .in('comment_id', allCommentIds);
-
-        userLikes?.forEach(like => {
+      // 사용자 좋아요 맵 생성
+      const userLikesMap = {};
+      if (currentUserId && likesResults[1]?.data) {
+        likesResults[1].data.forEach(like => {
           userLikesMap[like.comment_id] = true;
         });
       }
 
-      // 6. 답글을 부모 댓글에 매핑 (비공개 댓글 권한 체크 적용)
+      // 5. 답글을 부모 댓글에 매핑
       const commentsWithReplies = parentComments.map(comment => {
-        const maskedComment = maskSecretComment(comment);
-
         const commentReplies = replies
           .filter(reply => reply.parent_id === comment.id)
-          .map(reply => {
-            const maskedReply = maskSecretComment(reply);
-            return {
-              ...maskedReply,
-              desc: maskedReply.description,
-              userId: maskedReply.user_id,
-              name: maskedReply.users?.name,
-              username: maskedReply.users?.username,
-              profilePic: maskedReply.users?.profile_pic,
-              user_name: maskedReply.users?.name,
-              profile_pic: maskedReply.users?.profile_pic,
-              user: maskedReply.users,
-              likes_count: likesCountMap[reply.id] || 0,
-              user_liked: userLikesMap[reply.id] || false
-            };
-          });
+          .map(reply => ({
+            ...reply,
+            desc: reply.description,
+            userId: reply.user_id,
+            name: reply.users?.name,
+            username: reply.users?.username,
+            profilePic: reply.users?.profile_pic,
+            user_name: reply.users?.name,
+            profile_pic: reply.users?.profile_pic,
+            user: reply.users,
+            likes_count: likesCountMap[reply.id] || 0,
+            user_liked: userLikesMap[reply.id] || false
+          }));
 
         return {
-          ...maskedComment,
-          desc: maskedComment.description,
-          userId: maskedComment.user_id,
-          name: maskedComment.users?.name,
-          username: maskedComment.users?.username,
-          profilePic: maskedComment.users?.profile_pic,
-          user_name: maskedComment.users?.name,
-          profile_pic: maskedComment.users?.profile_pic,
-          user: maskedComment.users,
+          ...comment,
+          desc: comment.description,
+          userId: comment.user_id,
+          name: comment.users?.name,
+          username: comment.users?.username,
+          profilePic: comment.users?.profile_pic,
+          user_name: comment.users?.name,
+          profile_pic: comment.users?.profile_pic,
+          user: comment.users,
           replies: commentReplies,
           likes_count: likesCountMap[comment.id] || 0,
           user_liked: userLikesMap[comment.id] || false

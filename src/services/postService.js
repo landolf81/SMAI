@@ -83,23 +83,12 @@ export const postService = {
       const postIds = posts.map(p => p.id);
 
       // 3. 관련 데이터를 병렬로 조회
+      // 참고: likes_count, comments_count는 posts 테이블에 집계 컬럼으로 저장됨 (트리거로 자동 업데이트)
       const queryPromises = [
         // 태그 조회 (is_primary 포함)
         supabase
           .from('post_tags')
           .select('post_id, is_primary, tags(id, name, display_name, color)')
-          .in('post_id', postIds),
-
-        // 좋아요 수 조회
-        supabase
-          .from('likes')
-          .select('post_id')
-          .in('post_id', postIds),
-
-        // 댓글 수 조회
-        supabase
-          .from('comments')
-          .select('post_id')
           .in('post_id', postIds),
 
         // 중고거래 상태 조회
@@ -121,7 +110,7 @@ export const postService = {
       }
 
       const results = await Promise.all(queryPromises);
-      const [tagsData, likesData, commentsData, tradeItemsData, viewedData] = results;
+      const [tagsData, tradeItemsData, viewedData] = results;
 
       // 4. 데이터를 맵으로 변환 (빠른 조회를 위해)
       const tagsMap = {};
@@ -135,16 +124,6 @@ export const postService = {
             primaryTagMap[pt.post_id] = pt.tags;
           }
         }
-      });
-
-      const likesCountMap = {};
-      likesData.data?.forEach(like => {
-        likesCountMap[like.post_id] = (likesCountMap[like.post_id] || 0) + 1;
-      });
-
-      const commentsCountMap = {};
-      commentsData.data?.forEach(comment => {
-        commentsCountMap[comment.post_id] = (commentsCountMap[comment.post_id] || 0) + 1;
       });
 
       // 중고거래 상태 맵 생성
@@ -185,8 +164,8 @@ export const postService = {
           // 관계 데이터
           tags: tagsMap[post.id] || [],
           primaryTag: primaryTagMap[post.id] || null,
-          likesCount: likesCountMap[post.id] || 0,
-          commentsCount: commentsCountMap[post.id] || 0,
+          likesCount: post.likes_count || 0,  // DB 집계 컬럼 사용
+          commentsCount: post.comments_count || 0,  // DB 집계 컬럼 사용
 
           // 중고거래 정보
           tradeInfo: tradeInfoMap[post.id] || null,
