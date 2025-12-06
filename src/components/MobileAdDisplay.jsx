@@ -241,25 +241,27 @@ const MobileAdDisplay = ({ ad }) => {
 
   // 모달 내 자동 순환 (이미지만, 동영상은 onEnded로 처리)
   useEffect(() => {
-    if (showLandingModal) {
-      const allMedia = getAllMedia();
-      if (allMedia.length <= 1) return;
+    if (!showLandingModal) return;
 
-      const currentMedia = allMedia[modalMediaIndex];
+    const allMedia = getAllMedia();
+    if (allMedia.length <= 1) return;
 
-      // 현재 미디어가 동영상이면 자동 순환 안 함 (동영상은 onEnded로 처리)
-      if (currentMedia?.type?.startsWith('video')) {
-        return;
-      }
+    const currentMedia = allMedia[modalMediaIndex];
 
-      // 이미지일 때 3초 후 다음으로
-      const timeout = setTimeout(() => {
-        setModalMediaIndex(prev => (prev + 1) % allMedia.length);
-      }, 3000);
-
-      return () => clearTimeout(timeout);
+    // 현재 미디어가 동영상이면 자동 순환 안 함 (동영상은 onEnded로 처리)
+    // video 타입 체크 강화
+    if (currentMedia?.type === 'video' || currentMedia?.type?.startsWith('video')) {
+      return; // 동영상일 때는 타이머 설정 안 함
     }
-  }, [showLandingModal, modalMediaIndex, adMedia]);
+
+    // 이미지일 때만 3초 후 다음으로
+    const timeout = setTimeout(() => {
+      setModalMediaIndex(prev => (prev + 1) % allMedia.length);
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showLandingModal, modalMediaIndex]); // adMedia 의존성 제거 - 무한 리렌더링 방지
 
   // 모달 동영상 종료 시 다음 미디어로 이동
   const handleModalVideoEnded = () => {
@@ -349,6 +351,7 @@ const MobileAdDisplay = ({ ad }) => {
                     muted
                     playsInline
                     loop
+                    preload="auto"
                     onError={(e) => {
                       console.error('비디오 로드 오류:', e);
                     }}
@@ -465,13 +468,9 @@ const MobileAdDisplay = ({ ad }) => {
                         muted={modalVideoMuted}
                         autoPlay
                         playsInline
-                        preload="metadata"
+                        preload="auto"
                         onEnded={handleModalVideoEnded}
                         onLoadedData={(e) => {
-                          e.target.muted = modalVideoMuted;
-                          e.target.play().catch(() => {});
-                        }}
-                        onCanPlay={(e) => {
                           e.target.muted = modalVideoMuted;
                           e.target.play().catch(() => {});
                         }}

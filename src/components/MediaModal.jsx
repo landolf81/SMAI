@@ -55,11 +55,11 @@ const MediaModal = ({
     }
   }, [isOpen, initialIndex]);
 
-  // 인접 이미지 프리로드 (현재 ±1)
+  // 현재 및 인접 이미지 프리로드 (현재, 현재 ±1)
   useEffect(() => {
-    if (!isOpen || mediaFiles.length <= 1) return;
+    if (!isOpen || mediaFiles.length === 0) return;
 
-    const preloadIndexes = [currentIndex - 1, currentIndex + 1]
+    const preloadIndexes = [currentIndex, currentIndex - 1, currentIndex + 1]
       .filter(i => i >= 0 && i < mediaFiles.length);
 
     preloadIndexes.forEach(index => {
@@ -381,6 +381,7 @@ const MediaModal = ({
               src={currentMedia}
               className="max-w-full max-h-full object-contain"
               style={{ willChange: 'transform' }}
+              preload="auto"
               autoPlay
               loop
               playsInline
