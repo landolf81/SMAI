@@ -36,6 +36,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isFetching,
     error,
     refetch
   } = useInfiniteQuery({
@@ -581,6 +582,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
   if (isLoading) return <LoadingSkeleton />;
   if (error) return <ErrorComponent />;
+  // 데이터가 없고 fetch 중일 때는 로딩 표시 (캐시 만료 후 재검증 중)
+  if (postsWithAds.length === 0 && isFetching) return <LoadingSkeleton />;
   if (postsWithAds.length === 0) return <EmptyComponent />;
 
   return (

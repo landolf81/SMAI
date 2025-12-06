@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postService, commentService, adService } from '../services';
@@ -43,6 +43,11 @@ const PostDetail = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isSecretComment, setIsSecretComment] = useState(false);
+
+  // 페이지 진입 시 스크롤 최상단으로 이동
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [postId]);
 
   // 게시물 조회
   const { data: post, isLoading, error } = useQuery({
