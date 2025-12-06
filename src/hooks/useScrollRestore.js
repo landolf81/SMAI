@@ -19,6 +19,18 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
   const isRestoringRef = useRef(false); // 스크롤 복원 중 플래그
   const mountNavigationTypeRef = useRef(navigationType); // 마운트 시점의 navigationType 저장
 
+  // boardType과 pathname 매핑
+  const getExpectedPathname = (type) => {
+    const pathMap = {
+      'home': '/',
+      'community': '/community',
+      'secondhand': '/secondhand',
+      'qna': '/qna',
+      'profile': '/profile'
+    };
+    return pathMap[type] || `/${type}`;
+  };
+
   // 스크롤 위치 저장 함수
   const saveCurrentScrollPosition = () => {
     if (!enabled) return;
@@ -26,6 +38,13 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
     // 스크롤 복원 중에는 저장하지 않음
     if (isRestoringRef.current) {
       console.log(`⏸️ [${boardType}] 스크롤 복원 중이므로 저장 생략`);
+      return;
+    }
+
+    // 현재 경로가 해당 boardType 경로가 아니면 저장하지 않음
+    const expectedPath = getExpectedPathname(boardType);
+    if (!location.pathname.startsWith(expectedPath) || location.pathname.includes('/post/')) {
+      console.log(`⏭️ [${boardType}] 다른 페이지이므로 저장 생략 (현재: ${location.pathname})`);
       return;
     }
 
