@@ -1,11 +1,11 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { commentService, reportService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faReply, faEllipsisV, faTrash, faEdit, faFlag, faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons';
+import { faReply, faEllipsisV, faTrash, faEdit, faFlag, faHeart as faHeartSolid, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import ReportModal from './ReportModal';
 
@@ -24,7 +24,117 @@ const CommentsSection = ({ postId, postTag, post }) => {
   const [isSecretComment, setIsSecretComment] = useState(false);
   const [isSecretReply, setIsSecretReply] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  
+
+  // 음성 인식 상태
+  const [isListening, setIsListening] = useState(false);
+  const [isReplyListening, setIsReplyListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef(null);
+  const replyRecognitionRef = useRef(null);
+
+  // 댓글용 음성 인식 초기화
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+
+      // 댓글용 음성 인식
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+        if (finalTranscript) {
+          setNewComment(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('음성 인식 오류:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+
+      // 대댓글용 음성 인식
+      const replyRecognition = new SpeechRecognition();
+      replyRecognition.lang = 'ko-KR';
+      replyRecognition.continuous = true;
+      replyRecognition.interimResults = true;
+
+      replyRecognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+        if (finalTranscript) {
+          setReplyText(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      replyRecognition.onerror = (event) => {
+        console.error('대댓글 음성 인식 오류:', event.error);
+        setIsReplyListening(false);
+      };
+
+      replyRecognition.onend = () => {
+        setIsReplyListening(false);
+      };
+
+      replyRecognitionRef.current = replyRecognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (replyRecognitionRef.current) {
+        replyRecognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // 댓글 음성 인식 토글
+  const toggleSpeechRecognition = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
+
+  // 대댓글 음성 인식 토글
+  const toggleReplySpeechRecognition = () => {
+    if (!replyRecognitionRef.current) return;
+
+    if (isReplyListening) {
+      replyRecognitionRef.current.stop();
+      setIsReplyListening(false);
+    } else {
+      replyRecognitionRef.current.start();
+      setIsReplyListening(true);
+    }
+  };
+
   // 중고거래 게시물인지 확인
   const isSecondHand = postTag === 'secondhand' || postTag === '중고거래';
 
@@ -220,32 +330,45 @@ const CommentsSection = ({ postId, postTag, post }) => {
                 className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
                 rows="2"
               />
-              <div className="flex justify-between items-center mt-2">
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                {/* 음성 입력 버튼 - 아이콘만 */}
+                {speechSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleSpeechRecognition}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+                      isListening
+                        ? 'bg-red-500 text-white animate-pulse'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    title={isListening ? '음성 입력 중지' : '음성 입력'}
+                  >
+                    <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-3.5 h-3.5" />
+                  </button>
+                )}
                 {/* 중고거래 게시물에서만 비밀 댓글 옵션 표시 */}
                 {isSecondHand && (
-                  <label className="flex items-center space-x-2 text-sm text-gray-600">
+                  <label className="flex items-center space-x-1.5 text-sm text-gray-600">
                     <input
                       type="checkbox"
                       checked={isSecretComment}
                       onChange={(e) => setIsSecretComment(e.target.checked)}
                       className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
                     />
-                    <span>🔒 비밀 댓글</span>
-                    <span className="text-xs text-gray-500">(작성자와 판매자만 볼 수 있음)</span>
+                    <span>🔒 비밀</span>
                   </label>
                 )}
-                <div className={!isSecondHand ? 'w-full flex justify-end' : ''}>
-                  <button
-                    type="submit"
-                    disabled={!newComment.trim() || addCommentMutation.isPending}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {addCommentMutation.isPending ? (
-                      <span className="loading loading-spinner loading-xs mr-1"></span>
-                    ) : null}
-                    댓글 작성
-                  </button>
-                </div>
+                {/* 댓글 작성 버튼 - 오른쪽 정렬 */}
+                <button
+                  type="submit"
+                  disabled={!newComment.trim() || addCommentMutation.isPending}
+                  className="ml-auto px-3 py-1.5 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                >
+                  {addCommentMutation.isPending ? (
+                    <span className="loading loading-spinner loading-xs mr-1"></span>
+                  ) : null}
+                  작성
+                </button>
               </div>
             </div>
           </div>
@@ -423,18 +546,35 @@ const CommentsSection = ({ postId, postTag, post }) => {
                           rows="2"
                         />
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mt-2">
-                          {/* 중고거래 게시물에서만 비밀 댓글 옵션 표시 */}
-                          {isSecondHand && (
-                            <label className="flex items-center space-x-2 text-xs text-gray-600">
-                              <input
-                                type="checkbox"
-                                checked={isSecretReply}
-                                onChange={(e) => setIsSecretReply(e.target.checked)}
-                                className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
-                              />
-                              <span>🔒 비밀 답글</span>
-                            </label>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {/* 대댓글 음성 입력 버튼 */}
+                            {speechSupported && (
+                              <button
+                                type="button"
+                                onClick={toggleReplySpeechRecognition}
+                                className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
+                                  isReplyListening
+                                    ? 'bg-red-500 text-white animate-pulse'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                                title={isReplyListening ? '음성 입력 중지' : '음성 입력'}
+                              >
+                                <FontAwesomeIcon icon={isReplyListening ? faStop : faMicrophone} className="w-3 h-3" />
+                              </button>
+                            )}
+                            {/* 중고거래 게시물에서만 비밀 댓글 옵션 표시 */}
+                            {isSecondHand && (
+                              <label className="flex items-center space-x-2 text-xs text-gray-600">
+                                <input
+                                  type="checkbox"
+                                  checked={isSecretReply}
+                                  onChange={(e) => setIsSecretReply(e.target.checked)}
+                                  className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+                                />
+                                <span>🔒 비밀 답글</span>
+                              </label>
+                            )}
+                          </div>
                           <div className="flex space-x-2">
                             <button
                               type="submit"
@@ -449,6 +589,10 @@ const CommentsSection = ({ postId, postTag, post }) => {
                                 setReplyTo(null);
                                 setReplyText('');
                                 setIsSecretReply(false);
+                                if (isReplyListening) {
+                                  replyRecognitionRef.current?.stop();
+                                  setIsReplyListening(false);
+                                }
                               }}
                               className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
                             >

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postService, commentService, adService } from '../services';
@@ -29,6 +29,8 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import LockIcon from '@mui/icons-material/Lock';
 import CloseIcon from '@mui/icons-material/Close';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 
 moment.locale('ko');
 
@@ -44,10 +46,70 @@ const PostDetail = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isSecretComment, setIsSecretComment] = useState(false);
 
+  // 음성 인식 상태
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef(null);
+
   // 페이지 진입 시 스크롤 최상단으로 이동
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [postId]);
+
+  // 음성 인식 초기화
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+        if (finalTranscript) {
+          setCommentContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('음성 인식 오류:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // 음성 인식 토글
+  const toggleSpeechRecognition = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
 
   // 게시물 조회
   const { data: post, isLoading, error } = useQuery({
@@ -612,7 +674,23 @@ const PostDetail = () => {
                     </label>
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                  {/* 음성 입력 버튼 */}
+                  {speechSupported && (
+                    <button
+                      type="button"
+                      onClick={toggleSpeechRecognition}
+                      className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full transition-all ${
+                        isListening
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      disabled={isSubmitting}
+                      title={isListening ? '음성 입력 중지' : '음성 입력'}
+                    >
+                      <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                   <input
                     id="comment-input"
                     type="text"

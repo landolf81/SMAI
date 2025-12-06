@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { qnaService, storageService, postService, adService, commentService } from '../services';
@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
 import 'moment/locale/ko';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisH } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisH, faMicrophone, faStop } from "@fortawesome/free-solid-svg-icons";
 import { v4 as uuidv4 } from 'uuid';
 import MobileAdDisplay from './MobileAdDisplay';
 import ProfileModal from './ProfileModal';
@@ -47,6 +47,11 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const [answerMenuOpen, setAnswerMenuOpen] = useState(null); // 열린 답변 ID
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editingAnswerContent, setEditingAnswerContent] = useState('');
+
+  // 음성 인식 상태
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef(null);
 
   // 수정 관련 상태
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -100,6 +105,61 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       ]).catch(error => console.error('조회수/열람 기록 실패:', error));
     }
   }, [questionId, currentUser]);
+
+  // 음성 인식 초기화
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+        if (finalTranscript) {
+          setAnswerContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('음성 인식 오류:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // 음성 인식 토글
+  const toggleSpeechRecognition = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
 
   // 답변 작성 뮤테이션
   const createAnswerMutation = useMutation({
@@ -732,7 +792,24 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
                 disabled={isSubmitting}
               />
-              <div className="flex justify-end mt-3">
+              <div className="flex items-center justify-between mt-3">
+                {/* 음성 입력 버튼 */}
+                {speechSupported && (
+                  <button
+                    type="button"
+                    onClick={toggleSpeechRecognition}
+                    className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+                      isListening
+                        ? 'bg-red-500 text-white animate-pulse'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    disabled={isSubmitting}
+                    title={isListening ? '음성 입력 중지' : '음성 입력'}
+                  >
+                    <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-4 h-4" />
+                  </button>
+                )}
+                {!speechSupported && <div />}
                 <button
                   type="submit"
                   disabled={!answerContent.trim() || isSubmitting}

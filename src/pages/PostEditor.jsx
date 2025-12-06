@@ -599,14 +599,14 @@ const PostEditor = () => {
                 <button
                   type="button"
                   onClick={toggleSpeechRecognition}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                  className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
                     isListening
                       ? 'bg-red-500 text-white animate-pulse'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
+                  title={isListening ? '음성 입력 중지' : '음성 입력'}
                 >
-                  <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} />
-                  {isListening ? '중지' : '음성입력'}
+                  <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-4 h-4" />
                 </button>
               )}
             </div>

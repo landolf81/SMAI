@@ -1,9 +1,9 @@
-import { useState, useContext, useEffect } from 'react';
+import { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faImage, faPaperPlane, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faImage, faPaperPlane, faTimes, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { postService, storageService } from '../services';
@@ -33,6 +33,66 @@ const SecondHandEditor = () => {
   const [imageConvertProgress, setImageConvertProgress] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(null);
   const [uploadedVideos, setUploadedVideos] = useState([]);
+
+  // 음성 인식 상태
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const recognitionRef = useRef(null);
+
+  // 음성 인식 초기화
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setSpeechSupported(true);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          }
+        }
+        if (finalTranscript) {
+          setContent(prev => prev + (prev ? ' ' : '') + finalTranscript);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('음성 인식 오류:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  // 음성 인식 토글
+  const toggleSpeechRecognition = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
 
   // 수정 모드일 때 기존 게시글 데이터 불러오기
   const { data: postData, isLoading: postLoading } = useQuery({
@@ -572,9 +632,26 @@ const SecondHandEditor = () => {
 
           {/* 내용 입력 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              내용 <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                내용 <span className="text-red-500">*</span>
+              </label>
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleSpeechRecognition}
+                  className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+                    isListening
+                      ? 'bg-red-500 text-white animate-pulse'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                  disabled={loading}
+                  title={isListening ? '음성 입력 중지' : '음성 입력'}
+                >
+                  <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-4 h-4" />
+                </button>
+              )}
+            </div>
             <textarea
               placeholder="상품에 대해 자세히 설명해주세요.&#10;(가격, 상태, 거래 방법 등)"
               className="w-full min-h-[150px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
