@@ -27,6 +27,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   const [startY, setStartY] = useState(0);
   const pullToRefreshRef = useRef(null);
 
+  // 초기 광고 노출 횟수 스냅샷 (광고 순서 안정화용)
+  const initialAdViewCountsRef = useRef(null);
+
   // 글쓰기 버튼 회전 애니메이션 상태
   const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
 
@@ -92,6 +95,13 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   const shuffledAds = useMemo(() => {
     if (!adsData || adsData.length === 0) return [];
 
+    // 초기 로딩 시점의 viewCounts 스냅샷 저장 (한 번만)
+    // 이후 광고 노출로 adViewCounts가 변경되어도 순서가 바뀌지 않음
+    if (initialAdViewCountsRef.current === null) {
+      initialAdViewCountsRef.current = { ...adViewCounts };
+    }
+    const viewCountsSnapshot = initialAdViewCountsRef.current;
+
     const now = new Date();
     const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
@@ -121,8 +131,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       const ctrBonus = Math.max(0, 100 - (ctr * 1000));
       score += ctrBonus;
 
-      // 4. 로컬 세션 노출 빈도 (적게 본 광고 우선)
-      const localViewCount = adViewCounts[`ad_${ad.id}`] || 0;
+      // 4. 로컬 세션 노출 빈도 (적게 본 광고 우선) - 초기 스냅샷 사용
+      const localViewCount = viewCountsSnapshot[`ad_${ad.id}`] || 0;
       const localViewPenalty = localViewCount * 50; // 볼수록 점수 감소
       score -= localViewPenalty;
 
@@ -137,7 +147,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     return adsWithScore
       .sort((a, b) => b._score - a._score)
       .map(({ _score, ...ad }) => ad);
-  }, [adsData, adViewCounts]);
+  }, [adsData]); // adViewCounts 의존성 제거 - 초기 스냅샷만 사용
 
   // 모든 페이지의 게시물을 하나의 배열로 합치기
   const allPosts = useMemo(() => {
@@ -169,7 +179,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
           result.push({
             type: 'ad',
             data: ad,
-            key: `ad-${ad.id}-pos${index}-${Date.now()}` // 고유 키로 리렌더링 보장
+            key: `ad-${ad.id}-pos${index}` // 안정적인 키 (Date.now 제거)
           });
           adIndex++;
         }
@@ -183,7 +193,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         result.push({
           type: 'ad',
           data: ad,
-          key: `ad-${ad.id}-last-${Date.now()}`
+          key: `ad-${ad.id}-last` // 안정적인 키 (Date.now 제거)
         });
       }
     }
