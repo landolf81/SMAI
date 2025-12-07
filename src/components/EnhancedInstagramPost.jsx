@@ -61,7 +61,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [isBuffering, setIsBuffering] = useState(false);
   const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
   const replayTimeoutRef = useRef(null);
-  const isLoadingRef = useRef(false);  // 동영상 로드 중복 방지
+  const isLoadingRef = useRef(false);  // 동영상 로드 진행 중 여부
+  const hasLoadedRef = useRef(false);  // 동영상이 한번이라도 로드 완료되었는지
 
   // 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {
@@ -350,6 +351,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 동영상 자동재생 관리 (개선된 버전)
   // Cloudflare Stream은 CloudflareStreamPlayer가 자체 관리하므로 제외
+  const playTimeoutRef = useRef(null);  // 재생 debounce용
+  const pauseTimeoutRef = useRef(null);  // 정지 debounce용
+  const lastVisibleRef = useRef(isVisible);  // 이전 isVisible 상태
+
   useEffect(() => {
     // Cloudflare Stream은 자체 컴포넌트에서 관리
     if (isCloudflareStream) return;
@@ -357,12 +362,26 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     if (!videoRef.current || (!isVideo && !isR2Video)) return;
 
     const video = videoRef.current;
+    const wasVisible = lastVisibleRef.current;
+    lastVisibleRef.current = isVisible;
+
+    // 이전 타이머들 취소
+    if (playTimeoutRef.current) {
+      clearTimeout(playTimeoutRef.current);
+      playTimeoutRef.current = null;
+    }
+    if (pauseTimeoutRef.current) {
+      clearTimeout(pauseTimeoutRef.current);
+      pauseTimeoutRef.current = null;
+    }
 
     if (isVisible) {
       // 동영상이 재생 가능한 상태인지 확인 후 재생
       const attemptPlay = () => {
+        // 이미 재생 중이면 스킵
+        if (!video.paused) return;
+
         // muted 상태 확인 (자동재생 정책)
-        // iOS에서 볼륨도 0으로 설정해야 벨소리가 아닌 미디어 볼륨 사용
         video.muted = true;
         video.volume = 0;
 
@@ -372,53 +391,91 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             setIsPlaying(true);
             onVideoPlay && onVideoPlay(post.id);
           }).catch(() => {
-            // 자동재생 실패 시 재시도 (사용자 인터랙션 후)
             setIsPlaying(false);
           });
         }
       };
 
-      // 동영상이 로드되어 있으면 바로 재생, 아니면 로드 후 재생
-      if (video.readyState >= 2) { // HAVE_CURRENT_DATA 이상
-        attemptPlay();
+      // 동영상이 이미 로드되어 있거나, 이전에 로드 완료된 적 있으면 바로 재생
+      if (video.readyState >= 2 || hasLoadedRef.current) {
+        // 이미 로드됨 - 약간의 지연 후 재생 (빠른 상태 변경 방지)
+        // 한번 로드된 후에는 더 긴 debounce 적용
+        const delay = hasLoadedRef.current ? 150 : 50;
+        playTimeoutRef.current = setTimeout(() => {
+          attemptPlay();
+        }, delay);
       } else if (!isLoadingRef.current) {
-        // 이미 로드 중이면 중복 로드 방지
+        // 최초 로드 필요 - 로드 시작
         isLoadingRef.current = true;
 
-        // 데이터 로드 대기
         const handleCanPlay = () => {
           isLoadingRef.current = false;
+          hasLoadedRef.current = true;  // 로드 완료 표시
           attemptPlay();
           video.removeEventListener('canplay', handleCanPlay);
         };
         video.addEventListener('canplay', handleCanPlay);
 
-        // 로드 시작
+        // 로드 시작 (최초 1회만)
         video.load();
 
         return () => {
           video.removeEventListener('canplay', handleCanPlay);
         };
       }
+      // isLoadingRef.current === true인 경우: 이미 로드 중이므로 아무것도 안 함
     } else {
-      // 동영상 정지 및 상태 초기화
-      video.pause();
-      video.muted = true;  // 음소거 확인 (오디오 재생 방지)
-      video.volume = 0;    // iOS 볼륨도 0으로 설정
-      video.currentTime = 0;  // 재생 위치 리셋
+      // 화면에서 벗어남 - 정지 전에 debounce 적용 (빠른 상태 변경 무시)
+      pauseTimeoutRef.current = setTimeout(() => {
+        // 다시 보이는 상태가 되었으면 정지하지 않음
+        if (lastVisibleRef.current) return;
 
-      setIsPlaying(false);
-      isLoadingRef.current = false;  // 로딩 상태 리셋
-      onVideoPause && onVideoPause(post.id);
+        video.pause();
+        video.muted = true;
+        video.volume = 0;
 
-      // 화면 밖으로 나가면 replay 타이머 클리어
-      if (replayTimeoutRef.current) {
-        clearTimeout(replayTimeoutRef.current);
-        replayTimeoutRef.current = null;
-      }
-      setIsWaitingToReplay(false);
+        setIsPlaying(false);
+        onVideoPause && onVideoPause(post.id);
+
+        // replay 타이머 클리어
+        if (replayTimeoutRef.current) {
+          clearTimeout(replayTimeoutRef.current);
+          replayTimeoutRef.current = null;
+        }
+        setIsWaitingToReplay(false);
+      }, 100);  // 100ms 대기 후 정지 (빠른 상태 변경 무시)
     }
+
+    return () => {
+      if (playTimeoutRef.current) {
+        clearTimeout(playTimeoutRef.current);
+      }
+      if (pauseTimeoutRef.current) {
+        clearTimeout(pauseTimeoutRef.current);
+      }
+    };
   }, [isVisible, isVideo, isR2Video, isCloudflareStream, post.id, onVideoPlay, onVideoPause]);
+
+  // 미디어 모달이 열릴 때 피드 동영상 일시정지
+  useEffect(() => {
+    if (!videoRef.current || (!isVideo && !isR2Video)) return;
+
+    const video = videoRef.current;
+
+    if (showMediaModal) {
+      // 모달 열림: 피드 동영상 일시정지 및 음소거
+      video.pause();
+      video.muted = true;
+      setIsPlaying(false);
+    } else {
+      // 모달 닫힘: 피드 동영상 재개 (화면에 보이는 경우에만)
+      if (isVisible) {
+        video.muted = true;  // 자동재생은 음소거 상태로
+        video.play().catch(() => {});
+        setIsPlaying(true);
+      }
+    }
+  }, [showMediaModal, isVideo, isR2Video, isVisible]);
 
   // 동영상 진행률 및 버퍼링 상태 업데이트
   useEffect(() => {

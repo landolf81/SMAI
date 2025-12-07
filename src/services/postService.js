@@ -1362,7 +1362,9 @@ export const postService = {
    */
   async recordPostView(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      // 읽기 전용 세션 사용 (열람 기록은 빈번하게 호출되므로 getUser HTTP 요청 회피)
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return { success: false, reason: 'not_logged_in' };
 
       const postIdInt = parseInt(postId, 10);
