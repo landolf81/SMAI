@@ -61,6 +61,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [isBuffering, setIsBuffering] = useState(false);
   const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
   const replayTimeoutRef = useRef(null);
+  const isLoadingRef = useRef(false);  // 동영상 로드 중복 방지
 
   // 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {
@@ -380,9 +381,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       // 동영상이 로드되어 있으면 바로 재생, 아니면 로드 후 재생
       if (video.readyState >= 2) { // HAVE_CURRENT_DATA 이상
         attemptPlay();
-      } else {
+      } else if (!isLoadingRef.current) {
+        // 이미 로드 중이면 중복 로드 방지
+        isLoadingRef.current = true;
+
         // 데이터 로드 대기
         const handleCanPlay = () => {
+          isLoadingRef.current = false;
           attemptPlay();
           video.removeEventListener('canplay', handleCanPlay);
         };
@@ -403,6 +408,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       video.currentTime = 0;  // 재생 위치 리셋
 
       setIsPlaying(false);
+      isLoadingRef.current = false;  // 로딩 상태 리셋
       onVideoPause && onVideoPause(post.id);
 
       // 화면 밖으로 나가면 replay 타이머 클리어
