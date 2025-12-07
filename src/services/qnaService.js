@@ -24,7 +24,9 @@ export const qnaService = {
       let countQuery = supabase
         .from('posts')
         .select('*', { count: 'exact', head: true })
-        .eq('post_type', 'qna');
+        .eq('post_type', 'qna')
+        // 숨김 처리된 게시물 제외
+        .or('is_hidden.is.null,is_hidden.eq.false');
 
       if (search) {
         countQuery = countQuery.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
@@ -55,7 +57,9 @@ export const qnaService = {
             profile_pic
           )
         `, { count: 'exact' })
-        .eq('post_type', 'qna');
+        .eq('post_type', 'qna')
+        // 숨김 처리된 게시물 제외
+        .or('is_hidden.is.null,is_hidden.eq.false');
 
       // 검색
       if (search) {
@@ -229,6 +233,8 @@ export const qnaService = {
           )
         `)
         .eq('post_type', 'qna')
+        // 숨김 처리된 게시물 제외
+        .or('is_hidden.is.null,is_hidden.eq.false')
         .gte('created_at', sevenDaysAgoISO) // 최근 7일 이내
         .order('views_count', { ascending: false, nullsFirst: false })
         .limit(limit);
@@ -302,6 +308,11 @@ export const qnaService = {
 
       const { data, error } = questionResult;
       if (error) throw error;
+
+      // 숨김 처리된 질문은 접근 불가
+      if (data.is_hidden === true) {
+        throw new Error('숨김 처리된 질문입니다.');
+      }
 
       // 답변을 QnADetail에서 기대하는 형식으로 변환
       const formattedAnswers = answers.map(comment => ({

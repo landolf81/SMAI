@@ -36,7 +36,9 @@ export const postService = {
             name,
             profile_pic
           )
-        `);
+        `)
+        // 숨김 처리된 게시물 제외 (is_hidden이 null이거나 false인 경우만 표시)
+        .or('is_hidden.is.null,is_hidden.eq.false');
 
       // 정렬 방식 선택
       if (sortBy === 'latest') {
@@ -266,6 +268,14 @@ export const postService = {
       // 3. 현재 사용자 정보 가져오기 (읽기 전용 - 캐시된 세션 사용)
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
+
+      // 숨김 처리된 게시물은 접근 불가 (단, 작성자 본인은 접근 가능)
+      if (post.is_hidden === true) {
+        const isOwner = currentUser && post.user_id === currentUser.id;
+        if (!isOwner) {
+          throw new Error('숨김 처리된 게시물입니다.');
+        }
+      }
 
       // 4. 좋아요 수 및 현재 사용자의 좋아요 여부 조회
       const { data: likes, error: likesError } = await supabase
