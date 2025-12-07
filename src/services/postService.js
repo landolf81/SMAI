@@ -148,7 +148,9 @@ export const postService = {
         const viewWeight = isViewed ? 0.3 : 2.0;
         // 좋아요 보너스: 좋아요 1개당 +5점 (좋아요 비중 강화)
         const likesBonus = (post.likes_count || 0) * 5;
-        const finalScore = ((post.hot_score || 0) + likesBonus) * viewWeight;
+        // 댓글 보너스: 댓글 1개당 +3점 (활발한 토론 장려)
+        const commentsBonus = (post.comments_count || 0) * 3;
+        const finalScore = ((post.hot_score || 0) + likesBonus + commentsBonus) * viewWeight;
 
         return {
           ...post,
