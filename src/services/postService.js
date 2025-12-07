@@ -146,7 +146,9 @@ export const postService = {
         const isViewed = viewedPostIds.has(post.id);
         // 미열람 가중치 적용: 안 본 게시물 ×2.0, 본 게시물 ×0.3
         const viewWeight = isViewed ? 0.3 : 2.0;
-        const finalScore = (post.hot_score || 0) * viewWeight;
+        // 좋아요 보너스: 좋아요 1개당 +5점 (좋아요 비중 강화)
+        const likesBonus = (post.likes_count || 0) * 5;
+        const finalScore = ((post.hot_score || 0) + likesBonus) * viewWeight;
 
         return {
           ...post,
