@@ -145,12 +145,9 @@ export const postService = {
       let postsWithDetails = posts.map((post) => {
         const isViewed = viewedPostIds.has(post.id);
         // 미열람 가중치 적용: 안 본 게시물 ×2.0, 본 게시물 ×0.3
+        // (좋아요/댓글/시간감쇠는 DB hot_score에서 이미 계산됨)
         const viewWeight = isViewed ? 0.3 : 2.0;
-        // 좋아요 보너스: 좋아요 1개당 +5점 (좋아요 비중 강화)
-        const likesBonus = (post.likes_count || 0) * 5;
-        // 댓글 보너스: 댓글 1개당 +3점 (활발한 토론 장려)
-        const commentsBonus = (post.comments_count || 0) * 3;
-        const finalScore = ((post.hot_score || 0) + likesBonus + commentsBonus) * viewWeight;
+        const finalScore = (post.hot_score || 0) * viewWeight;
 
         return {
           ...post,
