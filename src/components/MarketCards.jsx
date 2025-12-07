@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useContext, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adService } from '../services';
 import MobileAdDisplay from './MobileAdDisplay';
-import { shouldShowAds, isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
-import { AuthContext } from '../context/AuthContext';
+import { shouldShowAds } from '../utils/deviceDetector';
 
 // 스크롤 시 요소가 화면 중앙에 가까워지면 선명해지는 커스텀 훅
 const useScrollFadeIn = () => {
@@ -55,8 +54,6 @@ const useScrollFadeIn = () => {
 const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
-  const { currentUser } = useContext(AuthContext);
-  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // 스크롤 페이드 인 효과
   const { visibleItems, observe, unobserve } = useScrollFadeIn();
@@ -97,10 +94,6 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
   });
 
   const handleCardClick = (marketName) => {
-    if (!currentUser) {
-      setShowLoginModal(true);
-      return;
-    }
     navigate(`/prices?market=${encodeURIComponent(marketName)}&date=${selectedDate}`);
   };
 
@@ -477,52 +470,6 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
           />
         )}
       </div>
-      {/* 로그인 모달 */}
-      {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-white text-2xl">🔒</span>
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">로그인이 필요합니다</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                등급별 상세 경락가 정보를 확인하려면<br />
-                로그인 또는 회원가입이 필요합니다.
-              </p>
-            </div>
-            
-            <div className="space-y-3">
-              <button 
-                onClick={() => {
-                  setShowLoginModal(false);
-                  navigate('/login');
-                }}
-                className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
-              >
-                로그인하기
-              </button>
-              
-              <button 
-                onClick={() => {
-                  setShowLoginModal(false);
-                  navigate('/register');
-                }}
-                className="w-full bg-gray-100 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                회원가입하기
-              </button>
-              
-              <button 
-                onClick={() => setShowLoginModal(false)}
-                className="w-full text-gray-500 font-medium py-2 hover:text-gray-700 transition-colors"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

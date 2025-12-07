@@ -1,94 +1,75 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Project Overview
 
-경락가 (Meridian Price) - A Korean agricultural market web application built with React + Vite. The app provides agricultural market price information, community features, Q&A, and a second-hand marketplace for farmers and market participants.
+성주마이 (SMAI) - 성주군 농업인을 위한 커뮤니티 웹앱. React + Vite 기반.
 
 ## Development Commands
 
 ```bash
-# Development
-npm run dev              # Start dev server (localhost:3000)
-
-# Build
-npm run build            # Development build
-npm run build:prod       # Production build (drops debugger statements)
-
-# Testing
-npm run test             # Run vitest tests
-npm run test:ui          # Run tests with UI
-npm run test:coverage    # Run tests with coverage
-
-# Linting
-npm run lint             # Check for lint errors
-npm run lint:fix         # Auto-fix lint errors
-
-# Other
-npm run preview          # Preview production build
-npm run analyze          # Analyze bundle size
+npm run dev          # 개발 서버 (localhost:3000)
+npm run build:prod   # 프로덕션 빌드
+npm run lint:fix     # 린트 자동 수정
 ```
 
 ## Tech Stack
 
-- **Frontend**: React 18 with Vite
-- **Styling**: Tailwind CSS + DaisyUI (custom themes: market-light, market-dark)
+- **Frontend**: React 18 + Vite + Tailwind CSS + DaisyUI
 - **State**: React Context (AuthContext) + TanStack Query
-- **Backend**: Supabase (Auth, Database, Storage, Realtime)
-- **Routing**: React Router v6 (createBrowserRouter)
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Routing**: React Router v6
 
-## Architecture
+## 컴포넌트 의존성 맵
 
-### Directory Structure
+### 주요 컴포넌트 사용 위치
+
+| 파일 | 사용 위치 | 라우트 | 역할 |
+|------|----------|-------|------|
+| **EnhancedInstagramPost.jsx** | EnhancedInstagramFeed.jsx | 피드 전체 | 게시물 카드 (현재 사용) |
+| **EnhancedInstagramFeed.jsx** | Community.jsx | `/community` | 피드 목록 |
+| **CommentsPreview.jsx** | EnhancedInstagramPost.jsx | 피드 내 | 댓글 미리보기 (3개) |
+| **CommentsSection.jsx** | Post.jsx | - | 전체 댓글 (레거시) |
+| **ImageSlider.jsx** | EnhancedInstagramPost, Post | 피드 내 | 다중 이미지 슬라이더 |
+| **MediaModal.jsx** | EnhancedInstagramPost.jsx | 피드 내 | 전체화면 미디어 뷰어 |
+| **PostDetail.jsx** | App.jsx (route) | `/post/:postId` | 게시물 상세 페이지 |
+| **PostDetailModal.jsx** | LikedPosts, UserComments, AdminReports | 모달 | 게시물 상세 모달 |
+| **Post.jsx** | **미사용 (레거시)** | - | 구형 게시물 카드 |
+| **SecondHandCard.jsx** | SecondHand.jsx | `/secondhand` | 중고거래 카드 |
+| **SecondHandEditor.jsx** | App.jsx (route) | `/secondhand/new`, `/secondhand/edit/:id` | 중고거래 에디터 |
+| **QnAForm.jsx** | QnA.jsx | `/qna/new` | QnA 질문 작성 |
+| **QnADetail.jsx** | App.jsx (route) | `/qna/:questionId` | QnA 상세 |
+| **ProfileModal.jsx** | 여러 컴포넌트 | 모달 | 사용자 프로필 |
+
+### 라우팅 구조
 
 ```
-src/
-├── App.jsx              # Router configuration, Layout component
-├── main.jsx             # App entry point with AuthContextProvider
-├── config/
-│   └── supabase.js      # Supabase client and helper functions
-├── context/
-│   └── AuthContext.jsx  # Authentication state management
-├── services/            # Supabase data layer (API calls)
-├── pages/               # Route components
-│   └── admin/           # Admin panel pages
-├── components/          # Reusable UI components
-├── hooks/               # Custom React hooks
-└── utils/               # Utility functions
+App.jsx
+├── /community → Community.jsx → EnhancedInstagramFeed → EnhancedInstagramPost
+├── /post/:postId → PostDetail.jsx
+├── /secondhand → SecondHand.jsx → SecondHandCard
+├── /secondhand/new → SecondHandEditor.jsx
+├── /qna → QnA.jsx
+├── /qna/:questionId → QnADetail.jsx
+├── /profile/:id → Profile.jsx → LikedPosts → PostDetailModal
+└── /admin/* → Admin pages
 ```
 
-### Key Patterns
+### 레거시 vs 현재 컴포넌트
 
-**Services Layer** (`src/services/`): All Supabase database operations are abstracted through service modules. Import from `services/index.js`:
+| 레거시 (미사용) | 현재 사용 중 |
+|---------------|-------------|
+| Post.jsx | EnhancedInstagramPost.jsx |
+| CommentsSection.jsx (일부) | CommentsPreview.jsx |
+
+### Services Layer
+
 ```javascript
-import { postService, userService, tagService } from './services';
+import { postService, commentService, userService, qnaService, storageService } from './services';
 ```
 
-Available services: `postService`, `commentService`, `tagService`, `tagGroupService`, `userService`, `adService`, `reportService`, `marketService`, `qnaService`, `badgeService`, `dmService`, `storageService`
+## Environment Variables
 
-**Authentication**: Uses Supabase Auth with a custom users table. The `AuthContext` provides:
-- `currentUser` - User profile with role and permissions
-- `login(inputs)`, `logout()`, `register(data)`
-- `updateUserProfile(updates)`
-
-User roles are managed through `admin_roles` table with granular permissions (canManagePosts, canManageTags, canManageUsers, canManageAds).
-
-**Protected Routes**: Use `ProtectedRoute` component wrapper in App.jsx for authenticated pages.
-
-**Layout**: The app uses a responsive layout with:
-- `Navbar` - Top navigation
-- `Leftbar` - PC sidebar (only shown when logged in)
-- `MobileBottomNav` - Mobile bottom navigation
-
-### Environment Variables
-
-Required in `.env`:
 ```
 VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 ```
-
-### Custom Theming
-
-Custom Tailwind colors defined: `market` (green), `produce` (orange), `fresh` (blue). DaisyUI themes: `market-light`, `market-dark`.
