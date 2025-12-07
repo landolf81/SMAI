@@ -60,7 +60,8 @@ export const marketService = {
    */
   async addToFavorites(marketData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 기존 관심 목록 확인
@@ -117,7 +118,8 @@ export const marketService = {
    */
   async removeFromFavorites(favoriteId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { error } = await supabase
@@ -167,7 +169,8 @@ export const marketService = {
    */
   async createAlert(alertData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -199,7 +202,8 @@ export const marketService = {
    */
   async updateAlert(alertId, updates) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -228,7 +232,8 @@ export const marketService = {
    */
   async deleteAlert(alertId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { error } = await supabase

@@ -176,7 +176,8 @@ export const commentService = {
    */
   async createComment(commentData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -227,7 +228,8 @@ export const commentService = {
    */
   async updateComment(commentId, content) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -256,7 +258,8 @@ export const commentService = {
    */
   async deleteComment(commentId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { error } = await supabase
@@ -301,7 +304,8 @@ export const commentService = {
    */
   async hideComment(commentId, isHidden = true) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -329,7 +333,8 @@ export const commentService = {
    */
   async toggleCommentLike(commentId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 기존 좋아요 확인

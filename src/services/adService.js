@@ -292,7 +292,8 @@ export const adService = {
       }
 
       // ad_clicks 테이블에 상세 클릭 기록 추가
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       const { error: insertError } = await supabase
         .from('ad_clicks')
@@ -331,7 +332,8 @@ export const adService = {
       }
 
       // 2. ad_views 테이블에 상세 노출 기록 추가
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       const { error: insertError } = await supabase
         .from('ad_views')

@@ -148,7 +148,8 @@ export const badgeService = {
    */
   async addBadge(badgeData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const insertData = {

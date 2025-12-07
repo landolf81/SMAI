@@ -73,7 +73,8 @@ export const reportService = {
    */
   async createReport(reportData) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 1. 신고 권한 확인
@@ -355,7 +356,8 @@ export const reportService = {
    */
   async updateReportStatus(reportId, status, adminAction, adminNotes, isFalseReport = false) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       const updateData = {
         status: status,
@@ -410,7 +412,8 @@ export const reportService = {
    */
   async markAsFalseReport(reportId, disableReporter = false) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
       // 1. 신고를 허위 신고로 표시
       const { data: report, error: reportError } = await supabase
@@ -459,8 +462,8 @@ export const reportService = {
       // 현재 로그인한 관리자 ID 가져오기
       let senderId = adminId;
       if (!senderId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        senderId = user?.id;
+        const { data: { session } } = await supabase.auth.getSession();
+        senderId = session?.user?.id;
       }
 
       if (!senderId) {

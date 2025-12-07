@@ -203,7 +203,8 @@ export const storageService = {
    */
   async uploadAvatar(file, type = 'profile') {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const ext = file.name.split('.').pop();
@@ -282,7 +283,8 @@ export const storageService = {
    */
   async uploadDMAttachment(messageId, file) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const ext = file.name.split('.').pop();

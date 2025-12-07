@@ -219,7 +219,8 @@ export const dmService = {
         throw new Error('DM 기능은 현재 준비 중입니다.');
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const now = new Date().toISOString();
@@ -298,7 +299,8 @@ export const dmService = {
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) return;
 
       await supabase
@@ -327,7 +329,8 @@ export const dmService = {
         return 0;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) {
         return 0;
       }
@@ -365,7 +368,8 @@ export const dmService = {
         throw new Error('DM 기능은 현재 준비 중입니다.');
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { error } = await supabase

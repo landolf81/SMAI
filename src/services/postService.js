@@ -337,7 +337,8 @@ export const postService = {
   async createPost(postData) {
     try {
       // 현재 사용자 가져오기
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 게시물 생성
@@ -386,7 +387,8 @@ export const postService = {
    */
   async updatePost(postId, updates) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 게시물 업데이트
@@ -444,7 +446,8 @@ export const postService = {
    */
   async deletePost(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 1. 먼저 게시물 정보 조회 (첨부파일 URL 확인)
@@ -558,7 +561,8 @@ export const postService = {
    */
   async likePost(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 자기 글 좋아요 차단: 게시물 작성자 확인
@@ -595,7 +599,8 @@ export const postService = {
    */
   async unlikePost(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { error } = await supabase
@@ -619,7 +624,8 @@ export const postService = {
    */
   async toggleLike(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 자기 글 좋아요 차단: 게시물 작성자 확인
@@ -827,7 +833,8 @@ export const postService = {
    */
   async updateTradeStatus(postId, status) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 게시물 소유권 확인
@@ -950,7 +957,8 @@ export const postService = {
    */
   async getPostStats() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 전체 게시물 수
@@ -996,7 +1004,8 @@ export const postService = {
    */
   async getAdminPosts(options = {}) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 기본 쿼리 (관계 쿼리 제거)
@@ -1111,7 +1120,8 @@ export const postService = {
    */
   async updatePostStatus(postId, status) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -1139,7 +1149,8 @@ export const postService = {
    */
   async deletePostAdmin(postId) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       // 1. 먼저 게시물 정보 조회 (첨부파일 URL 확인)
@@ -1176,7 +1187,8 @@ export const postService = {
    */
   async hidePost(postId, isHidden = true) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -1202,7 +1214,8 @@ export const postService = {
    */
   async getHiddenPosts(options = {}) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       let query = supabase
@@ -1236,7 +1249,8 @@ export const postService = {
    */
   async getReports(options = {}) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       let query = supabase
@@ -1332,7 +1346,8 @@ export const postService = {
    */
   async updateReportStatus(reportId, status, adminNote = '') {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
@@ -1408,7 +1423,8 @@ export const postService = {
    */
   async setPinned(postId, isPinned) {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
       const { data, error } = await supabase
