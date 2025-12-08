@@ -140,7 +140,7 @@ const Register = () => {
         <div className="text-center max-w-3xl mx-auto">
           {/* 로고 이미지 */}
           <img
-            src="https://pub-1d5977ce7cec48079bcd6f847b2f3dd1.r2.dev/assets/1764817602223_c2z6dm_seongju-chamoe-logo.png"
+            src="https://pub-1d5977ce7cec48079bcd6f847b2f3dd1.r2.dev/logos/logo-512.png"
             alt="성주참외 로고"
             className="h-24 md:h-32 mx-auto mb-8 object-contain"
           />
