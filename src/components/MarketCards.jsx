@@ -109,13 +109,13 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
         light: 'bg-blue-50',
         gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
       },
-      // 선남농협 - Yellow → Green
+      // 선남농협 - Dark Green → Yellow
       '선남': {
-        bg: 'from-[#FFCC00] to-[#00B140]',
-        badgeColor: '#FFCC00', // Yellow (그라데이션 시작색)
-        text: 'text-[#00B140]',
+        bg: 'from-[#006400] to-[#FFCC00]',
+        badgeColor: '#006400', // Dark Green (그라데이션 시작색)
+        text: 'text-[#006400]',
         light: 'bg-[#F5F9E0]',
-        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
+        gradient: 'linear-gradient(135deg, rgba(0, 100, 0, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
       },
       // 성주원예 - Midnight Blue → Yellow
       '성주원예': {
@@ -174,11 +174,12 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
   const getCardBackgroundColor = (theme) => {
     const colorMap = {
       'from-[#00B140] to-[#1D4F91]': 'rgba(0, 177, 64, 0.08)',      // Green → Blue
-      'from-[#FFCC00] to-[#00B140]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Green
+      'from-[#006400] to-[#FFCC00]': 'rgba(0, 100, 0, 0.08)',       // Dark Green → Yellow
       'from-[#1D4F91] to-[#FFCC00]': 'rgba(29, 79, 145, 0.08)',     // Blue → Yellow
       'from-[#FFCC00] to-[#1D4F91]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Blue
       'from-[#00B140] to-[#FFCC00]': 'rgba(0, 177, 64, 0.08)',      // Green → Yellow
       'from-[#1D4F91] to-[#00B140]': 'rgba(29, 79, 145, 0.08)',     // Blue → Green
+      'from-[#FFCC00] to-[#00B140]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Green
     };
 
     return colorMap[theme.bg] || 'rgba(0, 177, 64, 0.08)'; // 기본값: Green

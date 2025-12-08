@@ -8,6 +8,26 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { marketService } from '../services';
 
+// 공판장별 뱃지 색상 (MarketCards.jsx와 동일)
+const getMarketBadgeColor = (marketName) => {
+  const colors = {
+    '가락': '#00B140',      // Green
+    '선남': '#006400',      // Dark Green
+    '성주원예': '#1D4F91',  // Midnight Blue
+    '성주조공': '#FFCC00',  // Yellow
+    '용암': '#00B140',      // Green
+    '초전': '#1D4F91',      // Midnight Blue
+    '성주': '#FFCC00',      // Yellow (기본)
+  };
+
+  for (const [key, color] of Object.entries(colors)) {
+    if (marketName.includes(key)) {
+      return color;
+    }
+  }
+  return '#004225'; // 기본값
+};
+
 const Prices = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [marketData, setMarketData] = useState(null);
@@ -233,9 +253,12 @@ const Prices = () => {
             {/* 요약 정보 - 카드 형태 */}
             {marketData.summary && (
               <div className="relative pt-4 mb-6">
-                {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 */}
+                {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 (공판장별 색상 적용) */}
                 <div className="absolute -top-0 left-4 z-10">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#004225] text-white text-sm font-bold rounded-full shadow-md">
+                  <span
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-sm font-bold rounded-full shadow-md"
+                    style={{ backgroundColor: getMarketBadgeColor(marketName) }}
+                  >
                     <span className="w-2 h-2 bg-white rounded-full"></span>
                     {marketName}
                   </span>
@@ -296,9 +319,12 @@ const Prices = () => {
 
                 return (
                   <div key={index} className="relative pt-4">
-                    {/* 등급 뱃지 - 카드 위에 걸쳐있는 형태 */}
+                    {/* 등급 뱃지 - 카드 위에 걸쳐있는 형태 (공판장별 색상 적용) */}
                     <div className="absolute -top-0 left-4 z-10">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#004225] text-white text-sm font-bold rounded-full shadow-md">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-sm font-bold rounded-full shadow-md"
+                        style={{ backgroundColor: getMarketBadgeColor(marketName) }}
+                      >
                         <span className="w-2 h-2 bg-white rounded-full"></span>
                         {item.grade}
                       </span>
