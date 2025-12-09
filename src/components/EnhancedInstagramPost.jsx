@@ -682,7 +682,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     setIsBuffering(false);
   };
 
-  // 동영상 재생 완료 시 3초 후 다시 재생
+  // 동영상 재생 완료 시 1초 후 다시 재생
   const handleVideoEnded = () => {
     // 화면 밖이면 재생하지 않음
     if (!isVisible) {
@@ -699,7 +699,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       clearTimeout(replayTimeoutRef.current);
     }
 
-    // 3초 후 처음부터 재생
+    // 1초 후 처음부터 재생
     replayTimeoutRef.current = setTimeout(() => {
       // 타이머 실행 시점에도 isVisible 재확인
       if (videoRef.current && isVisible) {
@@ -713,7 +713,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         });
       }
       setIsWaitingToReplay(false);
-    }, 3000);
+    }, 1000);
   };
 
   const handleImageError = () => {
@@ -1124,7 +1124,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   </div>
                 ) : (
                   <>
-                    {/* 피드 동영상: 자동재생, 무음, 재생 완료 후 3초 대기 후 재시작, 클릭시 모달 */}
+                    {/* 피드 동영상: 자동재생, 무음, 재생 완료 후 1초 대기 후 재시작, 클릭시 모달 */}
                     <video
                       ref={videoRef}
                       src={normalizedMediaFiles[0]}

@@ -168,7 +168,7 @@ const CloudflareStreamPlayer = ({
     setIsMuted(!isMuted);
   };
 
-  // 동영상 재생 완료 시 3초 후 다시 재생
+  // 동영상 재생 완료 시 1초 후 다시 재생
   const handleVideoEnded = () => {
     // 화면 밖이면(autoplay=false) 재생하지 않음
     if (!autoplay) {
@@ -183,7 +183,7 @@ const CloudflareStreamPlayer = ({
       clearTimeout(replayTimeoutRef.current);
     }
 
-    // 3초 후 처음부터 재생
+    // 1초 후 처음부터 재생
     replayTimeoutRef.current = setTimeout(() => {
       // 타이머 실행 시점에도 autoplay 재확인
       if (videoRef.current && autoplay) {
@@ -192,7 +192,7 @@ const CloudflareStreamPlayer = ({
         videoRef.current.play().catch(() => {});
       }
       setIsWaitingToReplay(false);
-    }, 3000);
+    }, 1000);
   };
 
   const aspectRatioClass = {
