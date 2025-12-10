@@ -4,7 +4,9 @@
       "Bash(git push:*)",
       "Bash(git add:*)",
       "Bash(git pull:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: 여러 UI/UX 개선\n\n- 로그인/회원가입 폼 autocomplete 속성 추가 (브라우저 경고 해결)\n- React Router v7_startTransition future 플래그 추가\n- 피드 동영상 음소거 상태 유지 (재생 반복 시에도 유지)\n- QnA 답변 수정/삭제 기능 추가 (... 메뉴)\n- 사고팔고 검색창 레이아웃 개선 (줄바꿈)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: 여러 UI/UX 개선\n\n- 로그인/회원가입 폼 autocomplete 속성 추가 (브라우저 경고 해결)\n- React Router v7_startTransition future 플래그 추가\n- 피드 동영상 음소거 상태 유지 (재생 반복 시에도 유지)\n- QnA 답변 수정/삭제 기능 추가 (... 메뉴)\n- 사고팔고 검색창 레이아웃 개선 (줄바꿈)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git commit:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

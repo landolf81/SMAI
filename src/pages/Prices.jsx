@@ -46,12 +46,24 @@ const Prices = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  // 등급 정렬 순서 적용
-  const sortDetailsByGradeOrder = (details) => {
-    const savedOrder = localStorage.getItem('grade_order');
-    if (!savedOrder || !details) return details;
+  // 등급 정렬 순서 적용 (공판장별)
+  const sortDetailsByGradeOrder = (details, currentMarket) => {
+    if (!details) return details;
 
-    const orderArray = JSON.parse(savedOrder);
+    // 공판장별 등급 순서 확인
+    const savedGradeOrders = localStorage.getItem('market_grade_orders');
+    let orderArray = null;
+
+    if (savedGradeOrders) {
+      const gradeOrders = JSON.parse(savedGradeOrders);
+      if (gradeOrders[currentMarket]) {
+        orderArray = gradeOrders[currentMarket];
+      }
+    }
+
+    // 공판장별 순서가 없으면 정렬하지 않음
+    if (!orderArray) return details;
+
     return [...details].sort((a, b) => {
       const indexA = orderArray.indexOf(a.grade);
       const indexB = orderArray.indexOf(b.grade);
@@ -74,9 +86,9 @@ const Prices = () => {
 
       const data = await marketService.getMarketDataWithComparison(market, date);
 
-      // 등급 정렬 순서 적용
+      // 등급 정렬 순서 적용 (공판장별)
       if (data && data.details) {
-        data.details = sortDetailsByGradeOrder(data.details);
+        data.details = sortDetailsByGradeOrder(data.details, market);
       }
 
       setMarketData(data);
