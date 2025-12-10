@@ -33,34 +33,34 @@ const AdminLeftbar = () => {
     {
       title: "대시보드",
       items: [
-        { 
-          path: "/admin", 
-          icon: DashboardIcon, 
-          label: "메인 대시보드", 
-          badge: null 
+        {
+          path: "/admin",
+          icon: DashboardIcon,
+          label: "메인 대시보드",
+          badge: null
         },
-        { 
-          path: "/admin/analytics", 
-          icon: AnalyticsIcon, 
-          label: "통계 개요", 
-          badge: null 
+        {
+          path: "/admin/analytics",
+          icon: AnalyticsIcon,
+          label: "통계 개요",
+          badge: null
         }
       ]
     },
     {
       title: "사용자 관리",
       items: [
-        { 
-          path: "/admin/users", 
-          icon: PeopleIcon, 
-          label: "사용자 및 권한", 
-          badge: null 
+        {
+          path: "/admin/users",
+          icon: PeopleIcon,
+          label: "사용자 및 권한",
+          badge: null
         },
-        { 
-          path: "/admin/badges", 
-          icon: VerifiedIcon, 
-          label: "뱃지 관리", 
-          badge: null 
+        {
+          path: "/admin/badges",
+          icon: VerifiedIcon,
+          label: "뱃지 관리",
+          badge: null
         }
       ]
     },
@@ -84,17 +84,17 @@ const AdminLeftbar = () => {
     {
       title: "광고 관리",
       items: [
-        { 
-          path: "/admin/ads", 
-          icon: CampaignIcon, 
-          label: "광고 관리", 
-          badge: null 
+        {
+          path: "/admin/ads",
+          icon: CampaignIcon,
+          label: "광고 관리",
+          badge: null
         },
-        { 
-          path: "/admin/ads/analytics", 
-          icon: TrendingUpIcon, 
-          label: "광고 성과", 
-          badge: null 
+        {
+          path: "/admin/ads/analytics",
+          icon: TrendingUpIcon,
+          label: "광고 성과",
+          badge: null
         },
         {
           path: "/admin/ads/revenue",
@@ -118,35 +118,35 @@ const AdminLeftbar = () => {
     {
       title: "시스템",
       items: [
-        { 
-          path: "/admin/settings", 
-          icon: SettingsIcon, 
-          label: "시스템 설정", 
-          badge: null 
+        {
+          path: "/admin/settings",
+          icon: SettingsIcon,
+          label: "시스템 설정",
+          badge: null
         },
-        { 
-          path: "/admin/backup", 
-          icon: BackupIcon, 
-          label: "백업 관리", 
-          badge: null 
+        {
+          path: "/admin/backup",
+          icon: BackupIcon,
+          label: "백업 관리",
+          badge: null
         },
-        { 
-          path: "/admin/database", 
-          icon: StorageIcon, 
-          label: "데이터베이스", 
-          badge: null 
+        {
+          path: "/admin/database",
+          icon: StorageIcon,
+          label: "데이터베이스",
+          badge: null
         },
-        { 
-          path: "/admin/cache", 
-          icon: CachedIcon, 
-          label: "캐시 관리", 
-          badge: null 
+        {
+          path: "/admin/cache",
+          icon: CachedIcon,
+          label: "캐시 관리",
+          badge: null
         },
-        { 
-          path: "/admin/performance", 
-          icon: SpeedIcon, 
-          label: "성능 모니터링", 
-          badge: null 
+        {
+          path: "/admin/performance",
+          icon: SpeedIcon,
+          label: "성능 모니터링",
+          badge: null
         }
       ]
     }
@@ -177,18 +177,18 @@ const AdminLeftbar = () => {
             aria-label="close sidebar"
             className="drawer-overlay"
           ></label>
-          <ul className="menu p-4 w-80 min-h-full bg-gradient-to-b from-red-50 to-red-100 text-base-content overflow-y-auto">
-            
+          <ul className="menu p-4 w-80 min-h-full bg-white border-r border-gray-200 overflow-y-auto">
+
             {/* 관리자 프로필 */}
-            <div className="mb-6 p-4 bg-white rounded-lg shadow-sm border border-red-200">
+            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="avatar">
-                  <div className="w-12 rounded-full border-2 border-red-300">
+                  <div className="w-12 rounded-full border-2 border-[#004225]">
                     <img
                       alt="관리자"
                       src={
-                        currentUser.profilePic 
-                          ? `/uploads/profiles/${currentUser.profilePic}` 
+                        currentUser.profilePic
+                          ? `/uploads/profiles/${currentUser.profilePic}`
                           : "/default/default_profile.png"
                       }
                     />
@@ -197,39 +197,39 @@ const AdminLeftbar = () => {
                 <div>
                   <div className="font-semibold text-gray-800 flex items-center gap-2">
                     {currentUser.username}
-                    <AdminPanelSettingsIcon className="text-red-600 text-sm" />
+                    <AdminPanelSettingsIcon className="text-[#004225] text-sm" />
                   </div>
-                  <div className="text-sm text-red-600 font-medium">시스템 관리자</div>
+                  <div className="text-sm text-[#004225] font-medium">시스템 관리자</div>
                 </div>
               </div>
             </div>
 
             {/* 관리자 메뉴 섹션들 */}
             {menuSections.map((section, sectionIndex) => (
-              <div key={sectionIndex} className="mb-6">
-                <h3 className="font-semibold text-gray-700 mb-3 px-2 text-sm uppercase tracking-wide">
+              <div key={sectionIndex} className="mb-5">
+                <h3 className="font-semibold text-gray-500 mb-2 px-3 text-xs uppercase tracking-wider">
                   {section.title}
                 </h3>
-                
+
                 {section.items.map((item, itemIndex) => {
                   const IconComponent = item.icon;
                   const isActive = isActiveLink(item.path);
-                  
+
                   return (
-                    <Link 
+                    <Link
                       key={itemIndex}
-                      to={item.path} 
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 mb-1 ${
-                        isActive 
-                          ? 'bg-red-600 text-white shadow-md transform scale-105' 
-                          : 'hover:bg-white hover:shadow-sm text-gray-700'
+                      to={item.path}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-1 ${
+                        isActive
+                          ? 'bg-[#004225] text-white shadow-md'
+                          : 'hover:bg-gray-100 text-gray-700'
                       }`}
                     >
-                      <IconComponent className={`${isActive ? 'text-white' : 'text-red-600'}`} />
-                      <span className="font-medium">{item.label}</span>
+                      <IconComponent className={`text-lg ${isActive ? 'text-white' : 'text-[#004225]'}`} />
+                      <span className="font-medium text-sm">{item.label}</span>
                       {item.badge && (
                         <span className={`badge badge-sm ml-auto ${
-                          isActive ? 'badge-warning' : 'badge-error'
+                          isActive ? 'bg-white text-[#004225]' : 'bg-orange-500 text-white border-none'
                         }`}>
                           {item.badge}
                         </span>
@@ -241,30 +241,30 @@ const AdminLeftbar = () => {
             ))}
 
             {/* 개발자 도구 (별도 섹션) */}
-            <div className="mt-auto pt-4 border-t border-red-200">
-              <h3 className="font-semibold text-gray-700 mb-3 px-2 text-sm uppercase tracking-wide">
+            <div className="mt-auto pt-4 border-t border-gray-200">
+              <h3 className="font-semibold text-gray-500 mb-2 px-3 text-xs uppercase tracking-wider">
                 개발자 도구
               </h3>
-              <Link 
-                to="/admin/developer" 
-                className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-200 mb-2 ${
+              <Link
+                to="/admin/developer"
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-2 ${
                   isActiveLink("/admin/developer")
-                    ? 'bg-red-600 text-white shadow-md' 
-                    : 'hover:bg-white hover:shadow-sm text-gray-700'
+                    ? 'bg-[#004225] text-white shadow-md'
+                    : 'hover:bg-gray-100 text-gray-700'
                 }`}
               >
-                <DeveloperBoardIcon className={`${isActiveLink("/admin/developer") ? 'text-white' : 'text-red-600'}`} />
-                <span className="font-medium">API & 도구</span>
+                <DeveloperBoardIcon className={`text-lg ${isActiveLink("/admin/developer") ? 'text-white' : 'text-[#004225]'}`} />
+                <span className="font-medium text-sm">API & 도구</span>
               </Link>
             </div>
 
             {/* 푸터 */}
-            <div className="mt-4 pt-4 border-t border-red-200">
+            <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="text-xs text-gray-500 px-2 text-center">
-                <div className="font-semibold text-red-600 mb-1">Meridian Admin</div>
+                <div className="font-bold text-[#004225] mb-1">Meridian Admin</div>
                 <div>농업 커뮤니티 관리 시스템</div>
                 <div className="mt-2 flex justify-center gap-1">
-                  <span className="px-2 py-1 bg-red-100 text-red-600 rounded text-xs">v1.0</span>
+                  <span className="px-2 py-1 bg-[#004225]/10 text-[#004225] rounded text-xs font-medium">v1.0</span>
                 </div>
               </div>
             </div>

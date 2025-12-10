@@ -42,24 +42,33 @@ const Prices = () => {
     urlDate || new Date().toISOString().split('T')[0]
   );
 
+  // 설정 로드 상태
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+
   // 페이지 진입 시 스크롤 최상단으로 이동 및 설정 로드
   useEffect(() => {
     window.scrollTo(0, 0);
     // DB에서 등급 정렬 설정 가져오기
     marketService.getMarketSettings().then(settings => {
       setGradeSettings(settings);
+      setSettingsLoaded(true);
+    }).catch(() => {
+      setSettingsLoaded(true); // 에러가 나도 진행
     });
   }, []);
 
   // 등급 정렬 순서 적용 (공판장별 - DB 설정 사용)
-  const sortDetailsByGradeOrder = (details, currentMarket) => {
+  const sortDetailsByGradeOrder = (details, currentMarket, settings) => {
     if (!details) return details;
+
+    // 전달받은 settings 또는 현재 gradeSettings 사용
+    const currentSettings = settings || gradeSettings;
 
     // DB에서 가져온 공판장별 등급 순서 확인
     let orderArray = null;
 
-    if (gradeSettings?.grade_orders?.[currentMarket]) {
-      orderArray = gradeSettings.grade_orders[currentMarket];
+    if (currentSettings?.grade_orders?.[currentMarket]) {
+      orderArray = currentSettings.grade_orders[currentMarket];
     }
 
     // 공판장별 순서가 없으면 정렬하지 않음
@@ -104,23 +113,17 @@ const Prices = () => {
   };
 
   useEffect(() => {
+    // 설정이 로드된 후에만 데이터 가져오기
+    if (!settingsLoaded) return;
+
     if (marketName) {
       fetchMarketData(marketName, selectedDate);
     } else {
       setLoading(false);
       setError('시장을 선택해주세요.');
     }
-  }, [marketName, selectedDate]);
+  }, [marketName, selectedDate, settingsLoaded]);
 
-  // 설정이 로드되면 기존 데이터 다시 정렬
-  useEffect(() => {
-    if (gradeSettings?.grade_orders && marketData?.details && marketName) {
-      const sortedDetails = sortDetailsByGradeOrder(marketData.details, marketName);
-      if (sortedDetails !== marketData.details) {
-        setMarketData(prev => ({ ...prev, details: sortedDetails }));
-      }
-    }
-  }, [gradeSettings]);
 
   const handleDateChange = (e) => {
     const newDate = e.target.value;
@@ -229,6 +232,11 @@ const Prices = () => {
                 {formatDate(selectedDate)}
               </span>
             </div>
+
+            {/* 단위 표시 */}
+            <span className="absolute right-0 text-xs text-gray-500">
+              단위 : 원
+            </span>
           </div>
         </div>
       </div>
@@ -317,27 +325,27 @@ const Prices = () => {
                   </div>
 
                   {/* 요약 정보 그리드 */}
-                  <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="grid grid-cols-3 gap-1 text-center">
                     {/* 총 출하량 */}
-                    <div className="bg-gray-50 rounded-lg py-3 px-2">
+                    <div className="bg-gray-50 rounded-lg py-3 px-1">
                       <div className="text-xs text-gray-500 mb-1">총 출하량</div>
-                      <div className="text-base font-bold text-gray-800">
+                      <div className="text-base font-bold text-gray-800 whitespace-nowrap">
                         {formatPrice(marketData.summary.total_boxes)}상자
                       </div>
                     </div>
 
                     {/* 평균가 */}
-                    <div className="bg-gray-50 rounded-lg py-3 px-2">
+                    <div className="bg-gray-50 rounded-lg py-3 px-1">
                       <div className="text-xs text-gray-500 mb-1">평균가</div>
-                      <div className="text-base font-bold text-[#004225]">
-                        {formatPrice(marketData.summary.overall_avg_price)}원
+                      <div className="text-base font-bold text-[#004225] whitespace-nowrap">
+                        {formatPrice(marketData.summary.overall_avg_price)}
                       </div>
                     </div>
 
                     {/* 전일대비 */}
-                    <div className="bg-gray-50 rounded-lg py-3 px-2">
+                    <div className="bg-gray-50 rounded-lg py-3 px-1">
                       <div className="text-xs text-gray-500 mb-1">전일대비</div>
-                      <div className={`text-base font-bold ${
+                      <div className={`text-base font-bold whitespace-nowrap ${
                         !marketData.overall_comparison?.comparison_available ? 'text-gray-400' :
                         Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-gray-600' :
                         marketData.overall_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'
@@ -383,19 +391,19 @@ const Prices = () => {
                       </div>
 
                       {/* 가격 정보 그리드 */}
-                      <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="grid grid-cols-4 gap-1 text-center">
                         {/* 평균가 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                        <div className="bg-gray-50 rounded-lg py-3 px-1">
                           <div className="text-xs text-gray-500 mb-1">평균가</div>
-                          <div className="text-base font-bold text-[#004225]">
-                            {formatPrice(item.avg_price)}원
+                          <div className="text-base font-bold text-[#004225] whitespace-nowrap">
+                            {formatPrice(item.avg_price)}
                           </div>
                         </div>
 
                         {/* 전일대비 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                        <div className="bg-gray-50 rounded-lg py-3 px-1">
                           <div className="text-xs text-gray-500 mb-1">전일대비</div>
-                          <div className={`text-base font-bold ${
+                          <div className={`text-base font-bold whitespace-nowrap ${
                             !priceComparison.comparison_available ? 'text-gray-400' :
                             Math.abs(priceComparison.changePercent) < 0.1 ? 'text-gray-600' :
                             priceComparison.change > 0 ? 'text-red-500' : 'text-blue-500'
@@ -408,18 +416,18 @@ const Prices = () => {
                         </div>
 
                         {/* 최고가 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                        <div className="bg-gray-50 rounded-lg py-3 px-1">
                           <div className="text-xs text-gray-500 mb-1">최고가</div>
-                          <div className="text-base font-bold text-red-500">
-                            {formatPrice(item.max_price)}원
+                          <div className="text-base font-bold text-red-500 whitespace-nowrap">
+                            {formatPrice(item.max_price)}
                           </div>
                         </div>
 
                         {/* 최저가 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-2">
+                        <div className="bg-gray-50 rounded-lg py-3 px-1">
                           <div className="text-xs text-gray-500 mb-1">최저가</div>
-                          <div className="text-base font-bold text-blue-500">
-                            {formatPrice(item.min_price)}원
+                          <div className="text-base font-bold text-blue-500 whitespace-nowrap">
+                            {formatPrice(item.min_price)}
                           </div>
                         </div>
                       </div>
