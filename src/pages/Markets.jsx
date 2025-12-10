@@ -103,7 +103,23 @@ const Markets = () => {
   const loadMarketData = async (date) => {
     setLoading(true);
     const markets = await fetchAvailableMarkets(date);
-    await fetchMarketDetails(markets, date);
+
+    // 저장된 정렬 순서 적용
+    const savedOrder = localStorage.getItem('market_order');
+    let sortedMarkets = markets;
+    if (savedOrder) {
+      const orderArray = JSON.parse(savedOrder);
+      sortedMarkets = [...markets].sort((a, b) => {
+        const indexA = orderArray.indexOf(a);
+        const indexB = orderArray.indexOf(b);
+        // 목록에 없는 시장은 뒤로
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return indexA - indexB;
+      });
+    }
+
+    await fetchMarketDetails(sortedMarkets, date);
     setLoading(false);
   };
 

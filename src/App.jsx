@@ -45,6 +45,7 @@ const AdminTags = lazy(() => import('./pages/admin/AdminTags'));
 const AdminTagGroups = lazy(() => import('./pages/admin/AdminTagGroups'));
 const AdminBadgesNew = lazy(() => import('./pages/admin/AdminBadgesNew'));
 const AdminReports = lazy(() => import('./pages/AdminReports'));
+const AdminMarketSettings = lazy(() => import('./pages/admin/AdminMarketSettings'));
 
 // Other Pages - Lazy Loading
 const Prices = lazy(() => import('./pages/Prices'));
@@ -253,6 +254,10 @@ useEffect(() => {
         {
           path: '/admin/reports',
           element: <ProtectedRoute><AdminReports /></ProtectedRoute>,
+        },
+        {
+          path: '/admin/market-settings',
+          element: <ProtectedRoute><AdminMarketSettings /></ProtectedRoute>,
         },
       ],
     },

@@ -46,6 +46,22 @@ const Prices = () => {
     window.scrollTo(0, 0);
   }, []);
 
+  // 등급 정렬 순서 적용
+  const sortDetailsByGradeOrder = (details) => {
+    const savedOrder = localStorage.getItem('grade_order');
+    if (!savedOrder || !details) return details;
+
+    const orderArray = JSON.parse(savedOrder);
+    return [...details].sort((a, b) => {
+      const indexA = orderArray.indexOf(a.grade);
+      const indexB = orderArray.indexOf(b.grade);
+      // 목록에 없는 등급은 뒤로
+      if (indexA === -1) return 1;
+      if (indexB === -1) return -1;
+      return indexA - indexB;
+    });
+  };
+
   // 경락가 데이터 가져오기
   const fetchMarketData = async (market, date) => {
     try {
@@ -57,6 +73,12 @@ const Prices = () => {
       }
 
       const data = await marketService.getMarketDataWithComparison(market, date);
+
+      // 등급 정렬 순서 적용
+      if (data && data.details) {
+        data.details = sortDetailsByGradeOrder(data.details);
+      }
+
       setMarketData(data);
 
     } catch (error) {
