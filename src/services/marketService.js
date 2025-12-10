@@ -530,6 +530,66 @@ export const marketService = {
       console.error('❌ 상세 경락가 조회 오류:', error);
       throw error;
     }
+  },
+
+  /**
+   * 공판장별 등급 목록 조회
+   * @param {string} marketName - 시장명
+   * @returns {Array<string>} 등급 목록
+   */
+  async getMarketGrades(marketName) {
+    try {
+      const { data, error } = await supabase
+        .from('market_data')
+        .select('grade')
+        .eq('market_name', marketName)
+        .order('grade');
+
+      if (error) throw error;
+
+      // 중복 제거
+      const uniqueGrades = [...new Set(data.map(item => item.grade).filter(Boolean))];
+      return uniqueGrades;
+    } catch (error) {
+      console.error('등급 목록 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
+   * 모든 공판장의 등급 목록 조회
+   * @returns {Object} { marketName: [grades] }
+   */
+  async getAllMarketGrades() {
+    try {
+      const { data, error } = await supabase
+        .from('market_data')
+        .select('market_name, grade')
+        .order('market_name')
+        .order('grade');
+
+      if (error) throw error;
+
+      // 시장별로 등급 그룹화
+      const gradesByMarket = {};
+      data.forEach(item => {
+        if (!item.market_name || !item.grade) return;
+        if (!gradesByMarket[item.market_name]) {
+          gradesByMarket[item.market_name] = new Set();
+        }
+        gradesByMarket[item.market_name].add(item.grade);
+      });
+
+      // Set을 Array로 변환
+      Object.keys(gradesByMarket).forEach(market => {
+        gradesByMarket[market] = [...gradesByMarket[market]];
+      });
+
+      return gradesByMarket;
+    } catch (error) {
+      console.error('전체 등급 목록 조회 오류:', error);
+      return {};
+    }
   }
 };
 

@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../config/supabase';
+import { marketService } from '../../services';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import SaveIcon from '@mui/icons-material/Save';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 // 기본 공판장 목록
 const DEFAULT_MARKETS = [
@@ -15,7 +19,7 @@ const DEFAULT_MARKETS = [
   '용암'
 ];
 
-// 기본 등급 목록
+// 기본 등급 목록 (공판장별 등급 조회 실패 시 사용)
 const DEFAULT_GRADES = [
   '특품',
   '상품',
@@ -33,10 +37,38 @@ const AdminMarketSettings = () => {
   const [draggedType, setDraggedType] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // 공판장별 등급 정보
+  const [marketGrades, setMarketGrades] = useState({});
+  const [selectedMarket, setSelectedMarket] = useState(null);
+  const [loadingGrades, setLoadingGrades] = useState(false);
+  const [expandedMarkets, setExpandedMarkets] = useState({});
+
   // 설정 불러오기
   useEffect(() => {
     loadSettings();
+    loadAllMarketGrades();
   }, []);
+
+  // 모든 공판장의 등급 목록 불러오기
+  const loadAllMarketGrades = async () => {
+    try {
+      setLoadingGrades(true);
+      const grades = await marketService.getAllMarketGrades();
+      setMarketGrades(grades);
+    } catch (error) {
+      console.error('등급 목록 조회 오류:', error);
+    } finally {
+      setLoadingGrades(false);
+    }
+  };
+
+  // 공판장 펼치기/접기 토글
+  const toggleMarketExpand = (marketName) => {
+    setExpandedMarkets(prev => ({
+      ...prev,
+      [marketName]: !prev[marketName]
+    }));
+  };
 
   const loadSettings = async () => {
     try {
@@ -169,10 +201,19 @@ const AdminMarketSettings = () => {
         >
           <ArrowBackIcon />
         </button>
-        <div>
+        <div className="flex-1">
           <h1 className="text-2xl font-bold">시장정보 설정</h1>
           <p className="text-gray-500 text-sm">공판장 및 등급 정렬 순서를 설정합니다</p>
         </div>
+        <button
+          onClick={loadAllMarketGrades}
+          disabled={loadingGrades}
+          className="btn btn-ghost btn-sm gap-1"
+          title="등급 정보 새로고침"
+        >
+          <RefreshIcon className={loadingGrades ? 'animate-spin' : ''} fontSize="small" />
+          <span className="hidden sm:inline">새로고침</span>
+        </button>
       </div>
 
       {/* 성공 메시지 */}
@@ -205,33 +246,69 @@ const AdminMarketSettings = () => {
               {marketOrder.map((market, index) => (
                 <li
                   key={market}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index, 'market')}
-                  onDragOver={(e) => handleDragOver(e, index, 'market')}
-                  onDragEnd={handleDragEnd}
-                  className={`flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-move hover:bg-gray-100 transition-colors ${
+                  className={`bg-gray-50 rounded-lg transition-colors ${
                     draggedItem === index && draggedType === 'market' ? 'opacity-50' : ''
                   }`}
                 >
-                  <DragIndicatorIcon className="text-gray-400" />
-                  <span className="flex-1 font-medium">{market}</span>
-                  <span className="text-gray-400 text-sm mr-2">#{index + 1}</span>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => moveUp(index, 'market')}
-                      disabled={index === 0}
-                      className="btn btn-ghost btn-xs"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      onClick={() => moveDown(index, 'market')}
-                      disabled={index === marketOrder.length - 1}
-                      className="btn btn-ghost btn-xs"
-                    >
-                      ▼
-                    </button>
+                  <div
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index, 'market')}
+                    onDragOver={(e) => handleDragOver(e, index, 'market')}
+                    onDragEnd={handleDragEnd}
+                    className="flex items-center gap-2 p-3 cursor-move hover:bg-gray-100"
+                  >
+                    <DragIndicatorIcon className="text-gray-400" />
+                    <span className="flex-1 font-medium">{market}</span>
+                    <span className="text-gray-400 text-sm mr-2">#{index + 1}</span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => moveUp(index, 'market')}
+                        disabled={index === 0}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={() => moveDown(index, 'market')}
+                        disabled={index === marketOrder.length - 1}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        ▼
+                      </button>
+                      <button
+                        onClick={() => toggleMarketExpand(market)}
+                        className="btn btn-ghost btn-xs"
+                        title="등급 목록 보기"
+                      >
+                        {expandedMarkets[market] ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                      </button>
+                    </div>
                   </div>
+
+                  {/* 공판장별 등급 목록 */}
+                  {expandedMarkets[market] && (
+                    <div className="px-4 pb-3 border-t border-gray-200 bg-gray-100 rounded-b-lg">
+                      <div className="pt-2">
+                        <span className="text-xs text-gray-500 font-medium">등급 목록:</span>
+                        {loadingGrades ? (
+                          <span className="loading loading-spinner loading-xs ml-2"></span>
+                        ) : marketGrades[market] && marketGrades[market].length > 0 ? (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {marketGrades[market].map((grade, gIndex) => (
+                              <span
+                                key={gIndex}
+                                className="px-2 py-0.5 bg-white text-gray-700 text-xs rounded border border-gray-300"
+                              >
+                                {grade}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400 ml-2">등급 정보 없음</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -251,7 +328,8 @@ const AdminMarketSettings = () => {
               </button>
             </div>
             <p className="text-sm text-gray-500 mb-4">
-              경락가 상세 화면에서 등급 표시 순서입니다
+              경락가 상세 화면에서 등급 표시 순서입니다.<br/>
+              <span className="text-xs text-blue-600">각 공판장의 실제 등급 목록은 왼쪽 공판장을 펼쳐서 확인하세요.</span>
             </p>
             <ul className="space-y-2">
               {gradeOrder.map((grade, index) => (

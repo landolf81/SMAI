@@ -107,17 +107,11 @@ const AdminLeftbar = () => {
     {
       title: "시장 데이터",
       items: [
-        { 
-          path: "/admin/markets", 
-          icon: StoreIcon, 
-          label: "시장 정보", 
-          badge: null 
-        },
-        { 
-          path: "/admin/prices", 
-          icon: TrendingUpIcon, 
-          label: "가격 데이터", 
-          badge: null 
+        {
+          path: "/admin/market-settings",
+          icon: StoreIcon,
+          label: "시장정보 설정",
+          badge: null
         }
       ]
     },
