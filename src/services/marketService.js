@@ -470,16 +470,23 @@ export const marketService = {
 
         const currentAvgPrice = parseInt(row.avg_price) || 0;
         const previousAvgPrice = prevItem ? (parseInt(prevItem.avg_price) || 0) : 0;
+        const currentBoxes = parseInt(row.boxes) || 0;
+        const previousBoxes = prevItem ? (parseInt(prevItem.boxes) || 0) : 0;
 
         const change = previousAvgPrice > 0 ? currentAvgPrice - previousAvgPrice : 0;
         const changePercent = previousAvgPrice > 0
           ? Math.round((change / previousAvgPrice) * 1000) / 10
           : 0;
 
+        const boxesChange = previousBoxes > 0 ? currentBoxes - previousBoxes : 0;
+        const boxesChangePercent = previousBoxes > 0
+          ? Math.round((boxesChange / previousBoxes) * 1000) / 10
+          : 0;
+
         return {
           weight: row.weight || '5kg',
           grade: row.grade || '특품',
-          boxes: parseInt(row.boxes) || 0,
+          boxes: currentBoxes,
           avg_price: currentAvgPrice,
           min_price: parseInt(row.min_price) || 0,
           max_price: parseInt(row.max_price) || 0,
@@ -490,6 +497,13 @@ export const marketService = {
             previousPrice: previousAvgPrice,
             change: change,
             changePercent: changePercent
+          },
+          // 수량 비교 정보
+          boxes_comparison: {
+            comparison_available: previousBoxes > 0,
+            previousBoxes: previousBoxes,
+            change: boxesChange,
+            changePercent: boxesChangePercent
           }
         };
       });

@@ -96,7 +96,17 @@ const Register = () => {
       setSuccess(true);
     } catch (error) {
       console.error('회원가입 오류:', error);
-      const errorMessage = error.message || "회원가입 중 오류가 발생했습니다.";
+      // 에러 메시지 한글화
+      let errorMessage = "회원가입 중 오류가 발생했습니다.";
+      if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
+        errorMessage = "이미 가입된 이메일입니다. 탈퇴한 계정의 이메일로는 재가입이 불가능하니, 다른 이메일을 사용해주세요.";
+      } else if (error.message?.includes('invalid email') || error.message?.includes('Invalid email')) {
+        errorMessage = "올바른 이메일 형식을 입력해주세요.";
+      } else if (error.message?.includes('password') && error.message?.includes('6')) {
+        errorMessage = "비밀번호는 최소 6자 이상이어야 합니다.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       setErr(errorMessage);
     } finally {
       setLoading(false);

@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
-import TrendingFlatIcon from '@mui/icons-material/TrendingFlat';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { marketService } from '../services';
 
 // 공판장별 뱃지 색상 (MarketCards.jsx와 동일)
@@ -369,6 +364,11 @@ const Prices = () => {
                   changePercent: 0,
                   comparison_available: false
                 };
+                const boxesComparison = item.boxes_comparison || {
+                  change: 0,
+                  changePercent: 0,
+                  comparison_available: false
+                };
 
                 return (
                   <div key={index} className="relative pt-4">
@@ -386,8 +386,13 @@ const Prices = () => {
                     {/* 카드 본체 */}
                     <div className="bg-white rounded-2xl shadow-md border border-gray-100 pt-6 pb-4 px-4">
                       {/* 품목 정보 */}
-                      <div className="text-sm text-gray-600 mb-3">
-                        참외 {item.weight} · 수량 <span className="font-semibold text-gray-800">{formatPrice(item.boxes)}상자</span>
+                      <div className="text-base text-gray-600 mb-3 flex items-center gap-2">
+                        <span>참외 {item.weight} · 수량 <span className="font-semibold text-gray-800">{formatPrice(item.boxes)}상자</span></span>
+                        {boxesComparison.comparison_available && boxesComparison.change !== 0 && (
+                          <span className={`text-base font-medium ${boxesComparison.change > 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                            ({boxesComparison.change > 0 ? '+' : ''}{formatPrice(boxesComparison.change)})
+                          </span>
+                        )}
                       </div>
 
                       {/* 가격 정보 그리드 */}

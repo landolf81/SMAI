@@ -15,3 +15,4 @@ export { badgeService } from './badgeService.js';
 export { dmService } from './dmService.js';
 export { storageService, BUCKETS } from './storageService.js';
 export { r2Service } from './r2Service.js';
+export { verificationService } from './verificationService.js';

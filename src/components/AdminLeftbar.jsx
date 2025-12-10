@@ -9,6 +9,7 @@ import DeveloperBoardIcon from "@mui/icons-material/DeveloperBoard";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ReportIcon from "@mui/icons-material/Report";
 import VerifiedIcon from "@mui/icons-material/Verified";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -60,6 +61,12 @@ const AdminLeftbar = () => {
           path: "/admin/badges",
           icon: VerifiedIcon,
           label: "뱃지 관리",
+          badge: null
+        },
+        {
+          path: "/admin/verification",
+          icon: VerifiedUserIcon,
+          label: "신원 인증 관리",
           badge: null
         }
       ]

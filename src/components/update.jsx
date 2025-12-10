@@ -13,11 +13,36 @@ import { convertImageToPng, isHeicFile, formatFileSize as formatSize } from '../
 
 import {  useState, useEffect } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { userService, storageService } from '../services';
+import { userService, storageService, verificationService } from '../services';
+import { useQuery } from "@tanstack/react-query";
+import VerificationRequestModal from './VerificationRequestModal';
+import VerificationCodeModal from './VerificationCodeModal';
 
 const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdating}) => {
 
   const [profile, setProfile] = useState(null);
+  const [showVerificationRequestModal, setShowVerificationRequestModal] = useState(false);
+  const [showVerificationCodeModal, setShowVerificationCodeModal] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawConfirmText, setWithdrawConfirmText] = useState('');
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
+  // 현재 사용자의 verified 상태 조회 (실시간)
+  const { data: currentUserData } = useQuery({
+    queryKey: ['currentUserVerified', user?.id],
+    queryFn: () => userService.getUser(user?.id),
+    enabled: !!user?.id
+  });
+
+  // 인증 상태 (DB에서 가져온 최신 값 우선, true만 인정)
+  const isVerified = currentUserData?.verified === true || user?.verified === true;
+
+  // 인증 요청 상태 조회
+  const { data: verificationRequest } = useQuery({
+    queryKey: ['myVerificationRequest'],
+    queryFn: () => verificationService.getMyRequest(),
+    enabled: !isVerified
+  });
   const [cover, setCover] = useState(null);
   const [profilePreview, setProfilePreview] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
@@ -521,16 +546,26 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
-        {/* 헤더 */}
-        <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
+        {/* 헤더 - 진한 녹색 그라데이션 */}
+        <div className="bg-gradient-to-r from-emerald-700 to-teal-600 text-white p-5">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">프로필 설정 수정</h1>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold">프로필 설정</h1>
+                <p className="text-emerald-100 text-sm">내 정보를 수정해보세요</p>
+              </div>
+            </div>
             <button
               onClick={() => {
                 setOpenUpdate(false);
                 setIsUpdating(false);
               }}
-              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
+              className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -561,15 +596,16 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 사용자명
+                <span className="text-xs text-gray-400 ml-2">(변경 불가)</span>
               </label>
-              <input 
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                type="text" 
-                placeholder="사용자명" 
-                name="username" 
+              <input
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed text-gray-500"
+                type="text"
+                placeholder="사용자명"
+                name="username"
                 value={info.username}
-                onChange={handleChange} 
-                disabled 
+                onChange={handleChange}
+                disabled
               />
             </div>
 
@@ -577,28 +613,80 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 별명/닉네임 <span className="text-red-500">*</span>
-                {!user?.verified && (
-                  <span className="text-xs text-gray-500 ml-2">(관리자 승인 후 변경 가능)</span>
+                {!isVerified && (
+                  <span className="text-xs text-gray-500 ml-2">(신원 인증 후 변경 가능)</span>
                 )}
               </label>
               <input
-                className={`w-full px-4 py-2 border rounded-lg transition-colors ${
-                  !user?.verified
-                    ? 'bg-gray-100 cursor-not-allowed border-gray-300'
+                className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
+                  !isVerified
+                    ? 'bg-gray-100 cursor-not-allowed border-gray-200'
                     : errors.name
-                      ? 'border-red-500 focus:ring-2 focus:ring-green-500 focus:border-transparent'
-                      : 'border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                      ? 'border-red-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500'
+                      : 'border-gray-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
                 }`}
                 type="text"
-                placeholder={user?.verified ? "사용할 별명이나 닉네임을 입력하세요" : "관리자 승인 후 변경 가능합니다"}
+                placeholder={isVerified ? "사용할 별명이나 닉네임을 입력하세요" : "신원 인증 후 변경 가능합니다"}
                 name="name"
                 value={info.name}
                 onChange={handleChange}
-                disabled={!user?.verified}
+                disabled={!isVerified}
                 required
               />
               {errors.name && (
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+              )}
+              {/* 신원 인증 안내 */}
+              {!isVerified && (
+                <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  {!verificationRequest && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-yellow-700">별명을 수정하려면 신원 인증이 필요합니다.</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowVerificationRequestModal(true)}
+                        className="text-xs font-medium text-yellow-700 underline hover:text-yellow-800"
+                      >
+                        인증 요청
+                      </button>
+                    </div>
+                  )}
+                  {verificationRequest?.status === 'pending' && (
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                      </svg>
+                      <span className="text-xs text-blue-700">인증 요청 검토 중입니다...</span>
+                    </div>
+                  )}
+                  {verificationRequest?.status === 'code_sent' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-green-700">인증 코드가 발송되었습니다.</span>
+                      <button
+                        type="button"
+                        onClick={() => setShowVerificationCodeModal(true)}
+                        className="text-xs font-medium text-green-700 underline hover:text-green-800"
+                      >
+                        코드 입력
+                      </button>
+                    </div>
+                  )}
+                  {verificationRequest?.status === 'rejected' && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-red-700">
+                        인증 거부됨{verificationRequest.rejection_reason ? `: ${verificationRequest.rejection_reason}` : ''}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowVerificationRequestModal(true)}
+                        className="text-xs font-medium text-red-700 underline hover:text-red-800"
+                      >
+                        다시 요청
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
@@ -606,15 +694,16 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 이메일
+                <span className="text-xs text-gray-400 ml-2">(변경 불가)</span>
               </label>
-              <input 
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                type="email" 
-                placeholder="admin@test.com" 
-                name="email" 
+              <input
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed text-gray-500"
+                type="email"
+                placeholder="admin@test.com"
+                name="email"
                 value={info.email}
-                onChange={handleChange} 
-                disabled 
+                onChange={handleChange}
+                disabled
               />
             </div>
 
@@ -623,13 +712,13 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 소개
               </label>
-              <textarea 
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors resize-none ${
-                  errors.bio ? 'border-red-500' : 'border-gray-300'
-                }`} 
-                name="bio" 
+              <textarea
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 resize-none ${
+                  errors.bio ? 'border-red-400' : 'border-gray-200'
+                }`}
+                name="bio"
                 placeholder="자기소개를 입력하세요
-(최대 200자)" 
+(최대 200자)"
                 value={info.bio}
                 onChange={handleChange}
                 maxLength="200"
@@ -672,11 +761,11 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                   </div>
                 )}
                 <div className="flex-1">
-                  <label className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg inline-flex items-center transition-colors border border-gray-300">
+                  <label className="cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white px-5 py-2.5 rounded-xl inline-flex items-center transition-all duration-200 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    파일 선택
+                    사진 선택
                     <input
                       className="hidden"
                       type="file"
@@ -685,7 +774,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     />
                   </label>
                   {!profilePreview && (
-                    <p className="text-xs text-gray-500 mt-2">선택된 파일 없음</p>
+                    <p className="text-xs text-gray-400 mt-2">프로필 사진을 선택해주세요</p>
                   )}
                 </div>
               </div>
@@ -722,11 +811,11 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     </button>
                   </div>
                 )}
-                <label className="cursor-pointer bg-white hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg inline-flex items-center transition-colors border border-gray-300">
+                <label className="cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600 text-white px-5 py-2.5 rounded-xl inline-flex items-center transition-all duration-200 shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30">
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  파일 선택
+                  사진 선택
                   <input
                     className="hidden"
                     type="file"
@@ -735,7 +824,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                   />
                 </label>
                 {!coverPreview && (
-                  <p className="text-xs text-gray-500">선택된 파일 없음</p>
+                  <p className="text-xs text-gray-400">배경 사진을 선택해주세요</p>
                 )}
               </div>
               {errors.cover && (
@@ -747,26 +836,56 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
         </div>
 
         {/* 하단 버튼 - 모바일 네비게이션 메뉴와 겹치지 않도록 padding 추가 */}
-        <div className="border-t border-gray-200 p-6 pb-20 bg-gray-50">
+        <div className="border-t border-gray-200 p-6 pb-20 bg-gradient-to-b from-gray-50 to-white">
           <div className="flex gap-3">
             <button
               onClick={handleSubmit}
-              className={`flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`flex-1 px-6 py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 hover:from-blue-700 hover:to-blue-600 hover:shadow-blue-600/40 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${
                 isLoading ? 'animate-pulse' : ''
               }`}
               disabled={isLoading}
             >
-              {isLoading ? '업데이트 중...' : '수정 완료'}
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  업데이트 중...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  수정 완료
+                </span>
+              )}
             </button>
             <button
               onClick={() => {
                 setOpenUpdate(false);
                 setIsUpdating(false);
               }}
-              className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+              className="px-6 py-3.5 bg-white text-gray-600 border-2 border-gray-200 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
               disabled={isLoading}
             >
               취소
+            </button>
+          </div>
+
+          {/* 회원탈퇴 버튼 - 붉은색 강조 */}
+          <div className="mt-6 pt-5 border-t border-gray-200">
+            <button
+              type="button"
+              onClick={() => setShowWithdrawModal(true)}
+              className="w-full py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 hover:border-red-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+              disabled={isLoading}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              회원탈퇴
             </button>
           </div>
         </div>
@@ -790,6 +909,103 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
           onCancel={() => setShowCoverCropper(false)}
           aspectRatio={2} // 2:1 비율
         />
+      )}
+
+      {/* 신원 인증 요청 모달 */}
+      <VerificationRequestModal
+        isOpen={showVerificationRequestModal}
+        onClose={() => setShowVerificationRequestModal(false)}
+      />
+
+      {/* 인증 코드 입력 모달 */}
+      <VerificationCodeModal
+        isOpen={showVerificationCodeModal}
+        onClose={() => setShowVerificationCodeModal(false)}
+        onSuccess={() => {
+          setShowVerificationCodeModal(false);
+          // 인증 완료 후 모달 닫기 및 페이지 새로고침
+          setOpenUpdate(false);
+          window.location.reload();
+        }}
+      />
+
+      {/* 회원탈퇴 확인 모달 */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-[60] bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* 헤더 */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4">
+              <h2 className="text-xl font-bold">회원탈퇴</h2>
+            </div>
+
+            <div className="p-6">
+              {/* 경고 메시지 */}
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">⚠️</div>
+                  <div>
+                    <h4 className="font-medium text-red-800 mb-1">탈퇴 시 주의사항</h4>
+                    <ul className="text-sm text-red-700 space-y-1">
+                      <li>• 작성한 게시글과 댓글은 <strong>삭제되지 않습니다</strong></li>
+                      <li>• 작성자 정보는 "탈퇴한 사용자"로 표시됩니다</li>
+                      <li>• 개인정보(이름, 연락처 등)는 즉시 삭제됩니다</li>
+                      <li>• 탈퇴 후 동일 계정으로 재가입이 불가합니다</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* 확인 입력 */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  탈퇴를 진행하려면 <span className="text-red-600 font-bold">"탈퇴합니다"</span>를 입력하세요
+                </label>
+                <input
+                  type="text"
+                  value={withdrawConfirmText}
+                  onChange={(e) => setWithdrawConfirmText(e.target.value)}
+                  placeholder="탈퇴합니다"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* 버튼 */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowWithdrawModal(false);
+                    setWithdrawConfirmText('');
+                  }}
+                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                  disabled={isWithdrawing}
+                >
+                  취소
+                </button>
+                <button
+                  onClick={async () => {
+                    if (withdrawConfirmText !== '탈퇴합니다') {
+                      alert('"탈퇴합니다"를 정확히 입력해주세요.');
+                      return;
+                    }
+                    setIsWithdrawing(true);
+                    try {
+                      await userService.withdrawAccount();
+                      alert('회원탈퇴가 완료되었습니다. 이용해주셔서 감사합니다.');
+                      window.location.href = '/';
+                    } catch (error) {
+                      alert(error.message || '탈퇴 처리 중 오류가 발생했습니다.');
+                      setIsWithdrawing(false);
+                    }
+                  }}
+                  disabled={withdrawConfirmText !== '탈퇴합니다' || isWithdrawing}
+                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isWithdrawing ? '처리 중...' : '탈퇴하기'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

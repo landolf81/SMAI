@@ -884,6 +884,38 @@ export const userService = {
       console.error('사용자 삭제 오류:', error);
       throw error;
     }
+  },
+
+  /**
+   * 회원 탈퇴 (Soft Delete)
+   * - 개인정보 익명화
+   * - 인증 요청 정보 삭제
+   * - Auth 계정은 유지 (로그인 불가 처리)
+   */
+  async withdrawAccount() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user;
+      if (!currentUser) throw new Error('로그인이 필요합니다.');
+
+      // 1. soft_delete_user 함수 호출 (DB에서 개인정보 익명화)
+      const { error: rpcError } = await supabase.rpc('soft_delete_user', {
+        target_user_id: currentUser.id
+      });
+
+      if (rpcError) {
+        console.error('탈퇴 처리 오류:', rpcError);
+        throw new Error('탈퇴 처리 중 오류가 발생했습니다.');
+      }
+
+      // 2. 로그아웃
+      await supabase.auth.signOut();
+
+      return { success: true };
+    } catch (error) {
+      console.error('회원 탈퇴 오류:', error);
+      throw error;
+    }
   }
 };
 

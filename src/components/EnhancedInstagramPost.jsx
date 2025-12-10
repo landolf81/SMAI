@@ -36,6 +36,7 @@ import BadgeDisplay from './BadgeDisplay';
 import { badgeService } from '../services';
 import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
+import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
 const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
@@ -142,6 +143,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 거래 완료 관리 권한 확인 (작성자 또는 관리자, 로그인 필요)
   const canManageTrade = currentUser && (post.userId === currentUser.id || featurePermissions.canDeleteAnyPost);
+
+  // 작성자 정보 (탈퇴 사용자 대응)
+  const postUser = post.user || { name: post.name, username: post.username, profile_pic: post.profilePic, deleted_at: post.user_deleted_at };
+  const authorName = getDisplayName(postUser);
+  const authorProfilePic = getProfilePic(postUser);
+  const canClickProfile = isProfileClickable(postUser);
+  const avatarClassName = getAvatarClassName(postUser);
 
   // 디버깅 로그 제거 (성능 향상)
   // console.log 제거됨
@@ -610,7 +618,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/post/${post.id}`;
-    const shareText = `${post.name || post.username}님의 게시글: ${postContent.slice(0, 100)}${postContent.length > 100 ? '...' : ''}`;
+    const shareText = `${authorName}님의 게시글: ${postContent.slice(0, 100)}${postContent.length > 100 ? '...' : ''}`;
     
     if (navigator.share) {
       navigator.share({
@@ -857,21 +865,21 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       {/* 헤더 */}
       <header className="flex items-center justify-between py-1.5 px-3 border-b border-gray-100">
         <div className="flex items-center space-x-2 flex-1">
-          {/* 프로필 사진 - 클릭 시 모달 열기 */}
+          {/* 프로필 사진 - 클릭 시 모달 열기 (탈퇴 사용자는 클릭 불가) */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setShowProfileModal(true);
+              if (canClickProfile) {
+                setShowProfileModal(true);
+              }
             }}
-            className="relative flex-shrink-0"
+            className={`relative flex-shrink-0 ${!canClickProfile ? 'cursor-default' : ''}`}
+            disabled={!canClickProfile}
           >
-            <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-orange-400 ring-offset-1 hover:ring-pink-500 transition-all duration-200">
+            <div className={`w-10 h-10 rounded-full overflow-hidden ring-2 ring-orange-400 ring-offset-1 ${canClickProfile ? 'hover:ring-pink-500' : ''} transition-all duration-200 ${avatarClassName}`}>
               <img
-                src={post.profilePic && post.profilePic !== 'defaultAvatar.png'
-                  ? (post.profilePic.startsWith('http') ? post.profilePic : `/uploads/profiles/${post.profilePic}`)
-                  : "/default/default_profile.png"
-                }
-                alt={`${post.username} 프로필`}
+                src={authorProfilePic}
+                alt={`${authorName} 프로필`}
                 className="w-full h-full object-cover object-center"
                 loading="lazy"
                 onError={(e) => {
@@ -880,11 +888,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               />
             </div>
           </button>
-          
+
           {/* 사용자 정보 - 클릭 불가 */}
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900 truncate leading-tight">
-              {post.name || post.username}
+            <p className={`font-semibold text-sm truncate leading-tight ${!canClickProfile ? 'text-gray-500' : 'text-gray-900'}`}>
+              {authorName}
             </p>
             <div className="flex items-center space-x-1 text-[10px] text-gray-500">
               <span>{formatTime(post.createdAt)}</span>
@@ -1299,7 +1307,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         {/* QnA 게시글 제목 */}
         {post.post_type === 'question' && post.title && (
           <div className="text-sm text-gray-900 mb-1">
-            <span className="font-semibold mr-2">{post.name || post.username}</span>
+            <span className={`font-semibold mr-2 ${!canClickProfile ? 'text-gray-500' : ''}`}>{authorName}</span>
             <span className="font-bold text-gray-800 block mb-0.5">[Q&A] {post.title}</span>
           </div>
         )}
@@ -1308,7 +1316,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         {(post.Desc || post.desc) && (
           <div className="text-sm text-gray-900 mb-1">
             {post.post_type !== 'question' && (
-              <span className="font-semibold mr-2">{post.name || post.username}</span>
+              <span className={`font-semibold mr-2 ${!canClickProfile ? 'text-gray-500' : ''}`}>{authorName}</span>
             )}
             <span className="whitespace-pre-wrap break-words">{displayDescription}</span>
             {shouldShowMore && (
@@ -1413,27 +1421,29 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       loading={deleteMutation.isPending}
     />
 
-    {/* 프로필 모달 */}
-    <ProfileModal
-      isOpen={showProfileModal}
-      onClose={() => setShowProfileModal(false)}
-      user={{
-        userId: post.userId,
-        user_id: post.userId,
-        id: post.userId,
-        name: post.name,
-        username: post.username,
-        profilePic: post.profilePic,
-        profile_pic: post.profilePic
-      }}
-    />
+    {/* 프로필 모달 - 탈퇴 사용자는 표시하지 않음 */}
+    {canClickProfile && (
+      <ProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        user={{
+          userId: post.userId,
+          user_id: post.userId,
+          id: post.userId,
+          name: authorName,
+          username: postUser.username,
+          profilePic: authorProfilePic,
+          profile_pic: authorProfilePic
+        }}
+      />
+    )}
 
     {/* 신고 모달 */}
     <ReportModal
       open={showReportModal}
       onClose={() => setShowReportModal(false)}
       postId={post.id}
-      postAuthor={post.name || post.username}
+      postAuthor={authorName}
     />
 
     {/* 신고 내역 모달 */}

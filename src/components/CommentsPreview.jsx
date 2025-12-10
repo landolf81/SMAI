@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faReply, faEllipsisV, faTrash, faEdit, faFlag, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import ReportModal from './ReportModal';
 import ProfileModal from './ProfileModal';
+import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
 const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm }) => {
   const { currentUser } = useContext(AuthContext);
@@ -294,29 +295,28 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
               {/* 부모 댓글 */}
               <div className="flex items-start space-x-2">
                 <img
-                  src={(() => {
-                    const pic = comment.profilePic || comment.profile_pic;
-                    if (!pic) return '/default/default_profile.png';
-                    if (pic.startsWith('http')) return pic;
-                    return `/uploads/profiles/${pic}`;
-                  })()}
-                  alt={comment.name || comment.username}
+                  src={getProfilePic(comment)}
+                  alt={getDisplayName(comment)}
                   onClick={() => {
-                    setSelectedUser(comment);
-                    setShowProfileModal(true);
+                    if (isProfileClickable(comment)) {
+                      setSelectedUser(comment);
+                      setShowProfileModal(true);
+                    }
                   }}
-                  className="w-6 h-6 rounded-full object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                  className={`w-6 h-6 rounded-full object-cover flex-shrink-0 transition-opacity ${isProfileClickable(comment) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(comment)}`}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start">
                     <span
                       onClick={() => {
-                        setSelectedUser(comment);
-                        setShowProfileModal(true);
+                        if (isProfileClickable(comment)) {
+                          setSelectedUser(comment);
+                          setShowProfileModal(true);
+                        }
                       }}
-                      className="font-semibold text-sm text-gray-800 mr-2 cursor-pointer hover:underline"
+                      className={`font-semibold text-sm mr-2 ${isProfileClickable(comment) ? 'text-gray-800 cursor-pointer hover:underline' : 'text-gray-500 cursor-default'}`}
                     >
-                      {comment.name || comment.username}
+                      {getDisplayName(comment)}
                       {comment.is_secret && (
                         <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
                           🔒 비밀글
@@ -491,29 +491,28 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                   {comment.replies.slice(0, 2).map((reply) => (
                     <div key={reply.id} className="flex items-start space-x-2">
                       <img
-                        src={(() => {
-                          const pic = reply.profilePic || reply.profile_pic;
-                          if (!pic) return '/default/default_profile.png';
-                          if (pic.startsWith('http')) return pic;
-                          return `/uploads/profiles/${pic}`;
-                        })()}
-                        alt={reply.name || reply.username}
+                        src={getProfilePic(reply)}
+                        alt={getDisplayName(reply)}
                         onClick={() => {
-                          setSelectedUser(reply);
-                          setShowProfileModal(true);
+                          if (isProfileClickable(reply)) {
+                            setSelectedUser(reply);
+                            setShowProfileModal(true);
+                          }
                         }}
-                        className="w-5 h-5 rounded-full object-cover flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                        className={`w-5 h-5 rounded-full object-cover flex-shrink-0 transition-opacity ${isProfileClickable(reply) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(reply)}`}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start">
                           <span
                             onClick={() => {
-                              setSelectedUser(reply);
-                              setShowProfileModal(true);
+                              if (isProfileClickable(reply)) {
+                                setSelectedUser(reply);
+                                setShowProfileModal(true);
+                              }
                             }}
-                            className="font-semibold text-xs text-gray-800 mr-2 cursor-pointer hover:underline"
+                            className={`font-semibold text-xs mr-2 ${isProfileClickable(reply) ? 'text-gray-800 cursor-pointer hover:underline' : 'text-gray-500 cursor-default'}`}
                           >
-                            {reply.name || reply.username}
+                            {getDisplayName(reply)}
                             {reply.is_secret && (
                               <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
                                 🔒 비밀글
