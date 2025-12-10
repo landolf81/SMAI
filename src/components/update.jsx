@@ -577,16 +577,24 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 별명/닉네임 <span className="text-red-500">*</span>
+                {!user?.verified && (
+                  <span className="text-xs text-gray-500 ml-2">(관리자 승인 후 변경 가능)</span>
+                )}
               </label>
-              <input 
-                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
-                }`} 
-                type="text" 
-                placeholder="사용할 별명이나 닉네임을 입력하세요" 
-                name="name" 
+              <input
+                className={`w-full px-4 py-2 border rounded-lg transition-colors ${
+                  !user?.verified
+                    ? 'bg-gray-100 cursor-not-allowed border-gray-300'
+                    : errors.name
+                      ? 'border-red-500 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                      : 'border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                }`}
+                type="text"
+                placeholder={user?.verified ? "사용할 별명이나 닉네임을 입력하세요" : "관리자 승인 후 변경 가능합니다"}
+                name="name"
                 value={info.name}
-                onChange={handleChange} 
+                onChange={handleChange}
+                disabled={!user?.verified}
                 required
               />
               {errors.name && (

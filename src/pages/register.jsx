@@ -4,14 +4,13 @@ import { AuthContext } from "../context/AuthContext";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
+import { generateRandomId, generateRandomNickname } from '../utils/randomGenerator';
 
 const Register = () => {
   const { register: registerUser } = useContext(AuthContext);
   const [inputs, setInputs] = useState({
-    username: "",
     email: "",
     password: "",
-    name: "",
   });
   const [err, setErr] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -89,7 +88,11 @@ const Register = () => {
     setErr(null);
 
     try {
-      await registerUser(inputs);
+      // 랜덤 ID와 별명 생성
+      const username = generateRandomId();
+      const name = generateRandomNickname();
+
+      await registerUser({ ...inputs, username, name });
       setSuccess(true);
     } catch (error) {
       console.error('회원가입 오류:', error);
@@ -238,37 +241,6 @@ const Register = () => {
           {/* 회원가입 폼 */}
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  사용자명
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  autoComplete="username"
-                  value={inputs.username}
-                  onChange={handleChange}
-                  placeholder="영문, 숫자로 구성"
-                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이름
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={inputs.name}
-                  onChange={handleChange}
-                  placeholder="실명을 입력하세요"
-                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
-                  required
-                />
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   이메일

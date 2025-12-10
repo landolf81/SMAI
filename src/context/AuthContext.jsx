@@ -1,5 +1,6 @@
 import React, { createContext, useEffect, useState } from "react";
 import { supabase, supabaseHelpers } from "../config/supabase.js";
+import { generateRandomId, generateRandomNickname } from "../utils/randomGenerator";
 
 export const AuthContext = createContext();
 
@@ -121,14 +122,34 @@ export const AuthContextProvider = ({ children }) => {
 
   const register = async ({ username, email, password, name }) => {
     try {
+      // 중복 체크 및 재생성 (최대 10회 시도)
+      let finalUsername = username;
+      let finalName = name;
+
+      // username 중복 체크
+      for (let i = 0; i < 10; i++) {
+        const exists = await supabaseHelpers.checkUsernameExists(finalUsername);
+        if (!exists) break;
+        finalUsername = generateRandomId();
+        if (i === 9) throw new Error('사용자명 생성에 실패했습니다. 다시 시도해주세요.');
+      }
+
+      // name 중복 체크
+      for (let i = 0; i < 10; i++) {
+        const exists = await supabaseHelpers.checkNameExists(finalName);
+        if (!exists) break;
+        finalName = generateRandomNickname();
+        if (i === 9) throw new Error('별명 생성에 실패했습니다. 다시 시도해주세요.');
+      }
+
       // Supabase Auth에 사용자 등록
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
         password: password,
         options: {
           data: {
-            username: username,
-            name: name
+            username: finalUsername,
+            name: finalName
           }
         }
       });

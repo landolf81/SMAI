@@ -180,6 +180,30 @@ export const supabaseHelpers = {
 
     if (error) throw error
     return data
+  },
+
+  // username 중복 체크
+  checkUsernameExists: async (username) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .maybeSingle()
+
+    if (error) throw error
+    return !!data
+  },
+
+  // name(별명) 중복 체크
+  checkNameExists: async (name) => {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('name', name)
+      .maybeSingle()
+
+    if (error) throw error
+    return !!data
   }
 }
 
