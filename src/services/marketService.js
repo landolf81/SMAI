@@ -533,6 +533,28 @@ export const marketService = {
   },
 
   /**
+   * DB에서 모든 공판장 목록 조회
+   * @returns {Array<string>} 공판장 목록
+   */
+  async getAllMarkets() {
+    try {
+      const { data, error } = await supabase
+        .from('market_data')
+        .select('market_name')
+        .order('market_name');
+
+      if (error) throw error;
+
+      // 중복 제거
+      const uniqueMarkets = [...new Set(data.map(item => item.market_name).filter(Boolean))];
+      return uniqueMarkets;
+    } catch (error) {
+      console.error('공판장 목록 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
    * 공판장별 등급 목록 조회
    * @param {string} marketName - 시장명
    * @returns {Array<string>} 등급 목록

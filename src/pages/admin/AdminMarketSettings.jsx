@@ -5,24 +5,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
-
-// 기본 공판장 목록
-const DEFAULT_MARKETS = [
-  '성주원예',
-  '성주조공',
-  '선남',
-  '가락',
-  '초전',
-  '용암'
-];
-
-// 기본 등급 목록 (공판장별 등급 조회 실패 시 사용)
-const DEFAULT_GRADES = [
-  '특품',
-  '상품',
-  '중품',
-  '하품'
-];
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 
 const AdminMarketSettings = () => {
   const navigate = useNavigate();
@@ -40,6 +25,12 @@ const AdminMarketSettings = () => {
 
   // 선택된 공판장의 등급 순서 (공판장별로 저장)
   const [marketGradeOrders, setMarketGradeOrders] = useState({});
+
+  // 신규 추가용
+  const [newMarketName, setNewMarketName] = useState('');
+  const [newGradeName, setNewGradeName] = useState('');
+  const [showAddMarket, setShowAddMarket] = useState(false);
+  const [showAddGrade, setShowAddGrade] = useState(false);
 
   // 설정 불러오기
   useEffect(() => {
@@ -66,9 +57,30 @@ const AdminMarketSettings = () => {
     }
   };
 
+  // DB에서 공판장 목록 가져오기
+  const loadMarketsFromDB = async () => {
+    try {
+      setLoading(true);
+      const markets = await marketService.getAllMarkets();
+      if (markets.length > 0) {
+        setMarketOrder(markets);
+        setSuccessMessage('DB에서 공판장 목록을 불러왔습니다.');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } else {
+        setSuccessMessage('DB에 공판장 데이터가 없습니다.');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('DB 공판장 조회 오류:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // 공판장 선택
   const handleMarketSelect = (marketName) => {
     setSelectedMarket(marketName);
+    setShowAddGrade(false);
   };
 
   // 현재 선택된 공판장의 등급 순서 가져오기
@@ -103,11 +115,13 @@ const AdminMarketSettings = () => {
       if (savedMarketOrder) {
         setMarketOrder(JSON.parse(savedMarketOrder));
       } else {
-        setMarketOrder(DEFAULT_MARKETS);
+        // 저장된 순서가 없으면 DB에서 불러오기
+        const markets = await marketService.getAllMarkets();
+        setMarketOrder(markets.length > 0 ? markets : []);
       }
     } catch (error) {
       console.error('설정 불러오기 오류:', error);
-      setMarketOrder(DEFAULT_MARKETS);
+      setMarketOrder([]);
     } finally {
       setLoading(false);
     }
@@ -196,15 +210,49 @@ const AdminMarketSettings = () => {
     }
   };
 
-  // 기본값으로 초기화
-  const resetToDefault = (type) => {
-    if (type === 'market') {
-      setMarketOrder(DEFAULT_MARKETS);
-    } else if (type === 'grade' && selectedMarket) {
-      // 원본 등급 순서로 복원
-      const originalGrades = marketGrades[selectedMarket] || [];
-      updateGradeOrder(originalGrades);
+  // 공판장 추가
+  const addMarket = () => {
+    if (!newMarketName.trim()) return;
+    if (marketOrder.includes(newMarketName.trim())) {
+      alert('이미 존재하는 공판장입니다.');
+      return;
     }
+    setMarketOrder([...marketOrder, newMarketName.trim()]);
+    setNewMarketName('');
+    setShowAddMarket(false);
+  };
+
+  // 공판장 삭제
+  const deleteMarket = (marketName) => {
+    if (!confirm(`"${marketName}" 공판장을 삭제하시겠습니까?`)) return;
+    setMarketOrder(marketOrder.filter(m => m !== marketName));
+    if (selectedMarket === marketName) {
+      setSelectedMarket(null);
+    }
+    // 해당 공판장의 등급 순서도 삭제
+    const newGradeOrders = { ...marketGradeOrders };
+    delete newGradeOrders[marketName];
+    setMarketGradeOrders(newGradeOrders);
+  };
+
+  // 등급 추가
+  const addGrade = () => {
+    if (!newGradeName.trim() || !selectedMarket) return;
+    const currentGrades = getCurrentGradeOrder();
+    if (currentGrades.includes(newGradeName.trim())) {
+      alert('이미 존재하는 등급입니다.');
+      return;
+    }
+    updateGradeOrder([...currentGrades, newGradeName.trim()]);
+    setNewGradeName('');
+    setShowAddGrade(false);
+  };
+
+  // 등급 삭제
+  const deleteGrade = (gradeName) => {
+    if (!confirm(`"${gradeName}" 등급을 삭제하시겠습니까?`)) return;
+    const currentGrades = getCurrentGradeOrder();
+    updateGradeOrder(currentGrades.filter(g => g !== gradeName));
   };
 
   const currentGradeOrder = getCurrentGradeOrder();
@@ -232,6 +280,14 @@ const AdminMarketSettings = () => {
           <p className="text-gray-500 text-sm">공판장 및 등급 정렬 순서를 설정합니다</p>
         </div>
         <button
+          onClick={loadMarketsFromDB}
+          disabled={loading}
+          className="btn btn-ghost btn-sm gap-1 text-blue-600"
+          title="DB에서 공판장 불러오기"
+        >
+          <CloudDownloadIcon fontSize="small" />
+        </button>
+        <button
           onClick={loadAllMarketGrades}
           disabled={loadingGrades}
           className="btn btn-ghost btn-sm gap-1 text-blue-600"
@@ -242,7 +298,7 @@ const AdminMarketSettings = () => {
         <button
           onClick={saveSettings}
           disabled={saving}
-          className="btn btn-primary btn-sm gap-1"
+          className="btn btn-outline btn-sm gap-1 text-blue-600 border-blue-600 hover:bg-blue-600 hover:text-white"
         >
           {saving ? (
             <span className="loading loading-spinner loading-xs"></span>
@@ -268,58 +324,100 @@ const AdminMarketSettings = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="card-title text-lg text-blue-600">공판장 정렬 순서</h2>
+              <h2 className="card-title text-lg text-blue-600">공판장 목록</h2>
               <button
-                onClick={() => resetToDefault('market')}
+                onClick={() => setShowAddMarket(!showAddMarket)}
                 className="btn btn-ghost btn-xs text-blue-600"
               >
-                기본값
+                <AddIcon fontSize="small" /> 추가
               </button>
             </div>
+
+            {/* 신규 공판장 추가 */}
+            {showAddMarket && (
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newMarketName}
+                  onChange={(e) => setNewMarketName(e.target.value)}
+                  placeholder="공판장명 입력"
+                  className="input input-bordered input-sm flex-1"
+                  onKeyPress={(e) => e.key === 'Enter' && addMarket()}
+                />
+                <button onClick={addMarket} className="btn btn-sm btn-outline text-blue-600 border-blue-600">
+                  추가
+                </button>
+                <button onClick={() => { setShowAddMarket(false); setNewMarketName(''); }} className="btn btn-sm btn-ghost">
+                  취소
+                </button>
+              </div>
+            )}
+
             <p className="text-sm text-gray-500 mb-4">
               공판장을 클릭하면 오른쪽에 등급 목록이 표시됩니다
             </p>
-            <ul className="space-y-2">
-              {marketOrder.map((market, index) => (
-                <li
-                  key={market}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index, 'market')}
-                  onDragOver={(e) => handleDragOver(e, index, 'market')}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => handleMarketSelect(market)}
-                  className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-colors ${
-                    draggedItem === index && draggedType === 'market' ? 'opacity-50' : ''
-                  } ${
-                    selectedMarket === market
-                      ? 'bg-blue-100 border-2 border-blue-400'
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
+
+            {marketOrder.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <p>공판장이 없습니다</p>
+                <button
+                  onClick={loadMarketsFromDB}
+                  className="btn btn-sm btn-outline mt-2 text-blue-600 border-blue-600"
                 >
-                  <DragIndicatorIcon className="text-gray-400 cursor-move" />
-                  <span className={`flex-1 font-medium ${selectedMarket === market ? 'text-blue-700' : 'text-gray-700'}`}>
-                    {market}
-                  </span>
-                  <span className="text-gray-400 text-sm mr-2">#{index + 1}</span>
-                  <div className="flex gap-1">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); moveUp(index, 'market'); }}
-                      disabled={index === 0}
-                      className="btn btn-ghost btn-xs"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); moveDown(index, 'market'); }}
-                      disabled={index === marketOrder.length - 1}
-                      className="btn btn-ghost btn-xs"
-                    >
-                      ▼
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  <CloudDownloadIcon fontSize="small" className="mr-1" />
+                  DB에서 불러오기
+                </button>
+              </div>
+            ) : (
+              <ul className="space-y-2">
+                {marketOrder.map((market, index) => (
+                  <li
+                    key={market}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, index, 'market')}
+                    onDragOver={(e) => handleDragOver(e, index, 'market')}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => handleMarketSelect(market)}
+                    className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                      draggedItem === index && draggedType === 'market' ? 'opacity-50' : ''
+                    } ${
+                      selectedMarket === market
+                        ? 'bg-blue-100 border-2 border-blue-400'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <DragIndicatorIcon className="text-gray-400 cursor-move" />
+                    <span className={`flex-1 font-medium ${selectedMarket === market ? 'text-blue-700' : 'text-gray-700'}`}>
+                      {market}
+                    </span>
+                    <span className="text-gray-400 text-sm mr-2">#{index + 1}</span>
+                    <div className="flex gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveUp(index, 'market'); }}
+                        disabled={index === 0}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); moveDown(index, 'market'); }}
+                        disabled={index === marketOrder.length - 1}
+                        className="btn btn-ghost btn-xs"
+                      >
+                        ▼
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteMarket(market); }}
+                        className="btn btn-ghost btn-xs text-red-500 hover:bg-red-50"
+                        title="삭제"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 
@@ -328,17 +426,37 @@ const AdminMarketSettings = () => {
           <div className="card-body">
             <div className="flex justify-between items-center mb-4">
               <h2 className="card-title text-lg text-blue-600">
-                {selectedMarket ? `${selectedMarket} 등급` : '등급 정렬 순서'}
+                {selectedMarket ? `${selectedMarket} 등급` : '등급 목록'}
               </h2>
               {selectedMarket && (
                 <button
-                  onClick={() => resetToDefault('grade')}
+                  onClick={() => setShowAddGrade(!showAddGrade)}
                   className="btn btn-ghost btn-xs text-blue-600"
                 >
-                  기본값
+                  <AddIcon fontSize="small" /> 추가
                 </button>
               )}
             </div>
+
+            {/* 신규 등급 추가 */}
+            {showAddGrade && selectedMarket && (
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newGradeName}
+                  onChange={(e) => setNewGradeName(e.target.value)}
+                  placeholder="등급명 입력"
+                  className="input input-bordered input-sm flex-1"
+                  onKeyPress={(e) => e.key === 'Enter' && addGrade()}
+                />
+                <button onClick={addGrade} className="btn btn-sm btn-outline text-blue-600 border-blue-600">
+                  추가
+                </button>
+                <button onClick={() => { setShowAddGrade(false); setNewGradeName(''); }} className="btn btn-sm btn-ghost">
+                  취소
+                </button>
+              </div>
+            )}
 
             {!selectedMarket ? (
               <div className="text-center py-12 text-gray-400">
@@ -352,7 +470,7 @@ const AdminMarketSettings = () => {
             ) : currentGradeOrder.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
                 <p className="text-lg">등급 정보가 없습니다</p>
-                <p className="text-sm mt-2">이 공판장은 아직 등급 데이터가 없습니다</p>
+                <p className="text-sm mt-2">위의 추가 버튼으로 등급을 추가하세요</p>
               </div>
             ) : (
               <>
@@ -388,6 +506,13 @@ const AdminMarketSettings = () => {
                           className="btn btn-ghost btn-xs"
                         >
                           ▼
+                        </button>
+                        <button
+                          onClick={() => deleteGrade(grade)}
+                          className="btn btn-ghost btn-xs text-red-500 hover:bg-red-50"
+                          title="삭제"
+                        >
+                          <DeleteIcon fontSize="small" />
                         </button>
                       </div>
                     </li>
