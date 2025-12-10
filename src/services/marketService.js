@@ -579,28 +579,37 @@ export const marketService = {
   },
 
   /**
-   * 모든 공판장의 등급 목록 조회
+   * 모든 공판장의 등급 목록 조회 (페이지네이션 적용)
    * @returns {Object} { marketName: [grades] }
    */
   async getAllMarketGrades() {
     try {
-      const { data, error } = await supabase
-        .from('market_data')
-        .select('market_name, grade')
-        .order('market_name')
-        .order('grade');
-
-      if (error) throw error;
-
-      // 시장별로 등급 그룹화
+      // Supabase 기본 limit이 1000개이므로 페이지네이션으로 전체 조회
       const gradesByMarket = {};
-      data.forEach(item => {
-        if (!item.market_name || !item.grade) return;
-        if (!gradesByMarket[item.market_name]) {
-          gradesByMarket[item.market_name] = new Set();
-        }
-        gradesByMarket[item.market_name].add(item.grade);
-      });
+      let from = 0;
+      const pageSize = 1000;
+
+      while (true) {
+        const { data, error } = await supabase
+          .from('market_data')
+          .select('market_name, grade')
+          .range(from, from + pageSize - 1);
+
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+
+        // 시장별로 등급 그룹화
+        data.forEach(item => {
+          if (!item.market_name || !item.grade) return;
+          if (!gradesByMarket[item.market_name]) {
+            gradesByMarket[item.market_name] = new Set();
+          }
+          gradesByMarket[item.market_name].add(item.grade);
+        });
+
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
 
       // Set을 Array로 변환
       Object.keys(gradesByMarket).forEach(market => {
@@ -611,6 +620,76 @@ export const marketService = {
     } catch (error) {
       console.error('전체 등급 목록 조회 오류:', error);
       return {};
+    }
+  },
+
+  /**
+   * 시장 설정 조회 (공판장 순서, 등급 순서)
+   * @returns {Object|null} { market_order: [], grade_orders: {} }
+   */
+  async getMarketSettings() {
+    try {
+      const { data, error } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'market_display_settings')
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // 설정이 없는 경우
+          return null;
+        }
+        throw error;
+      }
+
+      return data?.value || null;
+    } catch (error) {
+      console.error('시장 설정 조회 오류:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 시장 설정 저장 (공판장 순서, 등급 순서)
+   * @param {Object} settings - { market_order: [], grade_orders: {} }
+   */
+  async saveMarketSettings(settings) {
+    try {
+      const { data: existing } = await supabase
+        .from('app_settings')
+        .select('id')
+        .eq('key', 'market_display_settings')
+        .single();
+
+      if (existing) {
+        // 업데이트
+        const { error } = await supabase
+          .from('app_settings')
+          .update({
+            value: settings,
+            updated_at: new Date().toISOString()
+          })
+          .eq('key', 'market_display_settings');
+
+        if (error) throw error;
+      } else {
+        // 신규 생성
+        const { error } = await supabase
+          .from('app_settings')
+          .insert([{
+            key: 'market_display_settings',
+            value: settings,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('시장 설정 저장 오류:', error);
+      throw error;
     }
   }
 };

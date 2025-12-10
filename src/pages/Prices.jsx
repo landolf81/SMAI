@@ -33,6 +33,7 @@ const Prices = () => {
   const [marketData, setMarketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [gradeSettings, setGradeSettings] = useState(null); // DB에서 가져온 등급 설정
 
   // URL 파라미터에서 시장명과 날짜 가져오기
   const marketName = searchParams.get('market');
@@ -41,24 +42,24 @@ const Prices = () => {
     urlDate || new Date().toISOString().split('T')[0]
   );
 
-  // 페이지 진입 시 스크롤 최상단으로 이동
+  // 페이지 진입 시 스크롤 최상단으로 이동 및 설정 로드
   useEffect(() => {
     window.scrollTo(0, 0);
+    // DB에서 등급 정렬 설정 가져오기
+    marketService.getMarketSettings().then(settings => {
+      setGradeSettings(settings);
+    });
   }, []);
 
-  // 등급 정렬 순서 적용 (공판장별)
+  // 등급 정렬 순서 적용 (공판장별 - DB 설정 사용)
   const sortDetailsByGradeOrder = (details, currentMarket) => {
     if (!details) return details;
 
-    // 공판장별 등급 순서 확인
-    const savedGradeOrders = localStorage.getItem('market_grade_orders');
+    // DB에서 가져온 공판장별 등급 순서 확인
     let orderArray = null;
 
-    if (savedGradeOrders) {
-      const gradeOrders = JSON.parse(savedGradeOrders);
-      if (gradeOrders[currentMarket]) {
-        orderArray = gradeOrders[currentMarket];
-      }
+    if (gradeSettings?.grade_orders?.[currentMarket]) {
+      orderArray = gradeSettings.grade_orders[currentMarket];
     }
 
     // 공판장별 순서가 없으면 정렬하지 않음
@@ -110,6 +111,16 @@ const Prices = () => {
       setError('시장을 선택해주세요.');
     }
   }, [marketName, selectedDate]);
+
+  // 설정이 로드되면 기존 데이터 다시 정렬
+  useEffect(() => {
+    if (gradeSettings?.grade_orders && marketData?.details && marketName) {
+      const sortedDetails = sortDetailsByGradeOrder(marketData.details, marketName);
+      if (sortedDetails !== marketData.details) {
+        setMarketData(prev => ({ ...prev, details: sortedDetails }));
+      }
+    }
+  }, [gradeSettings]);
 
   const handleDateChange = (e) => {
     const newDate = e.target.value;

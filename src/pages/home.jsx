@@ -24,6 +24,7 @@ const Home = () => {
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [marketSettings, setMarketSettings] = useState(null); // DB에서 가져온 시장 설정
 
   // 날짜 선택기 모달 상태
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -100,12 +101,36 @@ const Home = () => {
     const checkDevice = () => {
       setIsMobile(isMobileDevice() || isTabletDevice());
     };
-    
+
     checkDevice();
     window.addEventListener('resize', checkDevice);
-    
+
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
+
+  // 시장 설정 로드 (공판장 정렬 순서)
+  useEffect(() => {
+    marketService.getMarketSettings().then(settings => {
+      setMarketSettings(settings);
+    });
+  }, []);
+
+  // 시장 설정이 로드되면 기존 데이터 다시 정렬
+  useEffect(() => {
+    if (marketSettings?.market_order?.length > 0 && marketData.length > 0) {
+      const orderArray = marketSettings.market_order;
+      const sortedData = [...marketData].sort((a, b) => {
+        const indexA = orderArray.indexOf(a.name);
+        const indexB = orderArray.indexOf(b.name);
+
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+        if (indexA === -1) return 1;
+        if (indexB === -1) return -1;
+        return 0;
+      });
+      setMarketData(sortedData);
+    }
+  }, [marketSettings]);
 
   // 실제 데이터가 있는 시장 목록 가져오기
   const fetchAvailableMarkets = async (date) => {
@@ -209,23 +234,36 @@ const Home = () => {
           }
         });
         
-        // 시장 순서 정렬: 가락공판장, 대전공판장을 마지막으로 이동
-        const sortedData = transformedData.sort((a, b) => {
+        // 시장 순서 정렬: DB 설정에서 가져온 market_order 사용
+        const sortedData = [...transformedData].sort((a, b) => {
+          // DB에 저장된 순서가 있으면 사용
+          if (marketSettings?.market_order?.length > 0) {
+            const orderArray = marketSettings.market_order;
+            const indexA = orderArray.indexOf(a.name);
+            const indexB = orderArray.indexOf(b.name);
+
+            // 둘 다 목록에 있으면 순서대로
+            if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+            // 목록에 없는 건 뒤로
+            if (indexA === -1) return 1;
+            if (indexB === -1) return -1;
+          }
+
+          // 설정이 없으면 기본 정렬 (가락, 대전은 마지막)
           const isASpecial = a.name.includes('가락') || a.name.includes('대전');
           const isBSpecial = b.name.includes('가락') || b.name.includes('대전');
-          
+
           if (isASpecial && !isBSpecial) return 1;
           if (!isASpecial && isBSpecial) return -1;
-          
-          // 가락과 대전 사이에서는 가락을 먼저
+
           if (isASpecial && isBSpecial) {
             if (a.name.includes('가락') && b.name.includes('대전')) return -1;
             if (a.name.includes('대전') && b.name.includes('가락')) return 1;
           }
-          
+
           return a.name.localeCompare(b.name);
         });
-        
+
         setMarketData(sortedData);
       } else {
         throw new Error('API 응답 형식이 올바르지 않습니다.');
