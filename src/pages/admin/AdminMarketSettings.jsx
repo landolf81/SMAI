@@ -7,8 +7,6 @@ import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
-
 const AdminMarketSettings = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -57,26 +55,6 @@ const AdminMarketSettings = () => {
     }
   };
 
-  // DB에서 공판장 목록 가져오기
-  const loadMarketsFromDB = async () => {
-    try {
-      setLoading(true);
-      const markets = await marketService.getAllMarkets();
-      if (markets.length > 0) {
-        setMarketOrder(markets);
-        setSuccessMessage('DB에서 공판장 목록을 불러왔습니다.');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      } else {
-        setSuccessMessage('DB에 공판장 데이터가 없습니다.');
-        setTimeout(() => setSuccessMessage(''), 3000);
-      }
-    } catch (error) {
-      console.error('DB 공판장 조회 오류:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // 공판장 선택
   const handleMarketSelect = (marketName) => {
     setSelectedMarket(marketName);
@@ -115,9 +93,8 @@ const AdminMarketSettings = () => {
       if (savedMarketOrder) {
         setMarketOrder(JSON.parse(savedMarketOrder));
       } else {
-        // 저장된 순서가 없으면 DB에서 불러오기
-        const markets = await marketService.getAllMarkets();
-        setMarketOrder(markets.length > 0 ? markets : []);
+        // 저장된 순서가 없으면 빈 배열 (수기 등록)
+        setMarketOrder([]);
       }
     } catch (error) {
       console.error('설정 불러오기 오류:', error);
@@ -280,14 +257,6 @@ const AdminMarketSettings = () => {
           <p className="text-gray-500 text-sm">공판장 및 등급 정렬 순서를 설정합니다</p>
         </div>
         <button
-          onClick={loadMarketsFromDB}
-          disabled={loading}
-          className="btn btn-ghost btn-sm gap-1 text-blue-600"
-          title="DB에서 공판장 불러오기"
-        >
-          <CloudDownloadIcon fontSize="small" />
-        </button>
-        <button
           onClick={loadAllMarketGrades}
           disabled={loadingGrades}
           className="btn btn-ghost btn-sm gap-1 text-blue-600"
@@ -319,11 +288,11 @@ const AdminMarketSettings = () => {
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-6" style={{ height: 'calc(100vh - 200px)' }}>
         {/* 공판장 정렬 순서 */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
+        <div className="card bg-base-100 shadow-xl flex flex-col h-full">
+          <div className="card-body flex flex-col p-4 h-full">
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
               <h2 className="card-title text-lg text-blue-600">공판장 목록</h2>
               <button
                 onClick={() => setShowAddMarket(!showAddMarket)}
@@ -335,7 +304,7 @@ const AdminMarketSettings = () => {
 
             {/* 신규 공판장 추가 */}
             {showAddMarket && (
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-4 flex-shrink-0">
                 <input
                   type="text"
                   value={newMarketName}
@@ -353,23 +322,17 @@ const AdminMarketSettings = () => {
               </div>
             )}
 
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-gray-500 mb-4 flex-shrink-0">
               공판장을 클릭하면 오른쪽에 등급 목록이 표시됩니다
             </p>
 
             {marketOrder.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-gray-400 flex-1">
                 <p>공판장이 없습니다</p>
-                <button
-                  onClick={loadMarketsFromDB}
-                  className="btn btn-sm btn-outline mt-2 text-blue-600 border-blue-600"
-                >
-                  <CloudDownloadIcon fontSize="small" className="mr-1" />
-                  DB에서 불러오기
-                </button>
+                <p className="text-sm mt-2">위 추가 버튼으로 공판장을 등록하세요</p>
               </div>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-2 overflow-y-auto flex-1">
                 {marketOrder.map((market, index) => (
                   <li
                     key={market}
@@ -422,9 +385,9 @@ const AdminMarketSettings = () => {
         </div>
 
         {/* 등급 정렬 순서 */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex justify-between items-center mb-4">
+        <div className="card bg-base-100 shadow-xl flex flex-col h-full">
+          <div className="card-body flex flex-col p-4 h-full">
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
               <h2 className="card-title text-lg text-blue-600">
                 {selectedMarket ? `${selectedMarket} 등급` : '등급 목록'}
               </h2>
@@ -440,7 +403,7 @@ const AdminMarketSettings = () => {
 
             {/* 신규 등급 추가 */}
             {showAddGrade && selectedMarket && (
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-4 flex-shrink-0">
                 <input
                   type="text"
                   value={newGradeName}
@@ -459,25 +422,25 @@ const AdminMarketSettings = () => {
             )}
 
             {!selectedMarket ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-gray-400 flex-1 flex flex-col justify-center">
                 <p className="text-lg mb-2">공판장을 선택하세요</p>
                 <p className="text-sm">왼쪽 목록에서 공판장을 클릭하면<br/>해당 공판장의 등급 목록이 표시됩니다</p>
               </div>
             ) : loadingGrades ? (
-              <div className="flex justify-center py-12">
+              <div className="flex justify-center py-12 flex-1">
                 <span className="loading loading-spinner loading-lg text-blue-600"></span>
               </div>
             ) : currentGradeOrder.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-gray-400 flex-1 flex flex-col justify-center">
                 <p className="text-lg">등급 정보가 없습니다</p>
                 <p className="text-sm mt-2">위의 추가 버튼으로 등급을 추가하세요</p>
               </div>
             ) : (
               <>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 mb-4 flex-shrink-0">
                   드래그하거나 화살표로 정렬 순서를 변경하세요
                 </p>
-                <ul className="space-y-2">
+                <ul className="space-y-2 overflow-y-auto flex-1">
                   {currentGradeOrder.map((grade, index) => (
                     <li
                       key={grade}
