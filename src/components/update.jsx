@@ -614,7 +614,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 별명/닉네임 <span className="text-red-500">*</span>
                 {!isVerified && (
-                  <span className="text-xs text-gray-500 ml-2">(신원 인증 후 변경 가능)</span>
+                  <span className="text-xs text-gray-500 ml-2">(인증 후 변경 가능)</span>
                 )}
               </label>
               <input
@@ -626,7 +626,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                       : 'border-gray-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
                 }`}
                 type="text"
-                placeholder={isVerified ? "사용할 별명이나 닉네임을 입력하세요" : "신원 인증 후 변경 가능합니다"}
+                placeholder={isVerified ? "사용할 별명이나 닉네임을 입력하세요" : "인증 후 변경 가능합니다"}
                 name="name"
                 value={info.name}
                 onChange={handleChange}
@@ -636,12 +636,12 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
               {errors.name && (
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
               )}
-              {/* 신원 인증 안내 */}
+              {/* 인증 안내 */}
               {!isVerified && (
                 <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   {!verificationRequest && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-yellow-700">별명을 수정하려면 신원 인증이 필요합니다.</span>
+                      <span className="text-xs text-yellow-700">별명을 수정하려면 인증이 필요합니다.</span>
                       <button
                         type="button"
                         onClick={() => setShowVerificationRequestModal(true)}
@@ -911,7 +911,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
         />
       )}
 
-      {/* 신원 인증 요청 모달 */}
+      {/* 인증 요청 모달 */}
       <VerificationRequestModal
         isOpen={showVerificationRequestModal}
         onClose={() => setShowVerificationRequestModal(false)}

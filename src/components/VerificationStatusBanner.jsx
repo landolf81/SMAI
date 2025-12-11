@@ -35,15 +35,15 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
               </svg>
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-yellow-800">신원 인증이 필요합니다</h4>
+              <h4 className="text-sm font-medium text-yellow-800">인증이 필요합니다</h4>
               <p className="text-xs text-yellow-700 mt-1">
-                별명 수정 및 일부 기능을 사용하려면 신원 인증이 필요합니다.
+                별명 수정 및 일부 기능을 사용하려면 인증이 필요합니다.
               </p>
               <button
                 onClick={() => setShowRequestModal(true)}
                 className="mt-2 text-sm font-medium text-yellow-700 underline hover:text-yellow-800"
               >
-                신원 인증 요청하기
+                인증 요청하기
               </button>
             </div>
           </div>

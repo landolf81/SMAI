@@ -78,7 +78,7 @@ const VerificationRequestModal = ({ isOpen, onClose }) => {
         {/* 헤더 */}
         <div className="bg-gradient-to-r from-green-500 to-green-600 text-white p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold">신원 인증 요청</h2>
+            <h2 className="text-xl font-bold">인증 요청</h2>
             <button
               onClick={onClose}
               className="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors"
@@ -93,7 +93,7 @@ const VerificationRequestModal = ({ isOpen, onClose }) => {
         {/* 안내 메시지 */}
         <div className="p-4 bg-blue-50 border-b border-blue-100">
           <p className="text-sm text-blue-700">
-            별명을 수정하려면 신원 인증이 필요합니다. 아래 정보를 입력하면 관리자 검토 후 SMS로 인증 코드가 발송됩니다.
+            별명을 수정하려면 인증이 필요합니다. 아래 정보를 입력하면 관리자 검토 후 SMS로 인증 코드가 발송됩니다.
           </p>
         </div>
 
@@ -154,7 +154,7 @@ const VerificationRequestModal = ({ isOpen, onClose }) => {
             <h4 className="text-sm font-medium text-gray-800 mb-2">개인정보 수집 및 이용 동의</h4>
             <div className="text-xs text-gray-600 space-y-1 mb-3">
               <p><strong>수집항목:</strong> 성명, 휴대폰 번호</p>
-              <p><strong>수집목적:</strong> 신원 인증 및 별명 변경 허용</p>
+              <p><strong>수집목적:</strong> 본인 인증 및 별명 변경 허용</p>
               <p><strong>보유기간:</strong> 회원 탈퇴 시까지</p>
               <p className="text-gray-500">※ 회원 탈퇴 시 수집된 개인정보는 즉시 삭제됩니다.</p>
             </div>

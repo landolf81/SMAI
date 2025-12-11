@@ -9,6 +9,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import SecurityIcon from "@mui/icons-material/Security";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { userService } from '../../services';
 
@@ -257,9 +258,7 @@ const UserListContent = ({
               <p className="text-xs text-gray-500 uppercase tracking-wide">전체 사용자</p>
               <p className="text-2xl font-bold text-blue-600 mt-1">{pagination?.total || users.length}</p>
             </div>
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <PeopleIcon className="text-blue-600" fontSize="small" />
-            </div>
+            <PeopleIcon className="text-blue-600" fontSize="small" />
           </div>
         </div>
 
@@ -271,9 +270,7 @@ const UserListContent = ({
                 {users.filter(u => u.role === 'super_admin').length}
               </p>
             </div>
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <SecurityIcon className="text-purple-600" fontSize="small" />
-            </div>
+            <SecurityIcon className="text-purple-600" fontSize="small" />
           </div>
         </div>
 
@@ -285,9 +282,7 @@ const UserListContent = ({
                 {users.filter(u => ['content_admin', 'market_admin', 'advertiser'].includes(u.role)).length}
               </p>
             </div>
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <EditIcon className="text-[#004225]" fontSize="small" />
-            </div>
+            <EditIcon className="text-[#004225]" fontSize="small" />
           </div>
         </div>
 
@@ -299,9 +294,7 @@ const UserListContent = ({
                 {users.filter(u => u.status === 'active').length}
               </p>
             </div>
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <CheckCircleIcon className="text-emerald-600" fontSize="small" />
-            </div>
+            <CheckCircleIcon className="text-emerald-600" fontSize="small" />
           </div>
         </div>
 
@@ -313,9 +306,7 @@ const UserListContent = ({
                 {users.filter(u => u.status === 'banned').length}
               </p>
             </div>
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <BlockIcon className="text-red-600" fontSize="small" />
-            </div>
+            <BlockIcon className="text-red-600" fontSize="small" />
           </div>
         </div>
       </div>
@@ -427,9 +418,21 @@ const UserListContent = ({
                     </select>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(user.status)}`}>
-                      {getStatusText(user.status)}
-                    </span>
+                    <div className={`inline-flex p-1.5 rounded-lg transition-colors ${
+                      user.status === 'active'
+                        ? 'text-emerald-600 hover:bg-emerald-50'
+                        : user.status === 'banned'
+                          ? 'text-red-600 hover:bg-red-50'
+                          : 'text-amber-600 hover:bg-amber-50'
+                    }`} title={getStatusText(user.status)}>
+                      {user.status === 'active' ? (
+                        <CheckCircleIcon fontSize="small" />
+                      ) : user.status === 'banned' ? (
+                        <BlockIcon fontSize="small" />
+                      ) : (
+                        <HourglassEmptyIcon fontSize="small" />
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-gray-600">
@@ -450,8 +453,8 @@ const UserListContent = ({
                       <button
                         className={`p-2 rounded-lg transition-colors ${
                           user.status === 'active'
-                            ? 'bg-red-100 text-red-600 hover:bg-red-200'
-                            : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'
+                            ? 'text-red-600 hover:bg-red-50'
+                            : 'text-emerald-600 hover:bg-emerald-50'
                         }`}
                         onClick={() => handleStatusToggle(user.id, user.status)}
                         title={user.status === 'active' ? '차단' : '활성화'}
@@ -463,7 +466,7 @@ const UserListContent = ({
                         )}
                       </button>
                       <button
-                        className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                        className="p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
                         onClick={() => handleDeleteUser(user.id, user.username || user.name)}
                         title="삭제"
                       >

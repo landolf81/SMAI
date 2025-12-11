@@ -13,8 +13,8 @@ import { AdminOnly } from '../../components/PermissionComponents';
 import { SUPABASE_URL } from '../../config/supabase';
 
 const AdminPosts = () => {
+  const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterTag, setFilterTag] = useState('all');
   const [page, setPage] = useState(0);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showPostModal, setShowPostModal] = useState(false);
@@ -32,12 +32,11 @@ const AdminPosts = () => {
 
   // 게시글 목록 조회
   const { data: posts = [], isLoading, error } = useQuery({
-    queryKey: ['admin-posts', searchTerm, filterTag, page],
+    queryKey: ['admin-posts', searchTerm, page],
     queryFn: () => postService.getAdminPosts({
       page,
       limit: 20,
-      search: searchTerm || undefined,
-      tagName: filterTag !== 'all' ? filterTag : undefined
+      search: searchTerm || undefined
     }),
     keepPreviousData: true,
     retry: false
@@ -77,10 +76,20 @@ const AdminPosts = () => {
     }
   });
 
-  // 검색어나 필터 변경 시 페이지 리셋
+  // 검색어 변경 시 페이지 리셋
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, filterTag]);
+  }, [searchTerm]);
+
+  const handleSearch = () => {
+    setSearchTerm(searchInput);
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   const handleHidePost = (postId, currentHidden) => {
     const action = currentHidden ? '숨김 해제' : '숨김';
@@ -248,32 +257,26 @@ const AdminPosts = () => {
           </div>
         </div>
 
-        {/* 검색 및 필터 */}
+        {/* 검색 */}
         <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex gap-2">
             <div className="flex-1 relative">
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="제목, 내용, 작성자로 검색..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleSearchKeyPress}
                 className="input input-bordered w-full pl-10"
               />
             </div>
-
-            <select
-              value={filterTag}
-              onChange={(e) => setFilterTag(e.target.value)}
-              className="select select-bordered"
+            <button
+              onClick={handleSearch}
+              className="btn btn-primary"
             >
-              <option value="all">모든 태그</option>
-              <option value="농업정보">농업정보</option>
-              <option value="가격정보">가격정보</option>
-              <option value="질문">질문</option>
-              <option value="중고거래">중고거래</option>
-              <option value="일반">일반</option>
-            </select>
+              검색
+            </button>
           </div>
         </div>
 

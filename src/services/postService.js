@@ -1016,7 +1016,7 @@ export const postService = {
 
       // 검색 필터
       if (options.search) {
-        query = query.or(`title.ilike.%${options.search}%,desc.ilike.%${options.search}%`);
+        query = query.or(`title.ilike.%${options.search}%,description.ilike.%${options.search}%`);
       }
 
       // 상태 필터

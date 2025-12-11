@@ -66,7 +66,7 @@ const AdminLeftbar = () => {
         {
           path: "/admin/verification",
           icon: VerifiedUserIcon,
-          label: "신원 인증 관리",
+          label: "인증 관리",
           badge: null
         }
       ]

@@ -1,6 +1,5 @@
 import { supabase } from '../config/supabase.js';
 import { badgeService } from './badgeService.js';
-import { userService } from './userService.js';
 
 export const verificationService = {
   /**
@@ -162,28 +161,23 @@ export const verificationService = {
 
     if (error) throw error;
 
-    // 2. 사용자 정보 별도 조회 (userService 사용)
-    const userIds = [...new Set((data || []).map(r => r.user_id))];
+    // 2. 사용자 정보 일괄 조회 (N+1 문제 해결)
+    const userIds = [...new Set((data || []).map(r => r.user_id).filter(Boolean))];
     let usersMap = {};
 
     if (userIds.length > 0) {
       try {
-        // userService.getUser를 사용하여 각 사용자 정보 조회
-        const userPromises = userIds.map(id => userService.getUser(id).catch(() => null));
-        const usersData = await Promise.all(userPromises);
+        // 한 번의 쿼리로 모든 사용자 정보 조회
+        const { data: usersData, error: usersError } = await supabase
+          .from('users')
+          .select('id, username, name, email, profile_pic, verified')
+          .in('id', userIds);
 
-        usersData.forEach(user => {
-          if (user) {
-            usersMap[user.id] = {
-              id: user.id,
-              username: user.username,
-              name: user.name,
-              email: user.email,
-              profile_pic: user.profile_pic || user.profilePic,
-              verified: user.verified
-            };
-          }
-        });
+        if (!usersError && usersData) {
+          usersData.forEach(user => {
+            usersMap[user.id] = user;
+          });
+        }
       } catch (err) {
         console.error('사용자 정보 조회 실패:', err);
       }

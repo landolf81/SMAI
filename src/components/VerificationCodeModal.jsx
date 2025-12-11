@@ -24,7 +24,7 @@ const VerificationCodeModal = ({ isOpen, onClose, onSuccess }) => {
       if (onSuccess) {
         onSuccess();
       } else {
-        alert('신원 인증이 완료되었습니다! 이제 별명을 수정할 수 있습니다.');
+        alert('인증이 완료되었습니다! 이제 별명을 수정할 수 있습니다.');
       }
     },
     onError: (err) => {
