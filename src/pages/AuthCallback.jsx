@@ -51,13 +51,14 @@ const AuthCallback = () => {
           .from('users')
           .select('*')
           .eq('id', user.id)
+          .is('deleted_at', null)  // 탈퇴하지 않은 활성 사용자만
           .maybeSingle();
 
         if (profileError && profileError.code !== 'PGRST116') {
           console.error('프로필 조회 오류:', profileError);
         }
 
-        // 프로필이 없으면 생성
+        // 프로필이 없으면 생성 (탈퇴 및 불완전 프로필 처리 포함)
         if (!existingProfile) {
           console.log('🆕 신규 사용자 - 프로필 생성 중...');
           setStatus('프로필 생성 중...');
@@ -70,27 +71,64 @@ const AuthCallback = () => {
           const kakaoProfileImage = kakaoUser.avatar_url || kakaoUser.picture || '';
 
           // 고유한 username과 name 생성
-          let username = generateRandomId();
+          // username: 사용자 ID 뒤 4자리 + 랜덤 6자리 = 더 높은 유니크성
+          const userIdSuffix = user.id.slice(-4);
+          let username = `${generateRandomId()}${userIdSuffix}`;
           let name = kakaoName || generateRandomNickname();
 
-          // username 중복 체크
+          // username 중복 체크 (최대 10회 시도)
           for (let i = 0; i < 10; i++) {
             const exists = await supabaseHelpers.checkUsernameExists(username);
-            if (!exists) break;
-            username = generateRandomId();
+            if (!exists) {
+              console.log(`✅ 사용 가능한 username 찾음: ${username} (${i + 1}번째 시도)`);
+              break;
+            }
+            console.log(`⚠️ username 중복: ${username}, 재생성 중...`);
+            username = `${generateRandomId()}${userIdSuffix}`;
           }
 
-          // name 중복 체크
+          // name 중복 체크 (최대 10회 시도)
           for (let i = 0; i < 10; i++) {
             const exists = await supabaseHelpers.checkNameExists(name);
-            if (!exists) break;
+            if (!exists) {
+              console.log(`✅ 사용 가능한 name 찾음: ${name} (${i + 1}번째 시도)`);
+              break;
+            }
+            console.log(`⚠️ name 중복: ${name}, 재생성 중...`);
             name = generateRandomNickname();
           }
 
-          // 프로필 생성
-          const { error: insertError } = await supabase
+          // 이전에 생성된 프로필(탈퇴 또는 불완전)이 있는지 확인하고 정리
+          const { data: anyExistingProfile } = await supabase
             .from('users')
-            .insert([{
+            .select('id, username, deleted_at')
+            .eq('id', user.id)
+            .maybeSingle();
+
+          if (anyExistingProfile) {
+            console.log('⚠️ 이전 프로필 발견:', anyExistingProfile);
+
+            if (anyExistingProfile.deleted_at) {
+              // 탈퇴한 사용자는 재가입 불가
+              throw new Error('탈퇴한 계정입니다. 탈퇴한 계정으로는 재가입이 불가능합니다.');
+            } else {
+              // 불완전한 프로필(생성 중 오류) - 삭제 후 재생성
+              console.log('⚠️ 불완전한 프로필 삭제 중...');
+              await supabase
+                .from('users')
+                .delete()
+                .eq('id', user.id);
+              console.log('✅ 불완전한 프로필 삭제 완료');
+            }
+          }
+
+          // 프로필 생성 (재시도 로직 포함)
+          let insertSuccess = false;
+          let retryCount = 0;
+          const maxRetries = 5;
+
+          while (!insertSuccess && retryCount < maxRetries) {
+            const newUserData = {
               id: user.id,
               email: kakaoEmail,
               username: username,
@@ -99,16 +137,59 @@ const AuthCallback = () => {
               status: 'active',
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
-            }]);
+            };
 
-          if (insertError) {
-            console.error('프로필 생성 오류:', insertError);
-            // 이미 존재하는 경우 무시 (동시성 문제)
-            if (insertError.code !== '23505') {
-              throw insertError;
+            console.log(`📝 생성할 사용자 데이터 (${retryCount + 1}/${maxRetries}):`, JSON.stringify(newUserData, null, 2));
+
+            const { error: insertError } = await supabase
+              .from('users')
+              .insert([newUserData]);
+
+            if (insertError) {
+              console.error('프로필 생성 오류:', insertError);
+              console.error('에러 코드:', insertError.code);
+              console.error('에러 메시지:', insertError.message);
+              console.error('에러 상세:', insertError.details);
+
+              // username 또는 name 중복 오류 (23505)
+              if (insertError.code === '23505') {
+                retryCount++;
+                console.warn(`⚠️ 중복 키 오류 발생, 재시도 중... (${retryCount}/${maxRetries})`);
+
+                // 에러 메시지에서 어떤 필드가 중복인지 확인
+                const errorDetail = insertError.message || '';
+
+                if (errorDetail.includes('username')) {
+                  console.log('🔄 username 재생성');
+                  username = `${generateRandomId()}${userIdSuffix}`;
+                } else if (errorDetail.includes('name')) {
+                  console.log('🔄 name 재생성');
+                  name = generateRandomNickname();
+                } else {
+                  // 어떤 필드인지 모르면 둘 다 재생성
+                  console.log('🔄 username과 name 모두 재생성');
+                  username = `${generateRandomId()}${userIdSuffix}`;
+                  name = generateRandomNickname();
+                }
+
+                // 대기 시간을 점진적으로 증가 (exponential backoff)
+                const delay = 100 * Math.pow(2, retryCount - 1);
+                console.log(`⏳ ${delay}ms 대기 후 재시도...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+              } else {
+                // 23505가 아닌 다른 에러는 즉시 throw
+                throw new Error(`프로필 생성 실패: ${insertError.message || '알 수 없는 오류'}`);
+              }
+            } else {
+              insertSuccess = true;
+              console.log('✅ 프로필 생성 완료');
             }
-          } else {
-            console.log('✅ 프로필 생성 완료');
+          }
+
+          // 최대 재시도 횟수를 초과한 경우
+          if (!insertSuccess) {
+            throw new Error('프로필 생성 실패: 최대 재시도 횟수 초과 (중복 키 문제). 브라우저 캐시를 삭제하고 다시 시도해주세요.');
           }
         } else {
           console.log('✅ 기존 사용자 확인됨');
