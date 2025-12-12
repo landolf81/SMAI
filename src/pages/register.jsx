@@ -7,7 +7,7 @@ import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
 import { generateRandomId, generateRandomNickname } from '../utils/randomGenerator';
 
 const Register = () => {
-  const { register: registerUser } = useContext(AuthContext);
+  const { register: registerUser, loginWithKakao } = useContext(AuthContext);
   const [inputs, setInputs] = useState({
     email: "",
     password: "",
@@ -332,6 +332,29 @@ const Register = () => {
                 )}
               </button>
             </form>
+
+            {/* 소셜 회원가입 (카카오톡) */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white text-gray-500">또는</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={loginWithKakao}
+                disabled={loading}
+                className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-4 px-4 rounded-xl transition-all text-lg shadow-lg shadow-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3C6.477 3 2 6.463 2 10.742c0 2.72 1.753 5.097 4.388 6.463-.17.598-.614 2.169-.702 2.505-.108.41.15.405.316.295.13-.087 2.07-1.366 2.903-1.92.689.1 1.401.152 2.095.152 5.523 0 10-3.463 10-7.742S17.523 3 12 3z"/>
+                </svg>
+                카카오톡으로 시작하기
+              </button>
+            </div>
 
             {/* 로그인 링크 */}
             <div className="mt-6 text-center">
