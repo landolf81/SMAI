@@ -209,10 +209,11 @@ const AuthCallback = () => {
         }
 
         setStatus('로그인 완료! 이동 중...');
+        console.log('✅ 로그인 완료! 이동 중...');
 
-        // 잠시 대기 후 메인 페이지로 이동
+        // 메인 페이지로 이동하면서 새로고침하여 AuthContext가 프로필을 로드하도록 함
         await new Promise(resolve => setTimeout(resolve, 500));
-        navigate('/', { replace: true });
+        window.location.href = '/';
 
       } catch (err) {
         console.error('❌ OAuth 콜백 오류:', err);
