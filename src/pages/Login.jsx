@@ -32,7 +32,7 @@ const Login = () => {
   }, []);
 
   const navigate = useNavigate();
-  const { currentUser, login, logout } = useContext(AuthContext);
+  const { currentUser, login, logout, loginWithKakao } = useContext(AuthContext);
 
   // 로그인 상태일 때 자동 리다이렉트
   useEffect(() => {
@@ -198,8 +198,16 @@ const Login = () => {
                   <span className="px-2 bg-white text-gray-500">또는</span>
                 </div>
               </div>
-              <button className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-3 px-4 rounded-lg transition-colors">
-                카카오톡으로 로그인 (준비중)
+              <button
+                type="button"
+                onClick={loginWithKakao}
+                disabled={loading}
+                className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 3C6.477 3 2 6.463 2 10.742c0 2.72 1.753 5.097 4.388 6.463-.17.598-.614 2.169-.702 2.505-.108.41.15.405.316.295.13-.087 2.07-1.366 2.903-1.92.689.1 1.401.152 2.095.152 5.523 0 10-3.463 10-7.742S17.523 3 12 3z"/>
+                </svg>
+                카카오톡으로 로그인
               </button>
             </div>
           </div>

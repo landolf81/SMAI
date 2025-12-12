@@ -196,6 +196,24 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  // 카카오 로그인
+  const loginWithKakao = async () => {
+    try {
+      console.log("🟡 카카오 로그인 시작...");
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: window.location.origin + '/auth/callback'
+        }
+      });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error("❌ 카카오 로그인 오류:", error);
+      throw error;
+    }
+  };
+
   // 차단된 사용자인지 확인
   const isBanned = currentUser?.status === 'banned';
 
@@ -206,7 +224,8 @@ export const AuthContextProvider = ({ children }) => {
     login,
     logout,
     register,
-    updateUserProfile
+    updateUserProfile,
+    loginWithKakao
   };
 
   return (

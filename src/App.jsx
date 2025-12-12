@@ -29,6 +29,7 @@ const PageLoader = () => (
 // Pages - Lazy Loading
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/register'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
 const Home = lazy(() => import('./pages/home'));
 const Profile = lazy(() => import('./pages/profile'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
@@ -273,6 +274,10 @@ useEffect(() => {
     {
       path: '/register',
       element: <Suspense fallback={<PageLoader />}><Register /></Suspense>,
+    },
+    {
+      path: '/auth/callback',
+      element: <Suspense fallback={<PageLoader />}><AuthCallback /></Suspense>,
     },
   ], {
     future: {
