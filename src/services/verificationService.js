@@ -22,6 +22,19 @@ export const verificationService = {
       throw new Error('이미 진행 중인 인증 요청이 있습니다.');
     }
 
+    // 전화번호 중복 확인 (다른 사용자가 이미 승인받은 경우)
+    const { data: duplicatePhone } = await supabase
+      .from('verification_requests')
+      .select('id, user_id, status')
+      .eq('phone_number', data.phoneNumber)
+      .eq('status', 'approved')
+      .neq('user_id', user.id)
+      .maybeSingle();
+
+    if (duplicatePhone) {
+      throw new Error('이미 다른 사용자가 인증한 전화번호입니다.');
+    }
+
     const { data: request, error } = await supabase
       .from('verification_requests')
       .insert([{
@@ -119,12 +132,29 @@ export const verificationService = {
       const hasVerifiedBadge = existingBadges.some(b => b.badge_type === 'verified_user');
 
       if (!hasVerifiedBadge) {
-        await badgeService.addBadge({
-          userId: userId,
-          badgeType: 'verified_user',
-          badgeName: '인증됨',
-          badgeColor: '#10B981'
-        });
+        // badge_types 테이블에서 등록된 뱃지 정보 가져오기
+        const badgeTypeInfo = await badgeService.getBadgeTypeInfo('verified_user');
+
+        if (badgeTypeInfo) {
+          // 등록된 뱃지 타입 정보 사용
+          await badgeService.addBadge({
+            userId: userId,
+            badgeType: badgeTypeInfo.type,
+            badgeName: badgeTypeInfo.name,
+            badgeColor: badgeTypeInfo.color,
+            iconType: badgeTypeInfo.icon_type,
+            iconValue: badgeTypeInfo.icon_value,
+            iconBackground: badgeTypeInfo.icon_background
+          });
+        } else {
+          // badge_types에 없으면 기본값 사용
+          await badgeService.addBadge({
+            userId: userId,
+            badgeType: 'verified_user',
+            badgeName: '인증됨',
+            badgeColor: '#10B981'
+          });
+        }
       }
     } catch (badgeError) {
       console.error('뱃지 발급 오류:', badgeError);

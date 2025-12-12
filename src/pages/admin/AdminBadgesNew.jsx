@@ -988,7 +988,7 @@ const AdminBadgesNew = () => {
                                 deleteBadgeTypeMutation.mutate(badgeType.id);
                               }
                             }}
-                            className="btn btn-error btn-sm"
+                            className="btn btn-ghost btn-sm text-red-600 hover:bg-red-50"
                             disabled={deleteBadgeTypeMutation.isPending}
                           >
                             <DeleteIcon className="w-4 h-4" />
