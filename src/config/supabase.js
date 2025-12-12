@@ -89,36 +89,13 @@ export const supabaseHelpers = {
 
       // PGRST116: 사용자를 찾을 수 없음 (프로필 미생성)
       if (error.code === 'PGRST116') {
-        console.warn('⚠️ users 테이블에 프로필이 없습니다. 자동 생성 시도...');
+        console.warn('⚠️ users 테이블에 프로필이 없습니다.');
+        console.warn('⚠️ AuthCallback.jsx에서 프로필을 생성해야 합니다.');
+        console.warn('⚠️ 여기서는 자동 생성을 시도하지 않습니다.');
 
-        // Session에서 사용자 정보 가져오기 (getUser보다 가벼움)
-        const { data: { session } } = await supabase.auth.getSession();
-        const user = session?.user;
-
-        if (user) {
-          // users 테이블에 기본 프로필 생성
-          const { data: newProfile, error: insertError } = await supabase
-            .from('users')
-            .insert([
-              {
-                id: userId,
-                email: user.email,
-                username: user.user_metadata?.username || user.email?.split('@')[0] || 'user',
-                name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-                created_at: new Date().toISOString()
-              }
-            ])
-            .select()
-            .single();
-
-          if (insertError) {
-            console.error('❌ 프로필 자동 생성 실패:', insertError);
-            throw error; // 원래 에러 throw
-          }
-
-          console.log('✅ 프로필 자동 생성 성공:', newProfile);
-          return newProfile;
-        }
+        // 프로필이 없으면 원래 에러를 throw하여 로그아웃 처리
+        // AuthCallback.jsx나 register에서 제대로 프로필을 생성하도록 유도
+        throw error;
       }
 
       throw error;

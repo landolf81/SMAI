@@ -8,6 +8,8 @@ const AuthCallback = () => {
   const [status, setStatus] = useState('처리 중...');
   const [error, setError] = useState(null);
 
+  // v2.0 - 불완전한 프로필 자동 정리 및 재시도 로직 추가
+
   useEffect(() => {
     const handleCallback = async () => {
       try {
@@ -21,6 +23,10 @@ const AuthCallback = () => {
         const errorDescription = hashParams.get('error_description') || queryParams.get('error_description');
 
         if (errorParam) {
+          console.error('🚨 URL에서 에러 파라미터 발견:');
+          console.error('에러:', errorParam);
+          console.error('에러 설명:', errorDescription);
+          console.error('전체 URL:', window.location.href);
           throw new Error(errorDescription || errorParam);
         }
 
@@ -65,16 +71,16 @@ const AuthCallback = () => {
 
           // 카카오에서 받은 사용자 정보
           const kakaoUser = user.user_metadata || {};
-          const kakaoName = kakaoUser.name || kakaoUser.full_name || kakaoUser.preferred_username || '';
           // 이메일이 없을 수 있음 (카카오 동의 항목에서 선택 또는 미동의)
           const kakaoEmail = user.email || kakaoUser.email || null;
           const kakaoProfileImage = kakaoUser.avatar_url || kakaoUser.picture || '';
 
           // 고유한 username과 name 생성
-          // username: 사용자 ID 뒤 4자리 + 랜덤 6자리 = 더 높은 유니크성
+          // username: 랜덤 6자리 + 사용자 ID 뒤 4자리 = 더 높은 유니크성
           const userIdSuffix = user.id.slice(-4);
           let username = `${generateRandomId()}${userIdSuffix}`;
-          let name = kakaoName || generateRandomNickname();
+          // name: 카카오 프로필명 사용하지 않고 랜덤 닉네임 생성
+          let name = generateRandomNickname();
 
           // username 중복 체크 (최대 10회 시도)
           for (let i = 0; i < 10; i++) {
@@ -153,12 +159,19 @@ const AuthCallback = () => {
 
               // username 또는 name 중복 오류 (23505)
               if (insertError.code === '23505') {
+                const errorDetail = insertError.message || '';
+
+                // Primary Key (id) 중복인 경우 - 이미 프로필이 생성됨
+                if (errorDetail.includes('pkey') || errorDetail.includes('users_pkey')) {
+                  console.log('✅ 프로필이 이미 생성되어 있습니다. (동시성 문제)');
+                  insertSuccess = true;
+                  break;
+                }
+
                 retryCount++;
                 console.warn(`⚠️ 중복 키 오류 발생, 재시도 중... (${retryCount}/${maxRetries})`);
 
                 // 에러 메시지에서 어떤 필드가 중복인지 확인
-                const errorDetail = insertError.message || '';
-
                 if (errorDetail.includes('username')) {
                   console.log('🔄 username 재생성');
                   username = `${generateRandomId()}${userIdSuffix}`;

@@ -15,6 +15,15 @@ export const AuthContextProvider = ({ children }) => {
     const initializeAuth = async () => {
       try {
         console.log("🚀 인증 초기화 시작...");
+
+        // OAuth 콜백 처리 중에는 프로필 체크를 건너뜀
+        const isOAuthCallback = window.location.pathname === '/auth/callback';
+        if (isOAuthCallback) {
+          console.log("⏭️ OAuth 콜백 처리 중이므로 AuthContext 초기화를 건너뜁니다.");
+          setLoading(false);
+          return;
+        }
+
         const { data: { session } } = await supabase.auth.getSession();
         console.log("📝 세션 확인:", session ? "로그인됨" : "로그아웃됨");
 
@@ -47,6 +56,13 @@ export const AuthContextProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("🔔 Auth state changed:", event);
+
+        // OAuth 콜백 처리 중에는 건너뜀
+        const isOAuthCallback = window.location.pathname === '/auth/callback';
+        if (isOAuthCallback) {
+          console.log("⏭️ OAuth 콜백 처리 중이므로 Auth state change 무시");
+          return;
+        }
 
         // SIGNED_IN, TOKEN_REFRESHED 같은 이벤트는 프로필 재조회 불필요
         // SIGNED_IN: login 함수에서 이미 처리
