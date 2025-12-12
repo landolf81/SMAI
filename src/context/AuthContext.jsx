@@ -204,9 +204,8 @@ export const AuthContextProvider = ({ children }) => {
         provider: 'kakao',
         options: {
           redirectTo: window.location.origin + '/auth/callback',
-          // 카카오 개발자 콘솔에서 설정하지 않은 동의 항목 제외
-          // 기본적으로 필수 동의 항목만 요청 (openid만 요청)
-          scopes: 'openid'
+          // scopes를 지정하지 않아 Supabase 기본값 사용
+          // 카카오 개발자 콘솔에서 활성화된 동의 항목만 요청됨
         }
       });
 
