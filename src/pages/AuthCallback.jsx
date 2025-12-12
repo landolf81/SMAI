@@ -65,7 +65,8 @@ const AuthCallback = () => {
           // 카카오에서 받은 사용자 정보
           const kakaoUser = user.user_metadata || {};
           const kakaoName = kakaoUser.name || kakaoUser.full_name || kakaoUser.preferred_username || '';
-          const kakaoEmail = user.email || kakaoUser.email || '';
+          // 이메일이 없을 수 있음 (카카오 동의 항목에서 선택 또는 미동의)
+          const kakaoEmail = user.email || kakaoUser.email || null;
           const kakaoProfileImage = kakaoUser.avatar_url || kakaoUser.picture || '';
 
           // 고유한 username과 name 생성
