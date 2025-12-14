@@ -54,7 +54,7 @@ const PostDetail = () => {
       });
     } else {
       // 일반 뒤로가기
-      handleBack();
+      navigate(-1);
     }
   };
 
