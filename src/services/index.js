@@ -16,3 +16,5 @@ export { dmService } from './dmService.js';
 export { storageService, BUCKETS } from './storageService.js';
 export { r2Service } from './r2Service.js';
 export { verificationService } from './verificationService.js';
+export { geminiService } from './geminiService.js';
+export { translationService } from './translationService.js';
