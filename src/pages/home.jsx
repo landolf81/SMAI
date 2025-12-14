@@ -492,9 +492,12 @@ const Home = () => {
   // 모바일 사용자를 위한 기존 화면
   return (
     <div className="min-h-screen bg-gray-50 pb-20 safe-area-bottom">
-      {/* 날짜 선택기 헤더 */}
+      {/* 상단 헤더 공간 확보 */}
+      <div className="h-14"></div>
+
+      {/* 날짜 선택기 헤더 - 카드 상단 고정 */}
       <div
-        className="flex items-center justify-center gap-1 py-0.5 shadow-sm border-b sticky top-16 z-10 bg-white"
+        className="flex items-center justify-center gap-1 py-2 shadow-sm border-b sticky top-14 z-30 bg-white/90 backdrop-blur-sm"
         style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
       >
         <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">
