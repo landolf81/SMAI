@@ -81,8 +81,8 @@ const CommunityHub = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* 탭 헤더 */}
-      <div className="bg-white border-b border-gray-200 shadow-sm">
+      {/* 탭 헤더 - sticky + 반투명 */}
+      <div className="sticky top-14 z-40 bg-white/70 backdrop-blur-md border-b border-white/30">
         <div className="flex items-center">
           {TABS.map((tab, index) => {
             const IconComponent = tab.icon;

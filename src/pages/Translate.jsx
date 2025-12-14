@@ -465,11 +465,12 @@ const Translate = () => {
             className="w-full h-36 p-4 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none text-lg"
             placeholder="번역할 텍스트를 입력하세요..."
           />
-          <div className="flex gap-3 mt-4">
+          <div className="flex gap-3 mt-4 relative z-10">
             <button
+              type="button"
               onClick={handleTranslate}
               disabled={!inputText.trim() || isTranslating}
-              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-blue-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-lg touch-manipulation active:scale-95"
+              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-blue-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-lg"
             >
               {isTranslating ? (
                 <span className="flex items-center justify-center gap-2">
@@ -482,8 +483,9 @@ const Translate = () => {
             </button>
             {speechSupported && (
               <button
+                type="button"
                 onClick={toggleVoiceInput}
-                className={`px-6 py-4 rounded-xl font-bold transition-all shadow-md touch-manipulation active:scale-95 ${
+                className={`px-6 py-4 rounded-xl font-bold transition-all shadow-md ${
                   isListening
                     ? 'bg-red-500 text-white animate-pulse hover:bg-red-600'
                     : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
