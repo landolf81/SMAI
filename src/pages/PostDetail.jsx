@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { postService, commentService, adService } from '../services';
 import { AuthContext } from '../context/AuthContext';
@@ -37,8 +37,26 @@ moment.locale('ko');
 const PostDetail = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
+
+  // 뒤로가기 핸들러 - 커뮤니티 허브에서 온 경우 탭 정보와 함께 복귀
+  const handleBack = () => {
+    const fromTab = location.state?.fromTab;
+    const fromPath = location.state?.fromPath;
+
+    if (fromTab && fromPath) {
+      // 허브에서 온 경우: 탭 정보와 함께 복원
+      navigate(fromPath, {
+        replace: false,
+        state: { fromDetail: true, activeTab: fromTab }
+      });
+    } else {
+      // 일반 뒤로가기
+      handleBack();
+    }
+  };
 
   const [commentContent, setCommentContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,7 +199,7 @@ const PostDetail = () => {
     mutationFn: () => postService.deletePost(postId),
     onSuccess: () => {
       alert('게시물이 삭제되었습니다.');
-      navigate(-1);
+      handleBack();
     }
   });
 
@@ -289,7 +307,7 @@ const PostDetail = () => {
           <h2 className="text-xl font-semibold text-gray-700 mb-2">게시물을 찾을 수 없습니다</h2>
           <p className="text-gray-500 mb-4">삭제되었거나 존재하지 않는 게시물입니다.</p>
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
           >
             돌아가기
@@ -300,7 +318,7 @@ const PostDetail = () => {
   }
 
   const price = post.post_type === 'secondhand' ? extractPrice(post.title || post.name, post.description || post.desc) : null;
-  const location = post.post_type === 'secondhand' ? extractLocation(post.description || post.desc) : null;
+  const postLocation = post.post_type === 'secondhand' ? extractLocation(post.description || post.desc) : null;
   const isSecondHand = post.post_type === 'secondhand';
   const isOwner = currentUser && currentUser.id === post.user_id;
   const isAdmin = currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin');
@@ -477,7 +495,7 @@ const PostDetail = () => {
               {price && (
                 <div className="text-2xl font-bold text-orange-600 mt-2">{price}</div>
               )}
-              {location && (
+              {postLocation && (
                 <div className="flex items-center gap-1 text-gray-600 mt-2">
                   <LocationOnIcon fontSize="small" />
                   <span>{location}</span>
@@ -727,7 +745,7 @@ const PostDetail = () => {
 
       {/* 플로팅 닫기 버튼 (왼쪽 하단) */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={handleBack}
         className="fixed bottom-20 left-4 w-14 h-14 text-white rounded-full z-10 flex items-center justify-center border-2 border-white shadow-lg transition-all duration-200 hover:scale-110"
         style={{
           background: 'linear-gradient(135deg, #6B7280 0%, #374151 100%)',

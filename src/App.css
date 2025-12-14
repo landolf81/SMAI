@@ -227,3 +227,24 @@ header div.mr-2:after {
 .modal:after {
   content: "" !important;
 }
+
+/* CommunityHub Swiper 스타일 */
+.community-hub-swiper {
+  height: calc(100vh - 64px - 64px); /* viewport - 상단탭(64px) - 하단메뉴(64px) */
+  overflow: hidden;
+}
+
+.tab-content-wrapper {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* 각 wrapper가 독립적인 스크롤 컨텍스트 생성 */
+}
+
+/* 모바일 환경에서 탭 컨텐츠 높이 조정 */
+@media (max-width: 768px) {
+  .community-hub-swiper {
+    height: calc(100vh - 56px - 64px); /* 모바일 탭 헤더는 더 작을 수 있음 */
+  }
+}

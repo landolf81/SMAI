@@ -20,7 +20,7 @@ import SearchIcon from '@mui/icons-material/Search';
 
 moment.locale('ko');
 
-const QnAList = () => {
+const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const [searchInput, setSearchInput] = useState(''); // 입력값
@@ -45,7 +45,9 @@ const QnAList = () => {
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
-  useScrollRestore('qna', statusFilter, searchTerm);
+  // hubMode일 때는 탭별 독립 키 사용
+  const scrollKey = hubMode ? `community-hub-${activeTab}` : 'qna';
+  useScrollRestore(scrollKey, statusFilter, searchTerm);
 
   // 모달 열릴 때 배경 스크롤 막기
   useEffect(() => {

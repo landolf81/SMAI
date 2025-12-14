@@ -4,14 +4,16 @@ import EnhancedInstagramFeed from '../components/EnhancedInstagramFeed';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { AuthContext } from '../context/AuthContext';
 
-const Community = () => {
+const Community = ({ hubMode = false, activeTab = 'community' }) => {
     const [searchParams] = useSearchParams();
     const location = useLocation();
     const { isBanned } = useContext(AuthContext);
     const [showBannedAlert, setShowBannedAlert] = useState(false);
 
     // 커뮤니티 페이지 스크롤 위치 복원
-    const { resetScrollPosition, scrollToTop } = useScrollRestore('community');
+    // hubMode일 때는 탭별 독립 키 사용
+    const scrollKey = hubMode ? `community-hub-${activeTab}` : 'community';
+    const { resetScrollPosition, scrollToTop } = useScrollRestore(scrollKey);
 
     // 차단된 사용자가 리다이렉트되어 왔을 때 알림 표시
     useEffect(() => {
@@ -21,7 +23,7 @@ const Community = () => {
     }, [location.state, isBanned]);
 
     return (
-        <div className="community-page pb-20">
+        <div className={`community-page ${hubMode ? '' : 'pb-20'}`}>
             {/* 차단 알림 */}
             {showBannedAlert && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-4 mt-4" role="alert">

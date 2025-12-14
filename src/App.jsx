@@ -34,6 +34,8 @@ const Home = lazy(() => import('./pages/home'));
 const Profile = lazy(() => import('./pages/profile'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const PostEditor = lazy(() => import('./pages/PostEditor'));
+const Translate = lazy(() => import('./pages/Translate'));
+const CommunityHub = lazy(() => import('./pages/CommunityHub'));
 
 // Admin Pages - Lazy Loading
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
@@ -146,14 +148,25 @@ useEffect(() => {
           path: '/prices',
           element: <Prices />,
         },
+        {
+          path: '/translate',
+          element: <Translate />,
+        },
         // 게시판 페이지들 (읽기는 누구나, 글쓰기/댓글은 각 페이지에서 로그인 체크)
         {
           path: '/community',
-          element: <Community />,
+          element: <CommunityHub />,
+        },
+        // 레거시 라우트 리디렉트
+        {
+          path: '/qna',
+          element: <Navigate to="/community?tab=qna" replace />,
         },
         {
           path: '/secondhand',
-          element: isBanned ? <Navigate to="/community" state={{ banned: true }} /> : <SecondHand />,
+          element: isBanned
+            ? <Navigate to="/community" state={{ banned: true }} />
+            : <Navigate to="/community?tab=secondhand" replace />,
         },
         {
           path: '/secondhand/new',
@@ -162,10 +175,6 @@ useEffect(() => {
         {
           path: '/secondhand/edit/:id',
           element: <BannedRestrictedRoute><SecondHandEditor /></BannedRestrictedRoute>,
-        },
-        {
-          path: '/qna',
-          element: <QnA />,
         },
         {
           path: '/qna/questions/:questionId',

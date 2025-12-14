@@ -10,7 +10,7 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useNavigate } from 'react-router-dom';
 
-const SecondHand = () => {
+const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const navigationType = useNavigationType();
@@ -25,8 +25,10 @@ const SecondHand = () => {
   const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
 
   // 중고거래 페이지 스크롤 위치 복원 (검색어 고려)
+  // hubMode일 때는 탭별 독립 키 사용
+  const scrollKey = hubMode ? `community-hub-${activeTab}` : 'secondhand';
   const { resetScrollPosition, scrollToTop } = useScrollRestore(
-    'secondhand',
+    scrollKey,
     null,
     searchTerm || null
   );
@@ -155,7 +157,7 @@ const SecondHand = () => {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${isMobile ? 'pb-20' : ''}`}>
+    <div className={`min-h-screen bg-gray-50 ${(isMobile && !hubMode) ? 'pb-20' : ''}`}>
       <div className="max-w-2xl mx-auto">
         {/* 헤더 */}
         <div className="bg-white border-b border-gray-200 sticky top-0 z-10">

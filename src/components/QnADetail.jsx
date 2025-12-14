@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { qnaService, storageService, postService, adService, commentService } from '../services';
 import { AuthContext } from '../context/AuthContext';
@@ -31,9 +31,32 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const { questionId: paramQuestionId } = useParams();
   const questionId = propQuestionId || paramQuestionId; // Use prop if provided, otherwise URL param
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const [isMobile] = useState(() => isMobileDevice());
+
+  // 뒤로가기 핸들러 - 커뮤니티 허브에서 온 경우 탭 정보와 함께 복귀
+  const handleBack = () => {
+    if (isModal && onClose) {
+      onClose();
+      return;
+    }
+
+    const fromTab = location.state?.fromTab;
+    const fromPath = location.state?.fromPath;
+
+    if (fromTab && fromPath) {
+      // 허브에서 온 경우: 탭 정보와 함께 복원
+      navigate(fromPath, {
+        replace: false,
+        state: { fromDetail: true, activeTab: fromTab }
+      });
+    } else {
+      // 일반 뒤로가기
+      navigate(-1);
+    }
+  };
 
   const [answerContent, setAnswerContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -435,7 +458,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
         <p className="text-red-500">질문을 불러오는데 실패했습니다.</p>
         <p className="text-gray-500 text-sm mt-2">{error?.message}</p>
         <button
-          onClick={() => isModal ? onClose() : navigate('/qna')}
+          onClick={handleBack}
           className="mt-4 px-4 py-2 text-market-600 border border-market-600 rounded-lg hover:bg-market-50 transition-colors"
         >
           {isModal ? '닫기' : '목록으로 돌아가기'}
@@ -452,7 +475,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       <div className="text-center py-12">
         <p className="text-red-500">질문 데이터를 찾을 수 없습니다.</p>
         <button
-          onClick={() => isModal ? onClose() : navigate('/qna')}
+          onClick={handleBack}
           className="mt-4 px-4 py-2 text-market-600 border border-market-600 rounded-lg hover:bg-market-50 transition-colors"
         >
           {isModal ? '닫기' : '목록으로 돌아가기'}
@@ -467,7 +490,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       {!isModal && (
         <div className="mb-6">
           <button
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
           >
             <ArrowBackIcon fontSize="small" />

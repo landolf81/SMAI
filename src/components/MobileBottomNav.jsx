@@ -1,8 +1,7 @@
 import HomeIcon from "@mui/icons-material/Home";
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import TranslateIcon from "@mui/icons-material/Translate";
 import ForumIcon from "@mui/icons-material/Forum";
 import PersonIcon from "@mui/icons-material/Person";
-import ShoppingBagIcon from "@mui/icons-material/ShoppingBag";
 import { useContext, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
@@ -46,22 +45,16 @@ const MobileBottomNav = () => {
       activeColor: "text-market-600"
     },
     {
-      path: "/qna",
-      icon: HelpOutlineIcon,
-      label: "Q&A",
-      activeColor: "text-blue-600"
+      path: "/translate",
+      icon: TranslateIcon,
+      label: "번역",
+      activeColor: "text-indigo-600"
     },
     {
       path: "/community",
       icon: ForumIcon,
       label: "커뮤니티",
       activeColor: "text-[#FFC425]"
-    },
-    {
-      path: "/secondhand",
-      icon: ShoppingBagIcon,
-      label: "사고팔고",
-      activeColor: "text-orange-600"
     },
     {
       path: currentUser ? `/profile/${currentUser.id}` : "/login",
@@ -74,6 +67,12 @@ const MobileBottomNav = () => {
   const isActive = (path) => {
     if (path === "/") {
       return location.pathname === "/";
+    }
+    // /community, /qna, /secondhand 모두 커뮤니티로 인식
+    if (path === "/community") {
+      return location.pathname.startsWith("/community") ||
+             location.pathname.startsWith("/qna") ||
+             location.pathname.startsWith("/secondhand");
     }
     return location.pathname.startsWith(path);
   };
