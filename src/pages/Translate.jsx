@@ -469,7 +469,7 @@ const Translate = () => {
             <button
               onClick={handleTranslate}
               disabled={!inputText.trim() || isTranslating}
-              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-blue-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-lg"
+              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-blue-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-lg touch-manipulation active:scale-95"
             >
               {isTranslating ? (
                 <span className="flex items-center justify-center gap-2">
@@ -483,7 +483,7 @@ const Translate = () => {
             {speechSupported && (
               <button
                 onClick={toggleVoiceInput}
-                className={`px-6 py-4 rounded-xl font-bold transition-all shadow-md ${
+                className={`px-6 py-4 rounded-xl font-bold transition-all shadow-md touch-manipulation active:scale-95 ${
                   isListening
                     ? 'bg-red-500 text-white animate-pulse hover:bg-red-600'
                     : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'

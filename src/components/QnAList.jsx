@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { qnaService, adService } from '../services';
 import { useScrollRestore } from '../hooks/useScrollRestore';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import QnADetail from './QnADetail';
 import moment from 'moment';
 import 'moment/locale/ko';
@@ -43,6 +44,9 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   // 프로필 모달 상태
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
+
+  // 스크롤 방향 감지
+  const scrollDirection = useScrollDirection();
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
   // hubMode일 때는 탭별 독립 키 사용
@@ -281,8 +285,10 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* 고정 헤더 (검색창 포함) */}
-      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
+      {/* 고정 헤더 (검색창 포함) - 스크롤 방향에 따라 숨김/표시 */}
+      <div className={`sticky z-40 bg-white border-b shadow-sm transition-transform duration-300 ${
+        scrollDirection === 'down' ? '-translate-y-full top-0' : 'translate-y-0 top-16'
+      }`}>
         <div className="p-4">
           {/* 타이틀 */}
           <div className="flex items-center justify-between mb-3">

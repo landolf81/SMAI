@@ -438,10 +438,11 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     const handleScroll = () => {
       const scrollPosition = window.innerHeight + document.documentElement.scrollTop;
       const totalHeight = document.documentElement.offsetHeight;
-      const threshold = totalHeight - 1500; // 더 일찍 로드
+      const threshold = totalHeight - 800; // 하단 800px 전에 로드
 
       if (scrollPosition >= threshold) {
         if (hasNextPage && !isFetchingNextPage) {
+          console.log('🔄 무한 스크롤 트리거:', { scrollPosition, totalHeight, threshold, hasNextPage });
           fetchNextPage();
         }
       }
@@ -615,7 +616,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   return (
     <div
       ref={pullToRefreshRef}
-      className={`w-full max-w-md mx-auto min-h-screen bg-gray-50 ${
+      className={`w-full max-w-md mx-auto bg-gray-50 ${
         enableSnapScroll ? 'snap-y snap-mandatory overflow-y-scroll' : ''
       }`}
       onTouchStart={handleTouchStart}
@@ -623,7 +624,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     >
       {/* Pull to refresh 인디케이터 */}
       {isPulling && (
-        <div 
+        <div
           className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-200"
           style={{ transform: `translateX(-50%) translateY(${pullDistance - 50}px)` }}
         >
@@ -634,9 +635,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
           </div>
         </div>
       )}
-      
+
       <div className="relative">
-        <div ref={postsContainerRef} className="space-y-4 p-4">
+        <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">
           {postsWithAds.slice(0, renderedCount).map((item, index) => {
             // 광고는 애니메이션 적용 안 함 (자체 Intersection Observer 사용)
             const isAd = item.type === 'ad';
@@ -722,7 +723,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
               window.location.href = '/post/new';
             }, 300);
           }}
-          className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"
+          className="fixed bottom-4 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-40 flex items-center justify-center border-2 border-white md:bottom-20"
           style={{
             transform: isScrolling ? 'scale(0)' : 'scale(1)',
             background: 'linear-gradient(135deg, #047857 0%, #06b6d4 100%)',

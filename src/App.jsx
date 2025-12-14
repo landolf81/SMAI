@@ -14,6 +14,7 @@ import Leftbar from './components/Leftbar';
 import MobileBottomNav from './components/MobileBottomNav';
 import { AuthContext } from './context/AuthContext';
 import { isMobileDevice } from './utils/deviceDetector';
+import { useScrollDirection } from './hooks/useScrollDirection';
 import {
   QueryClient,
   QueryClientProvider,
@@ -83,21 +84,27 @@ useEffect(() => {
   const Layout = () => {
     const location = useLocation();
     const isAdminPage = location.pathname.startsWith('/admin');
+    const scrollDirection = useScrollDirection();
 
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
+        <div className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+          scrollDirection === 'down' ? '-translate-y-full' : 'translate-y-0'
+        }`}>
+          <Navbar />
+        </div>
+
         <div className="flex">
           {/* PC 좌측 사이드바 - 로그인 상태에서만 표시 */}
           {currentUser && (
-            <div className="hidden lg:block w-80 flex-shrink-0">
+            <div className="hidden lg:block w-80 flex-shrink-0 pt-16">
               <Leftbar />
             </div>
           )}
 
           {/* 메인 콘텐츠 */}
           <div className="flex-1 min-w-0">
-            <div className="max-w-none mx-auto pb-20 lg:pb-4">
+            <div className="max-w-none mx-auto pt-16">
               <Suspense fallback={<PageLoader />}>
                 <Outlet />
               </Suspense>
@@ -106,8 +113,14 @@ useEffect(() => {
 
         </div>
 
-        {/* 모바일용 하단 네비게이션 - 항상 표시 */}
-        {(isMobileDevice() || window.innerWidth <= 768) && <MobileBottomNav />}
+        {/* 모바일용 하단 네비게이션 - 스크롤 방향에 따라 숨김/표시 */}
+        {(isMobileDevice() || window.innerWidth <= 768) && (
+          <div className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ${
+            scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
+          }`}>
+            <MobileBottomNav />
+          </div>
+        )}
       </div>
     );
   };
