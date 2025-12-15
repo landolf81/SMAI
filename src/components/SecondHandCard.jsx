@@ -9,7 +9,7 @@ import { API_BASE_URL } from '../config/api';
 
 moment.locale('ko');
 
-const SecondHandCard = ({ post }) => {
+const SecondHandCard = ({ post, onCardClick }) => {
   const navigate = useNavigate();
 
   // 판매 상태 확인 (sold = 판매완료)
@@ -83,9 +83,17 @@ const SecondHandCard = ({ post }) => {
   const imageUrls = getImageUrls();
   const imageUrl = imageUrls[0] || null;  // 카드에는 첫 번째 이미지만 표시
 
+  const handleClick = () => {
+    if (onCardClick) {
+      onCardClick(post.id);
+    } else {
+      navigate(`/post/${post.id}`);
+    }
+  };
+
   return (
     <div
-      onClick={() => navigate(`/post/${post.id}`)}
+      onClick={handleClick}
       className={`bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border ${
         isSold
           ? 'border-gray-300 opacity-75'

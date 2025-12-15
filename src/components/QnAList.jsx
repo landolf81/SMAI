@@ -475,24 +475,14 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
       {/* QnA 상세보기 모달 (전체화면) */}
       {selectedQuestionId && (
         <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
-          <QnADetail
-            questionId={selectedQuestionId}
-            onClose={() => setSelectedQuestionId(null)}
-            isModal={true}
-          />
-
-          {/* 플로팅 닫기 버튼 - 왼쪽 하단, 짙은 그라데이션 */}
+          {/* 오른쪽 상단 닫기 버튼 */}
           <button
             onClick={() => setSelectedQuestionId(null)}
-            className="fixed bottom-20 left-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-[60] flex items-center justify-center border-2 border-white/30"
-            style={{
-              background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4), 0 8px 25px rgba(15, 52, 96, 0.3)'
-            }}
+            className="fixed top-4 right-4 z-[60] w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
             title="닫기"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5 text-gray-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -500,6 +490,12 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
+          <QnADetail
+            questionId={selectedQuestionId}
+            onClose={() => setSelectedQuestionId(null)}
+            isModal={true}
+          />
         </div>
       )}
 

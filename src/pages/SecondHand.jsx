@@ -4,9 +4,11 @@ import { useNavigationType, useNavigate } from 'react-router-dom';
 import { postService, adService } from '../services';
 import SecondHandCard from '../components/SecondHandCard';
 import MobileAdDisplay from '../components/MobileAdDisplay';
+import PostDetail from './PostDetail';
 import { AuthContext } from '../context/AuthContext';
 import { isMobileDevice } from '../utils/deviceDetector';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import CloseIcon from '@mui/icons-material/Close';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
 const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
@@ -15,6 +17,9 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   const navigationType = useNavigationType();
   const [searchTerm, setSearchTerm] = useState('');
   const [isMobile] = useState(() => isMobileDevice());
+
+  // 상세보기 모달 상태
+  const [selectedPostId, setSelectedPostId] = useState(null);
 
   // 순차적 렌더링을 위한 상태
   const [renderedCount, setRenderedCount] = useState(0);
@@ -194,7 +199,10 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
                       opacity: navigationType !== 'POP' ? 0 : 1
                     }}
                   >
-                    <SecondHandCard post={item.data} />
+                    <SecondHandCard
+                      post={item.data}
+                      onCardClick={(postId) => setSelectedPostId(postId)}
+                    />
                   </div>
                 );
               })}
@@ -214,6 +222,26 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
           )}
         </div>
       </div>
+
+      {/* 상세보기 모달 */}
+      {selectedPostId && (
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          {/* 오른쪽 상단 닫기 버튼 */}
+          <button
+            onClick={() => setSelectedPostId(null)}
+            className="fixed top-4 right-4 z-[60] w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+            title="닫기"
+          >
+            <CloseIcon className="text-gray-600" />
+          </button>
+
+          <PostDetail
+            postId={selectedPostId}
+            isModal={true}
+            onClose={() => setSelectedPostId(null)}
+          />
+        </div>
+      )}
     </div>
   );
 };

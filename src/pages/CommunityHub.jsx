@@ -72,12 +72,14 @@ const CommunityHub = () => {
     setActiveTabIndex(swiper.activeIndex);
     // 탭 전환 시 스크롤 최상단으로 이동
     window.scrollTo({ top: 0, behavior: 'instant' });
-    // Swiper 높이 업데이트 (swiper가 초기화된 경우에만)
-    setTimeout(() => {
-      if (swiper && swiper.params) {
-        swiper.updateAutoHeight();
-      }
-    }, 100);
+    // Swiper 높이 업데이트 - 여러 시점에 호출하여 콘텐츠 로드 타이밍 커버
+    [100, 300, 500, 1000].forEach(delay => {
+      setTimeout(() => {
+        if (swiper && swiper.params) {
+          swiper.updateAutoHeight();
+        }
+      }, delay);
+    });
   };
 
   // 4. 탭 버튼 클릭 핸들러

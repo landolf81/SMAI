@@ -34,15 +34,21 @@ import { faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 
 moment.locale('ko');
 
-const PostDetail = () => {
-  const { postId } = useParams();
+const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
+  const { postId: paramPostId } = useParams();
+  const postId = propPostId || paramPostId;
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
-  // 뒤로가기 핸들러 - 커뮤니티 허브에서 온 경우 탭 정보와 함께 복귀
+  // 뒤로가기 핸들러 - 모달 모드 또는 일반 모드
   const handleBack = () => {
+    if (isModal && onClose) {
+      onClose();
+      return;
+    }
+
     const fromTab = location.state?.fromTab;
     const fromPath = location.state?.fromPath;
 
@@ -69,10 +75,12 @@ const PostDetail = () => {
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef(null);
 
-  // 페이지 진입 시 스크롤 최상단으로 이동
+  // 페이지 진입 시 스크롤 최상단으로 이동 (모달이 아닌 경우에만)
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [postId]);
+    if (!isModal) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [postId, isModal]);
 
   // 음성 인식 초기화
   useEffect(() => {
@@ -743,18 +751,20 @@ const PostDetail = () => {
         </div>
       </div>
 
-      {/* 플로팅 닫기 버튼 (왼쪽 하단) */}
-      <button
-        onClick={handleBack}
-        className="fixed bottom-20 left-4 w-14 h-14 text-white rounded-full z-10 flex items-center justify-center border-2 border-white shadow-lg transition-all duration-200 hover:scale-110"
-        style={{
-          background: 'linear-gradient(135deg, #6B7280 0%, #374151 100%)',
-          boxShadow: '0 4px 15px rgba(107, 114, 128, 0.4), 0 8px 25px rgba(55, 65, 81, 0.3)'
-        }}
-        title="닫기"
-      >
-        <CloseIcon />
-      </button>
+      {/* 플로팅 닫기 버튼 (왼쪽 하단) - 모달 모드가 아닐 때만 표시 */}
+      {!isModal && (
+        <button
+          onClick={handleBack}
+          className="fixed bottom-20 left-4 w-14 h-14 text-white rounded-full z-10 flex items-center justify-center border-2 border-white shadow-lg transition-all duration-200 hover:scale-110"
+          style={{
+            background: 'linear-gradient(135deg, #6B7280 0%, #374151 100%)',
+            boxShadow: '0 4px 15px rgba(107, 114, 128, 0.4), 0 8px 25px rgba(55, 65, 81, 0.3)'
+          }}
+          title="닫기"
+        >
+          <CloseIcon />
+        </button>
+      )}
 
       {/* 프로필 모달 */}
       <ProfileModal
