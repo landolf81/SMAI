@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useContext, useEffect } from 'react';
+import React, { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import {
   createBrowserRouter,
   Navigate,
@@ -6,6 +6,7 @@ import {
   RouterProvider,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from 'react-router-dom';
 import './App.css';
 
@@ -20,6 +21,13 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query';
+
+// 아이콘
+import SearchIcon from '@mui/icons-material/Search';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import EditIcon from '@mui/icons-material/Edit';
+import PolicyIcon from '@mui/icons-material/Policy';
+import CloseIcon from '@mui/icons-material/Close';
 
 // 로딩 컴포넌트
 const PageLoader = () => (
@@ -85,14 +93,71 @@ useEffect(() => {
   const Layout = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const isAdminPage = location.pathname.startsWith('/admin');
     const scrollDirection = useScrollDirection();
+
+    // 글쓰기 버튼 상태
+    const [isButtonSpinning, setIsButtonSpinning] = useState(false);
+    const [showWriteMenu, setShowWriteMenu] = useState(false);
 
     // 커뮤니티 관련 페이지인지 확인
     const isCommunityPage = location.pathname === '/community' ||
                             location.pathname.startsWith('/community') ||
                             location.pathname.startsWith('/qna') ||
                             location.pathname.startsWith('/secondhand');
+
+    // 현재 탭 가져오기
+    const getCurrentTab = () => {
+      if (location.pathname === '/community') {
+        return searchParams.get('tab') || 'community';
+      }
+      if (location.pathname.startsWith('/qna')) return 'qna';
+      if (location.pathname.startsWith('/secondhand')) return 'secondhand';
+      return 'community';
+    };
+
+    const currentTab = getCurrentTab();
+
+    // 탭별 색상 정의
+    const tabColors = {
+      community: {
+        gradient: 'linear-gradient(135deg, #047857 0%, #06b6d4 100%)',
+        shadow: '0 4px 15px rgba(4, 120, 87, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
+      },
+      qna: {
+        gradient: 'linear-gradient(135deg, #FFCC00 0%, #06b6d4 100%)',
+        shadow: '0 4px 15px rgba(255, 204, 0, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
+      },
+      secondhand: {
+        gradient: 'linear-gradient(135deg, #f97316 0%, #06b6d4 100%)',
+        shadow: '0 4px 15px rgba(249, 115, 22, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
+      }
+    };
+
+    // 글쓰기 버튼 클릭 핸들러
+    const handleWriteButtonClick = () => {
+      setIsButtonSpinning(true);
+
+      if (currentTab === 'community') {
+        // 커뮤니티는 바로 글쓰기 페이지로 이동
+        setTimeout(() => {
+          navigate('/post/new');
+          setIsButtonSpinning(false);
+        }, 300);
+      } else {
+        // QnA, 사고팔고는 메뉴 모달 표시
+        setTimeout(() => {
+          setShowWriteMenu(true);
+          setIsButtonSpinning(false);
+        }, 300);
+      }
+    };
+
+    // 메뉴 모달 닫기
+    const closeWriteMenu = () => {
+      setShowWriteMenu(false);
+    };
 
     return (
       <div className="min-h-screen bg-gray-50">
@@ -122,23 +187,142 @@ useEffect(() => {
 
         </div>
 
-        {/* 플로팅 글쓰기 버튼 - 커뮤니티 페이지에서만 표시 */}
+        {/* 플로팅 글쓰기 버튼 + 팝업 메뉴 */}
         {isCommunityPage && currentUser && !isBanned && (isMobileDevice() || window.innerWidth <= 768) && (
-          <button
-            onClick={() => navigate('/post/new')}
-            className={`fixed right-4 w-14 h-14 text-white rounded-full transition-all duration-300 z-40 flex items-center justify-center border-2 border-white shadow-lg ${
-              scrollDirection === 'down' ? 'bottom-4' : 'bottom-20'
-            }`}
-            style={{
-              background: 'linear-gradient(135deg, #047857 0%, #06b6d4 100%)',
-              boxShadow: '0 4px 15px rgba(4, 120, 87, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
-            }}
-            title="글쓰기"
-          >
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-          </button>
+          <div className={`fixed right-4 z-40 transition-all duration-300 ${
+            scrollDirection === 'down' ? 'bottom-4' : 'bottom-20'
+          }`}>
+            {/* 팝업 메뉴 (버튼 위에 표시) */}
+            {showWriteMenu && (
+              <>
+                {/* 배경 오버레이 */}
+                <div
+                  className="fixed inset-0 bg-black/30 -z-10"
+                  onClick={closeWriteMenu}
+                />
+
+                {/* 메뉴 아이템들 */}
+                <div className="absolute bottom-16 right-0 flex flex-col items-end gap-3 mb-2">
+                  {currentTab === 'qna' ? (
+                    <>
+                      {/* 질문하기 */}
+                      <button
+                        onClick={() => {
+                          closeWriteMenu();
+                          navigate('/qna/ask');
+                        }}
+                        className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                        style={{ animationDelay: '0.1s' }}
+                      >
+                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">질문하기</span>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
+                          <EditIcon className="text-white" fontSize="small" />
+                        </div>
+                      </button>
+
+                      {/* FAQ */}
+                      <button
+                        onClick={() => {
+                          closeWriteMenu();
+                          // TODO: FAQ 페이지
+                        }}
+                        className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                        style={{ animationDelay: '0.05s' }}
+                      >
+                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">FAQ</span>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-yellow-200 flex items-center justify-center">
+                          <HelpOutlineIcon className="text-amber-600" fontSize="small" />
+                        </div>
+                      </button>
+
+                      {/* 검색 */}
+                      <button
+                        onClick={() => {
+                          closeWriteMenu();
+                          // TODO: 검색 기능
+                        }}
+                        className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      >
+                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">검색</span>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-200 flex items-center justify-center">
+                          <SearchIcon className="text-blue-600" fontSize="small" />
+                        </div>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {/* 글쓰기 */}
+                      <button
+                        onClick={() => {
+                          closeWriteMenu();
+                          navigate('/secondhand/new');
+                        }}
+                        className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                        style={{ animationDelay: '0.1s' }}
+                      >
+                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">글쓰기</span>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                          <EditIcon className="text-white" fontSize="small" />
+                        </div>
+                      </button>
+
+                      {/* 검색 */}
+                      <button
+                        onClick={() => {
+                          closeWriteMenu();
+                          // TODO: 검색 기능
+                        }}
+                        className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                        style={{ animationDelay: '0.05s' }}
+                      >
+                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">검색</span>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-200 flex items-center justify-center">
+                          <SearchIcon className="text-blue-600" fontSize="small" />
+                        </div>
+                      </button>
+
+                      {/* 거래 정책 */}
+                      <button
+                        onClick={() => {
+                          closeWriteMenu();
+                          // TODO: 정책 페이지
+                        }}
+                        className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      >
+                        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">거래 정책</span>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-violet-200 flex items-center justify-center">
+                          <PolicyIcon className="text-purple-600" fontSize="small" />
+                        </div>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* 메인 플로팅 버튼 */}
+            <button
+              onClick={handleWriteButtonClick}
+              className={`w-14 h-14 text-white rounded-full transition-all duration-300 flex items-center justify-center border-2 border-white shadow-lg ${
+                showWriteMenu ? 'scale-110' : 'scale-100'
+              }`}
+              style={{
+                background: tabColors[currentTab]?.gradient || tabColors.community.gradient,
+                boxShadow: tabColors[currentTab]?.shadow || tabColors.community.shadow
+              }}
+              title="글쓰기"
+            >
+              <svg
+                className="w-7 h-7 transition-transform duration-300"
+                style={{ transform: showWriteMenu ? 'rotate(45deg)' : (isButtonSpinning ? 'rotate(180deg)' : 'rotate(0deg)') }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+            </button>
+          </div>
         )}
 
         {/* 모바일용 하단 네비게이션 - 스크롤 방향에 따라 숨김/표시 */}

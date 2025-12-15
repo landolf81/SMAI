@@ -230,21 +230,58 @@ header div.mr-2:after {
 
 /* CommunityHub Swiper 스타일 */
 .community-hub-swiper {
-  height: calc(100vh - 64px - 64px); /* viewport - 상단탭(64px) - 하단메뉴(64px) */
-  overflow: hidden;
+  /* Swiper는 높이 제한 없이 콘텐츠 크기만큼 확장 */
+  overflow: visible !important;
+}
+
+.community-hub-swiper .swiper-wrapper {
+  /* 스와이프 슬라이드도 높이 자동 */
+  align-items: flex-start;
+}
+
+.community-hub-swiper .swiper-slide {
+  /* 각 슬라이드 높이 자동 */
+  height: auto !important;
 }
 
 .tab-content-wrapper {
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  /* 각 wrapper가 독립적인 스크롤 컨텍스트 생성 */
+  /* window 스크롤 사용을 위해 overflow 제거 */
+  overflow: visible;
 }
 
-/* 모바일 환경에서 탭 컨텐츠 높이 조정 */
-@media (max-width: 768px) {
-  .community-hub-swiper {
-    height: calc(100vh - 56px - 64px); /* 모바일 탭 헤더는 더 작을 수 있음 */
+/* 슬라이드업 애니메이션 */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
   }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+/* 페이드인업 애니메이션 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+/* Safe area bottom for iOS */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }

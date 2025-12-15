@@ -70,6 +70,14 @@ const CommunityHub = () => {
   // 3. Swiper 탭 전환 핸들러
   const handleSlideChange = (swiper) => {
     setActiveTabIndex(swiper.activeIndex);
+    // 탭 전환 시 스크롤 최상단으로 이동
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Swiper 높이 업데이트 (swiper가 초기화된 경우에만)
+    setTimeout(() => {
+      if (swiper && swiper.params) {
+        swiper.updateAutoHeight();
+      }
+    }, 100);
   };
 
   // 4. 탭 버튼 클릭 핸들러
@@ -80,7 +88,7 @@ const CommunityHub = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-14">
       {/* 탭 헤더 - sticky + 반투명 */}
       <div className="sticky top-14 z-40 bg-white/70 backdrop-blur-md border-b border-white/30">
         <div className="flex items-center">
@@ -109,7 +117,7 @@ const CommunityHub = () => {
         </div>
       </div>
 
-      {/* Swiper 컨테이너 */}
+      {/* Swiper 컨테이너 - window 스크롤 사용 */}
       <Swiper
         spaceBetween={0}
         slidesPerView={1}
@@ -119,6 +127,7 @@ const CommunityHub = () => {
         touchRatio={1}
         resistanceRatio={0.85}
         threshold={10}
+        autoHeight={true}
         className="community-hub-swiper"
       >
         {TABS.map((tab) => (

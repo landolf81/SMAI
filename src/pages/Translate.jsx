@@ -3,10 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import TranslateIcon from '@mui/icons-material/Translate';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import HistoryIcon from '@mui/icons-material/History';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
+import CloseIcon from '@mui/icons-material/Close';
 import toast from 'react-hot-toast';
 import { geminiService, translationService, adService, r2Service } from '../services';
 import { supabase } from '../config/supabase';
@@ -47,6 +49,8 @@ const Translate = () => {
   const [history, setHistory] = useState([]);
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [historyCount, setHistoryCount] = useState(0);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [voiceInputText, setVoiceInputText] = useState(''); // 음성 입력 중 임시 텍스트
   const recognitionRef = useRef(null);
   const audioCache = useRef(null); // TTS 오디오 캐시
   const currentAudio = useRef(null); // 현재 재생 중인 오디오
@@ -75,18 +79,29 @@ const Translate = () => {
       recognition.interimResults = true;
       recognition.onresult = (event) => {
         let finalTranscript = '';
+        let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           if (event.results[i].isFinal) {
             finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
           }
         }
+        // 중간 결과를 모달에 표시
+        if (interimTranscript) {
+          setVoiceInputText(interimTranscript);
+        }
+        // 최종 결과를 입력창에 추가
         if (finalTranscript) {
           setInputText(prev => prev + (prev ? ' ' : '') + finalTranscript);
+          setVoiceInputText(''); // 임시 텍스트 초기화
         }
       };
       recognition.onerror = (event) => {
         console.error('음성 인식 오류:', event.error);
         setIsListening(false);
+        setShowVoiceModal(false);
+        setVoiceInputText('');
         if (event.error === 'not-allowed') {
           toast.error('마이크 권한이 거부되었습니다.');
         } else if (event.error === 'no-speech') {
@@ -97,6 +112,8 @@ const Translate = () => {
       };
       recognition.onend = () => {
         setIsListening(false);
+        setShowVoiceModal(false);
+        setVoiceInputText('');
       };
       recognitionRef.current = recognition;
     }
@@ -146,18 +163,24 @@ const Translate = () => {
     }
   };
 
-  const toggleVoiceInput = () => {
+  const startVoiceInput = () => {
     if (!speechSupported) {
       toast.error('이 브라우저는 음성 인식을 지원하지 않습니다.');
       return;
     }
-    if (isListening) {
+    setShowVoiceModal(true);
+    setVoiceInputText('');
+    recognitionRef.current.start();
+    setIsListening(true);
+  };
+
+  const stopVoiceInput = () => {
+    if (recognitionRef.current) {
       recognitionRef.current.stop();
-      setIsListening(false);
-    } else {
-      recognitionRef.current.start();
-      setIsListening(true);
     }
+    setIsListening(false);
+    setShowVoiceModal(false);
+    setVoiceInputText('');
   };
 
   // 언어 교환
@@ -480,12 +503,8 @@ const Translate = () => {
             {speechSupported && (
               <button
                 type="button"
-                onClick={toggleVoiceInput}
-                className={`px-6 py-4 rounded-xl font-bold transition-all shadow-md ${
-                  isListening
-                    ? 'bg-red-500 text-white animate-pulse hover:bg-red-600'
-                    : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
-                }`}
+                onClick={startVoiceInput}
+                className="px-6 py-4 rounded-xl font-bold transition-all shadow-md bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600"
                 title="음성으로 입력"
               >
                 <MicIcon />
@@ -622,6 +641,76 @@ const Translate = () => {
           onClose={() => setSelectedHistory(null)}
           onDelete={handleDeleteHistory}
         />
+      )}
+
+      {/* 음성 입력 모달 */}
+      {showVoiceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in duration-200">
+            {/* 닫기 버튼 */}
+            <button
+              onClick={stopVoiceInput}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <CloseIcon className="text-gray-500" />
+            </button>
+
+            {/* 헤더 */}
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">음성 입력</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {LANGUAGES.find(l => l.code === inputLang)?.flag} {LANGUAGES.find(l => l.code === inputLang)?.name}로 말씀하세요
+              </p>
+            </div>
+
+            {/* 마이크 애니메이션 */}
+            <div className="flex justify-center mb-6">
+              <div className="relative">
+                {/* 파동 효과 */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-24 h-24 bg-red-500/20 rounded-full animate-ping"></div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 bg-red-500/30 rounded-full animate-pulse"></div>
+                </div>
+                {/* 마이크 아이콘 */}
+                <div className="relative w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center shadow-lg">
+                  <MicIcon className="text-white" style={{ fontSize: '2.5rem' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* 음성 인식 상태 */}
+            <div className="text-center mb-6">
+              <p className="text-sm font-medium text-red-500 animate-pulse">
+                🎤 듣고 있습니다...
+              </p>
+              {/* 인식 중인 텍스트 표시 */}
+              {voiceInputText && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-xl">
+                  <p className="text-gray-700 text-sm">{voiceInputText}</p>
+                </div>
+              )}
+            </div>
+
+            {/* 입력된 텍스트 미리보기 */}
+            {inputText && (
+              <div className="mb-6 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                <p className="text-xs text-emerald-600 font-medium mb-1">입력된 텍스트</p>
+                <p className="text-gray-700 text-sm line-clamp-3">{inputText}</p>
+              </div>
+            )}
+
+            {/* 중지 버튼 */}
+            <button
+              onClick={stopVoiceInput}
+              className="w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <MicOffIcon />
+              음성 입력 중지
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

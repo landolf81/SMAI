@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useNavigationType } from 'react-router-dom';
+import { useNavigationType } from 'react-router-dom';
 import { qnaService, adService } from '../services';
 import { useScrollRestore } from '../hooks/useScrollRestore';
-import { useScrollDirection } from '../hooks/useScrollDirection';
 import QnADetail from './QnADetail';
 import moment from 'moment';
 import 'moment/locale/ko';
@@ -16,16 +15,12 @@ import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import SearchIcon from '@mui/icons-material/Search';
-// FilterListIcon 제거됨 - 필터 기능 비활성화
 
 moment.locale('ko');
 
 const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
-  const navigate = useNavigate();
   const navigationType = useNavigationType();
-  const [searchInput, setSearchInput] = useState(''); // 입력값
-  const [searchTerm, setSearchTerm] = useState(''); // 실제 검색어 (엔터 시 적용)
+  const [searchTerm, setSearchTerm] = useState(''); // 검색어 (외부에서 설정)
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [isMobile] = useState(() => isMobileDevice());
@@ -38,15 +33,9 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   // 스크롤 애니메이션을 위한 ref
   const questionRefs = useRef({});
 
-  // 글쓰기 버튼 회전 애니메이션 상태
-  const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
-
   // 프로필 모달 상태
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
-
-  // 스크롤 방향 감지
-  const scrollDirection = useScrollDirection();
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
   // hubMode일 때는 탭별 독립 키 사용
@@ -215,17 +204,6 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
     return () => observer.disconnect();
   }, [questionsWithAds, renderedCount]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setSearchTerm(searchInput); // 엔터 시에만 검색어 적용
-    setPage(0); // 검색 시 첫 페이지로 이동
-  };
-
-  const handleStatusChange = (status) => {
-    setStatusFilter(status);
-    setPage(0);
-  };
-
   const getStatusIcon = (status) => {
     switch (status) {
       case 'open':
@@ -284,30 +262,7 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* 고정 헤더 (검색창 포함) - 스크롤 방향에 따라 숨김/표시 */}
-      <div className={`sticky z-40 bg-white border-b shadow-sm transition-transform duration-300 ${
-        scrollDirection === 'down' ? '-translate-y-full top-0' : 'translate-y-0 top-16'
-      }`}>
-        <div className="p-4">
-          {/* 타이틀 */}
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-bold text-gray-900">Q&A 질문답변</h1>
-          </div>
-
-          {/* 검색바 */}
-          <form onSubmit={handleSearch}>
-            <input
-              type="text"
-              placeholder="검색어 입력 후 엔터"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent bg-white"
-            />
-          </form>
-        </div>
-      </div>
-
+    <div className="max-w-6xl mx-auto pt-2">
       <div className="p-4">
 
       {/* 인기 질문 (최상단) - 타이틀만 표시 */}
@@ -546,35 +501,6 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
             </svg>
           </button>
         </div>
-      )}
-
-      {/* 플로팅 글쓰기 버튼 (모바일용) */}
-      {isMobile && (
-        <button
-          onClick={() => {
-            if (isWriteButtonSpinning) return;
-            setIsWriteButtonSpinning(true);
-            setTimeout(() => {
-              navigate('/qna/ask');
-            }, 300);
-          }}
-          className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"
-          style={{
-            background: 'linear-gradient(135deg, #FFCC00 0%, #06b6d4 100%)',
-            boxShadow: '0 4px 15px rgba(255, 204, 0, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
-          }}
-          title="질문하기"
-        >
-          <svg
-            className="w-6 h-6 transition-transform duration-300"
-            style={{ transform: isWriteButtonSpinning ? 'rotate(180deg)' : 'rotate(0deg)' }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
       )}
 
       {/* 프로필 모달 */}

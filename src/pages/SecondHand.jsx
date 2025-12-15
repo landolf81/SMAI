@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useContext, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigationType } from 'react-router-dom';
+import { useNavigationType, useNavigate } from 'react-router-dom';
 import { postService, adService } from '../services';
 import SecondHandCard from '../components/SecondHandCard';
 import MobileAdDisplay from '../components/MobileAdDisplay';
@@ -8,7 +8,6 @@ import { AuthContext } from '../context/AuthContext';
 import { isMobileDevice } from '../utils/deviceDetector';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import { useScrollRestore } from '../hooks/useScrollRestore';
-import { useNavigate } from 'react-router-dom';
 
 const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   const { currentUser } = useContext(AuthContext);
@@ -20,9 +19,6 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   // 순차적 렌더링을 위한 상태
   const [renderedCount, setRenderedCount] = useState(0);
   const renderIntervalRef = useRef(null);
-
-  // 글쓰기 버튼 회전 애니메이션 상태
-  const [isWriteButtonSpinning, setIsWriteButtonSpinning] = useState(false);
 
   // 중고거래 페이지 스크롤 위치 복원 (검색어 고려)
   // hubMode일 때는 탭별 독립 키 사용
@@ -158,30 +154,9 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
 
   return (
     <div className={`min-h-screen bg-gray-50 ${(isMobile && !hubMode) ? 'pb-20' : ''}`}>
-      <div className="max-w-2xl mx-auto">
-        {/* 헤더 */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="px-4 py-3">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center">
-                <ShoppingBagIcon className="text-2xl text-orange-500 mr-2" />
-                <h1 className="text-xl font-bold text-gray-900">사고팔고</h1>
-              </div>
-
-              {/* 검색바 */}
-              <input
-                type="text"
-                placeholder="검색"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-4 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent bg-white"
-              />
-            </div>
-          </div>
-        </div>
-
+      <div className="max-w-2xl mx-auto pt-2">
         {/* 게시물 목록 - 그리드 레이아웃 */}
-        <div className="px-4 py-6">
+        <div className="px-4 py-4">
           {isLoading ? (
             <div className="flex justify-center py-12">
               <div className="loading loading-spinner loading-lg text-orange-500"></div>
@@ -238,34 +213,6 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
             </div>
           )}
         </div>
-
-        {/* 글쓰기 버튼 (모바일) */}
-        {isMobile && (
-          <button
-            onClick={() => {
-              if (isWriteButtonSpinning) return;
-              setIsWriteButtonSpinning(true);
-              setTimeout(() => {
-                navigate('/secondhand/new');
-              }, 300);
-            }}
-            className="fixed bottom-20 right-4 w-14 h-14 text-white rounded-full transition-all duration-200 hover:scale-110 z-10 flex items-center justify-center border-2 border-white"
-            style={{
-              background: 'linear-gradient(135deg, #f97316 0%, #06b6d4 100%)',
-              boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4), 0 8px 25px rgba(6, 182, 212, 0.3)'
-            }}
-          >
-            <svg
-              className="w-6 h-6 transition-transform duration-300"
-              style={{ transform: isWriteButtonSpinning ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
-        )}
       </div>
     </div>
   );
