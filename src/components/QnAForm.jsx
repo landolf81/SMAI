@@ -247,7 +247,7 @@ const QnAForm = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
+    <div className="max-w-3xl mx-auto px-4 pt-20 pb-24">
       {/* 질문 작성 폼 */}
       <div className="bg-white rounded-lg border shadow-sm">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
