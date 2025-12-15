@@ -151,9 +151,9 @@ useEffect(() => {
           setIsButtonSpinning(false);
         }, 300);
       } else {
-        // QnA, 사고팔고는 메뉴 모달 표시
+        // QnA, 사고팔고는 메뉴 모달 토글
         setTimeout(() => {
-          setShowWriteMenu(true);
+          setShowWriteMenu(prev => !prev);
           setIsButtonSpinning(false);
         }, 300);
       }
