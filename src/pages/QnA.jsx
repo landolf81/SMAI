@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, startTransition } from 'react';
 import QnAList from '../components/QnAList';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,29 +8,33 @@ const QnA = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const searchInputRef = useRef(null);
 
-  // 검색 모드 진입 이벤트 리스너
+  // 검색 모드 진입 이벤트 리스너 - startTransition으로 최적화
   useEffect(() => {
     const handleSearchOpen = () => {
-      // 바로 검색 모드 활성화
+      // 즉시 검색 모드 활성화 (우선순위 높음)
       setIsSearchMode(true);
 
-      // 다음 틱에 포커스 (DOM 렌더링 후)
-      setTimeout(() => {
+      // requestAnimationFrame으로 DOM 렌더링 후 포커스
+      requestAnimationFrame(() => {
         searchInputRef.current?.focus();
-      }, 50);
+      });
 
-      // 플로팅 메뉴 닫기
-      window.dispatchEvent(new CustomEvent('close-floating-menu'));
+      // 플로팅 메뉴 닫기는 낮은 우선순위로 처리
+      startTransition(() => {
+        window.dispatchEvent(new CustomEvent('close-floating-menu'));
+      });
     };
 
     window.addEventListener('qna-search-open', handleSearchOpen);
     return () => window.removeEventListener('qna-search-open', handleSearchOpen);
   }, []);
 
-  // 검색 종료
+  // 검색 종료 - startTransition으로 최적화
   const handleCloseSearch = () => {
-    setIsSearchMode(false);
-    setSearchTerm('');
+    startTransition(() => {
+      setIsSearchMode(false);
+      setSearchTerm('');
+    });
   };
 
   return (

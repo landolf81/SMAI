@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useContext, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useContext, useEffect, useRef, startTransition } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigationType, useNavigate } from 'react-router-dom';
@@ -26,14 +26,21 @@ const SecondHand = () => {
   const [selectedPostId, setSelectedPostId] = useState(null);
   const modalRef = useRef(null);
 
-  // 검색 모드 진입 이벤트 리스너
+  // 검색 모드 진입 이벤트 리스너 - startTransition으로 최적화
   useEffect(() => {
     const handleSearchOpen = () => {
+      // 즉시 검색 모드 활성화 (우선순위 높음)
       setIsSearchMode(true);
-      setTimeout(() => {
+
+      // requestAnimationFrame으로 DOM 렌더링 후 포커스
+      requestAnimationFrame(() => {
         searchInputRef.current?.focus();
-      }, 50);
-      window.dispatchEvent(new CustomEvent('close-floating-menu'));
+      });
+
+      // 플로팅 메뉴 닫기는 낮은 우선순위로 처리
+      startTransition(() => {
+        window.dispatchEvent(new CustomEvent('close-floating-menu'));
+      });
     };
 
     window.addEventListener('secondhand-search-open', handleSearchOpen);
@@ -71,10 +78,12 @@ const SecondHand = () => {
     searchTerm || null
   );
 
-  // 검색 종료 핸들러
+  // 검색 종료 핸들러 - startTransition으로 최적화
   const handleCloseSearch = () => {
-    setIsSearchMode(false);
-    setSearchTerm('');
+    startTransition(() => {
+      setIsSearchMode(false);
+      setSearchTerm('');
+    });
   };
 
   // post_type = 'secondhand'로 필터링된 게시물 조회 (단순 시간순)
@@ -142,6 +151,7 @@ const SecondHand = () => {
   }, [posts, adsData]);
 
   // 순차적 렌더링: 데이터 로드 후 아이템을 위에서부터 순서대로 표시
+  // startTransition을 사용하여 렌더링 업데이트를 백그라운드로 처리
   useEffect(() => {
     // 로딩 중이거나 데이터가 없으면 스킵
     if (isLoading || !postsWithAds.length) {
@@ -165,28 +175,50 @@ const SecondHand = () => {
       clearInterval(renderIntervalRef.current);
     }
 
-    // 첫 번째 아이템 즉시 표시
+    // 첫 3개 아이템 즉시 표시 (초기 화면)
     if (renderedCount === 0) {
-      setRenderedCount(1);
+      setRenderedCount(Math.min(3, postsWithAds.length));
     }
 
-    // 나머지 아이템 순차적 표시 (50ms 간격)
-    renderIntervalRef.current = setInterval(() => {
-      setRenderedCount(prev => {
-        if (prev >= postsWithAds.length) {
-          clearInterval(renderIntervalRef.current);
-          return prev;
-        }
-        return prev + 1;
+    // 나머지 아이템 순차적 표시 - startTransition으로 우선순위 낮춤
+    // requestAnimationFrame을 사용하여 브라우저 렌더링 사이클에 맞춤
+    let frameId;
+    let currentIndex = renderedCount;
+
+    const scheduleNextBatch = () => {
+      if (currentIndex >= postsWithAds.length) {
+        return;
+      }
+
+      frameId = requestAnimationFrame(() => {
+        startTransition(() => {
+          // 한 번에 2개씩 렌더링 (부드러운 로딩)
+          const nextCount = Math.min(currentIndex + 2, postsWithAds.length);
+          setRenderedCount(nextCount);
+          currentIndex = nextCount;
+
+          // 다음 배치 예약
+          if (currentIndex < postsWithAds.length) {
+            scheduleNextBatch();
+          }
+        });
       });
-    }, 50);
+    };
+
+    // 첫 3개 이후부터 순차 렌더링 시작
+    if (renderedCount >= 3 && renderedCount < postsWithAds.length) {
+      scheduleNextBatch();
+    }
 
     return () => {
+      if (frameId) {
+        cancelAnimationFrame(frameId);
+      }
       if (renderIntervalRef.current) {
         clearInterval(renderIntervalRef.current);
       }
     };
-  }, [isLoading, postsWithAds.length, navigationType]);
+  }, [isLoading, postsWithAds.length, navigationType, renderedCount]);
 
   if (!currentUser) {
     return (

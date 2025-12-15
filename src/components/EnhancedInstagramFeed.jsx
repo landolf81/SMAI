@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, startTransition } from 'react';
 import { useNavigationType } from 'react-router-dom';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { postService, adService } from '../services';
@@ -315,7 +315,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   //   }
   // }, [visiblePosts]);
 
-  // 점진적 렌더링 (첫 로딩 시 버벅임 방지)
+  // 점진적 렌더링 (첫 로딩 시 버벅임 방지) - startTransition으로 최적화
   useEffect(() => {
     // 첫 로딩이 아니거나 뒤로가기(POP)인 경우 모든 아이템 즉시 표시
     if (!isFirstLoadRef.current || navigationType === 'POP') {
@@ -333,10 +333,13 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       return;
     }
 
-    // 첫 로딩 시: 초기에 모든 아이템을 DOM에 추가하되, CSS로만 순차 표시
-    // 이렇게 하면 DOM 높이가 변하지 않아 스크롤 점프 없음
+    // 첫 로딩 시: startTransition으로 상태 업데이트를 낮은 우선순위로 처리
+    // 이렇게 하면 메인 스레드가 블로킹되지 않음
     const totalItems = data.pages.reduce((sum, page) => sum + page.length, 0);
-    setVisibleItemCount(totalItems); // 모든 아이템 즉시 표시 (CSS 애니메이션만 순차)
+
+    startTransition(() => {
+      setVisibleItemCount(totalItems); // 모든 아이템 즉시 표시 (CSS 애니메이션만 순차)
+    });
   }, [isLoading, data, navigationType]);
 
   // 첫 로딩 완료 후 최상단으로 스크롤 (뒤로가기가 아닌 경우)
@@ -361,15 +364,19 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     window.scrollTo({ top: 0, behavior: 'instant' });
     setHasInitialScrolled(true);
 
-    // 스크롤 복원 완료 이벤트 발생 (약간의 지연 후)
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('scroll-restore-end'));
-    }, 100);
+    // requestAnimationFrame으로 브라우저 렌더링 후 이벤트 발생
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.dispatchEvent(new CustomEvent('scroll-restore-end'));
+      });
+    });
 
-    // 첫 로딩 애니메이션 후 플래그 해제 (1초 후)
-    setTimeout(() => {
-      isFirstLoadRef.current = false;
-    }, 1000);
+    // 첫 로딩 애니메이션 후 플래그 해제 - startTransition으로 우선순위 낮춤
+    startTransition(() => {
+      setTimeout(() => {
+        isFirstLoadRef.current = false;
+      }, 1000);
+    });
   }, [isLoading, data, hasInitialScrolled, highlightPostId, navigationType]);
 
   // highlightPostId가 있을 때 해당 게시물로 스크롤
