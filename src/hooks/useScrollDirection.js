@@ -10,11 +10,30 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 export const useScrollDirection = () => {
   const [scrollDirection, setScrollDirection] = useState('up');
   const lastScrollYRef = useRef(window.scrollY);
+  const isRestoringScrollRef = useRef(false); // 스크롤 복원 중 플래그
 
   useEffect(() => {
     let ticking = false;
 
+    // 스크롤 복원 시작 이벤트 리스너
+    const handleScrollRestoreStart = () => {
+      isRestoringScrollRef.current = true;
+      // 복원 중에는 항상 'up' 상태 유지 (헤더/메뉴바 표시)
+      setScrollDirection('up');
+    };
+
+    // 스크롤 복원 완료 이벤트 리스너
+    const handleScrollRestoreEnd = () => {
+      isRestoringScrollRef.current = false;
+      lastScrollYRef.current = window.scrollY; // 현재 위치를 기준점으로 설정
+    };
+
     const onScroll = () => {
+      // 스크롤 복원 중이면 방향 감지 비활성화
+      if (isRestoringScrollRef.current) {
+        return;
+      }
+
       if (ticking) return; // 이미 처리 중이면 스킵
 
       ticking = true;
@@ -56,8 +75,14 @@ export const useScrollDirection = () => {
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll-restore-start', handleScrollRestoreStart);
+    window.addEventListener('scroll-restore-end', handleScrollRestoreEnd);
 
-    return () => window.removeEventListener('scroll', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('scroll-restore-start', handleScrollRestoreStart);
+      window.removeEventListener('scroll-restore-end', handleScrollRestoreEnd);
+    };
   }, []);
 
   return scrollDirection;

@@ -354,9 +354,17 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       return;
     }
 
+    // 스크롤 복원 시작 이벤트 발생 (헤더/메뉴바 플리커링 방지)
+    window.dispatchEvent(new CustomEvent('scroll-restore-start'));
+
     // 첫 페이지 로딩 완료 시 최상단으로 스크롤
     window.scrollTo({ top: 0, behavior: 'instant' });
     setHasInitialScrolled(true);
+
+    // 스크롤 복원 완료 이벤트 발생 (약간의 지연 후)
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('scroll-restore-end'));
+    }, 100);
 
     // 첫 로딩 애니메이션 후 플래그 해제 (1초 후)
     setTimeout(() => {
