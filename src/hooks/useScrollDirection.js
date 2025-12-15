@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * 스크롤 방향 감지 훅 (즉시 반응 버전)
  * - 모든 스크롤 이벤트에서 즉시 방향 감지
  * - threshold 없이 바로 반응
+ * - 페이지 상단(scrollY < 50)에서는 항상 'up' 반환 (헤더 표시)
  * @returns {string} 'up' | 'down'
  */
 export const useScrollDirection = () => {
@@ -14,6 +15,13 @@ export const useScrollDirection = () => {
     const onScroll = () => {
       const scrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
+
+      // 페이지 상단 근처에서는 항상 'up' (헤더/메뉴바 표시)
+      if (scrollY < 50) {
+        lastScrollYRef.current = scrollY;
+        setScrollDirection('up');
+        return;
+      }
 
       // 스크롤 위치가 변하지 않았으면 무시
       if (scrollY === lastScrollY) return;
@@ -39,4 +47,12 @@ export const useScrollDirection = () => {
   }, []);
 
   return scrollDirection;
+};
+
+/**
+ * 스크롤 방향을 강제로 리셋하는 함수를 외부에서 호출할 수 있도록 export
+ * 탭 전환 등에서 사용
+ */
+export const triggerScrollCheck = () => {
+  window.dispatchEvent(new Event('scroll'));
 };

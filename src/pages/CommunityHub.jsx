@@ -7,6 +7,7 @@ import 'swiper/css';
 import Community from './Community';
 import QnA from './QnA';
 import SecondHand from './SecondHand';
+import { triggerScrollCheck } from '../hooks/useScrollDirection';
 
 // Icons
 import ForumIcon from '@mui/icons-material/Forum';
@@ -150,6 +151,8 @@ const CommunityHub = () => {
     // requestAnimationFrame으로 DOM 업데이트 후 스크롤 복원
     requestAnimationFrame(() => {
       window.scrollTo({ top: savedPosition, behavior: 'instant' });
+      // 스크롤 위치 변경 후 헤더/메뉴바 상태 업데이트
+      triggerScrollCheck();
     });
   };
 
