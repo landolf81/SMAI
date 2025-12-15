@@ -56,6 +56,7 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
         }
 
         const audio = new Audio(history.audio_url);
+        audio.playbackRate = 0.85; // 재생 속도를 85%로 느리게 설정
         audioRef.current = audio;
         setIsPlaying(true);
 
