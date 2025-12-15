@@ -31,9 +31,6 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   const [renderedCount, setRenderedCount] = useState(0);
   const renderIntervalRef = useRef(null);
 
-  // 스크롤 애니메이션을 위한 ref
-  const questionRefs = useRef({});
-
   // 프로필 모달 상태
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
@@ -186,30 +183,7 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
     };
   }, [isLoading, questionsWithAds.length, navigationType]);
 
-  // 스크롤 시 애니메이션 효과 (IntersectionObserver)
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.15
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('animate-fade-in-up');
-          entry.target.classList.remove('opacity-0', 'translate-y-8');
-        }
-      });
-    }, observerOptions);
-
-    // 각 질문 카드 관찰
-    Object.values(questionRefs.current).forEach(ref => {
-      if (ref) observer.observe(ref);
-    });
-
-    return () => observer.disconnect();
-  }, [questionsWithAds, renderedCount]);
+  // IntersectionObserver 제거 - CSS 애니메이션으로 대체하여 스크롤 성능 향상
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -317,12 +291,16 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
                 return (
                   <div
                     key={item.key}
-                    ref={(el) => { questionRefs.current[item.key] = el; }}
-                    className={`rounded-lg p-6 border shadow-sm hover:shadow-md transition-shadow cursor-pointer opacity-0 translate-y-8 ${
+                    className={`rounded-lg p-6 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
                       question.question_status === 'closed' ? 'bg-green-50/30' :
                       question.question_status === 'answered' ? 'bg-yellow-50/30' :
                       'bg-blue-50/30'
                     }`}
+                    style={{
+                      animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
+                      animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
+                      opacity: navigationType !== 'POP' ? 0 : 1
+                    }}
                     onClick={() => setSelectedQuestionId(question.id)}
                   >
                   <div className="flex items-start gap-4">
