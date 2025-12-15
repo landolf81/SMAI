@@ -221,51 +221,28 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     });
   }, []);
 
-  // 향상된 Intersection Observer 설정
+  // 향상된 Intersection Observer 설정 (최적화: 광고 추적만 수행)
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: enableSnapScroll ? '0px' : '200px 0px',  // 화면 진입 200px 전에 트리거 (더 빠른 애니메이션)
-      threshold: enableSnapScroll ? [0.5, 0.75, 1.0] : [0]  // 조금이라도 보이면 트리거
+      rootMargin: '200px 0px',  // 화면 진입 200px 전에 트리거
+      threshold: [0]  // 조금이라도 보이면 트리거
     };
 
+    // 이미 추적된 광고 ID를 ref로 관리 (리렌더링 방지)
+    const trackedAds = new Set();
+
     observerRef.current = new IntersectionObserver((entries) => {
-      // setVisiblePosts를 함수형 업데이트로 변경하여 stale closure 문제 해결
-      setVisiblePosts(prevVisiblePosts => {
-        const newVisiblePosts = new Set(prevVisiblePosts);
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
 
-        entries.forEach((entry) => {
-          const postId = entry.target.dataset.postId;
-          const adId = entry.target.dataset.adId;
+        const adId = entry.target.dataset.adId;
 
-          if (entry.isIntersecting) {
-            // 스냅 스크롤 모드에서는 더 엄격한 가시성 기준
-            if (enableSnapScroll && entry.intersectionRatio < 0.75) {
-              return;
-            }
-
-            // 광고 노출 추적
-            if (adId && !newVisiblePosts.has(postId)) {
-              trackAdView(adId);
-            }
-
-            newVisiblePosts.add(postId);
-
-            // 애니메이션 트리거 (한 번만)
-            setAnimatedPosts(prev => {
-              if (!prev.has(postId)) {
-                const newSet = new Set(prev);
-                newSet.add(postId);
-                return newSet;
-              }
-              return prev;
-            });
-          } else {
-            newVisiblePosts.delete(postId);
-          }
-        });
-
-        return newVisiblePosts;
+        // 광고 노출 추적 (한 번만)
+        if (adId && !trackedAds.has(adId)) {
+          trackedAds.add(adId);
+          trackAdView(adId);
+        }
       });
     }, observerOptions);
 
@@ -274,7 +251,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         observerRef.current.disconnect();
       }
     };
-  }, [enableSnapScroll, trackAdView]); // visiblePosts 제거 - 함수형 업데이트 사용
+  }, [trackAdView]);
 
   // 게시글 요소들을 Observer에 등록 (renderedCount 변경 시마다 재등록)
   useEffect(() => {
