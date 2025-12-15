@@ -27,6 +27,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   const [startY, setStartY] = useState(0);
   const pullToRefreshRef = useRef(null);
 
+  // 무한 스크롤용 sentinel ref
+  const sentinelRef = useRef(null);
+
   // 초기 광고 노출 횟수 스냅샷 (광고 순서 안정화용)
   const initialAdViewCountsRef = useRef(null);
 
@@ -336,19 +339,26 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       clearInterval(renderIntervalRef.current);
     }
 
-    // 첫 번째 아이템 즉시 표시 + 처음 3개 애니메이션 즉시 시작
+    // 첫 로딩 시: 처음 5개 즉시 표시 (빈 화면 방지)
     if (renderedCount === 0) {
-      setRenderedCount(1);
-      // 처음 3개 게시물은 애니메이션 대기 없이 바로 표시
+      const initialCount = Math.min(5, postsWithAds.length);
+      setRenderedCount(initialCount);
+
+      // 처음 5개 게시물은 애니메이션 대기 없이 바로 표시
       const initialAnimated = new Set();
-      postsWithAds.slice(0, 3).forEach(item => {
+      postsWithAds.slice(0, initialCount).forEach(item => {
         const itemId = item.type === 'ad' ? `ad-${item.data.id}` : item.data.id.toString();
         initialAnimated.add(itemId);
       });
       setAnimatedPosts(prev => new Set([...prev, ...initialAnimated]));
+
+      // 5개 이하면 여기서 끝
+      if (postsWithAds.length <= initialCount) {
+        return;
+      }
     }
 
-    // 나머지 아이템 순차적 표시 (30ms 간격 - 더 빠르게)
+    // 나머지 아이템 순차적 표시 (20ms 간격 - 더 빠르게)
     renderIntervalRef.current = setInterval(() => {
       setRenderedCount(prev => {
         if (prev >= postsWithAds.length) {
@@ -357,7 +367,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         }
         return prev + 1;
       });
-    }, 30);
+    }, 20);
 
     return () => {
       if (renderIntervalRef.current) {
@@ -433,35 +443,29 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     };
   }, [enableSnapScroll]);
 
-  // 무한 스크롤 처리 (개선된 버전)
+  // 무한 스크롤 처리 (IntersectionObserver 사용 - scroll 이벤트 제거)
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollPosition = window.innerHeight + document.documentElement.scrollTop;
-      const totalHeight = document.documentElement.offsetHeight;
-      const threshold = totalHeight - 800; // 하단 800px 전에 로드
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
 
-      if (scrollPosition >= threshold) {
-        if (hasNextPage && !isFetchingNextPage) {
-          console.log('🔄 무한 스크롤 트리거:', { scrollPosition, totalHeight, threshold, hasNextPage });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          console.log('🔄 무한 스크롤 트리거 (IntersectionObserver)');
           fetchNextPage();
         }
+      },
+      {
+        rootMargin: '1200px', // 하단 1200px 전에 트리거
+        threshold: 0
       }
-    };
+    );
 
-    // 스크롤 이벤트 쓰로틀링
-    let timeoutId;
-    const throttledHandleScroll = () => {
-      if (timeoutId) return;
-      timeoutId = setTimeout(() => {
-        handleScroll();
-        timeoutId = null;
-      }, 100);
-    };
+    observer.observe(sentinel);
 
-    window.addEventListener('scroll', throttledHandleScroll);
     return () => {
-      window.removeEventListener('scroll', throttledHandleScroll);
-      if (timeoutId) clearTimeout(timeoutId);
+      observer.disconnect();
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
@@ -677,6 +681,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
             </div>
             );
           })}
+
+          {/* 무한 스크롤 감지용 sentinel 요소 */}
+          <div ref={sentinelRef} className="h-1" aria-hidden="true" />
 
           {/* 로딩 인디케이터 */}
           {isFetchingNextPage && (

@@ -1,45 +1,42 @@
 import { useState, useEffect, useRef } from 'react';
 
 /**
- * 스크롤 방향 감지 훅 (개선된 버전)
- * @param {number} threshold - 스크롤 감지 임계값 (기본 10px)
+ * 스크롤 방향 감지 훅 (즉시 반응 버전)
+ * - 모든 스크롤 이벤트에서 즉시 방향 감지
+ * - threshold 없이 바로 반응
  * @returns {string} 'up' | 'down'
  */
-export const useScrollDirection = (threshold = 10) => {
+export const useScrollDirection = () => {
   const [scrollDirection, setScrollDirection] = useState('up');
-  const lastScrollYRef = useRef(0);
-  const ticking = useRef(false);
+  const lastScrollYRef = useRef(window.scrollY);
 
   useEffect(() => {
-    const updateScrollDirection = () => {
+    const onScroll = () => {
       const scrollY = window.scrollY;
       const lastScrollY = lastScrollYRef.current;
 
-      if (Math.abs(scrollY - lastScrollY) < threshold) {
-        ticking.current = false;
-        return;
-      }
+      // 스크롤 위치가 변하지 않았으면 무시
+      if (scrollY === lastScrollY) return;
 
-      const direction = scrollY > lastScrollY ? 'down' : 'up';
-      setScrollDirection(direction);
-      lastScrollYRef.current = scrollY > 0 ? scrollY : 0;
-      ticking.current = false;
+      // 방향 결정: 내려가면 down, 올라가면 up
+      const newDirection = scrollY > lastScrollY ? 'down' : 'up';
+
+      // 항상 lastScrollY 업데이트
+      lastScrollYRef.current = scrollY;
+
+      // 방향이 바뀔 때만 state 업데이트
+      setScrollDirection(prev => {
+        if (prev !== newDirection) {
+          return newDirection;
+        }
+        return prev;
+      });
     };
-
-    const onScroll = () => {
-      if (!ticking.current) {
-        window.requestAnimationFrame(updateScrollDirection);
-        ticking.current = true;
-      }
-    };
-
-    // 초기 스크롤 위치 설정
-    lastScrollYRef.current = window.scrollY;
 
     window.addEventListener('scroll', onScroll, { passive: true });
 
     return () => window.removeEventListener('scroll', onScroll);
-  }, [threshold]);
+  }, []);
 
   return scrollDirection;
 };

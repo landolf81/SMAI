@@ -51,10 +51,13 @@ const Translate = () => {
   const [historyCount, setHistoryCount] = useState(0);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
   const [voiceInputText, setVoiceInputText] = useState(''); // 음성 입력 중 임시 텍스트
+  const [showTranslationModal, setShowTranslationModal] = useState(false); // 번역 결과 모달
   const recognitionRef = useRef(null);
   const audioCache = useRef(null); // TTS 오디오 캐시
   const currentAudio = useRef(null); // 현재 재생 중인 오디오
   const historySaved = useRef(false); // 히스토리 저장 여부
+  const modalAudioIntervalRef = useRef(null); // 모달 음성 반복 재생 인터벌
+  const isModalOpenRef = useRef(false); // 모달 열림 상태 ref
 
   // 광고 조회
   const { data: adsData } = useQuery({
@@ -378,6 +381,90 @@ const Translate = () => {
       });
   };
 
+  // 번역 결과 모달 열기
+  const openTranslationModal = () => {
+    isModalOpenRef.current = true;
+    setShowTranslationModal(true);
+
+    // 1초 후 음성 재생 시작 (반복)
+    setTimeout(() => {
+      startModalAudioLoop();
+    }, 1000);
+  };
+
+  // 번역 결과 모달 닫기
+  const closeTranslationModal = () => {
+    isModalOpenRef.current = false;
+    setShowTranslationModal(false);
+    stopModalAudioLoop();
+  };
+
+  // 모달 음성 반복 재생 시작
+  const startModalAudioLoop = async () => {
+    if (!translations.target) return;
+
+    const playOnce = async () => {
+      // ref로 모달 상태 확인
+      if (!isModalOpenRef.current) return;
+
+      try {
+        let audioBlob;
+
+        // 캐시에 오디오가 있으면 재사용
+        if (audioCache.current?.blob) {
+          audioBlob = audioCache.current.blob;
+        } else {
+          audioBlob = await geminiService.textToSpeech(translations.target, targetLang);
+          audioCache.current = { text: translations.target, blob: audioBlob };
+        }
+
+        // 현재 재생 중인 오디오가 있으면 중지
+        if (currentAudio.current) {
+          currentAudio.current.pause();
+          URL.revokeObjectURL(currentAudio.current.src);
+        }
+
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        currentAudio.current = audio;
+
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+          // 모달이 열려있으면 1초 후 다시 재생 (ref로 확인)
+          if (isModalOpenRef.current) {
+            modalAudioIntervalRef.current = setTimeout(() => {
+              playOnce();
+            }, 1000);
+          }
+        };
+
+        audio.onerror = () => {
+          URL.revokeObjectURL(audioUrl);
+        };
+
+        audio.play().catch(err => {
+          console.error('모달 오디오 재생 오류:', err);
+        });
+      } catch (error) {
+        console.error('모달 TTS 오류:', error);
+      }
+    };
+
+    playOnce();
+  };
+
+  // 모달 음성 반복 재생 중지
+  const stopModalAudioLoop = () => {
+    if (modalAudioIntervalRef.current) {
+      clearTimeout(modalAudioIntervalRef.current);
+      modalAudioIntervalRef.current = null;
+    }
+    if (currentAudio.current) {
+      currentAudio.current.pause();
+      currentAudio.current = null;
+    }
+  };
+
   // 공유하기
   const handleShare = async () => {
     if (!translations.target) return;
@@ -555,8 +642,12 @@ const Translate = () => {
                   </button>
                 </div>
               </div>
-              <div className="p-5 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl border-2 border-blue-200">
+              <div
+                onClick={openTranslationModal}
+                className="p-5 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl border-2 border-blue-200 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all active:scale-[0.99]"
+              >
                 <p className="text-slate-800 whitespace-pre-wrap text-lg leading-relaxed">{translations.target}</p>
+                <p className="text-xs text-blue-500 mt-2 text-center">👆 터치하여 크게 보기</p>
               </div>
 
               {/* 복사하기 & 공유하기 버튼 */}
@@ -708,6 +799,67 @@ const Translate = () => {
             >
               <MicOffIcon />
               음성 입력 중지
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 번역 결과 모달 */}
+      {showTranslationModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={closeTranslationModal}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 닫기 안내 */}
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-400">화면을 터치하면 닫힙니다</p>
+            </div>
+
+            {/* 번역 결과 - 큰 폰트 */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-2xl">{LANGUAGES.find(l => l.code === targetLang)?.flag}</span>
+                <span className="text-lg font-bold text-slate-700">{LANGUAGES.find(l => l.code === targetLang)?.name}</span>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-2xl border-2 border-blue-200">
+                <p className="text-slate-800 whitespace-pre-wrap text-2xl md:text-3xl leading-relaxed font-medium">
+                  {translations.target}
+                </p>
+              </div>
+            </div>
+
+            {/* 역번역 결과 */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-xl">{LANGUAGES.find(l => l.code === inputLang)?.flag}</span>
+                <span className="text-sm font-bold text-slate-600">역번역 (품질 검증)</span>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border-2 border-slate-200">
+                <p className="text-slate-700 whitespace-pre-wrap text-lg leading-relaxed">
+                  {translations.backTranslation}
+                </p>
+              </div>
+            </div>
+
+            {/* 음성 재생 상태 표시 */}
+            <div className="mt-4 text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm">
+                <VolumeUpIcon fontSize="small" className="animate-pulse" />
+                <span>음성 반복 재생 중...</span>
+              </div>
+            </div>
+
+            {/* 닫기 버튼 */}
+            <button
+              onClick={closeTranslationModal}
+              className="mt-6 w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <CloseIcon />
+              닫기
             </button>
           </div>
         </div>

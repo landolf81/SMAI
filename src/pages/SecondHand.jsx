@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useContext, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigationType, useNavigate } from 'react-router-dom';
 import { postService, adService } from '../services';
@@ -20,6 +21,27 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
 
   // 상세보기 모달 상태
   const [selectedPostId, setSelectedPostId] = useState(null);
+  const modalRef = useRef(null);
+
+  // 모달 열릴 때 배경 스크롤 막기 및 최상단 이동
+  useEffect(() => {
+    if (selectedPostId) {
+      // 모달이 열리면 body 스크롤 막기
+      document.body.style.overflow = 'hidden';
+      // 모달 최상단으로 스크롤
+      if (modalRef.current) {
+        modalRef.current.scrollTo({ top: 0, behavior: 'instant' });
+      }
+    } else {
+      // 모달이 닫히면 body 스크롤 복원
+      document.body.style.overflow = 'unset';
+    }
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedPostId]);
 
   // 순차적 렌더링을 위한 상태
   const [renderedCount, setRenderedCount] = useState(0);
@@ -223,24 +245,40 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
         </div>
       </div>
 
-      {/* 상세보기 모달 */}
-      {selectedPostId && (
-        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
-          {/* 오른쪽 상단 닫기 버튼 */}
-          <button
-            onClick={() => setSelectedPostId(null)}
-            className="fixed top-4 right-4 z-[60] w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-            title="닫기"
-          >
-            <CloseIcon className="text-gray-600" />
-          </button>
+      {/* 상세보기 모달 - Portal로 body에 직접 렌더링 */}
+      {selectedPostId && createPortal(
+        <div ref={modalRef} className="fixed inset-0 z-[9999] bg-white overflow-y-auto">
+          {/* 헤더 - 닫기 버튼 */}
+          <div className="sticky top-0 z-[10000] bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-800">상세보기</h2>
+            <button
+              onClick={() => setSelectedPostId(null)}
+              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              title="닫기"
+            >
+              <CloseIcon className="text-gray-600" />
+            </button>
+          </div>
 
+          {/* 콘텐츠 */}
           <PostDetail
             postId={selectedPostId}
             isModal={true}
             onClose={() => setSelectedPostId(null)}
           />
-        </div>
+
+          {/* 하단 닫기 버튼 - 콘텐츠 바로 아래 */}
+          <div className="px-4 pb-4 pt-2">
+            <button
+              onClick={() => setSelectedPostId(null)}
+              className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <CloseIcon fontSize="small" />
+              닫기
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

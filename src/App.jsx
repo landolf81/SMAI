@@ -162,7 +162,7 @@ useEffect(() => {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* 상단 Navbar - 반투명 레이어 */}
-        <div className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
+        <div className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 will-change-transform ${
           scrollDirection === 'down' ? '-translate-y-full' : 'translate-y-0'
         }`}>
           <Navbar />
@@ -327,7 +327,7 @@ useEffect(() => {
 
         {/* 모바일용 하단 네비게이션 - 스크롤 방향에 따라 숨김/표시 */}
         {(isMobileDevice() || window.innerWidth <= 768) && (
-          <div className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 ${
+          <div className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 will-change-transform ${
             scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
           }`}>
             <MobileBottomNav />

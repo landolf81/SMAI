@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigationType } from 'react-router-dom';
 import { qnaService, adService } from '../services';
@@ -42,11 +43,18 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   const scrollKey = hubMode ? `community-hub-${activeTab}` : 'qna';
   useScrollRestore(scrollKey, statusFilter, searchTerm);
 
-  // 모달 열릴 때 배경 스크롤 막기
+  // 모달 ref
+  const modalRef = useRef(null);
+
+  // 모달 열릴 때 배경 스크롤 막기 및 최상단 이동
   useEffect(() => {
     if (selectedQuestionId) {
       // 모달이 열리면 body 스크롤 막기
       document.body.style.overflow = 'hidden';
+      // 모달 최상단으로 스크롤
+      if (modalRef.current) {
+        modalRef.current.scrollTo({ top: 0, behavior: 'instant' });
+      }
     } else {
       // 모달이 닫히면 body 스크롤 복원
       document.body.style.overflow = 'unset';
@@ -472,31 +480,49 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
 
       </div>{/* p-4 닫기 */}
 
-      {/* QnA 상세보기 모달 (전체화면) */}
-      {selectedQuestionId && (
-        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
-          {/* 오른쪽 상단 닫기 버튼 */}
-          <button
-            onClick={() => setSelectedQuestionId(null)}
-            className="fixed top-4 right-4 z-[60] w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-            title="닫기"
-          >
-            <svg
-              className="w-5 h-5 text-gray-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+      {/* QnA 상세보기 모달 - Portal로 body에 직접 렌더링 */}
+      {selectedQuestionId && createPortal(
+        <div ref={modalRef} className="fixed inset-0 z-[9999] bg-white overflow-y-auto">
+          {/* 헤더 - 닫기 버튼 */}
+          <div className="sticky top-0 z-[10000] bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-800">Q&A 상세</h2>
+            <button
+              onClick={() => setSelectedQuestionId(null)}
+              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              title="닫기"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+              <svg
+                className="w-5 h-5 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
 
+          {/* 콘텐츠 */}
           <QnADetail
             questionId={selectedQuestionId}
             onClose={() => setSelectedQuestionId(null)}
             isModal={true}
           />
-        </div>
+
+          {/* 하단 닫기 버튼 - 콘텐츠 바로 아래 */}
+          <div className="px-4 pb-4 pt-2">
+            <button
+              onClick={() => setSelectedQuestionId(null)}
+              className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              닫기
+            </button>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* 프로필 모달 */}
