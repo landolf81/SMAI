@@ -404,14 +404,10 @@ const Translate = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 pt-14 p-4 pb-4">
       <div className="max-w-3xl mx-auto">
         {/* 헤더 */}
-        <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-2xl shadow-xl p-6 mb-6 text-white">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm">
-              <TranslateIcon fontSize="large" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">AI 번역기</h1>
-            </div>
+        <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl shadow-lg px-4 py-3 mb-4 text-white">
+          <div className="flex items-center gap-2">
+            <TranslateIcon fontSize="small" />
+            <h1 className="text-lg font-bold">AI 번역기</h1>
           </div>
         </div>
 
