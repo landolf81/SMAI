@@ -21,6 +21,17 @@ const SecondHandEditor = () => {
 
   const isEditMode = !!id;
 
+  // 인증 확인 (is_verified 체크)
+  const isVerified = currentUser?.is_verified === true;
+
+  // 비인증 사용자는 접근 불가
+  useEffect(() => {
+    if (currentUser && !isVerified) {
+      alert('인증된 사용자만 사고팔고 게시글을 작성할 수 있습니다.');
+      navigate('/secondhand');
+    }
+  }, [currentUser, isVerified, navigate]);
+
   // 상태 관리
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');

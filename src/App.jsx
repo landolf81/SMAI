@@ -266,11 +266,15 @@ useEffect(() => {
                     </>
                   ) : (
                     <>
-                      {/* 글쓰기 */}
+                      {/* 글쓰기 (인증된 사용자만) */}
                       <button
                         onClick={() => {
                           closeWriteMenu();
-                          navigate('/secondhand/new');
+                          if (currentUser?.is_verified) {
+                            navigate('/secondhand/new');
+                          } else {
+                            alert('인증된 사용자만 사고팔고 게시글을 작성할 수 있습니다.');
+                          }
                         }}
                         className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
                         style={{ animationDelay: '0.1s' }}

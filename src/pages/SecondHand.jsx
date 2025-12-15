@@ -304,7 +304,13 @@ const SecondHand = () => {
                   <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 상품이 없습니다</h3>
                   <p className="text-gray-500 mb-4">첫 번째 상품을 등록해보세요!</p>
                   <button
-                    onClick={() => navigate('/secondhand/new')}
+                    onClick={() => {
+                      if (currentUser?.is_verified) {
+                        navigate('/secondhand/new');
+                      } else {
+                        alert('인증된 사용자만 사고팔고 게시글을 작성할 수 있습니다.');
+                      }
+                    }}
                     className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
                   >
                     상품 등록하기
