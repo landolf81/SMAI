@@ -2,7 +2,7 @@
 
 /* 전역 스타일 재정의 */
 html {
-  scroll-behavior: smooth;
+  /* scroll-behavior: smooth; - React가 스크롤 제어하므로 제거 (300-500ms 지연 제거) */
   overflow-x: hidden;
 }
 
@@ -228,26 +228,6 @@ header div.mr-2:after {
   content: "" !important;
 }
 
-/* CommunityHub Swiper 스타일 */
-.community-hub-swiper {
-  /* Swiper는 높이 제한 없이 콘텐츠 크기만큼 확장 */
-  overflow: visible !important;
-}
-
-.community-hub-swiper .swiper-wrapper {
-  /* 스와이프 슬라이드도 높이 자동 */
-  align-items: flex-start;
-}
-
-.community-hub-swiper .swiper-slide {
-  /* 각 슬라이드 높이 자동 */
-  height: auto !important;
-}
-
-.tab-content-wrapper {
-  /* window 스크롤 사용을 위해 overflow 제거 */
-  overflow: visible;
-}
 
 /* 슬라이드업 애니메이션 */
 @keyframes slide-up {
@@ -265,20 +245,33 @@ header div.mr-2:after {
   animation: slide-up 0.3s ease-out forwards;
 }
 
-/* 페이드인업 애니메이션 */
+/* 페이드인업 애니메이션 (GPU 가속 최적화) */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translate3d(0, 15px, 0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out forwards;
+  animation: fadeInUp 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* 피드 아이템 애니메이션 (더 부드러운 버전) */
+@keyframes feedItemSlideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 /* Safe area bottom for iOS */

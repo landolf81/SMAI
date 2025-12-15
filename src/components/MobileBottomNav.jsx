@@ -1,15 +1,20 @@
-import HomeIcon from "@mui/icons-material/Home";
-import TranslateIcon from "@mui/icons-material/Translate";
-import ForumIcon from "@mui/icons-material/Forum";
-import PersonIcon from "@mui/icons-material/Person";
-import { useContext, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { AuthContext } from "../context/AuthContext";
-import { Link, useLocation } from "react-router-dom";
-import { dmService } from "../services";
+import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { AuthContext } from '../context/AuthContext';
+import { dmService } from '../services';
 
-const MobileBottomNav = () => {
+// Material UI Icons
+import HomeIcon from '@mui/icons-material/Home';
+import TranslateIcon from '@mui/icons-material/Translate';
+import ForumIcon from '@mui/icons-material/Forum';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import PersonIcon from '@mui/icons-material/Person';
+
+const MobileBottomNav = ({ scrollDirection }) => {
   const { currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
   const location = useLocation();
   const [isDMOpen, setIsDMOpen] = useState(false);
 
@@ -37,44 +42,108 @@ const MobileBottomNav = () => {
     return () => observer.disconnect();
   }, []);
 
-  const navItems = [
+  // 커뮤니티 모드 감지
+  const isCommunityMode = ['/community', '/qna', '/secondhand'].includes(location.pathname);
+
+  // 일반 모드 버튼 구성 (4개, 텍스트+아이콘)
+  const normalModeButtons = [
     {
-      path: "/",
+      id: 'home',
+      path: '/',
+      label: '홈',
       icon: HomeIcon,
-      label: "홈",
-      activeColor: "text-market-600"
+      showLabel: true,
+      activeColor: 'text-market-600'
     },
     {
-      path: "/translate",
+      id: 'translate',
+      path: '/translate',
+      label: '번역',
       icon: TranslateIcon,
-      label: "번역",
-      activeColor: "text-indigo-600"
+      showLabel: true,
+      activeColor: 'text-indigo-600'
     },
     {
-      path: "/community",
+      id: 'community',
+      path: '/community',
+      label: '커뮤니티',
       icon: ForumIcon,
-      label: "커뮤니티",
-      activeColor: "text-[#FFC425]"
+      showLabel: true,
+      activeColor: 'text-[#FFC425]'
     },
     {
-      path: currentUser ? `/profile/${currentUser.id}` : "/login",
+      id: 'profile',
+      path: currentUser ? `/profile/${currentUser.id}` : '/login',
+      label: currentUser ? '프로필' : '로그인',
       icon: PersonIcon,
-      label: currentUser ? "프로필" : "로그인",
-      activeColor: "text-purple-600"
+      showLabel: true,
+      isProfile: true,
+      activeColor: 'text-purple-600'
     }
   ];
 
-  const isActive = (path) => {
-    if (path === "/") {
-      return location.pathname === "/";
+  // 커뮤니티 모드 버튼 구성 (5개, 홈/프로필만 아이콘)
+  const communityModeButtons = [
+    {
+      id: 'home',
+      path: '/',
+      label: '홈',
+      icon: HomeIcon,
+      showLabel: false,  // 아이콘만 표시
+      activeColor: 'text-market-600'
+    },
+    {
+      id: 'community',
+      path: '/community',
+      label: '커뮤니티',
+      icon: ForumIcon,
+      showLabel: true,
+      activeColor: 'text-[#FFC425]'
+    },
+    {
+      id: 'qna',
+      path: '/qna',
+      label: 'Q&A',
+      icon: HelpOutlineIcon,
+      showLabel: true,
+      activeColor: 'text-blue-600'
+    },
+    {
+      id: 'secondhand',
+      path: '/secondhand',
+      label: '사고팔고',
+      icon: ShoppingBagIcon,
+      showLabel: true,
+      activeColor: 'text-green-600'
+    },
+    {
+      id: 'profile',
+      path: currentUser ? `/profile/${currentUser.id}` : '/login',
+      label: currentUser ? '프로필' : '로그인',
+      icon: PersonIcon,
+      showLabel: false,  // 아이콘만 표시
+      isProfile: true,
+      activeColor: 'text-purple-600'
     }
-    // /community, /qna, /secondhand 모두 커뮤니티로 인식
-    if (path === "/community") {
-      return location.pathname.startsWith("/community") ||
-             location.pathname.startsWith("/qna") ||
-             location.pathname.startsWith("/secondhand");
+  ];
+
+  // 현재 모드에 맞는 버튼 선택
+  const buttons = isCommunityMode ? communityModeButtons : normalModeButtons;
+
+  // 버튼 클릭 핸들러
+  const handleButtonClick = (button) => {
+    navigate(button.path);
+  };
+
+  // 활성 버튼 감지
+  const isActiveButton = (button) => {
+    if (button.id === 'home') {
+      return location.pathname === '/';
     }
-    return location.pathname.startsWith(path);
+    if (button.isProfile) {
+      return location.pathname.startsWith('/profile');
+    }
+    return location.pathname === button.path;
   };
 
   // DM이 열려있으면 하단 메뉴 숨기기
@@ -83,48 +152,61 @@ const MobileBottomNav = () => {
   }
 
   return (
-    <div className="bg-white/80 backdrop-blur-md border-t border-gray-200 shadow-lg md:hidden">
-      <div className="flex justify-around items-center h-16 px-2">
-        {navItems.map((item, index) => {
-          const IconComponent = item.icon;
-          const active = isActive(item.path);
-          const isProfile = item.label === "프로필";
+    <div
+      className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-150 will-change-transform md:hidden ${
+        scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
+      }`}
+    >
+      <div className="bg-white/90 backdrop-blur-md border-t border-gray-200 safe-area-bottom">
+        <div className="flex items-center justify-around h-16 max-w-screen-xl mx-auto px-2">
+          {buttons.map((button) => {
+            const IconComponent = button.icon;
+            const isActive = isActiveButton(button);
 
-          return (
-            <Link
-              key={index}
-              to={item.path}
-              className={`flex flex-col items-center justify-center flex-1 py-2 px-1 transition-all duration-200 ${
-                active
-                  ? `${item.activeColor} transform -translate-y-1`
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <div className={`relative p-2 rounded-full transition-all duration-200 ${
-                active ? 'bg-gray-100 shadow-sm' : ''
-              }`}>
-                <IconComponent
-                  className={`${active ? 'text-lg' : 'text-base'}`}
-                  fontSize="small"
-                />
-                {/* 프로필 아이콘에 읽지 않은 DM 뱃지 */}
-                {isProfile && unreadCount > 0 && (
-                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </div>
+            return (
+              <button
+                key={button.id}
+                onClick={() => handleButtonClick(button)}
+                className={`flex flex-col items-center justify-center transition-all duration-200 ${
+                  button.showLabel ? 'px-3 py-2 flex-1' : 'px-4 py-2'
+                } ${
+                  isActive
+                    ? `${button.activeColor} transform -translate-y-1`
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                aria-label={button.label}
+              >
+                <div className={`relative p-2 rounded-full transition-all duration-200 ${
+                  isActive ? 'bg-gray-100 shadow-sm' : ''
+                }`}>
+                  <IconComponent
+                    fontSize={button.showLabel ? 'small' : 'medium'}
+                    className={isActive ? 'text-lg' : 'text-base'}
+                  />
+
+                  {/* 프로필 아이콘에 읽지 않은 DM 뱃지 */}
+                  {button.isProfile && unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
+                  )}
+                </div>
+
+                {/* 텍스트 라벨 (showLabel이 true일 때만) */}
+                {button.showLabel && (
+                  <span className={`text-xs mt-1 ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                    {button.label}
+                  </span>
                 )}
-              </div>
-              <span className={`text-xs mt-1 font-medium ${
-                active ? 'font-semibold' : ''
-              }`}>
-                {item.label}
-              </span>
-              {active && (
-                <div className={`w-1 h-1 rounded-full mt-1 ${item.activeColor.replace('text-', 'bg-')}`}></div>
-              )}
-            </Link>
-          );
-        })}
+
+                {/* 활성 인디케이터 */}
+                {isActive && (
+                  <div className={`w-1 h-1 rounded-full mt-1 ${button.activeColor.replace('text-', 'bg-')}`}></div>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

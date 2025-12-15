@@ -12,32 +12,46 @@ export const useScrollDirection = () => {
   const lastScrollYRef = useRef(window.scrollY);
 
   useEffect(() => {
+    let ticking = false;
+
     const onScroll = () => {
-      const scrollY = window.scrollY;
-      const lastScrollY = lastScrollYRef.current;
+      if (ticking) return; // 이미 처리 중이면 스킵
 
-      // 페이지 상단 근처에서는 항상 'up' (헤더/메뉴바 표시)
-      if (scrollY < 50) {
-        lastScrollYRef.current = scrollY;
-        setScrollDirection('up');
-        return;
-      }
+      ticking = true;
 
-      // 스크롤 위치가 변하지 않았으면 무시
-      if (scrollY === lastScrollY) return;
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY;
+        const lastScrollY = lastScrollYRef.current;
 
-      // 방향 결정: 내려가면 down, 올라가면 up
-      const newDirection = scrollY > lastScrollY ? 'down' : 'up';
-
-      // 항상 lastScrollY 업데이트
-      lastScrollYRef.current = scrollY;
-
-      // 방향이 바뀔 때만 state 업데이트
-      setScrollDirection(prev => {
-        if (prev !== newDirection) {
-          return newDirection;
+        // 페이지 상단 근처에서는 항상 'up' (헤더/메뉴바 표시)
+        if (scrollY < 50) {
+          lastScrollYRef.current = scrollY;
+          setScrollDirection('up');
+          ticking = false;
+          return;
         }
-        return prev;
+
+        // 스크롤 위치가 변하지 않았으면 무시
+        if (scrollY === lastScrollY) {
+          ticking = false;
+          return;
+        }
+
+        // 방향 결정: 내려가면 down, 올라가면 up
+        const newDirection = scrollY > lastScrollY ? 'down' : 'up';
+
+        // 항상 lastScrollY 업데이트
+        lastScrollYRef.current = scrollY;
+
+        // 방향이 바뀔 때만 state 업데이트
+        setScrollDirection(prev => {
+          if (prev !== newDirection) {
+            return newDirection;
+          }
+          return prev;
+        });
+
+        ticking = false;
       });
     };
 

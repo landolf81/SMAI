@@ -19,7 +19,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 moment.locale('ko');
 
-const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
+const QnAList = () => {
   const navigationType = useNavigationType();
   const [searchTerm, setSearchTerm] = useState(''); // 검색어 (외부에서 설정)
   const [statusFilter, setStatusFilter] = useState('all');
@@ -36,8 +36,7 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
-  // hubMode일 때는 CommunityHub가 스크롤 관리하므로 비활성화
-  useScrollRestore('qna', statusFilter, searchTerm, null, !hubMode);
+  useScrollRestore('qna', statusFilter, searchTerm);
 
   // 모달 ref
   const modalRef = useRef(null);

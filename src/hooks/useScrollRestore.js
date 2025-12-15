@@ -3,14 +3,15 @@ import { useLocation, useNavigationType } from 'react-router-dom';
 import scrollManager from '../utils/scrollManager';
 
 /**
- * 게시판별 스크롤 위치 복원 훅 (뒤로가기시에만 복원)
+ * 게시판별 스크롤 위치 복원 훅 (페이지 재방문 시 복원, 캐시 만료 시 최상단)
  * @param {string} boardType - 게시판 타입 ('home', 'community', 'secondhand', 'profile' 등)
  * @param {string} tag - 태그 필터 (선택적)
  * @param {string} search - 검색어 (선택적)
  * @param {string} userId - 사용자 ID (선택적)
  * @param {boolean} enabled - 스크롤 복원 활성화 여부 (기본값: true)
+ * @param {boolean} isCacheValid - 캐시 유효 여부 (선택적, true면 스크롤 복원, false면 최상단)
  */
-export const useScrollRestore = (boardType, tag = null, search = null, userId = null, enabled = true) => {
+export const useScrollRestore = (boardType, tag = null, search = null, userId = null, enabled = true, isCacheValid = true) => {
   const location = useLocation();
   const navigationType = useNavigationType();
   const scrollTimeoutRef = useRef(null);
@@ -37,14 +38,12 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
 
     // 스크롤 복원 중에는 저장하지 않음
     if (isRestoringRef.current) {
-      console.log(`⏸️ [${boardType}] 스크롤 복원 중이므로 저장 생략`);
       return;
     }
 
     // 현재 경로가 해당 boardType 경로가 아니면 저장하지 않음
     const expectedPath = getExpectedPathname(boardType);
     if (!location.pathname.startsWith(expectedPath) || location.pathname.includes('/post/')) {
-      console.log(`⏭️ [${boardType}] 다른 페이지이므로 저장 생략 (현재: ${location.pathname})`);
       return;
     }
 
@@ -61,53 +60,29 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
   useEffect(() => {
     if (isInitializedRef.current) return;
 
-    const isBackForward = navigationType === 'POP';
+    // 캐시가 유효하면 저장된 스크롤 위치 복원 (뒤로가기 + 일반 페이지 이동 모두)
+    const savedScrollTop = scrollManager.restoreScrollPosition(boardType, tag, search, userId);
 
-    console.log(`🔄 [${boardType}] useScrollRestore 초기화:`, {
-      navigationType,
-      isBackForward,
-      pathname: location.pathname,
-      tag,
-      search
-    });
-
-    if (isBackForward) {
-      // 뒤로가기/앞으로가기: 저장된 스크롤 위치 복원
-      const savedScrollTop = scrollManager.restoreScrollPosition(boardType, tag, search, userId);
-
-      console.log(`📜 [${boardType}] 저장된 스크롤 위치:`, savedScrollTop);
-
-      if (savedScrollTop > 0) {
-        isRestoringRef.current = true; // 복원 중 플래그 설정
-
-        setTimeout(() => {
-          window.scrollTo({
-            top: savedScrollTop,
-            behavior: 'instant'
-          });
-          lastScrollPositionRef.current = savedScrollTop;
-          console.log(`✅ [${boardType}] 스크롤 복원 완료:`, savedScrollTop);
-
-          // 복원 완료 후 500ms 후에 플래그 해제 (스크롤 이벤트 안정화 대기)
-          setTimeout(() => {
-            isRestoringRef.current = false;
-            console.log(`🔓 [${boardType}] 스크롤 저장 재개`);
-          }, 500);
-        }, 100);
-      }
-    } else {
-      // 일반 페이지 이동: 항상 최상단으로
-      isRestoringRef.current = true; // 복원 중 플래그 설정
+    if (savedScrollTop > 0 && isCacheValid) {
+      isRestoringRef.current = true;
 
       setTimeout(() => {
         window.scrollTo({
-          top: 0,
+          top: savedScrollTop,
           behavior: 'instant'
         });
-        lastScrollPositionRef.current = 0;
-        console.log(`⬆️ [${boardType}] 최상단으로 이동 (일반 페이지 이동)`);
+        lastScrollPositionRef.current = savedScrollTop;
 
-        // 이동 완료 후 300ms 후에 플래그 해제
+        setTimeout(() => {
+          isRestoringRef.current = false;
+        }, 500);
+      }, 100);
+    } else {
+      // 캐시 무효 또는 저장된 위치가 없으면 최상단
+      isRestoringRef.current = true;
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        lastScrollPositionRef.current = 0;
         setTimeout(() => {
           isRestoringRef.current = false;
         }, 300);
@@ -135,9 +110,7 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
       // 컴포넌트 언마운트 시: 마지막으로 기록된 스크롤 위치 저장
       // (스크롤 이벤트에서 추적한 위치 사용 - 현재 window.scrollY는 이미 변경되었을 수 있음)
       if (!isRestoringRef.current && enabled && lastScrollPositionRef.current > 0) {
-        console.log(`📤 [${boardType}] 언마운트 시 스크롤 저장`);
         scrollManager.saveScrollPosition(boardType, lastScrollPositionRef.current, tag, search, userId);
-        console.log(`💾 [${boardType}] 스크롤 위치 저장됨:`, lastScrollPositionRef.current);
       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };

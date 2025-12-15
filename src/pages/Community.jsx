@@ -1,18 +1,31 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import EnhancedInstagramFeed from '../components/EnhancedInstagramFeed';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { AuthContext } from '../context/AuthContext';
 
-const Community = ({ hubMode = false, activeTab = 'community' }) => {
+const Community = () => {
     const [searchParams] = useSearchParams();
     const location = useLocation();
     const { isBanned } = useContext(AuthContext);
     const [showBannedAlert, setShowBannedAlert] = useState(false);
+    const [isCacheValid, setIsCacheValid] = useState(true);
+    const lastDataUpdateRef = useRef(null);
+
+    // EnhancedInstagramFeed에서 캐시 상태를 받아올 콜백
+    const handleCacheStatusChange = (dataUpdatedAt) => {
+        // 이전 데이터 업데이트 시간과 비교
+        if (lastDataUpdateRef.current !== null && lastDataUpdateRef.current !== dataUpdatedAt) {
+            // 데이터가 갱신되었으면 캐시 무효
+            setIsCacheValid(false);
+        } else {
+            setIsCacheValid(true);
+        }
+        lastDataUpdateRef.current = dataUpdatedAt;
+    };
 
     // 커뮤니티 페이지 스크롤 위치 복원
-    // hubMode일 때는 CommunityHub가 스크롤 관리하므로 비활성화
-    const { resetScrollPosition, scrollToTop } = useScrollRestore('community', null, null, null, !hubMode);
+    const { resetScrollPosition, scrollToTop } = useScrollRestore('community', null, null, null, true, isCacheValid);
 
     // 차단된 사용자가 리다이렉트되어 왔을 때 알림 표시
     useEffect(() => {
@@ -22,7 +35,7 @@ const Community = ({ hubMode = false, activeTab = 'community' }) => {
     }, [location.state, isBanned]);
 
     return (
-        <div className="community-page">
+        <div className="community-page min-h-screen bg-gray-50 pt-14">
             {/* 차단 알림 */}
             {showBannedAlert && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-4 mt-4" role="alert">
@@ -46,6 +59,7 @@ const Community = ({ hubMode = false, activeTab = 'community' }) => {
             <div className="w-full">
                 <EnhancedInstagramFeed
                     highlightPostId={searchParams.get('postId')}
+                    onCacheStatusChange={handleCacheStatusChange}
                 />
             </div>
         </div>

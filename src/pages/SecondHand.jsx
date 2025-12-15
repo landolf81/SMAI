@@ -12,7 +12,7 @@ import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import CloseIcon from '@mui/icons-material/Close';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
-const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
+const SecondHand = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const navigationType = useNavigationType();
@@ -48,13 +48,10 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   const renderIntervalRef = useRef(null);
 
   // 중고거래 페이지 스크롤 위치 복원 (검색어 고려)
-  // hubMode일 때는 CommunityHub가 스크롤 관리하므로 비활성화
   const { resetScrollPosition, scrollToTop } = useScrollRestore(
     'secondhand',
     null,
-    searchTerm || null,
-    null,
-    !hubMode
+    searchTerm || null
   );
 
   // post_type = 'secondhand'로 필터링된 게시물 조회 (단순 시간순)
@@ -181,7 +178,7 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${(isMobile && !hubMode) ? 'pb-20' : ''}`}>
+    <div className="secondhand-page min-h-screen bg-gray-50 pt-14">
       <div className="max-w-2xl mx-auto pt-2">
         {/* 게시물 목록 - 그리드 레이아웃 */}
         <div className="px-4 py-4">

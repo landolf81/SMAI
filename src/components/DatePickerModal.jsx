@@ -36,6 +36,7 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
     const startingDay = firstDay.getDay();
 
     const days = [];
+    const totalCells = 42; // 6줄 × 7칸 = 42칸 고정
 
     // 이전 달 빈 칸
     for (let i = 0; i < startingDay; i++) {
@@ -53,6 +54,11 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
         isToday: dateStr === maxDate,
         isFuture: dateStr > maxDate,
       });
+    }
+
+    // 나머지 빈 칸으로 채워서 42칸 고정 (버튼 위치 고정)
+    while (days.length < totalCells) {
+      days.push({ day: null, isCurrentMonth: false });
     }
 
     return days;

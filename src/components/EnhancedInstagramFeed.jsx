@@ -7,14 +7,18 @@ import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
 
-const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
+const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false, onCacheStatusChange }) => {
   const navigationType = useNavigationType();
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+  // 각 게시물의 가시성 상태 추적 (Set<postId>)
+  const [visiblePosts, setVisiblePosts] = useState(new Set());
   // 첫 로딩 여부 추적 (첫 로딩에만 애니메이션 적용)
   const isFirstLoadRef = useRef(true);
   const observerRef = useRef(null);
   const postsContainerRef = useRef(null);
+  // 점진적 렌더링을 위한 상태 (첫 로딩 시 버벅임 방지)
+  const [visibleItemCount, setVisibleItemCount] = useState(5);
 
   // Pull-to-refresh 상태
   const [isPulling, setIsPulling] = useState(false);
@@ -24,6 +28,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
   // 무한 스크롤용 sentinel ref
   const sentinelRef = useRef(null);
+
+  // 무한 스크롤 시 스크롤 위치 보존용
+  const scrollPositionBeforeFetchRef = useRef(0);
 
   // 초기 광고 노출 횟수 스냅샷 (광고 순서 안정화용)
   const initialAdViewCountsRef = useRef(null);
@@ -40,7 +47,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     isLoading,
     isFetching,
     error,
-    refetch
+    refetch,
+    dataUpdatedAt
   } = useInfiniteQuery({
     queryKey: ['enhanced-instagram-posts', tag, search, userId],
     queryFn: async ({ pageParam = 0 }) => {
@@ -62,6 +70,13 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     staleTime: 5 * 60 * 1000,  // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
   });
+
+  // 캐시 상태 변경 알림 (부모 컴포넌트에 전달)
+  useEffect(() => {
+    if (onCacheStatusChange && dataUpdatedAt) {
+      onCacheStatusChange(dataUpdatedAt);
+    }
+  }, [dataUpdatedAt, onCacheStatusChange]);
 
   // 광고 노출 기록 관리 (로컬 스토리지)
   const [adViewCounts, setAdViewCounts] = useState(() => {
@@ -216,28 +231,51 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     });
   }, []);
 
-  // 향상된 Intersection Observer 설정 (최적화: 광고 추적만 수행)
+  // 향상된 Intersection Observer 설정 (광고 추적 + 게시물 가시성 감지)
   useEffect(() => {
     const observerOptions = {
       root: null,
-      rootMargin: '200px 0px',  // 화면 진입 200px 전에 트리거
-      threshold: [0]  // 조금이라도 보이면 트리거
+      rootMargin: '100px 0px',  // 화면 상하 100px 여유 (빠른 스크롤 대응)
+      threshold: [0, 0.5]  // 0% (진입/퇴출), 50% (중앙)
     };
 
     // 이미 추적된 광고 ID를 ref로 관리 (리렌더링 방지)
     const trackedAds = new Set();
 
     observerRef.current = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
+      // 가시성 변경사항을 일괄 처리
+      setVisiblePosts(prevVisible => {
+        const updatedVisiblePosts = new Set(prevVisible);
+        let hasChanges = false;
 
-        const adId = entry.target.dataset.adId;
+        entries.forEach((entry) => {
+          const postId = entry.target.dataset.postId;
+          const adId = entry.target.dataset.adId;
 
-        // 광고 노출 추적 (한 번만)
-        if (adId && !trackedAds.has(adId)) {
-          trackedAds.add(adId);
-          trackAdView(adId);
-        }
+          // 광고 노출 추적 (기존 로직 유지)
+          if (adId && entry.isIntersecting && !trackedAds.has(adId)) {
+            trackedAds.add(adId);
+            trackAdView(adId);
+          }
+
+          // 게시물 가시성 추적 (신규 - 동영상 제어용)
+          if (postId) {
+            // 50% 이상 보일 때만 "visible"로 간주 (동영상 재생)
+            const isNowVisible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+            const wasVisible = updatedVisiblePosts.has(postId);
+
+            if (isNowVisible && !wasVisible) {
+              updatedVisiblePosts.add(postId);
+              hasChanges = true;
+            } else if (!isNowVisible && wasVisible) {
+              updatedVisiblePosts.delete(postId);
+              hasChanges = true;
+            }
+          }
+        });
+
+        // 변경사항이 있을 때만 새 Set 반환 (리렌더링 최소화)
+        return hasChanges ? updatedVisiblePosts : prevVisible;
       });
     }, observerOptions);
 
@@ -267,6 +305,40 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     };
   }, [data]); // data 변경 시에만 재등록 (성능 최적화)
 
+  // 가시성 변경 디버그 로깅 (프로덕션에서는 제거)
+  // useEffect(() => {
+  //   if (visiblePosts.size > 0) {
+  //     console.log('📹 가시성 변경:', {
+  //       visiblePostsCount: visiblePosts.size,
+  //       visibleIds: Array.from(visiblePosts)
+  //     });
+  //   }
+  // }, [visiblePosts]);
+
+  // 점진적 렌더링 (첫 로딩 시 버벅임 방지)
+  useEffect(() => {
+    // 첫 로딩이 아니거나 뒤로가기(POP)인 경우 모든 아이템 즉시 표시
+    if (!isFirstLoadRef.current || navigationType === 'POP') {
+      setVisibleItemCount(999); // 충분히 큰 수
+      return;
+    }
+
+    // 로딩 중이거나 데이터가 없으면 대기
+    if (isLoading || !data?.pages?.length) return;
+
+    // 사용자가 이미 스크롤했다면 (100px 이상), 모든 아이템 즉시 표시
+    // 이렇게 하면 스크롤 위치가 변경되는 동안 높이가 변하지 않음
+    if (window.scrollY > 100) {
+      setVisibleItemCount(999);
+      return;
+    }
+
+    // 첫 로딩 시: 초기에 모든 아이템을 DOM에 추가하되, CSS로만 순차 표시
+    // 이렇게 하면 DOM 높이가 변하지 않아 스크롤 점프 없음
+    const totalItems = data.pages.reduce((sum, page) => sum + page.length, 0);
+    setVisibleItemCount(totalItems); // 모든 아이템 즉시 표시 (CSS 애니메이션만 순차)
+  }, [isLoading, data, navigationType]);
+
   // 첫 로딩 완료 후 최상단으로 스크롤 (뒤로가기가 아닌 경우)
   useEffect(() => {
     // 이미 스크롤했거나, 로딩 중이거나, 데이터가 없으면 스킵
@@ -286,10 +358,10 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     window.scrollTo({ top: 0, behavior: 'instant' });
     setHasInitialScrolled(true);
 
-    // 첫 로딩 애니메이션 후 플래그 해제 (0.5초 후)
+    // 첫 로딩 애니메이션 후 플래그 해제 (1초 후)
     setTimeout(() => {
       isFirstLoadRef.current = false;
-    }, 500);
+    }, 1000);
   }, [isLoading, data, hasInitialScrolled, highlightPostId, navigationType]);
 
   // highlightPostId가 있을 때 해당 게시물로 스크롤
@@ -321,7 +393,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          console.log('🔄 무한 스크롤 트리거 (IntersectionObserver)');
+          // 현재 스크롤 위치 저장
+          scrollPositionBeforeFetchRef.current = window.scrollY;
           fetchNextPage();
         }
       },
@@ -337,6 +410,18 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       observer.disconnect();
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // 무한스크롤 로딩 완료 후 스크롤 위치 보존
+  useEffect(() => {
+    if (!isFetchingNextPage && scrollPositionBeforeFetchRef.current > 0) {
+      // 약간의 지연 후 위치 복원 (DOM 안정화 대기)
+      requestAnimationFrame(() => {
+        const targetScroll = scrollPositionBeforeFetchRef.current;
+        window.scrollTo({ top: targetScroll, behavior: 'instant' });
+        scrollPositionBeforeFetchRef.current = 0;
+      });
+    }
+  }, [isFetchingNextPage]);
 
   // 동영상 재생 관리 (개선된 버전)
   const handleVideoPlay = useCallback((postId) => {
@@ -511,14 +596,14 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">
-          {postsWithAds.map((item, index) => {
+          {postsWithAds.slice(0, visibleItemCount).map((item, index) => {
             const isAd = item.type === 'ad';
             const itemId = isAd ? `ad-${item.data.id}` : item.data.id.toString();
             const isPOP = navigationType === 'POP';
-            // 첫 로딩 시에만 CSS 애니메이션 적용 (첫 5개만)
-            const shouldAnimate = isFirstLoadRef.current && index < 5 && !isPOP && !isAd;
-            // 애니메이션 딜레이: 첫 3개는 즉시, 나머지는 50ms 간격
-            const animationDelay = index < 3 ? 0 : (index - 3) * 0.05;
+            // 첫 로딩 시에만 CSS 애니메이션 적용
+            const shouldAnimate = isFirstLoadRef.current && !isPOP && !isAd;
+            // 애니메이션 딜레이: 순차적으로 20ms씩
+            const animationDelay = index * 0.02;
 
             return (
             <div
@@ -527,8 +612,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
               data-ad-id={isAd ? item.data.id : undefined}
               className="relative"
               style={shouldAnimate ? {
-                animation: `fadeInUp 0.4s ease-out ${animationDelay}s forwards`,
-                opacity: 0
+                animation: `feedItemSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) ${animationDelay}s forwards`,
+                opacity: 0,
+                willChange: 'transform, opacity'
               } : undefined}
             >
               {item.type === 'post' ? (
@@ -536,6 +622,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                   post={item.data}
                   onVideoPlay={handleVideoPlay}
                   onVideoPause={handleVideoPause}
+                  isVisible={visiblePosts.has(itemId)}
                 />
               ) : (
                 <MobileAdDisplay ad={item.data} />

@@ -45,7 +45,6 @@ const Profile = lazy(() => import('./pages/profile'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const PostEditor = lazy(() => import('./pages/PostEditor'));
 const Translate = lazy(() => import('./pages/Translate'));
-const CommunityHub = lazy(() => import('./pages/CommunityHub'));
 
 // Admin Pages - Lazy Loading
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
@@ -102,18 +101,22 @@ useEffect(() => {
     const [showWriteMenu, setShowWriteMenu] = useState(false);
 
     // 커뮤니티 관련 페이지인지 확인
-    const isCommunityPage = location.pathname === '/community' ||
-                            location.pathname.startsWith('/community') ||
-                            location.pathname.startsWith('/qna') ||
-                            location.pathname.startsWith('/secondhand');
+    const isCommunityPage = ['/community', '/qna', '/secondhand'].includes(location.pathname) ||
+                            location.pathname.startsWith('/community/') ||
+                            location.pathname.startsWith('/qna/') ||
+                            location.pathname.startsWith('/secondhand/');
 
     // 현재 탭 가져오기
     const getCurrentTab = () => {
-      if (location.pathname === '/community') {
-        return searchParams.get('tab') || 'community';
+      if (location.pathname === '/community' || location.pathname.startsWith('/community/')) {
+        return 'community';
       }
-      if (location.pathname.startsWith('/qna')) return 'qna';
-      if (location.pathname.startsWith('/secondhand')) return 'secondhand';
+      if (location.pathname === '/qna' || location.pathname.startsWith('/qna/')) {
+        return 'qna';
+      }
+      if (location.pathname === '/secondhand' || location.pathname.startsWith('/secondhand/')) {
+        return 'secondhand';
+      }
       return 'community';
     };
 
@@ -162,7 +165,7 @@ useEffect(() => {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* 상단 Navbar - 반투명 레이어 */}
-        <div className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 will-change-transform ${
+        <div className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-150 will-change-transform ${
           scrollDirection === 'down' ? '-translate-y-full' : 'translate-y-0'
         }`}>
           <Navbar />
@@ -327,11 +330,7 @@ useEffect(() => {
 
         {/* 모바일용 하단 네비게이션 - 스크롤 방향에 따라 숨김/표시 */}
         {(isMobileDevice() || window.innerWidth <= 768) && (
-          <div className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-300 will-change-transform ${
-            scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
-          }`}>
-            <MobileBottomNav />
-          </div>
+          <MobileBottomNav scrollDirection={scrollDirection} />
         )}
       </div>
     );
@@ -380,18 +379,17 @@ useEffect(() => {
         // 게시판 페이지들 (읽기는 누구나, 글쓰기/댓글은 각 페이지에서 로그인 체크)
         {
           path: '/community',
-          element: <CommunityHub />,
+          element: <Community />,
         },
-        // 레거시 라우트 리디렉트
         {
           path: '/qna',
-          element: <Navigate to="/community?tab=qna" replace />,
+          element: <QnA />,
         },
         {
           path: '/secondhand',
           element: isBanned
             ? <Navigate to="/community" state={{ banned: true }} />
-            : <Navigate to="/community?tab=secondhand" replace />,
+            : <SecondHand />,
         },
         {
           path: '/secondhand/new',

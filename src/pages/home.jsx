@@ -491,7 +491,7 @@ const Home = () => {
 
   // 모바일 사용자를 위한 기존 화면
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 safe-area-bottom">
+    <div className="min-h-screen bg-gray-50 pb-28 safe-area-bottom">
       {/* 상단 헤더 공간 확보 */}
       <div className="h-14"></div>
 
