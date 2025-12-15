@@ -245,6 +245,23 @@ header div.mr-2:after {
   animation: slide-up 0.3s ease-out forwards;
 }
 
+/* 슬라이드다운 애니메이션 (상단에서 나타남) */
+@keyframes slide-down {
+  from {
+    transform: translate3d(0, -100%, 0);
+    opacity: 0;
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
 /* 페이드인업 애니메이션 (GPU 가속 최적화) */
 @keyframes fadeInUp {
   from {
@@ -277,4 +294,34 @@ header div.mr-2:after {
 /* Safe area bottom for iOS */
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* QnA 검색창 확장 애니메이션 (GPU 가속) */
+@keyframes searchExpand {
+  from {
+    width: 56px;
+  }
+  to {
+    width: 300px;
+  }
+}
+
+.search-expand {
+  animation: searchExpand 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: width;
+}
+
+/* QnA 검색창 상단 이동 애니메이션 (GPU 가속) */
+@keyframes searchMoveUp {
+  from {
+    transform: translate3d(0, calc(100vh - 5rem), 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.search-move-up {
+  animation: searchMoveUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform;
 }

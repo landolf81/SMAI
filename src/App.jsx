@@ -74,6 +74,8 @@ const SecondHandEditor = lazy(() => import('./pages/SecondHandEditor'));
 const PostDetail = lazy(() => import('./pages/PostDetail'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Terms = lazy(() => import('./pages/Terms'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const TradingPolicy = lazy(() => import('./pages/TradingPolicy'));
 
 function App() {
 
@@ -162,6 +164,16 @@ useEffect(() => {
       setShowWriteMenu(false);
     };
 
+    // close-floating-menu 이벤트 리스너
+    useEffect(() => {
+      const handleCloseFloatingMenu = () => {
+        setShowWriteMenu(false);
+      };
+
+      window.addEventListener('close-floating-menu', handleCloseFloatingMenu);
+      return () => window.removeEventListener('close-floating-menu', handleCloseFloatingMenu);
+    }, []);
+
     return (
       <div className="min-h-screen bg-gray-50">
         {/* 상단 Navbar - 반투명 레이어 */}
@@ -227,7 +239,7 @@ useEffect(() => {
                       <button
                         onClick={() => {
                           closeWriteMenu();
-                          // TODO: FAQ 페이지
+                          navigate('/faq');
                         }}
                         className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
                         style={{ animationDelay: '0.05s' }}
@@ -241,8 +253,8 @@ useEffect(() => {
                       {/* 검색 */}
                       <button
                         onClick={() => {
-                          closeWriteMenu();
-                          // TODO: 검색 기능
+                          // QnAList로 검색 모드 진입 이벤트 발송 (메뉴는 검색창 확장 후 자동으로 닫힘)
+                          window.dispatchEvent(new CustomEvent('qna-search-open'));
                         }}
                         className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
                       >
@@ -272,8 +284,8 @@ useEffect(() => {
                       {/* 검색 */}
                       <button
                         onClick={() => {
-                          closeWriteMenu();
-                          // TODO: 검색 기능
+                          // SecondHand 페이지로 검색 모드 진입 이벤트 발송 (메뉴는 검색창 확장 후 자동으로 닫힘)
+                          window.dispatchEvent(new CustomEvent('secondhand-search-open'));
                         }}
                         className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
                         style={{ animationDelay: '0.05s' }}
@@ -288,7 +300,7 @@ useEffect(() => {
                       <button
                         onClick={() => {
                           closeWriteMenu();
-                          // TODO: 정책 페이지
+                          navigate('/trading-policy');
                         }}
                         className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
                       >
@@ -384,6 +396,14 @@ useEffect(() => {
         {
           path: '/qna',
           element: <QnA />,
+        },
+        {
+          path: '/faq',
+          element: <FAQ />,
+        },
+        {
+          path: '/trading-policy',
+          element: <TradingPolicy />,
         },
         {
           path: '/secondhand',

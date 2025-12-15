@@ -16,6 +16,7 @@ export const qnaService = {
         status = 'all',
         sort = 'latest',
         search = '',
+        searchField = 'all', // 'all', 'title', 'description'
         limit = 20,
         offset = 0
       } = options;
@@ -29,7 +30,15 @@ export const qnaService = {
         .or('is_hidden.is.null,is_hidden.eq.false');
 
       if (search) {
-        countQuery = countQuery.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+        const searchPattern = `%${search}%`;
+        if (searchField === 'title') {
+          countQuery = countQuery.ilike('title', searchPattern);
+        } else if (searchField === 'description') {
+          countQuery = countQuery.ilike('description', searchPattern);
+        } else {
+          // 'all' - 제목 또는 내용
+          countQuery = countQuery.or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`);
+        }
       }
 
       const { count, error: countError } = await countQuery;
@@ -63,7 +72,15 @@ export const qnaService = {
 
       // 검색
       if (search) {
-        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+        const searchPattern = `%${search}%`;
+        if (searchField === 'title') {
+          query = query.ilike('title', searchPattern);
+        } else if (searchField === 'description') {
+          query = query.ilike('description', searchPattern);
+        } else {
+          // 'all' - 제목 또는 내용
+          query = query.or(`title.ilike.${searchPattern},description.ilike.${searchPattern}`);
+        }
       }
 
       // 상태 필터 (서버 사이드)

@@ -19,9 +19,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 moment.locale('ko');
 
-const QnAList = () => {
+const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
   const navigationType = useNavigationType();
-  const [searchTerm, setSearchTerm] = useState(''); // 검색어 (외부에서 설정)
+  const searchTerm = propSearchTerm; // props에서 받은 검색어 사용
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [isMobile] = useState(() => isMobileDevice());
@@ -61,17 +61,26 @@ const QnAList = () => {
     };
   }, [selectedQuestionId]);
 
+  // 검색 시 페이지 초기화
+  useEffect(() => {
+    if (isSearchMode && searchTerm) {
+      setPage(0);
+    }
+  }, [searchTerm, isSearchMode]);
+
   // QnA 질문 목록 조회
   const { data, isLoading, error } = useQuery({
-    queryKey: ['qna-questions', page, statusFilter, searchTerm],
+    queryKey: ['qna-questions', page, isSearchMode ? 'all' : statusFilter, searchTerm],
     queryFn: () =>
       qnaService.getQuestions({
         offset: page * 20,
         limit: 20,
-        status: statusFilter,
-        search: searchTerm
+        status: isSearchMode ? undefined : statusFilter, // 검색 모드에서는 필터 무시
+        search: searchTerm,
+        searchField: 'title' // 제목만 검색
       }),
-    keepPreviousData: true
+    keepPreviousData: true,
+    enabled: !isSearchMode || searchTerm.length > 0 // 검색 모드에서는 검색어가 있을 때만 실행
   });
 
   // 인기 질문 조회 (최근 7일, 3개)
@@ -244,9 +253,15 @@ const QnAList = () => {
   return (
     <div className="max-w-6xl mx-auto pt-2">
       <div className="p-4">
+        {/* 검색 결과 개수 (검색 모드일 때만) */}
+        {isSearchMode && searchTerm && data && (
+          <div className="mb-4 text-sm text-gray-600">
+            "{searchTerm}" 검색 결과: {pagination.total || 0}개
+          </div>
+        )}
 
-      {/* 인기 질문 (최상단) - 타이틀만 표시 */}
-      {trending && trending.length > 0 && (
+      {/* 인기 질문 (최상단) - 검색 모드가 아닐 때만 표시 */}
+      {!isSearchMode && trending && trending.length > 0 && (
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-6 border border-yellow-200">
           <p className="flex items-center gap-2 text-base font-bold text-gray-900 mb-2">
             <span>🔥</span> 인기 질문 <span className="text-xs text-gray-500 font-normal">(최근 7일)</span>
@@ -267,6 +282,26 @@ const QnAList = () => {
       <div className="grid grid-cols-1 gap-6">
         {/* 메인 질문 목록 */}
         <div>
+          {/* 검색 결과 없음 UI */}
+          {isSearchMode && searchTerm && !isLoading && questionsWithAds.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12">
+              <SearchIcon className="text-gray-300" style={{ fontSize: 64 }} />
+              <p className="text-gray-500 mt-4 text-lg">
+                "{searchTerm}"에 대한 검색 결과가 없습니다.
+              </p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setIsSearchMode(false);
+                  setPage(0);
+                }}
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                전체 목록 보기
+              </button>
+            </div>
+          )}
+
           {/* 질문 목록 */}
           <div className="space-y-4">
             {questionsWithAds.length > 0 && (

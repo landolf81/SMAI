@@ -9,6 +9,7 @@ import PostDetail from './PostDetail';
 import { AuthContext } from '../context/AuthContext';
 import { isMobileDevice } from '../utils/deviceDetector';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
@@ -17,11 +18,27 @@ const SecondHand = () => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false);
+  const searchInputRef = useRef(null);
   const [isMobile] = useState(() => isMobileDevice());
 
   // 상세보기 모달 상태
   const [selectedPostId, setSelectedPostId] = useState(null);
   const modalRef = useRef(null);
+
+  // 검색 모드 진입 이벤트 리스너
+  useEffect(() => {
+    const handleSearchOpen = () => {
+      setIsSearchMode(true);
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+      window.dispatchEvent(new CustomEvent('close-floating-menu'));
+    };
+
+    window.addEventListener('secondhand-search-open', handleSearchOpen);
+    return () => window.removeEventListener('secondhand-search-open', handleSearchOpen);
+  }, []);
 
   // 모달 열릴 때 배경 스크롤 막기 및 최상단 이동
   useEffect(() => {
@@ -54,11 +71,17 @@ const SecondHand = () => {
     searchTerm || null
   );
 
+  // 검색 종료 핸들러
+  const handleCloseSearch = () => {
+    setIsSearchMode(false);
+    setSearchTerm('');
+  };
+
   // post_type = 'secondhand'로 필터링된 게시물 조회 (단순 시간순)
   const { data: posts, isLoading, error } = useQuery({
     queryKey: ['secondHandPosts', searchTerm],
     queryFn: () => postService.getPosts({ postType: 'secondhand', search: searchTerm, sortBy: 'latest' }),
-    enabled: !!currentUser
+    enabled: !!currentUser && (!isSearchMode || searchTerm.length > 0)
   });
 
   // 광고 조회 (모바일에서만)
@@ -179,6 +202,38 @@ const SecondHand = () => {
 
   return (
     <div className="secondhand-page min-h-screen bg-gray-50 pt-14">
+      {/* 상단 고정 검색창 (검색 모드) */}
+      {isSearchMode && (
+        <div className="sticky top-14 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm animate-slide-down">
+          <div className="max-w-3xl mx-auto flex items-center gap-2">
+            <div className="flex-1 relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                placeholder="상품명 검색..."
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={handleCloseSearch}
+              className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <CloseIcon />
+            </button>
+          </div>
+
+          {/* 검색 결과 개수 */}
+          {searchTerm && posts && (
+            <div className="max-w-3xl mx-auto mt-2 text-sm text-gray-600">
+              "{searchTerm}" 검색 결과: {posts.length}개
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto pt-2">
         {/* 게시물 목록 - 그리드 레이아웃 */}
         <div className="px-4 py-4">
@@ -229,15 +284,33 @@ const SecondHand = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <ShoppingBagIcon className="mx-auto text-6xl text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 상품이 없습니다</h3>
-              <p className="text-gray-500 mb-4">첫 번째 상품을 등록해보세요!</p>
-              <button
-                onClick={() => navigate('/secondhand/new')}
-                className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
-              >
-                상품 등록하기
-              </button>
+              {isSearchMode && searchTerm ? (
+                <>
+                  <SearchIcon className="mx-auto text-6xl text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    "{searchTerm}"에 대한 검색 결과가 없습니다
+                  </h3>
+                  <p className="text-gray-500 mb-4">다른 검색어로 시도해보세요</p>
+                  <button
+                    onClick={handleCloseSearch}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  >
+                    전체 목록 보기
+                  </button>
+                </>
+              ) : (
+                <>
+                  <ShoppingBagIcon className="mx-auto text-6xl text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 상품이 없습니다</h3>
+                  <p className="text-gray-500 mb-4">첫 번째 상품을 등록해보세요!</p>
+                  <button
+                    onClick={() => navigate('/secondhand/new')}
+                    className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                  >
+                    상품 등록하기
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
