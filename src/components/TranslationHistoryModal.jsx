@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -15,7 +15,94 @@ const LANGUAGES = {
 
 const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showEnlargedView, setShowEnlargedView] = useState(false);
   const audioRef = useRef(null);
+  const audioLoopTimeoutRef = useRef(null);
+  const isEnlargedViewOpenRef = useRef(false);
+
+  // 확대 보기 모달 열기 - 음성 자동 재생 시작
+  const openEnlargedView = () => {
+    setShowEnlargedView(true);
+    isEnlargedViewOpenRef.current = true;
+
+    // 1초 후 음성 반복 재생 시작
+    if (history.audio_url) {
+      setTimeout(() => {
+        startAudioLoop();
+      }, 1000);
+    }
+  };
+
+  // 확대 보기 모달 닫기 - 음성 재생 중지
+  const closeEnlargedView = () => {
+    setShowEnlargedView(false);
+    isEnlargedViewOpenRef.current = false;
+    stopAudioLoop();
+  };
+
+  // 음성 반복 재생 시작 (1초 간격)
+  const startAudioLoop = async () => {
+    if (!history.audio_url) return;
+
+    const playOnce = async () => {
+      // ref로 모달 상태 확인
+      if (!isEnlargedViewOpenRef.current) return;
+
+      try {
+        // 현재 재생 중인 오디오가 있으면 중지
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current = null;
+        }
+
+        const audio = new Audio(history.audio_url);
+        audioRef.current = audio;
+        setIsPlaying(true);
+
+        audio.onended = () => {
+          setIsPlaying(false);
+          // 모달이 열려있으면 1초 후 다시 재생
+          if (isEnlargedViewOpenRef.current) {
+            audioLoopTimeoutRef.current = setTimeout(() => {
+              playOnce();
+            }, 1000);
+          }
+        };
+
+        audio.onerror = () => {
+          setIsPlaying(false);
+          console.error('음성 재생 오류');
+        };
+
+        await audio.play();
+      } catch (error) {
+        console.error('음성 재생 오류:', error);
+        setIsPlaying(false);
+      }
+    };
+
+    playOnce();
+  };
+
+  // 음성 반복 재생 중지
+  const stopAudioLoop = () => {
+    if (audioLoopTimeoutRef.current) {
+      clearTimeout(audioLoopTimeoutRef.current);
+      audioLoopTimeoutRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+  };
+
+  // 컴포넌트 언마운트 시 오디오 정리
+  useEffect(() => {
+    return () => {
+      stopAudioLoop();
+    };
+  }, []);
 
   const playAudio = async () => {
     if (!history.audio_url) {
@@ -183,8 +270,12 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
                 </button>
               )}
             </div>
-            <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div
+              onClick={openEnlargedView}
+              className="p-3 bg-indigo-50 rounded-lg border border-indigo-200 cursor-pointer hover:border-indigo-400 hover:shadow-md transition-all active:scale-[0.99]"
+            >
               <p className="text-gray-800 whitespace-pre-wrap">{history.target_translation}</p>
+              <p className="text-xs text-indigo-500 mt-2 text-center">👆 터치하여 크게 보기</p>
             </div>
 
             {/* 복사하기 & 공유하기 버튼 */}
@@ -217,6 +308,67 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
           </div>
         </div>
       </div>
+
+      {/* 확대 보기 모달 */}
+      {showEnlargedView && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          onClick={closeEnlargedView}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 닫기 안내 */}
+            <div className="text-center mb-4">
+              <p className="text-sm text-gray-400">화면을 터치하면 닫힙니다</p>
+            </div>
+
+            {/* 번역 결과 - 큰 폰트 */}
+            <div className="mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-lg font-bold text-slate-700">{LANGUAGES[history.target_lang]}</span>
+              </div>
+              <div className="p-6 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-2xl border-2 border-blue-200">
+                <p className="text-slate-800 whitespace-pre-wrap text-2xl md:text-3xl leading-relaxed font-medium">
+                  {history.target_translation}
+                </p>
+              </div>
+            </div>
+
+            {/* 역번역 결과 */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-bold text-slate-600">역번역 (품질 검증) - {LANGUAGES[history.input_lang]}</span>
+              </div>
+              <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border-2 border-slate-200">
+                <p className="text-slate-700 whitespace-pre-wrap text-lg leading-relaxed">
+                  {history.back_translation}
+                </p>
+              </div>
+            </div>
+
+            {/* 음성 재생 상태 표시 */}
+            {history.audio_url && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm">
+                  <VolumeUpIcon fontSize="small" className="animate-pulse" />
+                  <span>음성 반복 재생 중...</span>
+                </div>
+              </div>
+            )}
+
+            {/* 닫기 버튼 */}
+            <button
+              onClick={closeEnlargedView}
+              className="mt-6 w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <CloseIcon />
+              닫기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
