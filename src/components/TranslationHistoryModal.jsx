@@ -44,7 +44,7 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
   const startAudioLoop = async () => {
     if (!history.audio_url) return;
 
-    const playOnce = async () => {
+    const playOnce = () => {
       // ref로 모달 상태 확인
       if (!isEnlargedViewOpenRef.current) return;
 
@@ -64,9 +64,7 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
           setIsPlaying(false);
           // 모달이 열려있으면 1초 후 다시 재생
           if (isEnlargedViewOpenRef.current) {
-            audioLoopTimeoutRef.current = setTimeout(() => {
-              playOnce();
-            }, 1000);
+            audioLoopTimeoutRef.current = setTimeout(playOnce, 1000);
           }
         };
 
@@ -75,7 +73,10 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
           console.error('음성 재생 오류');
         };
 
-        await audio.play();
+        audio.play().catch(error => {
+          console.error('음성 재생 오류:', error);
+          setIsPlaying(false);
+        });
       } catch (error) {
         console.error('음성 재생 오류:', error);
         setIsPlaying(false);
