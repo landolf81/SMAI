@@ -312,37 +312,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     }
   }, [highlightPostId, data]);
 
-  // 스크롤 상태 관리
-  useEffect(() => {
-    const handleScrollStart = () => {
-      setIsScrolling(true);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-
-    const handleScrollEnd = () => {
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-      }, 150);
-    };
-
-    if (enableSnapScroll) {
-      window.addEventListener('scroll', handleScrollStart);
-      window.addEventListener('scroll', handleScrollEnd);
-    }
-
-    return () => {
-      if (enableSnapScroll) {
-        window.removeEventListener('scroll', handleScrollStart);
-        window.removeEventListener('scroll', handleScrollEnd);
-      }
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-    };
-  }, [enableSnapScroll]);
-
   // 무한 스크롤 처리 (IntersectionObserver 사용 - scroll 이벤트 제거)
   useEffect(() => {
     const sentinel = sentinelRef.current;
