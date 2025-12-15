@@ -39,9 +39,8 @@ const QnAList = ({ hubMode = false, activeTab = 'qna' }) => {
   const [selectedProfileUser, setSelectedProfileUser] = useState(null);
 
   // 스크롤 위치 복원 (statusFilter와 searchTerm별로 개별 관리)
-  // hubMode일 때는 탭별 독립 키 사용
-  const scrollKey = hubMode ? `community-hub-${activeTab}` : 'qna';
-  useScrollRestore(scrollKey, statusFilter, searchTerm);
+  // hubMode일 때는 CommunityHub가 스크롤 관리하므로 비활성화
+  useScrollRestore('qna', statusFilter, searchTerm, null, !hubMode);
 
   // 모달 ref
   const modalRef = useRef(null);

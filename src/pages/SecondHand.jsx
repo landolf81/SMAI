@@ -48,12 +48,13 @@ const SecondHand = ({ hubMode = false, activeTab = 'secondhand' }) => {
   const renderIntervalRef = useRef(null);
 
   // 중고거래 페이지 스크롤 위치 복원 (검색어 고려)
-  // hubMode일 때는 탭별 독립 키 사용
-  const scrollKey = hubMode ? `community-hub-${activeTab}` : 'secondhand';
+  // hubMode일 때는 CommunityHub가 스크롤 관리하므로 비활성화
   const { resetScrollPosition, scrollToTop } = useScrollRestore(
-    scrollKey,
+    'secondhand',
     null,
-    searchTerm || null
+    searchTerm || null,
+    null,
+    !hubMode
   );
 
   // post_type = 'secondhand'로 필터링된 게시물 조회 (단순 시간순)

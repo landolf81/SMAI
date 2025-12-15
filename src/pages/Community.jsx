@@ -11,9 +11,8 @@ const Community = ({ hubMode = false, activeTab = 'community' }) => {
     const [showBannedAlert, setShowBannedAlert] = useState(false);
 
     // 커뮤니티 페이지 스크롤 위치 복원
-    // hubMode일 때는 탭별 독립 키 사용
-    const scrollKey = hubMode ? `community-hub-${activeTab}` : 'community';
-    const { resetScrollPosition, scrollToTop } = useScrollRestore(scrollKey);
+    // hubMode일 때는 CommunityHub가 스크롤 관리하므로 비활성화
+    const { resetScrollPosition, scrollToTop } = useScrollRestore('community', null, null, null, !hubMode);
 
     // 차단된 사용자가 리다이렉트되어 왔을 때 알림 표시
     useEffect(() => {
