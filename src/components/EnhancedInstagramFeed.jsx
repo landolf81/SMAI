@@ -9,17 +9,12 @@ import { shouldShowAds } from '../utils/deviceDetector';
 
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
   const navigationType = useNavigationType();
-  const [visiblePosts, setVisiblePosts] = useState(new Set());
-  const [animatedPosts, setAnimatedPosts] = useState(new Set()); // 애니메이션 완료된 게시물
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
-  const [isScrolling, setIsScrolling] = useState(false);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
-  // 순차적 렌더링을 위한 상태 (표시된 아이템 수)
-  const [renderedCount, setRenderedCount] = useState(0);
-  const renderIntervalRef = useRef(null);
+  // 첫 로딩 여부 추적 (첫 로딩에만 애니메이션 적용)
+  const isFirstLoadRef = useRef(true);
   const observerRef = useRef(null);
   const postsContainerRef = useRef(null);
-  const scrollTimeoutRef = useRef(null);
 
   // Pull-to-refresh 상태
   const [isPulling, setIsPulling] = useState(false);
@@ -253,7 +248,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     };
   }, [trackAdView]);
 
-  // 게시글 요소들을 Observer에 등록 (renderedCount 변경 시마다 재등록)
+  // 게시글 요소들을 Observer에 등록 (data 변경 시에만)
   useEffect(() => {
     if (!observerRef.current || !postsContainerRef.current) return;
 
@@ -270,7 +265,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         });
       }
     };
-  }, [data, renderedCount]); // renderedCount 추가 - 순차 렌더링된 새 요소도 Observer에 등록
+  }, [data]); // data 변경 시에만 재등록 (성능 최적화)
 
   // 첫 로딩 완료 후 최상단으로 스크롤 (뒤로가기가 아닌 경우)
   useEffect(() => {
@@ -283,91 +278,19 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     // 뒤로가기(POP)일 때는 useScrollRestore가 처리하므로 스킵
     if (navigationType === 'POP') {
       setHasInitialScrolled(true);
+      isFirstLoadRef.current = false;
       return;
     }
 
     // 첫 페이지 로딩 완료 시 최상단으로 스크롤
     window.scrollTo({ top: 0, behavior: 'instant' });
     setHasInitialScrolled(true);
-    console.log('📍 피드 로딩 완료 - 최상단으로 스크롤');
+
+    // 첫 로딩 애니메이션 후 플래그 해제 (0.5초 후)
+    setTimeout(() => {
+      isFirstLoadRef.current = false;
+    }, 500);
   }, [isLoading, data, hasInitialScrolled, highlightPostId, navigationType]);
-
-  // 순차적 렌더링: 데이터 로드 후 게시글을 위에서부터 순서대로 표시
-  useEffect(() => {
-    // 로딩 중이거나 데이터가 없으면 스킵
-    if (isLoading || !postsWithAds.length) {
-      setRenderedCount(0);
-      return;
-    }
-
-    // 뒤로가기(POP)일 때는 즉시 모두 표시 (스크롤 위치 복원을 위해)
-    if (navigationType === 'POP') {
-      setRenderedCount(postsWithAds.length);
-      return;
-    }
-
-    // 이미 모두 렌더링 완료된 경우
-    if (renderedCount >= postsWithAds.length) {
-      return;
-    }
-
-    // 기존 인터벌 정리
-    if (renderIntervalRef.current) {
-      clearInterval(renderIntervalRef.current);
-    }
-
-    // 첫 로딩 시: 처음 5개 즉시 표시 (빈 화면 방지)
-    if (renderedCount === 0) {
-      const initialCount = Math.min(5, postsWithAds.length);
-      setRenderedCount(initialCount);
-
-      // 처음 5개 게시물은 애니메이션 대기 없이 바로 표시
-      const initialAnimated = new Set();
-      postsWithAds.slice(0, initialCount).forEach(item => {
-        const itemId = item.type === 'ad' ? `ad-${item.data.id}` : item.data.id.toString();
-        initialAnimated.add(itemId);
-      });
-      setAnimatedPosts(prev => new Set([...prev, ...initialAnimated]));
-
-      // 5개 이하면 여기서 끝
-      if (postsWithAds.length <= initialCount) {
-        return;
-      }
-    }
-
-    // 나머지 아이템 순차적 표시 (20ms 간격 - 더 빠르게)
-    renderIntervalRef.current = setInterval(() => {
-      setRenderedCount(prev => {
-        if (prev >= postsWithAds.length) {
-          clearInterval(renderIntervalRef.current);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 20);
-
-    return () => {
-      if (renderIntervalRef.current) {
-        clearInterval(renderIntervalRef.current);
-      }
-    };
-  }, [isLoading, postsWithAds.length, navigationType]);
-
-  // 무한 스크롤로 추가 데이터 로드 시 새 아이템 즉시 렌더링
-  useEffect(() => {
-    if (postsWithAds.length > renderedCount && renderedCount > 0) {
-      // 새로운 페이지 로드 시 바로 모두 표시
-      setRenderedCount(postsWithAds.length);
-
-      // 새로 추가된 아이템들도 즉시 animated 상태로 설정 (딜레이 없이 바로 보이게)
-      const newAnimated = new Set();
-      postsWithAds.slice(renderedCount).forEach(item => {
-        const itemId = item.type === 'ad' ? `ad-${item.data.id}` : item.data.id.toString();
-        newAnimated.add(itemId);
-      });
-      setAnimatedPosts(prev => new Set([...prev, ...newAnimated]));
-    }
-  }, [postsWithAds.length]);
 
   // highlightPostId가 있을 때 해당 게시물로 스크롤
   useEffect(() => {
@@ -619,36 +542,29 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">
-          {postsWithAds.slice(0, renderedCount).map((item, index) => {
-            // 광고는 애니메이션 적용 안 함 (자체 Intersection Observer 사용)
+          {postsWithAds.map((item, index) => {
             const isAd = item.type === 'ad';
             const itemId = isAd ? `ad-${item.data.id}` : item.data.id.toString();
-            const isAnimated = isAd ? true : animatedPosts.has(itemId);
             const isPOP = navigationType === 'POP';
-            // 순차 애니메이션을 위한 지연 (페이지 단위로 리셋)
-            // 5개씩 로드하므로 페이지 내 인덱스로 계산 (딜레이 누적 방지)
-            // 첫 3개는 딜레이 없이 즉시, 나머지는 50ms 간격 (최대 0.1초)
-            const pageIndex = index % 5;
-            const animationDelay = pageIndex < 3 ? 0 : (pageIndex - 3) * 0.05;
+            // 첫 로딩 시에만 CSS 애니메이션 적용 (첫 5개만)
+            const shouldAnimate = isFirstLoadRef.current && index < 5 && !isPOP && !isAd;
+            // 애니메이션 딜레이: 첫 3개는 즉시, 나머지는 50ms 간격
+            const animationDelay = index < 3 ? 0 : (index - 3) * 0.05;
 
             return (
             <div
               key={item.key}
               data-post-id={itemId}
               data-ad-id={isAd ? item.data.id : undefined}
-              className={`relative ${enableSnapScroll ? 'snap-start' : ''} ${
-                isScrolling && enableSnapScroll ? 'transition-opacity duration-200' : ''
-              } feed-item-animation`}
-              style={{
-                opacity: (isPOP || isAd) ? 1 : (isAnimated ? 1 : 0),
-                transform: (isPOP || isAd) ? 'none' : (isAnimated ? 'translateY(0)' : 'translateY(40px)'),
-                transition: (isPOP || isAd) ? 'none' : `opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${animationDelay}s, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${animationDelay}s`
-              }}
+              className="relative"
+              style={shouldAnimate ? {
+                animation: `fadeInUp 0.4s ease-out ${animationDelay}s forwards`,
+                opacity: 0
+              } : undefined}
             >
               {item.type === 'post' ? (
                 <EnhancedInstagramPost
                   post={item.data}
-                  isVisible={visiblePosts.has(item.data.id.toString())}
                   onVideoPlay={handleVideoPlay}
                   onVideoPause={handleVideoPause}
                 />
