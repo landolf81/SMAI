@@ -382,9 +382,42 @@ const Translate = () => {
   };
 
   // 번역 결과 모달 열기
-  const openTranslationModal = () => {
+  const openTranslationModal = async () => {
     isModalOpenRef.current = true;
     setShowTranslationModal(true);
+
+    // 히스토리 저장 (로그인한 경우 & 아직 저장되지 않은 경우)
+    if (currentUser && !historySaved.current && translations.target) {
+      try {
+        // TTS 오디오 생성 (캐시 확인)
+        let audioBlob;
+        if (audioCache.current?.blob && audioCache.current?.text === translations.target) {
+          audioBlob = audioCache.current.blob;
+        } else {
+          audioBlob = await geminiService.textToSpeech(translations.target, targetLang);
+          audioCache.current = { text: translations.target, blob: audioBlob };
+        }
+
+        // 히스토리 저장
+        await translationService.saveHistory({
+          inputText,
+          inputLang,
+          targetLang,
+          targetTranslation: translations.target,
+          backTranslation: translations.backTranslation
+        }, audioBlob, currentUser.id);
+
+        // 히스토리 갱신
+        await loadHistory();
+        await loadHistoryCount();
+
+        // 저장 완료 플래그 설정
+        historySaved.current = true;
+      } catch (error) {
+        console.error('히스토리 저장 오류:', error);
+        // 저장 실패해도 모달은 열림
+      }
+    }
 
     // 1초 후 음성 재생 시작 (반복)
     setTimeout(() => {
