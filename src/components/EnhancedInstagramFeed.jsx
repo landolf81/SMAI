@@ -13,11 +13,12 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   const observerRef = useRef(null);
   const postsContainerRef = useRef(null);
 
-  // Pull-to-refresh 상태
-  const [isPulling, setIsPulling] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
-  const [startY, setStartY] = useState(0);
+  // Pull-to-refresh 상태 (useRef로 최적화 - re-render 방지)
+  const isPullingRef = useRef(false);
+  const pullDistanceRef = useRef(0);
+  const startYRef = useRef(0);
   const pullToRefreshRef = useRef(null);
+  const pullIndicatorRef = useRef(null);
 
   // 무한 스크롤용 sentinel ref
   const sentinelRef = useRef(null);
@@ -233,46 +234,77 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     // 이미 추적된 광고 ID를 ref로 관리 (리렌더링 방지)
     const trackedAds = new Set();
 
-    observerRef.current = new IntersectionObserver((entries) => {
-      // 가시성 변경사항을 일괄 처리
-      setVisiblePosts(prevVisible => {
-        const updatedVisiblePosts = new Set(prevVisible);
-        let hasChanges = false;
+    // requestAnimationFrame으로 가시성 업데이트 배칭
+    let pendingUpdates = { add: new Set(), remove: new Set() };
+    let rafId = null;
 
-        entries.forEach((entry) => {
-          const postId = entry.target.dataset.postId;
-          const adId = entry.target.dataset.adId;
+    const flushVisibilityUpdates = () => {
+      if (pendingUpdates.add.size > 0 || pendingUpdates.remove.size > 0) {
+        setVisiblePosts((prevVisible) => {
+          const updatedVisiblePosts = new Set(prevVisible);
+          let hasChanges = false;
 
-          // 광고 노출 추적 (기존 로직 유지)
-          if (adId && entry.isIntersecting && !trackedAds.has(adId)) {
-            trackedAds.add(adId);
-            trackAdView(adId);
-          }
-
-          // 게시물 가시성 추적 (신규 - 동영상 제어용)
-          if (postId) {
-            // 50% 이상 보일 때만 "visible"로 간주 (동영상 재생)
-            const isNowVisible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
-            const wasVisible = updatedVisiblePosts.has(postId);
-
-            if (isNowVisible && !wasVisible) {
+          pendingUpdates.add.forEach(postId => {
+            if (!updatedVisiblePosts.has(postId)) {
               updatedVisiblePosts.add(postId);
               hasChanges = true;
-            } else if (!isNowVisible && wasVisible) {
+            }
+          });
+
+          pendingUpdates.remove.forEach(postId => {
+            if (updatedVisiblePosts.has(postId)) {
               updatedVisiblePosts.delete(postId);
               hasChanges = true;
             }
-          }
+          });
+
+          return hasChanges ? updatedVisiblePosts : prevVisible;
         });
 
-        // 변경사항이 있을 때만 새 Set 반환 (리렌더링 최소화)
-        return hasChanges ? updatedVisiblePosts : prevVisible;
+        // Reset pending updates
+        pendingUpdates = { add: new Set(), remove: new Set() };
+      }
+      rafId = null;
+    };
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const postId = entry.target.dataset.postId;
+        const adId = entry.target.dataset.adId;
+
+        // 광고 노출 추적 (기존 로직 유지)
+        if (adId && entry.isIntersecting && !trackedAds.has(adId)) {
+          trackedAds.add(adId);
+          trackAdView(adId);
+        }
+
+        // 게시물 가시성 추적 (requestAnimationFrame 배칭)
+        if (postId) {
+          // 50% 이상 보일 때만 "visible"로 간주 (동영상 재생)
+          const isNowVisible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+
+          if (isNowVisible) {
+            pendingUpdates.add.add(postId);
+            pendingUpdates.remove.delete(postId);
+          } else {
+            pendingUpdates.remove.add(postId);
+            pendingUpdates.add.delete(postId);
+          }
+        }
       });
+
+      // Schedule flush with requestAnimationFrame (배칭)
+      if (!rafId) {
+        rafId = requestAnimationFrame(flushVisibilityUpdates);
+      }
     }, observerOptions);
 
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
+      }
+      if (rafId) {
+        cancelAnimationFrame(rafId);
       }
     };
   }, [trackAdView]);
@@ -315,12 +347,10 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         const targetElement = document.querySelector(`[data-post-id="${highlightPostId}"]`);
         if (targetElement) {
           targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // 강조 효과 추가
-          targetElement.style.border = '3px solid #007bff';
-          targetElement.style.borderRadius = '8px';
+          // CSS 클래스로 강조 효과 추가 (Reflow 방지)
+          targetElement.classList.add('highlight-post');
           setTimeout(() => {
-            targetElement.style.border = '';
-            targetElement.style.borderRadius = '';
+            targetElement.classList.remove('highlight-post');
           }, 3000);
         }
       }, 500);
@@ -380,28 +410,42 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     }
   }, [currentPlayingVideo]);
 
-  // Pull-to-refresh 핸들러
+  // Pull-to-refresh 핸들러 (useRef 최적화 - re-render 없음)
   const handleTouchStart = useCallback((e) => {
     if (window.scrollY === 0) {
-      setStartY(e.touches[0].clientY);
+      startYRef.current = e.touches[0].clientY;
     }
   }, []);
 
   const handleTouchMove = useCallback((e) => {
-    if (window.scrollY === 0 && startY > 0) {
+    if (window.scrollY === 0 && startYRef.current > 0) {
       const currentY = e.touches[0].clientY;
-      const distance = Math.max(0, currentY - startY);
+      const distance = Math.max(0, currentY - startYRef.current);
 
       if (distance > 10) {
         e.preventDefault();
-        setIsPulling(true);
-        setPullDistance(Math.min(distance, 120));
+        isPullingRef.current = true;
+        pullDistanceRef.current = Math.min(distance, 120);
+
+        // CSS transform으로 UI 업데이트 (reflow 없음)
+        if (pullIndicatorRef.current) {
+          pullIndicatorRef.current.style.display = 'block';
+          pullIndicatorRef.current.style.transform = `translateX(-50%) translateY(${pullDistanceRef.current - 50}px)`;
+
+          // 스피너 스타일 업데이트
+          const spinner = pullIndicatorRef.current.querySelector('.spinner');
+          if (spinner) {
+            spinner.className = `spinner w-6 h-6 border-2 border-blue-500 rounded-full animate-spin ${
+              pullDistanceRef.current > 80 ? 'border-t-transparent' : 'border-r-transparent'
+            }`;
+          }
+        }
       }
     }
-  }, [startY]);
+  }, []);
 
   const handleTouchEnd = useCallback(async () => {
-    if (isPulling && pullDistance > 80) {
+    if (isPullingRef.current && pullDistanceRef.current > 80) {
       try {
         await refetch();
       } catch (error) {
@@ -409,10 +453,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       }
     }
 
-    setIsPulling(false);
-    setPullDistance(0);
-    setStartY(0);
-  }, [isPulling, pullDistance, refetch]);
+    // Reset refs
+    isPullingRef.current = false;
+    pullDistanceRef.current = 0;
+    startYRef.current = 0;
+
+    // Hide indicator
+    if (pullIndicatorRef.current) {
+      pullIndicatorRef.current.style.display = 'none';
+    }
+  }, [refetch]);
 
   // Native event listeners로 passive: false 설정 (preventDefault 가능)
   useEffect(() => {
@@ -523,19 +573,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pull to refresh 인디케이터 */}
-      {isPulling && (
-        <div
-          className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-200"
-          style={{ transform: `translateX(-50%) translateY(${pullDistance - 50}px)` }}
-        >
-          <div className="bg-white rounded-full p-3 shadow-lg border">
-            <div className={`w-6 h-6 border-2 border-blue-500 rounded-full animate-spin ${
-              pullDistance > 80 ? 'border-t-transparent' : 'border-r-transparent'
-            }`}></div>
-          </div>
+      {/* Pull to refresh 인디케이터 (useRef로 최적화) */}
+      <div
+        ref={pullIndicatorRef}
+        className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-200"
+        style={{ display: 'none' }}
+      >
+        <div className="bg-white rounded-full p-3 shadow-lg border">
+          <div className="spinner w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-r-transparent"></div>
         </div>
-      )}
+      </div>
 
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">

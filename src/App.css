@@ -1,5 +1,12 @@
 /* App.css - 경락가 웹앱 전용 스타일 */
 
+/* 게시물 강조 효과 (Performance optimized with CSS) */
+.highlight-post {
+  border: 3px solid #007bff !important;
+  border-radius: 8px !important;
+  transition: border 0.3s ease, border-radius 0.3s ease;
+}
+
 /* 전역 스타일 재정의 */
 html {
   /* scroll-behavior: smooth; - React가 스크롤 제어하므로 제거 (300-500ms 지연 제거) */
