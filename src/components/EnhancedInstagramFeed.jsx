@@ -62,6 +62,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     },
     staleTime: 5 * 60 * 1000,  // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
+    refetchOnMount: 'always',  // 마운트 시 항상 재조회 (개인화 피드 반영)
+    refetchOnWindowFocus: false,  // 윈도우 포커스 시 재조회 비활성화
   });
 
 
