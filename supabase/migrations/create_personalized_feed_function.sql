@@ -114,7 +114,7 @@ BEGIN
     fr.views_count,
     fr.hot_score,
     fr.view_count::INTEGER,
-    fr.final_score,
+    fr.final_score::REAL,
     fr.adjusted_priority AS sort_priority
   FROM final_ranked fr
   ORDER BY
