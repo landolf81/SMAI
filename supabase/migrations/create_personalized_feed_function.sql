@@ -1,6 +1,9 @@
 -- 개인화 피드 함수: 열람 횟수 + 고정 + 최신글 로직을 DB에서 처리
 -- 프론트엔드 로직을 DB로 이관하여 정확한 정렬 및 성능 개선
 
+-- 기존 함수 삭제 (리턴 타입 변경을 위해 필요)
+DROP FUNCTION IF EXISTS get_personalized_feed(uuid, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION get_personalized_feed(
   p_user_id UUID DEFAULT NULL,
   p_post_type TEXT DEFAULT 'general',
