@@ -25,57 +25,112 @@ export const postService = {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
 
-      // 1. 게시물 기본 정보 + 사용자 정보 조회
-      let query = supabase
-        .from('posts')
-        .select(`
-          *,
-          users:user_id (
-            id,
-            username,
-            name,
-            profile_pic
-          )
-        `)
-        // 숨김 처리된 게시물 제외 (is_hidden이 null이거나 false인 경우만 표시)
-        .or('is_hidden.is.null,is_hidden.eq.false');
+      let posts = [];
 
-      // 정렬 방식 선택
-      if (sortBy === 'latest') {
-        // 최신순 (기존 방식)
-        query = query.order('created_at', { ascending: false });
-      } else if (sortBy === 'popular') {
-        // 인기순 (hot_score만)
-        query = query.order('hot_score', { ascending: false });
-      } else {
-        // algorithm: 최신순으로 가져온 후 클라이언트에서 재정렬
-        // (최신글 상단 3개 로직을 위해 created_at 기준으로 가져옴)
-        query = query.order('created_at', { ascending: false });
+      // algorithm 모드: DB 함수로 개인화 피드 조회 (열람 횟수 + 고정 + 최신글 로직 포함)
+      if (sortBy === 'algorithm' && !userId && !search) {
+        const { data: feedData, error: feedError } = await supabase
+          .rpc('get_personalized_feed', {
+            p_user_id: currentUser?.id || null,
+            p_post_type: postType || 'general',
+            p_limit: limit,
+            p_offset: offset
+          });
+
+        if (feedError) {
+          console.error('개인화 피드 조회 오류:', feedError);
+          // 폴백: 기본 쿼리로 진행
+        } else if (feedData && feedData.length > 0) {
+          // DB 함수에서 반환된 post_id로 전체 데이터 조회
+          const postIds = feedData.map(p => p.id);
+
+          const { data: fullPosts, error: postsError } = await supabase
+            .from('posts')
+            .select(`
+              *,
+              users:user_id (
+                id,
+                username,
+                name,
+                profile_pic
+              )
+            `)
+            .in('id', postIds)
+            .or('is_hidden.is.null,is_hidden.eq.false');
+
+          if (!postsError && fullPosts) {
+            // DB 함수의 정렬 순서 유지 (feedData 순서대로)
+            const postsMap = {};
+            fullPosts.forEach(p => { postsMap[p.id] = p; });
+
+            // feedData에서 view_count, final_score 매핑
+            const scoreMap = {};
+            feedData.forEach(f => {
+              scoreMap[f.id] = { viewCount: f.view_count, finalScore: f.final_score };
+            });
+
+            posts = feedData
+              .map(f => postsMap[f.id])
+              .filter(p => p !== undefined)
+              .map(p => ({
+                ...p,
+                viewCount: scoreMap[p.id]?.viewCount || 0,
+                finalScore: scoreMap[p.id]?.finalScore || 0
+              }));
+          }
+        }
       }
 
-      // 페이지네이션
-      query = query.range(offset, offset + limit - 1);
+      // algorithm 모드 외 또는 폴백 시 기본 쿼리
+      if (posts.length === 0) {
+        let query = supabase
+          .from('posts')
+          .select(`
+            *,
+            users:user_id (
+              id,
+              username,
+              name,
+              profile_pic
+            )
+          `)
+          .or('is_hidden.is.null,is_hidden.eq.false');
 
-      // 사용자 필터 (프로필 페이지용)
-      if (userId) {
-        query = query.eq('user_id', userId);
-      }
+        // 정렬 방식 선택
+        if (sortBy === 'latest') {
+          query = query.order('created_at', { ascending: false });
+        } else if (sortBy === 'popular') {
+          query = query.order('hot_score', { ascending: false });
+        } else {
+          query = query.order('created_at', { ascending: false });
+        }
 
-      // post_type 필터
-      if (postType) {
-        query = query.eq('post_type', postType);
-      }
+        // 페이지네이션
+        query = query.range(offset, offset + limit - 1);
 
-      // 검색 필터 (description 컬럼 사용)
-      if (search) {
-        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-      }
+        // 사용자 필터 (프로필 페이지용)
+        if (userId) {
+          query = query.eq('user_id', userId);
+        }
 
-      const { data: posts, error: postsError } = await query;
+        // post_type 필터
+        if (postType) {
+          query = query.eq('post_type', postType);
+        }
 
-      if (postsError) {
-        console.error('게시물 조회 오류:', postsError);
-        return [];
+        // 검색 필터 (description 컬럼 사용)
+        if (search) {
+          query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+        }
+
+        const { data: queryPosts, error: postsError } = await query;
+
+        if (postsError) {
+          console.error('게시물 조회 오류:', postsError);
+          return [];
+        }
+
+        posts = queryPosts || [];
       }
 
       if (!posts || posts.length === 0) {
@@ -85,135 +140,66 @@ export const postService = {
       // 2. 모든 게시물 ID 추출
       const postIds = posts.map(p => p.id);
 
-      // 3. 관련 데이터를 병렬로 조회
-      // 참고: likes_count, comments_count는 posts 테이블에 집계 컬럼으로 저장됨 (트리거로 자동 업데이트)
+      // 3. 관련 데이터를 병렬로 조회 (태그, 중고거래 정보)
       const queryPromises = [
-        // 태그 조회 (is_primary 포함)
         supabase
           .from('post_tags')
           .select('post_id, is_primary, tags(id, name, display_name, color)')
           .in('post_id', postIds),
-
-        // 중고거래 상태 조회
         supabase
           .from('trade_items')
           .select('post_id, status, item_name, price')
           .in('post_id', postIds)
       ];
 
-      // 로그인 사용자인 경우 열람 기록도 조회 (횟수 포함)
-      if (currentUser && sortBy === 'algorithm') {
-        queryPromises.push(
-          supabase
-            .from('user_post_views')
-            .select('post_id, view_count')
-            .eq('user_id', currentUser.id)
-            .in('post_id', postIds)
-        );
-      }
-
       const results = await Promise.all(queryPromises);
-      const [tagsData, tradeItemsData, viewedData] = results;
+      const [tagsData, tradeItemsData] = results;
 
-      // 4. 데이터를 맵으로 변환 (빠른 조회를 위해)
+      // 4. 데이터를 맵으로 변환
       const tagsMap = {};
       const primaryTagMap = {};
       tagsData.data?.forEach(pt => {
         if (!tagsMap[pt.post_id]) tagsMap[pt.post_id] = [];
         if (pt.tags) {
           tagsMap[pt.post_id].push(pt.tags);
-          // 주 태그 저장
           if (pt.is_primary) {
             primaryTagMap[pt.post_id] = pt.tags;
           }
         }
       });
 
-      // 중고거래 상태 맵 생성
       const tradeInfoMap = {};
       tradeItemsData?.data?.forEach(item => {
         tradeInfoMap[item.post_id] = item;
       });
 
-      // 열람 기록 맵 생성 (횟수 포함)
-      const viewCountMap = {};
-      if (viewedData?.data) {
-        viewedData.data.forEach(v => {
-          viewCountMap[v.post_id] = v.view_count || 1;
-        });
-      }
-
       // 5. 데이터 변환: Supabase 형식 → 프론트엔드 형식
       let postsWithDetails = posts.map((post) => {
-        const viewCount = viewCountMap[post.id] || 0;
-        // 열람 횟수별 가중치: 안 본 게시물 ×5.0, 본 횟수가 많을수록 감소
-        // 0회: ×5.0, 1회: ×0.5, 2회: ×0.25, 5회: ×0.1, 10회+: ×0.01
-        const viewWeight = viewCount === 0
-          ? 5.0
-          : Math.max(0.01, 0.5 / viewCount);
-        const finalScore = (post.hot_score || 0) * viewWeight;
+        const viewCount = post.viewCount || 0;
+        const finalScore = post.finalScore || (post.hot_score || 0);
 
         return {
           ...post,
-          // Supabase → Frontend 컬럼 매핑
           desc: post.description,
-          content: post.description,  // content도 추가
+          content: post.description,
           img: post.photo,
           userId: post.user_id,
-          createdAt: post.created_at,  // 타임스탬프 매핑 추가
-          updatedAt: post.updated_at,  // 타임스탬프 매핑 추가
-
-          // 사용자 정보
+          createdAt: post.created_at,
+          updatedAt: post.updated_at,
           username: post.users?.username || '',
           name: post.users?.name || '',
           profilePic: post.users?.profile_pic || 'defaultAvatar.png',
           user: post.users || null,
-
-          // 관계 데이터
           tags: tagsMap[post.id] || [],
           primaryTag: primaryTagMap[post.id] || null,
-          likesCount: post.likes_count || 0,  // DB 집계 컬럼 사용
-          commentsCount: post.comments_count || 0,  // DB 집계 컬럼 사용
-
-          // 중고거래 정보
+          likesCount: post.likes_count || 0,
+          commentsCount: post.comments_count || 0,
           tradeInfo: tradeInfoMap[post.id] || null,
-
-          // 피드 알고리즘 관련
           viewCount,
           isViewed: viewCount > 0,
           finalScore
         };
       });
-
-      // 6. 알고리즘 모드 정렬 (algorithm 모드일 때만)
-      if (sortBy === 'algorithm') {
-        const now = new Date();
-        const sixHoursAgo = new Date(now.getTime() - 6 * 60 * 60 * 1000);
-
-        // 6-1. 고정 게시물 분리
-        const pinnedPosts = postsWithDetails.filter(p => p.is_pinned);
-        const normalPosts = postsWithDetails.filter(p => !p.is_pinned);
-
-        // 6-2. 최신글 (6시간 이내) 분리 - 최신순 정렬
-        const recentPosts = normalPosts
-          .filter(p => new Date(p.created_at) >= sixHoursAgo)
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-        // 6-3. 나머지 게시물 - finalScore 순 정렬
-        const olderPosts = normalPosts
-          .filter(p => new Date(p.created_at) < sixHoursAgo)
-          .sort((a, b) => b.finalScore - a.finalScore);
-
-        // 6-4. 최종 정렬: 고정 → 최신글(최대 3개) → 나머지(알고리즘순)
-        const topRecentPosts = recentPosts.slice(0, 3); // 상단 최대 3개
-        const remainingRecentPosts = recentPosts.slice(3); // 3개 초과분
-
-        // 3개 초과 최신글은 알고리즘 순서에 포함
-        const algorithmPosts = [...remainingRecentPosts, ...olderPosts]
-          .sort((a, b) => b.finalScore - a.finalScore);
-
-        postsWithDetails = [...pinnedPosts, ...topRecentPosts, ...algorithmPosts];
-      }
 
       // 태그 필터 (클라이언트 측)
       if (tagId) {

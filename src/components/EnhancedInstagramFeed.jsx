@@ -1,24 +1,17 @@
 /* eslint-disable react/prop-types */
-import React, { useEffect, useRef, useState, useCallback, useMemo, startTransition } from 'react';
-import { useNavigationType } from 'react-router-dom';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { postService, adService } from '../services';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
 
-const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false, onCacheStatusChange }) => {
-  const navigationType = useNavigationType();
+const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
-  const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
   // 각 게시물의 가시성 상태 추적 (Set<postId>)
   const [visiblePosts, setVisiblePosts] = useState(new Set());
-  // 첫 로딩 여부 추적 (첫 로딩에만 애니메이션 적용)
-  const isFirstLoadRef = useRef(true);
   const observerRef = useRef(null);
   const postsContainerRef = useRef(null);
-  // 점진적 렌더링을 위한 상태 (첫 로딩 시 버벅임 방지)
-  const [visibleItemCount, setVisibleItemCount] = useState(5);
 
   // Pull-to-refresh 상태
   const [isPulling, setIsPulling] = useState(false);
@@ -71,12 +64,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
   });
 
-  // 캐시 상태 변경 알림 (부모 컴포넌트에 전달)
-  useEffect(() => {
-    if (onCacheStatusChange && dataUpdatedAt) {
-      onCacheStatusChange(dataUpdatedAt);
-    }
-  }, [dataUpdatedAt, onCacheStatusChange]);
 
   // 광고 노출 기록 관리 (로컬 스토리지)
   const [adViewCounts, setAdViewCounts] = useState(() => {
@@ -315,69 +302,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   //   }
   // }, [visiblePosts]);
 
-  // 점진적 렌더링 (첫 로딩 시 버벅임 방지) - startTransition으로 최적화
-  useEffect(() => {
-    // 첫 로딩이 아니거나 뒤로가기(POP)인 경우 모든 아이템 즉시 표시
-    if (!isFirstLoadRef.current || navigationType === 'POP') {
-      setVisibleItemCount(999); // 충분히 큰 수
-      return;
-    }
-
-    // 로딩 중이거나 데이터가 없으면 대기
-    if (isLoading || !data?.pages?.length) return;
-
-    // 사용자가 이미 스크롤했다면 (100px 이상), 모든 아이템 즉시 표시
-    // 이렇게 하면 스크롤 위치가 변경되는 동안 높이가 변하지 않음
-    if (window.scrollY > 100) {
-      setVisibleItemCount(999);
-      return;
-    }
-
-    // 첫 로딩 시: startTransition으로 상태 업데이트를 낮은 우선순위로 처리
-    // 이렇게 하면 메인 스레드가 블로킹되지 않음
-    const totalItems = data.pages.reduce((sum, page) => sum + page.length, 0);
-
-    startTransition(() => {
-      setVisibleItemCount(totalItems); // 모든 아이템 즉시 표시 (CSS 애니메이션만 순차)
-    });
-  }, [isLoading, data, navigationType]);
-
-  // 첫 로딩 완료 후 최상단으로 스크롤 (뒤로가기가 아닌 경우)
-  useEffect(() => {
-    // 이미 스크롤했거나, 로딩 중이거나, 데이터가 없으면 스킵
-    if (hasInitialScrolled || isLoading || !data?.pages?.length) return;
-
-    // highlightPostId가 있으면 해당 위치로 스크롤하므로 여기서는 스킵
-    if (highlightPostId) return;
-
-    // 뒤로가기(POP)일 때는 useScrollRestore가 처리하므로 스킵
-    if (navigationType === 'POP') {
-      setHasInitialScrolled(true);
-      isFirstLoadRef.current = false;
-      return;
-    }
-
-    // 스크롤 복원 시작 이벤트 발생 (헤더/메뉴바 플리커링 방지)
-    window.dispatchEvent(new CustomEvent('scroll-restore-start'));
-
-    // 첫 페이지 로딩 완료 시 최상단으로 스크롤
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    setHasInitialScrolled(true);
-
-    // requestAnimationFrame으로 브라우저 렌더링 후 이벤트 발생
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.dispatchEvent(new CustomEvent('scroll-restore-end'));
-      });
-    });
-
-    // 첫 로딩 애니메이션 후 플래그 해제 - startTransition으로 우선순위 낮춤
-    startTransition(() => {
-      setTimeout(() => {
-        isFirstLoadRef.current = false;
-      }, 1000);
-    });
-  }, [isLoading, data, hasInitialScrolled, highlightPostId, navigationType]);
 
   // highlightPostId가 있을 때 해당 게시물로 스크롤
   useEffect(() => {
@@ -611,14 +535,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">
-          {postsWithAds.slice(0, visibleItemCount).map((item, index) => {
+          {postsWithAds.map((item) => {
             const isAd = item.type === 'ad';
             const itemId = isAd ? `ad-${item.data.id}` : item.data.id.toString();
-            const isPOP = navigationType === 'POP';
-            // 첫 로딩 시에만 CSS 애니메이션 적용
-            const shouldAnimate = isFirstLoadRef.current && !isPOP && !isAd;
-            // 애니메이션 딜레이: 순차적으로 20ms씩
-            const animationDelay = index * 0.02;
 
             return (
             <div
@@ -626,11 +545,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
               data-post-id={itemId}
               data-ad-id={isAd ? item.data.id : undefined}
               className="relative"
-              style={shouldAnimate ? {
-                animation: `feedItemSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) ${animationDelay}s forwards`,
-                opacity: 0,
-                willChange: 'transform, opacity'
-              } : undefined}
             >
               {item.type === 'post' ? (
                 <EnhancedInstagramPost

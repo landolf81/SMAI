@@ -1,7 +1,6 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import EnhancedInstagramFeed from '../components/EnhancedInstagramFeed';
-import { useScrollRestore } from '../hooks/useScrollRestore';
 import { AuthContext } from '../context/AuthContext';
 
 const Community = () => {
@@ -9,23 +8,6 @@ const Community = () => {
     const location = useLocation();
     const { isBanned } = useContext(AuthContext);
     const [showBannedAlert, setShowBannedAlert] = useState(false);
-    const [isCacheValid, setIsCacheValid] = useState(true);
-    const lastDataUpdateRef = useRef(null);
-
-    // EnhancedInstagramFeed에서 캐시 상태를 받아올 콜백
-    const handleCacheStatusChange = (dataUpdatedAt) => {
-        // 이전 데이터 업데이트 시간과 비교
-        if (lastDataUpdateRef.current !== null && lastDataUpdateRef.current !== dataUpdatedAt) {
-            // 데이터가 갱신되었으면 캐시 무효
-            setIsCacheValid(false);
-        } else {
-            setIsCacheValid(true);
-        }
-        lastDataUpdateRef.current = dataUpdatedAt;
-    };
-
-    // 커뮤니티 페이지 스크롤 위치 복원
-    const { resetScrollPosition, scrollToTop } = useScrollRestore('community', null, null, null, true, isCacheValid);
 
     // 차단된 사용자가 리다이렉트되어 왔을 때 알림 표시
     useEffect(() => {
@@ -59,7 +41,6 @@ const Community = () => {
             <div className="w-full">
                 <EnhancedInstagramFeed
                     highlightPostId={searchParams.get('postId')}
-                    onCacheStatusChange={handleCacheStatusChange}
                 />
             </div>
         </div>
