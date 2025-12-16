@@ -59,8 +59,10 @@ Please respond in the following JSON format:
 }
 
 IMPORTANT:
-- Make the translation natural and easy to understand, not literal.
+- Translate using natural, conversational language that people use in real-life everyday situations.
+- Avoid formal, literary, or overly polite expressions unless the original text clearly requires them.
 - Use simple, clear language that conveys the meaning effectively.
+- Make the translation sound like how native speakers would actually talk in casual, daily conversations.
 - Return ONLY the JSON object, no additional text.`;
 
     try {
