@@ -79,7 +79,20 @@ BEGIN
   ),
   final_ranked AS (
     SELECT
-      rp.*,
+      rp.id,
+      rp.user_id,
+      rp.description,
+      rp.photo,
+      rp.created_at,
+      rp.updated_at,
+      rp.is_pinned,
+      rp.post_type,
+      rp.likes_count,
+      rp.comments_count,
+      rp.views_count,
+      rp.hot_score,
+      rp.view_count,
+      rp.final_score,
       -- 6시간 이내 최신글 중 4번째 이후는 priority 3으로 변경
       CASE
         WHEN rp.sort_priority = 2 AND rp.recent_rank > 3 THEN 3
