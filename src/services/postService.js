@@ -40,7 +40,12 @@ export const postService = {
         if (feedError) {
           console.error('개인화 피드 조회 오류:', feedError);
           // 폴백: 기본 쿼리로 진행
-        } else if (feedData && feedData.length > 0) {
+        } else if (feedData) {
+          // feedData가 빈 배열이면 바로 빈 배열 반환 (더 이상 데이터 없음)
+          if (feedData.length === 0) {
+            return [];
+          }
+
           // DB 함수에서 반환된 post_id로 전체 데이터 조회
           const postIds = feedData.map(p => p.id);
 
