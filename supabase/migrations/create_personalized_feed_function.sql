@@ -14,7 +14,7 @@ RETURNS TABLE (
   id BIGINT,
   user_id UUID,
   description TEXT,
-  photo TEXT[],
+  photo TEXT,
   created_at TIMESTAMPTZ,
   updated_at TIMESTAMPTZ,
   is_pinned BOOLEAN,
