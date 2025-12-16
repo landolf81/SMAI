@@ -101,12 +101,12 @@ export const postService = {
           .in('post_id', postIds)
       ];
 
-      // 로그인 사용자인 경우 열람 기록도 조회
+      // 로그인 사용자인 경우 열람 기록도 조회 (횟수 포함)
       if (currentUser && sortBy === 'algorithm') {
         queryPromises.push(
           supabase
             .from('user_post_views')
-            .select('post_id')
+            .select('post_id, view_count')
             .eq('user_id', currentUser.id)
             .in('post_id', postIds)
         );
@@ -135,18 +135,22 @@ export const postService = {
         tradeInfoMap[item.post_id] = item;
       });
 
-      // 열람 기록 맵 생성
-      const viewedPostIds = new Set();
+      // 열람 기록 맵 생성 (횟수 포함)
+      const viewCountMap = {};
       if (viewedData?.data) {
-        viewedData.data.forEach(v => viewedPostIds.add(v.post_id));
+        viewedData.data.forEach(v => {
+          viewCountMap[v.post_id] = v.view_count || 1;
+        });
       }
 
       // 5. 데이터 변환: Supabase 형식 → 프론트엔드 형식
       let postsWithDetails = posts.map((post) => {
-        const isViewed = viewedPostIds.has(post.id);
-        // 미열람 가중치 적용: 안 본 게시물 ×2.0, 본 게시물 ×0.3
-        // (좋아요/댓글/시간감쇠는 DB hot_score에서 이미 계산됨)
-        const viewWeight = isViewed ? 0.3 : 2.0;
+        const viewCount = viewCountMap[post.id] || 0;
+        // 열람 횟수별 가중치: 안 본 게시물 ×5.0, 본 횟수가 많을수록 감소
+        // 0회: ×5.0, 1회: ×0.5, 2회: ×0.25, 5회: ×0.1, 10회+: ×0.01
+        const viewWeight = viewCount === 0
+          ? 5.0
+          : Math.max(0.01, 0.5 / viewCount);
         const finalScore = (post.hot_score || 0) * viewWeight;
 
         return {
@@ -175,7 +179,8 @@ export const postService = {
           tradeInfo: tradeInfoMap[post.id] || null,
 
           // 피드 알고리즘 관련
-          isViewed,
+          viewCount,
+          isViewed: viewCount > 0,
           finalScore
         };
       });
@@ -1388,28 +1393,47 @@ export const postService = {
         return { success: false, reason: 'invalid_post_id' };
       }
 
-      // 열람 기록 추가 (중복 시 무시)
-      const { error } = await supabase
+      // 기존 열람 기록 확인
+      const { data: existingView } = await supabase
         .from('user_post_views')
-        .upsert({
-          user_id: user.id,
-          post_id: postIdInt,
-          viewed_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id,post_id',
-          ignoreDuplicates: true
-        });
+        .select('view_count')
+        .eq('user_id', user.id)
+        .eq('post_id', postIdInt)
+        .single();
 
-      if (error) {
-        // 중복 에러는 무시 (이미 본 게시물)
-        if (error.code === '23505') {
-          return { success: true, alreadyViewed: true };
+      if (existingView) {
+        // 기존 기록 있으면 횟수 증가
+        const { error } = await supabase
+          .from('user_post_views')
+          .update({
+            view_count: existingView.view_count + 1,
+            viewed_at: new Date().toISOString()
+          })
+          .eq('user_id', user.id)
+          .eq('post_id', postIdInt);
+
+        if (error) {
+          console.warn('열람 횟수 증가 실패:', error);
+          return { success: false, reason: error.message };
         }
-        console.warn('열람 기록 저장 실패:', error);
-        return { success: false, reason: error.message };
-      }
+        return { success: true, viewCount: existingView.view_count + 1 };
+      } else {
+        // 신규 기록 추가
+        const { error } = await supabase
+          .from('user_post_views')
+          .insert({
+            user_id: user.id,
+            post_id: postIdInt,
+            view_count: 1,
+            viewed_at: new Date().toISOString()
+          });
 
-      return { success: true };
+        if (error) {
+          console.warn('열람 기록 저장 실패:', error);
+          return { success: false, reason: error.message };
+        }
+        return { success: true, viewCount: 1 };
+      }
     } catch (error) {
       console.error('열람 기록 저장 예외:', error);
       return { success: false, reason: error.message };

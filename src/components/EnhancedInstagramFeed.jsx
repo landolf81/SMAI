@@ -57,15 +57,15 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         search: search,
         userId: userId,
         postType: userId ? undefined : 'general', // 사용자 프로필에서는 모든 타입, 커뮤니티에서는 general만
-        limit: 5,
-        offset: pageParam * 5,
+        limit: 10,
+        offset: pageParam * 10,
         sortBy: userId ? 'latest' : 'algorithm' // 프로필: 최신순, 커뮤니티: 알고리즘
       });
 
       return posts;
     },
     getNextPageParam: (lastPage, pages) => {
-      return lastPage.length === 5 ? pages.length : undefined;
+      return lastPage.length === 10 ? pages.length : undefined;
     },
     staleTime: 5 * 60 * 1000,  // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
