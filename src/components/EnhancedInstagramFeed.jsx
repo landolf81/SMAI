@@ -50,15 +50,17 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         search: search,
         userId: userId,
         postType: userId ? undefined : 'general', // 사용자 프로필에서는 모든 타입, 커뮤니티에서는 general만
-        limit: 10,
-        offset: pageParam * 10,
+        limit: pageParam === 0 ? 2 : 10, // 첫 페이지는 2개, 이후 10개씩 (빠른 초기 렌더링)
+        offset: pageParam === 0 ? 0 : 2 + (pageParam - 1) * 10, // 오프셋 조정
         sortBy: userId ? 'latest' : 'algorithm' // 프로필: 최신순, 커뮤니티: 알고리즘
       });
 
       return posts;
     },
     getNextPageParam: (lastPage, pages) => {
-      return lastPage.length === 10 ? pages.length : undefined;
+      // 첫 페이지는 2개, 이후 10개 기준으로 다음 페이지 판단
+      const expectedLength = pages.length === 1 ? 2 : 10;
+      return lastPage.length === expectedLength ? pages.length : undefined;
     },
     staleTime: 5 * 60 * 1000,  // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
