@@ -76,6 +76,7 @@ BEGIN
       AND upv.user_id = p_user_id
     WHERE
       (p_post_type IS NULL OR p.post_type = p_post_type)
+      AND (p.is_hidden IS NULL OR p.is_hidden = false)
   ),
   final_ranked AS (
     SELECT

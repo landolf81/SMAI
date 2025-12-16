@@ -60,8 +60,7 @@ export const postService = {
                 profile_pic
               )
             `)
-            .in('id', postIds)
-            .or('is_hidden.is.null,is_hidden.eq.false');
+            .in('id', postIds);
 
           if (!postsError && fullPosts) {
             // DB 함수의 정렬 순서 유지 (feedData 순서대로)
