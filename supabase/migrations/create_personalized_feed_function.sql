@@ -48,11 +48,12 @@ BEGIN
       p.views_count,
       p.hot_score,
       COALESCE(upv.view_count, 0) AS view_count,
-      -- 열람 횟수별 가중치: 0회=×5.0, 1회=×0.5, 2회=×0.25, ...
+      -- 열람 횟수별 가중치: 지수 감소로 hot_score 자체를 낮춤
+      -- 0회=×1.0, 1회=×0.35, 2회=×0.19, 3회=×0.125, 5회=×0.068, 10회=×0.028
       p.hot_score * (
         CASE
-          WHEN upv.view_count IS NULL OR upv.view_count = 0 THEN 5.0
-          ELSE GREATEST(0.01, 0.5 / upv.view_count)
+          WHEN upv.view_count IS NULL OR upv.view_count = 0 THEN 1.0
+          ELSE 1.0 / POWER(COALESCE(upv.view_count, 0) + 1, 1.5)
         END
       ) AS final_score,
       -- 정렬 우선순위: 1=고정, 2=6시간이내 최신(상위3개), 3=나머지

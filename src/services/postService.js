@@ -1383,13 +1383,13 @@ export const postService = {
         return { success: false, reason: 'invalid_post_id' };
       }
 
-      // 기존 열람 기록 확인
+      // 기존 열람 기록 확인 (없으면 null 반환)
       const { data: existingView } = await supabase
         .from('user_post_views')
         .select('view_count')
         .eq('user_id', user.id)
         .eq('post_id', postIdInt)
-        .single();
+        .maybeSingle();
 
       if (existingView) {
         // 기존 기록 있으면 횟수 증가
