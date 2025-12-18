@@ -34,29 +34,43 @@ async function sendTelegramMessage(text: string) {
 }
 
 // 신고 알림 메시지 생성
-function formatReportMessage(record: Record<string, unknown>): string {
-  const reasonMap: Record<string, string> = {
-    'spam': '스팸/광고',
-    'inappropriate': '부적절한 콘텐츠',
-    'harassment': '괴롭힘/따돌림',
-    'false_info': '허위 정보',
-    'other': '기타',
+async function formatReportMessage(record: Record<string, unknown>): Promise<string> {
+  // 콘텐츠 타입 결정 (post_id 또는 comment_id로 판단)
+  let contentType = '알 수 없음'
+  if (record.post_id) {
+    contentType = '게시물'
+  } else if (record.comment_id) {
+    contentType = '댓글'
   }
 
-  const contentTypeMap: Record<string, string> = {
-    'post': '게시물',
-    'comment': '댓글',
-    'user': '사용자',
-  }
+  // category_id로 카테고리 이름 조회
+  let categoryName = '기타'
+  if (record.category_id) {
+    try {
+      const { createClient } = await import('jsr:@supabase/supabase-js@2')
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      const supabase = createClient(supabaseUrl, supabaseKey)
 
-  const reason = reasonMap[record.reason as string] || record.reason
-  const contentType = contentTypeMap[record.content_type as string] || record.content_type
+      const { data: category } = await supabase
+        .from('report_categories')
+        .select('name')
+        .eq('id', record.category_id)
+        .single()
+
+      if (category) {
+        categoryName = category.name
+      }
+    } catch (error) {
+      console.error('카테고리 조회 오류:', error)
+    }
+  }
 
   return `🚨 <b>새 신고 접수</b>
 
 📋 <b>유형:</b> ${contentType}
-📝 <b>사유:</b> ${reason}
-${record.description ? `💬 <b>상세:</b> ${record.description}` : ''}
+📝 <b>사유:</b> ${categoryName}
+${record.custom_reason ? `💬 <b>상세:</b> ${record.custom_reason}` : ''}
 🆔 <b>신고 ID:</b> ${record.id}
 ⏰ <b>시간:</b> ${new Date(record.created_at as string).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}
 
@@ -95,7 +109,7 @@ Deno.serve(async (req) => {
     // 테이블별 메시지 생성
     switch (payload.table) {
       case 'reports':
-        message = formatReportMessage(payload.record)
+        message = await formatReportMessage(payload.record)
         break
       case 'users':
         message = formatNewUserMessage(payload.record)

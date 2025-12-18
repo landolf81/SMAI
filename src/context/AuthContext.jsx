@@ -124,14 +124,36 @@ export const AuthContextProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
+      console.log("🚪 로그아웃 시작...");
+
+      // Supabase 세션 완전 삭제
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
 
+      // 로컬 상태 초기화
       setCurrentUser(null);
+
+      // 로컬 스토리지 완전 정리
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.removeItem('sb-' + supabase.supabaseUrl.split('//')[1].split('.')[0] + '-auth-token');
+
+      console.log("✅ 로그아웃 완료");
     } catch (error) {
-      console.error("로그아웃 오류:", error);
+      console.error("❌ 로그아웃 오류:", error);
       // 오류가 발생해도 로컬 상태는 초기화
       setCurrentUser(null);
+
+      // 강제로 로컬 스토리지 정리
+      try {
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('supabase') || key.includes('sb-')) {
+            localStorage.removeItem(key);
+          }
+        });
+      } catch (e) {
+        console.error("로컬 스토리지 정리 오류:", e);
+      }
+
       throw error;
     }
   };

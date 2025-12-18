@@ -81,7 +81,17 @@ function App() {
 
 const { currentUser, isBanned } = useContext(AuthContext);
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,        // 5분 캐시
+      gcTime: 10 * 60 * 1000,          // 10분 가비지 컬렉션
+      refetchOnWindowFocus: false,     // 포커스 시 재조회 방지
+      refetchOnMount: false,           // 마운트 시 불필요한 재조회 방지
+      retry: 1,                        // 실패 시 1회만 재시도
+    },
+  },
+})
 
 // 브라우저 기본 스크롤 복원 비활성화
 useEffect(() => {

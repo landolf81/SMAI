@@ -437,46 +437,59 @@ const Home = () => {
   // PC 사용자를 위한 안내 화면
   if (!isMobile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex items-center justify-center">
-        <div className="max-w-2xl mx-auto p-8 text-center">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="mb-6">
-              <StoreIcon className="text-6xl text-green-600 mb-4" />
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
-                메리디안 농업 커뮤니티
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 flex items-center justify-center relative overflow-hidden">
+        {/* 배경 장식 요소 */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '1s' }}></div>
+
+        <div className="max-w-2xl mx-auto p-8 text-center relative z-10">
+          <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200/50 p-12">
+            {/* 헤더 섹션 */}
+            <div className="mb-8">
+              <div className="inline-block p-4 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl mb-6 shadow-lg">
+                <StoreIcon className="text-6xl text-white" />
+              </div>
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent mb-4">
+                성주마이
               </h1>
-              <p className="text-gray-600">
-                모바일 전용 농업 커뮤니티 웹앱
+              <p className="text-xl text-gray-600">
+                성주 지역 농산물 거래와 소통을 위한 커뮤니티 플랫폼
               </p>
             </div>
-            
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-3">
+
+            {/* 정보 카드 */}
+            <div className="bg-gradient-to-br from-blue-50 to-green-50 rounded-2xl p-6 mb-8 border border-blue-100">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-3">
                 PC에서는 관리 기능만 제공됩니다
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 mb-6">
                 경락가 정보, 커뮤니티, 광고 등은 모바일에서만 이용 가능합니다.
               </p>
-              
+
+              {/* 버튼 그룹 */}
               <div className="space-y-3">
-                <Link 
-                  to="/admin" 
-                  className="block w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                <Link
+                  to="/admin"
+                  className="block w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   🖥️ 관리자 대시보드
                 </Link>
-                <Link 
-                  to="/login" 
-                  className="block w-full bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                <Link
+                  to="/login"
+                  className="block w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 font-bold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   👤 로그인
                 </Link>
               </div>
             </div>
-            
-            <div className="text-sm text-gray-500">
-              <p className="mb-2">📱 모바일에서 접속하시면 전체 기능을 이용하실 수 있습니다.</p>
-              <p>
+
+            {/* 안내 메시지 */}
+            <div className="text-sm text-gray-500 space-y-2">
+              <p className="flex items-center justify-center gap-2">
+                <span className="text-2xl">📱</span>
+                <span>모바일에서 접속하시면 전체 기능을 이용하실 수 있습니다.</span>
+              </p>
+              <p className="text-xs">
                 현재 화면 크기: {window.innerWidth}px × {window.innerHeight}px
               </p>
             </div>

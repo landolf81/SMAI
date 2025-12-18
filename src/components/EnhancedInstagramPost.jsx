@@ -1026,7 +1026,16 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     e.stopPropagation();
                     setShowReportModal(true);
                   }}
-                  className="flex items-center w-full text-left p-3 hover:bg-red-50 rounded-lg text-red-500"
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowReportModal(true);
+                  }}
+                  className="flex items-center w-full text-left p-3 hover:bg-red-50 rounded-lg text-red-500 active:bg-red-100"
                 >
                   🚨 신고하기
                 </button>

@@ -1035,64 +1035,78 @@ export const postService = {
         return [];
       }
 
-      // 각 게시물의 관련 데이터를 병렬로 조회
-      const postsWithDetails = await Promise.all(
-        posts.map(async (post) => {
-          try {
-            // 사용자 정보
-            const { data: user } = await supabase
-              .from('users')
-              .select('id, username, name, profile_pic')
-              .eq('id', post.user_id)
-              .single();
+      // 최적화: 모든 게시물 ID를 한 번에 조회 (N+1 쿼리 방지)
+      const postIds = posts.map(p => p.id);
+      const userIds = [...new Set(posts.map(p => p.user_id))];
 
-            // 좋아요 수
-            const { count: likesCount } = await supabase
-              .from('likes')
-              .select('*', { count: 'exact', head: true })
-              .eq('post_id', post.id);
+      // 1. 사용자 정보 일괄 조회
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, username, name, profile_pic')
+        .in('id', userIds);
+      const usersMap = (users || []).reduce((acc, user) => {
+        acc[user.id] = user;
+        return acc;
+      }, {});
 
-            // 댓글 수
-            const { count: commentsCount } = await supabase
-              .from('comments')
-              .select('*', { count: 'exact', head: true })
-              .eq('post_id', post.id);
+      // 2. 좋아요 데이터 일괄 조회
+      const { data: likesData } = await supabase
+        .from('likes')
+        .select('post_id')
+        .in('post_id', postIds);
+      const likesMap = (likesData || []).reduce((acc, like) => {
+        acc[like.post_id] = (acc[like.post_id] || 0) + 1;
+        return acc;
+      }, {});
 
-            // 태그 조회
-            const { data: postTags } = await supabase
-              .from('post_tags')
-              .select('tag_id')
-              .eq('post_id', post.id);
+      // 3. 댓글 데이터 일괄 조회
+      const { data: commentsData } = await supabase
+        .from('comments')
+        .select('post_id')
+        .in('post_id', postIds)
+        .eq('is_hidden', false);
+      const commentsMap = (commentsData || []).reduce((acc, comment) => {
+        acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
+        return acc;
+      }, {});
 
-            let tags = [];
-            if (postTags && postTags.length > 0) {
-              const tagIds = postTags.map(pt => pt.tag_id);
-              const { data: tagsData } = await supabase
-                .from('tags')
-                .select('id, name, display_name, color')
-                .in('id', tagIds);
-              tags = tagsData || [];
-            }
+      // 4. 태그 데이터 일괄 조회
+      const { data: postTagsData } = await supabase
+        .from('post_tags')
+        .select('post_id, tag_id')
+        .in('post_id', postIds);
 
-            return {
-              ...post,
-              user: user || null,
-              tags: tags,
-              likesCount: likesCount || 0,
-              commentsCount: commentsCount || 0
-            };
-          } catch (err) {
-            console.error(`게시물 ${post.id} 상세 조회 오류:`, err);
-            return {
-              ...post,
-              user: null,
-              tags: [],
-              likesCount: 0,
-              commentsCount: 0
-            };
+      // 태그 ID 추출 및 태그 정보 조회
+      let tagsMap = {};
+      if (postTagsData && postTagsData.length > 0) {
+        const tagIds = [...new Set(postTagsData.map(pt => pt.tag_id))];
+        const { data: tagsData } = await supabase
+          .from('tags')
+          .select('id, name, display_name, color')
+          .in('id', tagIds);
+
+        const tagsById = (tagsData || []).reduce((acc, tag) => {
+          acc[tag.id] = tag;
+          return acc;
+        }, {});
+
+        // 게시물별 태그 매핑
+        postTagsData.forEach(pt => {
+          if (!tagsMap[pt.post_id]) tagsMap[pt.post_id] = [];
+          if (tagsById[pt.tag_id]) {
+            tagsMap[pt.post_id].push(tagsById[pt.tag_id]);
           }
-        })
-      );
+        });
+      }
+
+      // 5. 게시물에 데이터 결합
+      const postsWithDetails = posts.map(post => ({
+        ...post,
+        user: usersMap[post.user_id] || null,
+        tags: tagsMap[post.id] || [],
+        likesCount: likesMap[post.id] || 0,
+        commentsCount: commentsMap[post.id] || 0
+      }));
 
       // 태그 필터 적용 (클라이언트 사이드)
       if (options.tagName && options.tagName !== 'all') {

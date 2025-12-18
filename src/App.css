@@ -222,16 +222,22 @@ header div.mr-2:after {
   display: none !important;
 }
 
-/* 모든 가상 요소에서 "0" 관련 content 제거 */
-*:before,
-*:after {
+/* DaisyUI countdown 관련 가상 요소만 제거 (MUI 모달 등은 보호) */
+.countdown:before,
+.countdown:after,
+.countdown *:before,
+.countdown *:after {
   content: none !important;
 }
 
-/* 특정 유틸리티만 허용 */
+/* 특정 유틸리티는 허용 */
 .tooltip:after,
 .dropdown-content:after,
-.modal:after {
+.modal:after,
+.MuiDialog-root *:before,
+.MuiDialog-root *:after,
+.MuiBackdrop-root:before,
+.MuiBackdrop-root:after {
   content: "" !important;
 }
 

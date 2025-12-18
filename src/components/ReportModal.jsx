@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reportService } from '../services';
 import {
@@ -187,7 +187,24 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
   }
 
   return (
-    <Dialog open={isModalOpen} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={isModalOpen}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      disableScrollLock={false}
+      sx={{
+        zIndex: 9999,
+        '& .MuiDialog-paper': {
+          margin: { xs: '16px', sm: '32px' },
+          maxHeight: { xs: 'calc(100% - 32px)', sm: 'calc(100% - 64px)' },
+          width: { xs: 'calc(100% - 32px)', sm: '100%' }
+        },
+        '& .MuiBackdrop-root': {
+          backgroundColor: 'rgba(0, 0, 0, 0.5)'
+        }
+      }}
+    >
       <DialogTitle>
         <Box display="flex" alignItems="center" gap={1}>
           <ReportIcon color="error" />

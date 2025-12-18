@@ -113,24 +113,60 @@ const Login = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-market-50 via-white to-produce-50 flex flex-col items-center justify-start relative">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 flex flex-col items-center justify-start relative overflow-hidden">
+      {/* 배경 장식 요소 */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
+
       {/* 모바일에서만 상단 헤더 표시 */}
       {isMobile && <Navbar />}
 
       {currentUser && <LogoutButton />}
 
-      <div className="w-full p-4 pb-20">
+      <div className="w-full p-4 pb-20 relative z-10">
       <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mt-8">
-        {/* 모바일에서는 로그인 폼을 먼저 표시 */}
-        <div className={`w-full max-w-md mx-auto ${isMobile ? 'order-1' : 'order-2'}`}>
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-gray-800">로그인</h3>
-              <p className="text-gray-600 mt-2">계정에 로그인하여 서비스를 이용하세요</p>
+        {/* 환영 섹션 (PC에서만) */}
+        {!isMobile && (
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent">
+                성주마이에<br />오신 것을 환영합니다
+              </h1>
+              <p className="text-xl text-gray-600">
+                성주 지역의 농산물 거래와 소통을 위한<br />
+                커뮤니티 플랫폼
+              </p>
             </div>
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="grid grid-cols-2 gap-4 mt-8">
+              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-yellow-200">
+                <div className="text-3xl mb-2">🌾</div>
+                <div className="font-semibold text-gray-800">신선한 농산물</div>
+                <div className="text-sm text-gray-600">실시간 시세 정보</div>
+              </div>
+              <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-green-200">
+                <div className="text-3xl mb-2">💬</div>
+                <div className="font-semibold text-gray-800">커뮤니티</div>
+                <div className="text-sm text-gray-600">지역 소통 공간</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 로그인 폼 */}
+        <div className={`w-full max-w-md mx-auto ${isMobile ? 'order-1' : 'order-2'}`}>
+          <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200/50 p-8 lg:p-10">
+            <div className="text-center mb-8">
+              <div className="inline-block p-3 bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h3 className="text-3xl font-bold text-gray-800">로그인</h3>
+              <p className="text-gray-500 mt-2">반가워요! 다시 만나서 기쁩니다</p>
+            </div>
+            <form onSubmit={handleLogin} className="space-y-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   사용자명
                 </label>
                 <input
@@ -139,13 +175,13 @@ const Login = () => {
                   autoComplete="username"
                   value={inputs.username}
                   onChange={handleChange}
-                  placeholder="사용자명을 입력하세요"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 transition-colors"
+                  placeholder="아이디를 입력하세요"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 focus:bg-white transition-all duration-200"
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   비밀번호
                 </label>
                 <input
@@ -155,32 +191,41 @@ const Login = () => {
                   value={inputs.password}
                   onChange={handleChange}
                   placeholder="비밀번호를 입력하세요"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 transition-colors"
+                  className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 focus:bg-white transition-all duration-200"
                   required
                 />
               </div>
-              <div className="flex items-center justify-between">
-                <label className="flex items-center">
-                  <input type="checkbox" className="rounded border-gray-300 text-market-600 focus:ring-market-500" />
-                  <span className="ml-2 text-sm text-gray-600">로그인 상태 유지</span>
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400 transition-all"
+                  />
+                  <span className="ml-2 text-gray-600 group-hover:text-gray-800 transition-colors">로그인 상태 유지</span>
                 </label>
-                <a href="#" className="text-sm text-market-600 hover:text-market-700">
+                <a href="#" className="text-yellow-600 hover:text-yellow-700 font-medium transition-colors">
                   비밀번호 찾기
                 </a>
               </div>
               {err && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {err}
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-xl text-sm flex items-start gap-2">
+                  <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <span>{err}</span>
                 </div>
               )}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-market-500 hover:bg-market-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
-                    <div className="loading-spinner mr-2"></div>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                     로그인 중...
                   </div>
                 ) : (
@@ -189,35 +234,42 @@ const Login = () => {
               </button>
             </form>
             {/* 소셜 로그인 (카카오톡) */}
-            <div className="mt-8">
+            <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+                  <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">또는</span>
+                  <span className="px-4 bg-white text-gray-400 font-medium">또는</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={loginWithKakao}
                 disabled={loading}
-                className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="mt-6 w-full bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] font-bold py-4 px-6 rounded-xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3C6.477 3 2 6.463 2 10.742c0 2.72 1.753 5.097 4.388 6.463-.17.598-.614 2.169-.702 2.505-.108.41.15.405.316.295.13-.087 2.07-1.366 2.903-1.92.689.1 1.401.152 2.095.152 5.523 0 10-3.463 10-7.742S17.523 3 12 3z"/>
                 </svg>
                 카카오톡으로 로그인
               </button>
             </div>
-          </div>
-        </div>
 
-        {/* 회원가입 링크 */}
-        <div className="text-center mt-6">
-          <Link to="/register" className="font-semibold text-market-600 hover:text-market-700">
-            회원가입하기 →
-          </Link>
+            {/* 회원가입 링크 */}
+            <div className="text-center mt-8 pt-6 border-t border-gray-100">
+              <p className="text-gray-600 text-sm mb-2">아직 계정이 없으신가요?</p>
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-1 text-yellow-600 hover:text-yellow-700 font-bold text-base transition-colors group"
+              >
+                회원가입하기
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
       </div>
