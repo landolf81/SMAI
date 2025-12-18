@@ -174,13 +174,31 @@ export const AuthContextProvider = ({ children }) => {
 
       console.log("✅ 회원가입 완료:", authData.user.id);
 
-      // Database Trigger가 자동으로 프로필 생성
-      // 프로필 생성을 위해 잠시 대기 (트리거 실행 시간)
-      console.log("⏳ 프로필 생성 대기 중...");
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 프로필 직접 생성
+      console.log("⏳ 프로필 생성 중...");
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
+          id: authData.user.id,
+          email: email,
+          username: finalUsername,
+          name: finalName,
+          created_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        // 이미 존재하는 경우 무시 (Trigger가 먼저 생성했을 수 있음)
+        if (profileError.code !== '23505') {
+          console.error("❌ 프로필 생성 실패:", profileError);
+          throw profileError;
+        }
+        console.log("ℹ️ 프로필이 이미 존재함");
+      } else {
+        console.log("✅ 프로필 생성 완료");
+      }
 
       // 생성된 프로필 조회
-      console.log("🔍 프로필 조회 시작...");
+      await new Promise(resolve => setTimeout(resolve, 500));
       const userProfile = await supabaseHelpers.getUserProfile(authData.user.id);
       console.log("✅ 프로필 조회 완료:", userProfile);
       setCurrentUser(userProfile);
