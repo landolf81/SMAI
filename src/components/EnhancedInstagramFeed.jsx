@@ -24,8 +24,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   // 무한 스크롤용 sentinel ref
   const sentinelRef = useRef(null);
 
-  // 무한 스크롤 시 스크롤 위치 보존용
-  const scrollPositionBeforeFetchRef = useRef(0);
+  // 무한 스크롤 시 스크롤 위치 보존용 (마지막 게시물 기준)
+  const lastPostBeforeFetchRef = useRef(null);
 
   // 초기 광고 노출 횟수 스냅샷 (광고 순서 안정화용)
   const initialAdViewCountsRef = useRef(null);
@@ -374,8 +374,35 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       (entries) => {
         const entry = entries[0];
         if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          // 현재 스크롤 위치 저장
-          scrollPositionBeforeFetchRef.current = window.scrollY;
+          // 현재 화면에 보이는 게시물의 ID 저장 (레이아웃 시프트 방지)
+          const container = postsContainerRef.current;
+          if (container) {
+            const posts = container.querySelectorAll('[data-post-id]');
+
+            // 뷰포트 상단에 가장 가까운 게시물 찾기
+            let closestPost = null;
+            let closestDistance = Infinity;
+
+            posts.forEach(post => {
+              const rect = post.getBoundingClientRect();
+              const postTop = window.scrollY + rect.top;
+              const distance = Math.abs(postTop - window.scrollY);
+
+              if (distance < closestDistance) {
+                closestDistance = distance;
+                closestPost = post;
+              }
+            });
+
+            if (closestPost) {
+              const postId = closestPost.dataset.postId;
+              const rect = closestPost.getBoundingClientRect();
+              lastPostBeforeFetchRef.current = {
+                postId,
+                offsetFromTop: rect.top // 뷰포트 상단으로부터의 거리
+              };
+            }
+          }
           fetchNextPage();
         }
       },
@@ -392,14 +419,25 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     };
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // 무한스크롤 로딩 완료 후 스크롤 위치 보존
+  // 무한스크롤 로딩 완료 후 스크롤 위치 보존 (DOM 기준 복원)
   useEffect(() => {
-    if (!isFetchingNextPage && scrollPositionBeforeFetchRef.current > 0) {
-      // 약간의 지연 후 위치 복원 (DOM 안정화 대기)
+    if (!isFetchingNextPage && lastPostBeforeFetchRef.current) {
+      const { postId, offsetFromTop } = lastPostBeforeFetchRef.current;
+
+      // DOM 업데이트 후 실행
       requestAnimationFrame(() => {
-        const targetScroll = scrollPositionBeforeFetchRef.current;
-        window.scrollTo({ top: targetScroll, behavior: 'instant' });
-        scrollPositionBeforeFetchRef.current = 0;
+        const targetPost = document.querySelector(`[data-post-id="${postId}"]`);
+        if (targetPost) {
+          const rect = targetPost.getBoundingClientRect();
+          const currentOffset = rect.top;
+          const diff = currentOffset - offsetFromTop;
+
+          // 위치가 변경되었다면 보정
+          if (Math.abs(diff) > 5) {
+            window.scrollBy({ top: diff, behavior: 'instant' });
+          }
+        }
+        lastPostBeforeFetchRef.current = null;
       });
     }
   }, [isFetchingNextPage]);
