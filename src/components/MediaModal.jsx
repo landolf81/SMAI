@@ -318,12 +318,13 @@ const MediaModal = ({
   const isVideo = isVideoFile(currentMedia);
   const isCloudflareStream = isCloudflareStreamUrl(currentMedia);
 
-  // Cloudflare Stream iframe URL 생성
+  // Cloudflare Stream iframe URL 생성 (9:16 비율에 맞게 cover 적용)
   const getCloudflareStreamIframeUrl = (url) => {
     const uid = getCloudflareStreamUid(url);
     if (!uid) return '';
     const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
-    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?autoplay=true&loop=true&controls=true`;
+    // fit=cover로 9:16 비율에 맞게 크롭, letterboxColor=black으로 여백 검정
+    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?autoplay=true&loop=true&controls=true&fit=cover&letterboxColor=black`;
   };
 
   // Portal을 사용하여 body에 직접 렌더링 (부모의 transform/will-change 영향 방지)

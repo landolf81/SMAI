@@ -326,11 +326,21 @@ const CloudflareStreamPlayer = ({
         onEnded={loop ? undefined : handleVideoEnded}
       />
 
-      {/* 클릭 영역 */}
-      {(onClick || hideOverlay) && !controls && (
+      {/* 클릭 영역 - onClick이 있으면 항상 클릭 가능 */}
+      {onClick && !controls && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
-          onClick={hideOverlay && onClick ? onClick : (hideOverlay ? handleMuteToggle : onClick)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick(e);
+          }}
+        />
+      )}
+      {/* hideOverlay만 있고 onClick이 없으면 음소거 토글 */}
+      {hideOverlay && !onClick && !controls && (
+        <div
+          className="absolute inset-0 z-10 cursor-pointer"
+          onClick={handleMuteToggle}
         />
       )}
 
