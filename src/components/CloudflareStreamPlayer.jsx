@@ -32,8 +32,8 @@ const CloudflareStreamPlayer = ({
   // autoplay가 true면 즉시 플레이어 표시, 한번 true가 되면 계속 유지
   const [showPlayer, setShowPlayer] = useState(autoplay);
   const [isMuted, setIsMuted] = useState(initialMuted);
-  // autoplay가 한 번이라도 true가 되었는지 추적
-  const hasAutoplayedRef = useRef(autoplay);
+  // HLS 로딩 완료 여부 (재생 제어용)
+  const [isHlsReady, setIsHlsReady] = useState(false);
   const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
@@ -55,28 +55,24 @@ const CloudflareStreamPlayer = ({
     return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
   }, [uid, aspectRatio]);
 
-  // 이전 autoplay 상태를 추적하기 위한 ref
-  const prevAutoplayRef = useRef(autoplay);
-
-  // autoplay prop 변경 시 재생/정지 제어
+  // autoplay prop 변경 시 showPlayer 설정
   useEffect(() => {
-    const wasAutoplay = prevAutoplayRef.current;
-    prevAutoplayRef.current = autoplay;
+    if (autoplay) {
+      setShowPlayer(true);
+    }
+  }, [autoplay]);
+
+  // 재생/정지 제어 (isHlsReady와 autoplay 기반)
+  useEffect(() => {
+    if (!videoRef.current || !isHlsReady) return;
 
     if (autoplay) {
-      // autoplay가 한 번이라도 true가 되면 기록
-      hasAutoplayedRef.current = true;
-      // 항상 showPlayer를 true로 설정 (화면에 들어오면 플레이어 표시)
-      setShowPlayer(true);
-      // 다시 화면에 들어올 때 재생 시작 (videoRef가 있을 때만)
-      if (videoRef.current && !wasAutoplay) {
-        // 화면 복귀 시 항상 음소거 상태로 재생 + 아이콘도 동기화
-        videoRef.current.muted = true;
-        setIsMuted(true); // 아이콘 상태도 음소거로 동기화
-        videoRef.current.play().catch(() => {});
-      }
-    } else if (videoRef.current) {
-      // 화면 밖으로 나가면 (autoplay가 false가 되면) 동영상 정지 + 음소거
+      // 화면에 들어오면 재생 (음소거 상태로)
+      videoRef.current.muted = true;
+      setIsMuted(true);
+      videoRef.current.play().catch(() => {});
+    } else {
+      // 화면 밖으로 나가면 정지 + 음소거
       videoRef.current.pause();
       videoRef.current.muted = true;
       // loop 모드가 아닐 때만 재생 위치 리셋 (광고는 loop 모드라 스크롤 중에도 위치 유지)
@@ -92,7 +88,7 @@ const CloudflareStreamPlayer = ({
       }
       setIsWaitingToReplay(false);
     }
-  }, [autoplay, loop]);
+  }, [autoplay, isHlsReady, loop]);
 
   // 컴포넌트 언마운트 시 HLS 정리 및 동영상 정지
   useEffect(() => {
@@ -111,27 +107,37 @@ const CloudflareStreamPlayer = ({
     };
   }, []);
 
-  // HLS.js 초기화 및 재생
+  // HLS.js 초기화 (재생은 별도 useEffect에서 처리)
   useEffect(() => {
     if (!showPlayer || !videoRef.current || !uid) return;
 
     const video = videoRef.current;
+    setIsHlsReady(false);
+    setIsLoading(true);
 
     // Safari는 네이티브 HLS 지원
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = playbackUrl;
-      video.addEventListener('loadedmetadata', () => {
+
+      const handleLoadedMetadata = () => {
         setIsLoading(false);
+        setIsHlsReady(true);
         if (onReady) onReady();
-        if (autoplay) {
-          video.play().catch(() => {});
-        }
-      });
-      video.addEventListener('error', () => {
+      };
+
+      const handleError = () => {
         setHasError(true);
         setIsLoading(false);
         if (onError) onError();
-      });
+      };
+
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      video.addEventListener('error', handleError);
+
+      return () => {
+        video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('error', handleError);
+      };
     } else if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
@@ -145,10 +151,8 @@ const CloudflareStreamPlayer = ({
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         setIsLoading(false);
+        setIsHlsReady(true);
         if (onReady) onReady();
-        if (autoplay) {
-          video.play().catch(() => {});
-        }
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -168,7 +172,7 @@ const CloudflareStreamPlayer = ({
       setHasError(true);
       setIsLoading(false);
     }
-  }, [showPlayer, uid, playbackUrl, autoplay, onReady, onError]);
+  }, [showPlayer, uid, playbackUrl, onReady, onError]); // autoplay 의존성 제거
 
   // 음소거 상태 변경
   useEffect(() => {
