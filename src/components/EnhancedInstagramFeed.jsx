@@ -424,6 +424,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     if (!isFetchingNextPage && lastPostBeforeFetchRef.current) {
       const { postId, offsetFromTop } = lastPostBeforeFetchRef.current;
 
+      // 스크롤 복원 시작 이벤트 발생 (헤더/메뉴바 깜빡임 방지)
+      window.dispatchEvent(new Event('scroll-restore-start'));
+
       // DOM 업데이트 후 실행
       requestAnimationFrame(() => {
         const targetPost = document.querySelector(`[data-post-id="${postId}"]`);
@@ -438,6 +441,11 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
           }
         }
         lastPostBeforeFetchRef.current = null;
+
+        // 스크롤 복원 완료 이벤트 발생 (다음 프레임에서)
+        requestAnimationFrame(() => {
+          window.dispatchEvent(new Event('scroll-restore-end'));
+        });
       });
     }
   }, [isFetchingNextPage]);
