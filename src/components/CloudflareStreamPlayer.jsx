@@ -29,8 +29,11 @@ const CloudflareStreamPlayer = ({
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
+  // autoplay가 true면 즉시 플레이어 표시, 한번 true가 되면 계속 유지
   const [showPlayer, setShowPlayer] = useState(autoplay);
   const [isMuted, setIsMuted] = useState(initialMuted);
+  // autoplay가 한 번이라도 true가 되었는지 추적
+  const hasAutoplayedRef = useRef(autoplay);
   const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
@@ -61,10 +64,10 @@ const CloudflareStreamPlayer = ({
     prevAutoplayRef.current = autoplay;
 
     if (autoplay) {
+      // autoplay가 한 번이라도 true가 되면 기록
+      hasAutoplayedRef.current = true;
       // 항상 showPlayer를 true로 설정 (화면에 들어오면 플레이어 표시)
-      if (!showPlayer) {
-        setShowPlayer(true);
-      }
+      setShowPlayer(true);
       // 다시 화면에 들어올 때 재생 시작 (videoRef가 있을 때만)
       if (videoRef.current && !wasAutoplay) {
         // 화면 복귀 시 항상 음소거 상태로 재생 + 아이콘도 동기화
