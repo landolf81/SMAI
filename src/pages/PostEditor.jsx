@@ -350,25 +350,14 @@ const PostEditor = () => {
 
         setUploadedVideos(prev => [...prev, result]);
 
-        // 미리보기 추가
-        if (result.type === 'r2') {
-          // R2 동영상: 직접 URL 사용
-          setPreviewImages(prev => [...prev, {
-            url: result.url,
-            type: 'video/r2',
-            name: videoFile.name,
-            videoUrl: result.url,
-          }]);
-        } else {
-          // Stream 동영상: 썸네일 및 iframe URL 사용
-          setPreviewImages(prev => [...prev, {
-            url: result.thumbnailUrl,
-            type: 'video/stream',
-            name: videoFile.name,
-            streamUid: result.uid,
-            iframeUrl: result.iframeUrl,
-          }]);
-        }
+        // 미리보기 추가 (모든 동영상은 Stream)
+        setPreviewImages(prev => [...prev, {
+          url: result.thumbnailUrl,
+          type: 'video/stream',
+          name: videoFile.name,
+          streamUid: result.uid,
+          iframeUrl: result.iframeUrl,
+        }]);
 
       } catch (err) {
         console.error('동영상 업로드 실패:', err);
@@ -398,9 +387,6 @@ const PostEditor = () => {
     // Cloudflare Stream 동영상인 경우
     if (preview?.streamUid) {
       setUploadedVideos(prev => prev.filter(v => v.uid !== preview.streamUid));
-    } else if (preview?.type === 'video/r2') {
-      // R2 동영상인 경우
-      setUploadedVideos(prev => prev.filter(v => v.url !== preview.videoUrl));
     } else if (index >= existingImages.length) {
       // 새로 추가한 이미지 파일
       const newFileIndex = index - existingImages.length;
@@ -527,8 +513,6 @@ const PostEditor = () => {
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {previewImages.map((preview, index) => {
                   const isStream = preview?.type === 'video/stream';
-                  const isR2Video = preview?.type === 'video/r2';
-                  const isVideo = typeof preview === 'object' && preview.type?.startsWith('video/');
                   const previewUrl = typeof preview === 'string' ? preview : preview.url;
 
                   return (
@@ -540,7 +524,6 @@ const PostEditor = () => {
                             alt="동영상 썸네일"
                             className="w-full h-full object-cover rounded-lg"
                             onError={(e) => {
-                              // 썸네일 로드 실패 시 대체 UI 표시 (인코딩 중)
                               e.target.style.display = 'none';
                             }}
                           />
@@ -552,21 +535,10 @@ const PostEditor = () => {
                             </div>
                             <span className="text-white text-xs text-center px-2">인코딩 중...</span>
                           </div>
-                        </div>
-                      ) : isR2Video ? (
-                        <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                          <video
-                            src={previewUrl}
-                            className="w-full h-full object-cover rounded-lg"
-                            muted
-                            playsInline
-                          />
-                          <div className="absolute bottom-2 left-2 bg-green-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
-                            R2 동영상
+                          <div className="absolute bottom-2 left-2 bg-purple-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
+                            동영상
                           </div>
                         </div>
-                      ) : isVideo ? (
-                        <video src={previewUrl} className="w-full h-auto rounded-lg" controls muted />
                       ) : (
                         <img src={previewUrl} alt={`미리보기 ${index + 1}`} className="w-full h-auto rounded-lg" />
                       )}
@@ -577,11 +549,6 @@ const PostEditor = () => {
                       >
                         <FontAwesomeIcon icon={faTimes} className="w-3 h-3" />
                       </button>
-                      {isStream && (
-                        <div className="absolute bottom-2 left-2 bg-purple-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
-                          Stream
-                        </div>
-                      )}
                     </div>
                   );
                 })}

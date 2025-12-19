@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
+import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
+import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 
 const MobileAdDisplay = ({ ad }) => {
   const [adMedia, setAdMedia] = useState([]);
@@ -79,8 +81,14 @@ const MobileAdDisplay = ({ ad }) => {
   }, [currentMediaIndex]); // currentMediaIndex 변경 시 다시 설정
 
   // 파일 확장자로 미디어 타입 판단
-  const getMediaTypeFromPath = (path) => {
+  const getMediaTypeFromPath = (path, mediaType) => {
     if (!path) return 'image';
+    // DB에 저장된 media_type이 'stream'인 경우
+    if (mediaType === 'stream') return 'stream';
+    // Cloudflare Stream URL인 경우
+    if (isCloudflareStreamUrl(path)) return 'stream';
+    // UID만 저장된 경우 (32자 hex 형식) - Stream으로 판단
+    if (/^[a-f0-9]{32}$/.test(path)) return 'stream';
     const extension = path.toLowerCase().split('.').pop();
     const videoExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
     return videoExtensions.includes(extension) ? 'video' : 'image';
@@ -94,7 +102,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (ad?.image_url) {
       allMedia.push({
         path: ad.image_url,
-        type: getMediaTypeFromPath(ad.image_url),
+        type: getMediaTypeFromPath(ad.image_url, ad.image_type),
         alt: ad.image_alt || ad.title
       });
     }
@@ -103,7 +111,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (adMedia && adMedia.length > 0) {
       allMedia.push(...adMedia.map(media => ({
         path: media.media_url,
-        type: media.media_type || getMediaTypeFromPath(media.media_url),
+        type: getMediaTypeFromPath(media.media_url, media.media_type),
         alt: media.caption || ad.title
       })));
     }
@@ -119,7 +127,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (ad?.image_url) {
       allMedia.push({
         path: ad.image_url,
-        type: getMediaTypeFromPath(ad.image_url),
+        type: getMediaTypeFromPath(ad.image_url, ad.image_type),
         alt: ad.image_alt || ad.title
       });
     }
@@ -128,7 +136,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (adMedia && adMedia.length > 0) {
       allMedia.push(...adMedia.map(media => ({
         path: media.media_url,
-        type: media.media_type || getMediaTypeFromPath(media.media_url),
+        type: getMediaTypeFromPath(media.media_url, media.media_type),
         alt: media.caption || ad.title
       })));
     }
@@ -144,7 +152,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (ad?.image_url) {
       allMedia.push({
         path: ad.image_url,
-        type: getMediaTypeFromPath(ad.image_url),
+        type: getMediaTypeFromPath(ad.image_url, ad.image_type),
         alt: ad.image_alt || ad.title
       });
     }
@@ -153,7 +161,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (adMedia && adMedia.length > 0) {
       allMedia.push(...adMedia.map(media => ({
         path: media.media_url,
-        type: media.media_type || getMediaTypeFromPath(media.media_url),
+        type: getMediaTypeFromPath(media.media_url, media.media_type),
         alt: media.caption || ad.title
       })));
     }
@@ -341,7 +349,21 @@ const MobileAdDisplay = ({ ad }) => {
           {/* 미디어 예시 */}
           {getCurrentMedia() ? (
             <div className="absolute inset-0">
-              {getCurrentMedia().type?.startsWith('video') ? (
+              {getCurrentMedia().type === 'stream' ? (
+                // Cloudflare Stream 동영상 - 피드에서는 무음, 터치 시 상세 모달로 이동
+                <div className="absolute inset-0">
+                  <CloudflareStreamPlayer
+                    uid={getCloudflareStreamUid(getCurrentMedia().path) || getCurrentMedia().path}
+                    autoplay={isVisible}
+                    muted={true}
+                    loop={true}
+                    controls={false}
+                    aspectRatio="square"
+                    hideOverlay={true}
+                    onClick={handleAdClick}
+                  />
+                </div>
+              ) : getCurrentMedia().type?.startsWith('video') ? (
                 <div className="absolute inset-0">
                   <video
                     ref={videoRef}
@@ -364,14 +386,14 @@ const MobileAdDisplay = ({ ad }) => {
                     onPlay={() => setIsVideoPlaying(true)}
                     onPause={() => setIsVideoPlaying(false)}
                   />
-                  
+
                   {/* 비디오 재생 상태 오버레이 */}
                   {!isVideoPlaying && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <div className="bg-white/90 rounded-full p-3">
-                        <svg 
-                          className="w-8 h-8 text-gray-800" 
-                          fill="currentColor" 
+                        <svg
+                          className="w-8 h-8 text-gray-800"
+                          fill="currentColor"
                           viewBox="0 0 24 24"
                         >
                           <path d="M8 5v14l11-7z"/>
@@ -381,7 +403,7 @@ const MobileAdDisplay = ({ ad }) => {
                   )}
                 </div>
               ) : (
-                <img 
+                <img
                   src={getImageUrl(getCurrentMedia().path)}
                   alt={getCurrentMedia().alt || ad.title}
                   className="absolute inset-0 w-full h-full object-contain hover:scale-105 transition-transform duration-300"
@@ -390,7 +412,7 @@ const MobileAdDisplay = ({ ad }) => {
                   }}
                 />
               )}
-              
+
             </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
@@ -458,7 +480,20 @@ const MobileAdDisplay = ({ ad }) => {
               {/* 미디어 표시 (자동 순환) */}
               {getModalMedia(modalMediaIndex) && (
                 <div className="mb-4">
-                  {getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
+                  {getModalMedia(modalMediaIndex).type === 'stream' ? (
+                    // Cloudflare Stream 동영상 - 모달에서는 오디오 재생, 터치 시 오디오 토글, 1초 간격 자동재생
+                    <div className="relative rounded-lg overflow-hidden">
+                      <CloudflareStreamPlayer
+                        uid={getCloudflareStreamUid(getModalMedia(modalMediaIndex).path) || getModalMedia(modalMediaIndex).path}
+                        autoplay={true}
+                        muted={modalVideoMuted}
+                        controls={false}
+                        aspectRatio="auto"
+                        hideOverlay={true}
+                        onMuteToggle={(muted) => setModalVideoMuted(muted)}
+                      />
+                    </div>
+                  ) : getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
                     <div className="relative">
                       <video
                         key={modalMediaIndex}

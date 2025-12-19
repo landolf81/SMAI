@@ -2,6 +2,7 @@ import { supabase } from '../config/supabase.js';
 import { v4 as uuidv4 } from 'uuid';
 import { API_BASE_URL } from '../config/api.js';
 import { uploadToR2, uploadMultipleToR2, deleteFromR2, isR2Url } from './r2Service.js';
+import { uploadVideo } from './videoUploadService.js';
 
 /**
  * Storage 서비스
@@ -255,13 +256,30 @@ export const storageService = {
   },
 
   /**
-   * 광고 이미지 업로드
+   * 광고 미디어 업로드 (이미지는 R2, 동영상은 Cloudflare Stream)
    * @param {string} adId - 광고 ID
    * @param {File} file - 파일 객체
+   * @param {Function} onProgress - 진행률 콜백 (동영상 업로드 시)
    * @returns {Promise<Object>} 업로드 결과
    */
-  async uploadAdImage(adId, file) {
+  async uploadAdImage(adId, file, onProgress = null) {
     try {
+      // 동영상인 경우 Cloudflare Stream으로 업로드
+      if (file.type.startsWith('video/')) {
+        const result = await uploadVideo(file, onProgress);
+        return {
+          success: true,
+          url: result.iframeUrl,
+          path: result.uid,
+          fullPath: result.uid,
+          type: 'stream',
+          uid: result.uid,
+          thumbnailUrl: result.thumbnailUrl,
+          playbackUrl: result.playbackUrl
+        };
+      }
+
+      // 이미지는 기존대로 R2로 업로드
       const ext = file.name.split('.').pop();
       const filename = `${uuidv4()}.${ext}`;
       const filePath = `${adId}/${filename}`;
@@ -270,7 +288,7 @@ export const storageService = {
         upsert: true
       });
     } catch (error) {
-      console.error('광고 이미지 업로드 오류:', error);
+      console.error('광고 미디어 업로드 오류:', error);
       throw error;
     }
   },

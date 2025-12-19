@@ -73,6 +73,56 @@ export const getCloudflareStreamUid = (url) => {
 };
 
 /**
+ * Cloudflare Stream 동영상의 인코딩 완료 여부 확인
+ * 썸네일 URL이 있고 유효한지 확인
+ * @param {string} url - Cloudflare Stream URL
+ * @returns {boolean} 인코딩 완료 여부
+ */
+export const isStreamVideoReady = (url) => {
+  if (!isCloudflareStreamUrl(url)) return true; // Stream이 아니면 ready로 간주
+
+  const uid = getCloudflareStreamUid(url);
+  if (!uid) return false;
+
+  // UID가 있으면 기본적으로 ready로 간주 (썸네일은 동영상보다 빨리 생성됨)
+  // 실제 재생 시 404가 나면 CloudflareStreamPlayer에서 처리
+  return true;
+};
+
+/**
+ * 게시물이 인코딩 중인 동영상을 포함하는지 확인
+ * Stream 동영상이 있고, 생성된 지 2분 이내면 인코딩 중으로 간주
+ * @param {Object} post - 게시물 객체
+ * @returns {boolean} 인코딩 중인 동영상 포함 여부
+ */
+export const hasEncodingVideo = (post) => {
+  if (!post || !post.photo) return false;
+
+  let photos = post.photo;
+  if (typeof photos === 'string') {
+    try {
+      photos = JSON.parse(photos);
+    } catch {
+      photos = [photos];
+    }
+  }
+
+  if (!Array.isArray(photos)) photos = [photos];
+
+  // Cloudflare Stream URL이 있는지 확인
+  const hasStreamVideo = photos.some(photo => isCloudflareStreamUrl(photo));
+
+  if (!hasStreamVideo) return false;
+
+  // 생성된 지 2분 이내면 인코딩 중으로 간주
+  const createdAt = new Date(post.created_at || post.createdAt);
+  const now = new Date();
+  const diffMinutes = (now - createdAt) / (1000 * 60);
+
+  return diffMinutes < 2;
+};
+
+/**
  * 파일명/URL로 동영상 여부를 판단
  * @param {string} filename - 파일명 또는 URL
  * @returns {boolean} 동영상 파일 여부
@@ -309,5 +359,7 @@ export default {
   getAcceptedFileTypes,
   isCloudflareStreamUrl,
   isR2VideoUrl,
-  getCloudflareStreamUid
+  getCloudflareStreamUid,
+  isStreamVideoReady,
+  hasEncodingVideo
 };

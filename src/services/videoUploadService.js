@@ -1,11 +1,9 @@
 /**
  * Cloudflare Stream 동영상 업로드 서비스
- * - MP4/WebM: R2에 직접 업로드 (브라우저 호환)
- * - MOV/AVI 등: Cloudflare Stream 업로드 (인코딩 필요)
+ * - 모든 동영상: Cloudflare Stream 업로드 (적응형 비트레이트, 빠른 로딩)
  */
 import { supabase } from '../config/supabase';
 import { v4 as uuidv4 } from 'uuid';
-import { uploadToR2 } from './r2Service';
 
 const MAX_DURATION_SECONDS = 180; // 3분
 
@@ -196,12 +194,11 @@ export const isBrowserCompatibleVideo = (file) => {
 
 /**
  * 통합 동영상 업로드 함수
- * - MP4/WebM → R2 직접 업로드 (비용 절감)
- * - MOV/AVI 등 → Cloudflare Stream 업로드 (인코딩)
+ * - 모든 동영상 → Cloudflare Stream 업로드 (적응형 비트레이트, 빠른 로딩)
  *
  * @param {File} file - 동영상 파일
  * @param {Function} onProgress - 진행률 콜백 (0-100)
- * @returns {Promise<{type: 'r2'|'stream', url: string, ...}>}
+ * @returns {Promise<{type: 'stream', url: string, uid: string, thumbnailUrl: string, ...}>}
  */
 export const uploadVideo = async (file, onProgress) => {
   // 1. 검증
@@ -210,37 +207,17 @@ export const uploadVideo = async (file, onProgress) => {
     throw new Error(validation.message);
   }
 
-  const isBrowserCompatible = BROWSER_COMPATIBLE_TYPES.includes(file.type);
-
-  if (isBrowserCompatible) {
-    // MP4/WebM → R2에 직접 업로드
-    const result = await uploadToR2(file, 'videos');
-
-    // 진행률 콜백 (R2는 즉시 완료로 표시)
-    if (onProgress) onProgress(100);
-
-    return {
-      type: 'r2',
-      url: result.url,
-      key: result.key,
-      // Stream 호환 필드 (null로 설정)
-      uid: null,
-      iframeUrl: null,
-      thumbnailUrl: null,
-    };
-  } else {
-    // MOV/AVI 등 → Cloudflare Stream에 업로드
-    const result = await uploadVideoToStream(file, onProgress);
-    return {
-      type: 'stream',
-      url: result.iframeUrl,
-      uid: result.uid,
-      iframeUrl: result.iframeUrl,
-      thumbnailUrl: result.thumbnailUrl,
-      playbackUrl: result.playbackUrl,
-      key: null,
-    };
-  }
+  // 모든 동영상을 Cloudflare Stream에 업로드
+  const result = await uploadVideoToStream(file, onProgress);
+  return {
+    type: 'stream',
+    url: result.iframeUrl,
+    uid: result.uid,
+    iframeUrl: result.iframeUrl,
+    thumbnailUrl: result.thumbnailUrl,
+    playbackUrl: result.playbackUrl,
+    key: null,
+  };
 };
 
 export default {

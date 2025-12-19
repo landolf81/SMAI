@@ -12,15 +12,20 @@ import Hls from 'hls.js';
  */
 const CloudflareStreamPlayer = ({
   url,
+  uid: uidProp, // uid를 직접 전달받을 수 있음
   autoplay = false,
   muted: initialMuted = true,
+  loop = false, // 반복 재생
   controls = false,
   showMuteToggle = false,
+  hideOverlay = false, // 모든 오버레이 UI 숨김 (광고용)
+  onMuteToggle, // 외부에서 음소거 상태 제어
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
   onClick,
   onReady,
   onError,
+  onEnded, // 동영상 종료 콜백
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -31,7 +36,8 @@ const CloudflareStreamPlayer = ({
   const hlsRef = useRef(null);
   const replayTimeoutRef = useRef(null);
 
-  const uid = getCloudflareStreamUid(url);
+  // uid prop이 있으면 사용, 없으면 url에서 추출
+  const uid = uidProp || getCloudflareStreamUid(url);
 
   // Customer subdomain (from your Cloudflare account)
   const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
@@ -165,11 +171,19 @@ const CloudflareStreamPlayer = ({
   // 음소거 토글 핸들러
   const handleMuteToggle = (e) => {
     e.stopPropagation();
-    setIsMuted(!isMuted);
+    const newMuted = !isMuted;
+    setIsMuted(newMuted);
+    if (onMuteToggle) onMuteToggle(newMuted);
   };
 
-  // 동영상 재생 완료 시 1초 후 다시 재생
+  // 동영상 재생 완료 시 처리
   const handleVideoEnded = () => {
+    // 외부 onEnded 콜백 호출
+    if (onEnded) {
+      onEnded();
+      return;
+    }
+
     // 화면 밖이면(autoplay=false) 재생하지 않음
     if (!autoplay) {
       setIsWaitingToReplay(false);
@@ -183,11 +197,11 @@ const CloudflareStreamPlayer = ({
       clearTimeout(replayTimeoutRef.current);
     }
 
-    // 1초 후 처음부터 재생
+    // 1초 후 처음부터 재생 (기존 오디오 상태 유지)
     replayTimeoutRef.current = setTimeout(() => {
       // 타이머 실행 시점에도 autoplay 재확인
       if (videoRef.current && autoplay) {
-        videoRef.current.muted = true;  // 음소거 보장
+        // 오디오 상태는 유지 (isMuted 그대로)
         videoRef.current.currentTime = 0;
         videoRef.current.play().catch(() => {});
       }
@@ -275,27 +289,40 @@ const CloudflareStreamPlayer = ({
         className="w-full h-full object-cover"
         autoPlay={autoplay}
         muted={isMuted}
+        loop={loop}
         playsInline
         controls={controls}
-        onEnded={handleVideoEnded}
+        onEnded={loop ? undefined : handleVideoEnded}
       />
 
-      {/* 클릭 영역 (전체화면 모달 열기용) */}
-      {onClick && !controls && (
+      {/* 클릭 영역 */}
+      {(onClick || hideOverlay) && !controls && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
-          onClick={onClick}
+          onClick={hideOverlay && onClick ? onClick : (hideOverlay ? handleMuteToggle : onClick)}
         />
       )}
 
-      {/* 동영상 아이콘 */}
-      <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
-        <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
-        <span>동영상</span>
-      </div>
+      {/* 동영상 아이콘 - hideOverlay일 때 숨김 */}
+      {!hideOverlay && (
+        <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
+          <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+          <span>동영상</span>
+        </div>
+      )}
 
-      {/* 음소거 토글 버튼 */}
-      {showMuteToggle && (
+      {/* 음소거 아이콘 - hideOverlay일 때 우하단에 작게 표시 (onClick이 없을 때만, 모달 내에서) */}
+      {hideOverlay && !onClick && (
+        <div className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-50 text-white p-1.5 rounded-full pointer-events-none">
+          <FontAwesomeIcon
+            icon={isMuted ? faVolumeMute : faVolumeUp}
+            className="w-3 h-3"
+          />
+        </div>
+      )}
+
+      {/* 음소거 토글 버튼 - hideOverlay가 아닐 때만 표시 */}
+      {showMuteToggle && !hideOverlay && (
         <button
           onClick={handleMuteToggle}
           className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"

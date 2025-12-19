@@ -391,22 +391,14 @@ const SecondHandEditor = () => {
 
         setUploadedVideos(prev => [...prev, result]);
 
-        if (result.type === 'r2') {
-          setPreviewImages(prev => [...prev, {
-            url: result.url,
-            type: 'video/r2',
-            name: videoFile.name,
-            videoUrl: result.url,
-          }]);
-        } else {
-          setPreviewImages(prev => [...prev, {
-            url: result.thumbnailUrl,
-            type: 'video/stream',
-            name: videoFile.name,
-            streamUid: result.uid,
-            iframeUrl: result.iframeUrl,
-          }]);
-        }
+        // 미리보기 추가 (모든 동영상은 Stream)
+        setPreviewImages(prev => [...prev, {
+          url: result.thumbnailUrl,
+          type: 'video/stream',
+          name: videoFile.name,
+          streamUid: result.uid,
+          iframeUrl: result.iframeUrl,
+        }]);
 
       } catch (err) {
         console.error('동영상 업로드 실패:', err);
@@ -430,8 +422,6 @@ const SecondHandEditor = () => {
 
     if (preview?.streamUid) {
       setUploadedVideos(prev => prev.filter(v => v.uid !== preview.streamUid));
-    } else if (preview?.type === 'video/r2') {
-      setUploadedVideos(prev => prev.filter(v => v.url !== preview.videoUrl));
     } else if (preview?.isExisting) {
       // 기존 이미지 삭제 - existingImages에서 해당 URL 제거
       const urlToRemove = preview.url;
@@ -588,7 +578,6 @@ const SecondHandEditor = () => {
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {previewImages.map((preview, index) => {
                   const isStream = preview?.type === 'video/stream';
-                  const isR2Video = preview?.type === 'video/r2';
                   const previewUrl = typeof preview === 'string' ? preview : preview.url;
 
                   return (
@@ -611,16 +600,7 @@ const SecondHandEditor = () => {
                             </div>
                             <span className="text-white text-xs text-center px-2">인코딩 중...</span>
                           </div>
-                        </div>
-                      ) : isR2Video ? (
-                        <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden">
-                          <video
-                            src={previewUrl}
-                            className="w-full h-full object-cover rounded-lg"
-                            muted
-                            playsInline
-                          />
-                          <div className="absolute bottom-2 left-2 bg-green-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
+                          <div className="absolute bottom-2 left-2 bg-purple-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
                             동영상
                           </div>
                         </div>

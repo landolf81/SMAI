@@ -5,6 +5,7 @@ import { postService, adService } from '../services';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
+import { hasEncodingVideo } from '../utils/mediaUtils';
 
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
@@ -155,9 +156,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   }, [adsData]); // adViewCounts 의존성 제거 - 초기 스냅샷만 사용
 
   // 모든 페이지의 게시물을 하나의 배열로 합치기
+  // 커뮤니티 피드(userId가 없을 때)에서는 인코딩 중인 동영상 게시물 숨김
   const allPosts = useMemo(() => {
-    return data?.pages?.flatMap(page => page) || [];
-  }, [data]);
+    const posts = data?.pages?.flatMap(page => page) || [];
+
+    // 프로필 피드(userId가 있을 때)에서는 모든 게시물 표시
+    if (userId) return posts;
+
+    // 커뮤니티 피드에서는 인코딩 중인 동영상 게시물 필터링
+    return posts.filter(post => !hasEncodingVideo(post));
+  }, [data, userId]);
 
   // 게시물과 광고를 합친 목록 생성 (3개마다 광고 삽입, 또는 게시물 끝에 항상 표시)
   const postsWithAds = useMemo(() => {
