@@ -67,10 +67,23 @@ const CloudflareStreamPlayer = ({
     if (!videoRef.current || !isHlsReady) return;
 
     if (autoplay) {
-      // 화면에 들어오면 재생 (음소거 상태로)
-      videoRef.current.muted = true;
-      setIsMuted(true);
-      videoRef.current.play().catch(() => {});
+      // 화면에 들어오면 재생
+      // initialMuted가 false면 소리 재생 허용 (광고 모달 등)
+      if (!initialMuted) {
+        // 소리 재생 시도 (사용자 인터랙션 후이므로 가능)
+        videoRef.current.muted = false;
+        setIsMuted(false);
+      } else {
+        // 피드에서는 음소거 상태로 재생
+        videoRef.current.muted = true;
+        setIsMuted(true);
+      }
+      videoRef.current.play().catch(() => {
+        // 자동재생 실패 시 음소거로 재시도
+        videoRef.current.muted = true;
+        setIsMuted(true);
+        videoRef.current.play().catch(() => {});
+      });
     } else {
       // 화면 밖으로 나가면 정지 + 음소거
       videoRef.current.pause();
@@ -88,7 +101,7 @@ const CloudflareStreamPlayer = ({
       }
       setIsWaitingToReplay(false);
     }
-  }, [autoplay, isHlsReady, loop]);
+  }, [autoplay, isHlsReady, loop, initialMuted]);
 
   // 컴포넌트 언마운트 시 HLS 정리 및 동영상 정지
   useEffect(() => {
