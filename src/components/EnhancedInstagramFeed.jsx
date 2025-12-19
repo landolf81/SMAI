@@ -26,6 +26,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
   // 무한 스크롤 시 스크롤 위치 보존용 (마지막 게시물 기준)
   const lastPostBeforeFetchRef = useRef(null);
+  const prevDataUpdatedAtRef = useRef(null);
 
   // 초기 광고 노출 횟수 스냅샷 (광고 순서 안정화용)
   const initialAdViewCountsRef = useRef(null);
@@ -421,7 +422,10 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
   // 무한스크롤 로딩 완료 후 스크롤 위치 보존 (DOM 기준 복원)
   useEffect(() => {
-    if (!isFetchingNextPage && lastPostBeforeFetchRef.current) {
+    // 데이터가 실제로 업데이트되었고, 저장된 위치 정보가 있을 때만 복원
+    const dataChanged = dataUpdatedAt !== prevDataUpdatedAtRef.current;
+
+    if (dataChanged && lastPostBeforeFetchRef.current && !isFetchingNextPage) {
       const { postId, offsetFromTop } = lastPostBeforeFetchRef.current;
 
       // 스크롤 복원 시작 이벤트 발생 (헤더/메뉴바 깜빡임 방지)
@@ -440,6 +444,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
             window.scrollBy({ top: diff, behavior: 'instant' });
           }
         }
+        // 복원 완료 후 즉시 초기화 (다음 fetch를 위해)
         lastPostBeforeFetchRef.current = null;
 
         // 스크롤 복원 완료 이벤트 발생 (다음 프레임에서)
@@ -448,7 +453,10 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         });
       });
     }
-  }, [isFetchingNextPage]);
+
+    // 현재 dataUpdatedAt 저장
+    prevDataUpdatedAtRef.current = dataUpdatedAt;
+  }, [dataUpdatedAt, isFetchingNextPage]);
 
   // 동영상 재생 관리 (개선된 버전)
   const handleVideoPlay = useCallback((postId) => {
