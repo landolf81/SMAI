@@ -70,10 +70,13 @@ const CloudflareStreamPlayer = ({
         videoRef.current.play().catch(() => {});
       }
     } else if (videoRef.current) {
-      // 화면 밖으로 나가면 (autoplay가 false가 되면) 동영상 정지 + 음소거 + 재생위치 리셋
+      // 화면 밖으로 나가면 (autoplay가 false가 되면) 동영상 정지 + 음소거
       videoRef.current.pause();
       videoRef.current.muted = true;
-      videoRef.current.currentTime = 0;  // 재생 위치 리셋
+      // loop 모드가 아닐 때만 재생 위치 리셋 (광고는 loop 모드라 스크롤 중에도 위치 유지)
+      if (!loop) {
+        videoRef.current.currentTime = 0;
+      }
       setIsMuted(true);
 
       // replay 타이머 클리어
@@ -83,7 +86,7 @@ const CloudflareStreamPlayer = ({
       }
       setIsWaitingToReplay(false);
     }
-  }, [autoplay]);
+  }, [autoplay, loop]);
 
   // 컴포넌트 언마운트 시 HLS 정리 및 동영상 정지
   useEffect(() => {
