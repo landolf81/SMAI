@@ -107,7 +107,7 @@ const CloudflareStreamPlayer = ({
     };
   }, []);
 
-  // HLS.js 초기화 (재생은 별도 useEffect에서 처리)
+  // HLS.js 초기화 및 첫 재생
   useEffect(() => {
     if (!showPlayer || !videoRef.current || !uid) return;
 
@@ -115,14 +115,24 @@ const CloudflareStreamPlayer = ({
     setIsHlsReady(false);
     setIsLoading(true);
 
+    // 로딩 완료 시 호출될 공통 함수
+    const onHlsReady = () => {
+      setIsLoading(false);
+      setIsHlsReady(true);
+      if (onReady) onReady();
+      // 로딩 완료 시 autoplay가 true면 즉시 재생
+      if (autoplay) {
+        video.muted = true;
+        video.play().catch(() => {});
+      }
+    };
+
     // Safari는 네이티브 HLS 지원
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = playbackUrl;
 
       const handleLoadedMetadata = () => {
-        setIsLoading(false);
-        setIsHlsReady(true);
-        if (onReady) onReady();
+        onHlsReady();
       };
 
       const handleError = () => {
@@ -150,9 +160,7 @@ const CloudflareStreamPlayer = ({
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setIsLoading(false);
-        setIsHlsReady(true);
-        if (onReady) onReady();
+        onHlsReady();
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -172,7 +180,7 @@ const CloudflareStreamPlayer = ({
       setHasError(true);
       setIsLoading(false);
     }
-  }, [showPlayer, uid, playbackUrl, onReady, onError]); // autoplay 의존성 제거
+  }, [showPlayer, uid, playbackUrl, autoplay, onReady, onError]); // autoplay 다시 추가
 
   // 음소거 상태 변경
   useEffect(() => {
