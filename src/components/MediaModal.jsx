@@ -2,8 +2,9 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faXmark, faPlay, faPause, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
-import { isVideoFile, isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
+import { faXmark, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import { isVideoFile, isCloudflareStreamUrl } from '../utils/mediaUtils';
+import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 
 const MediaModal = ({
   isOpen,
@@ -318,15 +319,6 @@ const MediaModal = ({
   const isVideo = isVideoFile(currentMedia);
   const isCloudflareStream = isCloudflareStreamUrl(currentMedia);
 
-  // Cloudflare Stream iframe URL 생성 (9:16 비율에 맞게 cover 적용)
-  const getCloudflareStreamIframeUrl = (url) => {
-    const uid = getCloudflareStreamUid(url);
-    if (!uid) return '';
-    const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
-    // fit=cover로 9:16 비율에 맞게 크롭, letterboxColor=black으로 여백 검정
-    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/iframe?autoplay=true&loop=true&controls=true&fit=cover&letterboxColor=black`;
-  };
-
   // Portal을 사용하여 body에 직접 렌더링 (부모의 transform/will-change 영향 방지)
   return createPortal(
     <div
@@ -384,12 +376,15 @@ const MediaModal = ({
               height: '100vh'
             }}
           >
-            <iframe
-              src={getCloudflareStreamIframeUrl(currentMedia)}
+            <CloudflareStreamPlayer
+              url={currentMedia}
+              autoplay={true}
+              muted={false}
+              loop={true}
+              controls={false}
+              hideOverlay={true}
+              aspectRatio="9-16"
               className="w-full h-full"
-              style={{ border: 'none' }}
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
             />
           </div>
         ) : isVideo ? (
@@ -410,40 +405,22 @@ const MediaModal = ({
               autoPlay
               loop
               playsInline
-              onClick={togglePlay}
-              onTimeUpdate={handleVideoProgress}
+              muted={isMuted}
               onPlay={() => setIsPlaying(true)}
               onPause={() => setIsPlaying(false)}
             />
 
-            {/* 재생/일시정지 버튼 */}
+            {/* 화면 클릭 시 음소거 토글 */}
             <div
-              className="absolute inset-0 flex items-center justify-center cursor-pointer"
-              onClick={togglePlay}
-            >
-              {!isPlaying && (
-                <div className="w-20 h-20 bg-black bg-opacity-60 rounded-full flex items-center justify-center">
-                  <FontAwesomeIcon icon={faPlay} className="w-8 h-8 text-white ml-1" />
-                </div>
-              )}
-            </div>
-
-            {/* 음소거 버튼 */}
-            <button
+              className="absolute inset-0 cursor-pointer"
               onClick={toggleMute}
-              className="absolute top-4 right-16 w-10 h-10 bg-black bg-opacity-50 rounded-full flex items-center justify-center text-white"
-            >
-              <FontAwesomeIcon icon={isMuted ? faVolumeMute : faVolumeUp} className="w-5 h-5" />
-            </button>
+            />
 
-            {/* 진행률 바 */}
-            <div
-              className="absolute bottom-20 left-4 right-4 h-2 bg-white bg-opacity-30 rounded-full cursor-pointer"
-              onClick={handleProgressClick}
-            >
-              <div
-                className="h-full bg-white rounded-full"
-                style={{ width: `${progress}%` }}
+            {/* 음소거 아이콘 (우하단) */}
+            <div className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-50 text-white p-1.5 rounded-full pointer-events-none">
+              <FontAwesomeIcon
+                icon={isMuted ? faVolumeMute : faVolumeUp}
+                className="w-3 h-3"
               />
             </div>
           </div>
