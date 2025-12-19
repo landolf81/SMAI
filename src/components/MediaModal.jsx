@@ -343,13 +343,20 @@ const MediaModal = ({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* 닫기 버튼 - z-index를 높여서 항상 클릭 가능하게 */}
+      {/* 닫기 버튼 - 최상위 z-index로 항상 클릭 가능 */}
       <button
         onClick={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           onClose();
         }}
-        className="absolute top-4 right-4 z-50 w-12 h-12 bg-black bg-opacity-70 rounded-full flex items-center justify-center text-white hover:bg-opacity-90 transition-all"
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onClose();
+        }}
+        className="absolute top-4 right-4 w-12 h-12 bg-black/70 rounded-full flex items-center justify-center text-white active:bg-black/90"
+        style={{ zIndex: 9999 }}
       >
         <FontAwesomeIcon icon={faXmark} className="w-7 h-7" />
       </button>
@@ -364,17 +371,16 @@ const MediaModal = ({
       {/* 메인 미디어 영역 - 9:16 비율 (릴스/스토리 스타일) */}
       <div
         ref={mediaRef}
-        className="w-full h-full flex items-center justify-center overflow-hidden p-4"
+        className="w-full h-full flex items-center justify-center overflow-hidden"
         onDoubleClick={handleDoubleTap}
       >
         {isCloudflareStream ? (
           <div
-            className="relative flex items-center justify-center bg-black rounded-lg overflow-hidden"
+            className="relative flex items-center justify-center overflow-hidden"
             style={{
-              width: 'min(100%, calc((100vh - 2rem) * 9 / 16))',
-              height: 'min(100%, calc((100vw - 2rem) * 16 / 9))',
-              maxHeight: 'calc(100vh - 2rem)',
-              aspectRatio: '9/16'
+              width: 'calc(100vh * 9 / 16)',
+              maxWidth: '100vw',
+              height: '100vh'
             }}
           >
             <iframe
@@ -387,12 +393,11 @@ const MediaModal = ({
           </div>
         ) : isVideo ? (
           <div
-            className="relative flex items-center justify-center bg-black rounded-lg overflow-hidden"
+            className="relative flex items-center justify-center overflow-hidden"
             style={{
-              width: 'min(100%, calc((100vh - 2rem) * 9 / 16))',
-              height: 'min(100%, calc((100vw - 2rem) * 16 / 9))',
-              maxHeight: 'calc(100vh - 2rem)',
-              aspectRatio: '9/16'
+              width: 'calc(100vh * 9 / 16)',
+              maxWidth: '100vw',
+              height: '100vh'
             }}
           >
             <video
@@ -443,12 +448,11 @@ const MediaModal = ({
           </div>
         ) : (
           <div
-            className="relative flex items-center justify-center bg-black rounded-lg overflow-hidden"
+            className="relative flex items-center justify-center overflow-hidden"
             style={{
-              width: 'min(100%, calc((100vh - 2rem) * 9 / 16))',
-              height: 'min(100%, calc((100vw - 2rem) * 16 / 9))',
-              maxHeight: 'calc(100vh - 2rem)',
-              aspectRatio: '9/16'
+              width: 'calc(100vh * 9 / 16)',
+              maxWidth: '100vw',
+              height: '100vh'
             }}
           >
             <img
