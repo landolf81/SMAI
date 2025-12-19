@@ -107,7 +107,7 @@ const CloudflareStreamPlayer = ({
     };
   }, []);
 
-  // HLS.js 초기화 및 첫 재생
+  // HLS.js 초기화 (autoplay 의존성 제거 - 재생 제어는 별도 useEffect에서)
   useEffect(() => {
     if (!showPlayer || !videoRef.current || !uid) return;
 
@@ -120,11 +120,6 @@ const CloudflareStreamPlayer = ({
       setIsLoading(false);
       setIsHlsReady(true);
       if (onReady) onReady();
-      // 로딩 완료 시 autoplay가 true면 즉시 재생
-      if (autoplay) {
-        video.muted = true;
-        video.play().catch(() => {});
-      }
     };
 
     // Safari는 네이티브 HLS 지원
@@ -180,7 +175,7 @@ const CloudflareStreamPlayer = ({
       setHasError(true);
       setIsLoading(false);
     }
-  }, [showPlayer, uid, playbackUrl, autoplay, onReady, onError]); // autoplay 다시 추가
+  }, [showPlayer, uid, playbackUrl, onReady, onError]); // autoplay 제거 - 재생 제어는 별도 useEffect
 
   // 음소거 상태 변경
   useEffect(() => {
