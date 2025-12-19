@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
+import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
+import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -37,8 +39,14 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
   }, [ad]);
 
   // 파일 확장자로 미디어 타입 판단
-  const getMediaTypeFromPath = (path) => {
+  const getMediaTypeFromPath = (path, mediaType) => {
     if (!path) return 'image';
+    // DB에 저장된 media_type이 'stream'인 경우
+    if (mediaType === 'stream') return 'stream';
+    // Cloudflare Stream URL인 경우
+    if (isCloudflareStreamUrl(path)) return 'stream';
+    // UID만 저장된 경우 (32자 hex 형식) - Stream으로 판단
+    if (/^[a-f0-9]{32}$/.test(path)) return 'stream';
     const extension = path.toLowerCase().split('.').pop();
     const videoExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
     return videoExtensions.includes(extension) ? 'video' : 'image';
@@ -52,7 +60,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
     if (ad?.image_url) {
       allMedia.push({
         path: ad.image_url,
-        type: getMediaTypeFromPath(ad.image_url),
+        type: getMediaTypeFromPath(ad.image_url, ad.image_type),
         alt: ad.image_alt || ad.title
       });
     }
@@ -61,7 +69,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
     if (adMedia && adMedia.length > 0) {
       allMedia.push(...adMedia.map(media => ({
         path: media.media_url,
-        type: media.media_type || getMediaTypeFromPath(media.media_url),
+        type: getMediaTypeFromPath(media.media_url, media.media_type),
         alt: media.caption || ad.title
       })));
     }
@@ -82,7 +90,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
     if (ad?.image_url) {
       allMedia.push({
         path: ad.image_url,
-        type: getMediaTypeFromPath(ad.image_url),
+        type: getMediaTypeFromPath(ad.image_url, ad.image_type),
         alt: ad.image_alt || ad.title
       });
     }
@@ -90,7 +98,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
     if (adMedia && adMedia.length > 0) {
       allMedia.push(...adMedia.map(media => ({
         path: media.media_url,
-        type: media.media_type || getMediaTypeFromPath(media.media_url),
+        type: getMediaTypeFromPath(media.media_url, media.media_type),
         alt: media.caption || ad.title
       })));
     }
@@ -293,15 +301,25 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
         <div className="relative bg-gray-100 overflow-hidden aspect-square">
           {getCurrentMedia() ? (
             <div className="absolute inset-0">
-              {getCurrentMedia().type?.startsWith('video') ? (
-                <video 
+              {getCurrentMedia().type === 'stream' ? (
+                <CloudflareStreamPlayer
+                  uid={getCloudflareStreamUid(getCurrentMedia().path) || getCurrentMedia().path}
+                  autoplay={false}
+                  muted={true}
+                  loop={false}
+                  controls={true}
+                  aspectRatio="square"
+                  className="w-full h-full"
+                />
+              ) : getCurrentMedia().type?.startsWith('video') ? (
+                <video
                   src={getImageUrl(getCurrentMedia().path)}
                   className="absolute inset-0 w-full h-full object-contain"
                   controls
                   muted
                 />
               ) : (
-                <img 
+                <img
                   src={getImageUrl(getCurrentMedia().path)}
                   alt={getCurrentMedia().alt || ad.title}
                   className="absolute inset-0 w-full h-full object-contain"
@@ -384,7 +402,20 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
               {/* 미디어 표시 */}
               {getModalMedia(modalMediaIndex) && (
                 <div className="mb-4 relative">
-                  {getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
+                  {getModalMedia(modalMediaIndex).type === 'stream' ? (
+                    <div className="rounded-lg overflow-hidden">
+                      <CloudflareStreamPlayer
+                        uid={getCloudflareStreamUid(getModalMedia(modalMediaIndex).path) || getModalMedia(modalMediaIndex).path}
+                        autoplay={true}
+                        muted={false}
+                        loop={false}
+                        controls={true}
+                        aspectRatio="auto"
+                        className="w-full"
+                        onEnded={handleVideoEnded}
+                      />
+                    </div>
+                  ) : getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
                     <video
                       ref={videoRef}
                       src={getImageUrl(getModalMedia(modalMediaIndex).path)}
@@ -456,7 +487,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
                           index === modalMediaIndex ? 'ring-2 ring-orange-500' : ''
                         }`}
                       >
-                        {media.type?.startsWith('video') ? (
+                        {media.type === 'stream' || media.type?.startsWith('video') ? (
                           <div className="w-14 h-14 bg-gray-200 rounded flex items-center justify-center">
                             <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z"/>
