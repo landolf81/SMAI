@@ -39,6 +39,14 @@ const MediaModal = ({
   const isDraggingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const imageRef = useRef(null);
+  const closedByPopStateRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  const hasAddedHistoryRef = useRef(false);
+
+  // onClose ref 동기화
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   // 인덱스 초기화
   useEffect(() => {
@@ -86,19 +94,40 @@ const MediaModal = ({
     }
   }, [isOpen, currentIndex, initialTime, initialIndex]);
 
-  // ESC 키로 모달 닫기 & 배경 스크롤 방지
+  // ESC 키로 모달 닫기 & 배경 스크롤 방지 & 뒤로가기 처리
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // 모달이 닫히면 히스토리 추가 플래그 리셋
+      hasAddedHistoryRef.current = false;
+      return;
+    }
+
+    // 모달 열릴 때 ref 초기화
+    closedByPopStateRef.current = false;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
       }
     };
 
     const preventScroll = (e) => {
       e.preventDefault();
     };
+
+    // 뒤로가기 버튼으로 모달 닫기
+    const handlePopState = () => {
+      closedByPopStateRef.current = true;
+      onCloseRef.current();
+    };
+
+    // 모달 열릴 때 히스토리에 상태 추가 (한 번만)
+    if (!hasAddedHistoryRef.current) {
+      window.history.pushState({ mediaModal: true }, '');
+      hasAddedHistoryRef.current = true;
+    }
+
+    window.addEventListener('popstate', handlePopState);
 
     scrollYRef.current = window.scrollY;
     document.addEventListener('keydown', handleKeyDown);
@@ -108,13 +137,19 @@ const MediaModal = ({
     document.addEventListener('wheel', preventScroll, { passive: false });
 
     return () => {
+      window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('touchmove', preventScroll);
       document.removeEventListener('wheel', preventScroll);
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
+
+      // X버튼/ESC로 닫은 경우에만 히스토리 정리
+      if (!closedByPopStateRef.current && window.history.state?.mediaModal) {
+        window.history.back();
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]); // onClose 의존성 제거 - ref로 참조
 
   // 컨트롤 자동 숨김
   const hideControlsAfterDelay = useCallback(() => {

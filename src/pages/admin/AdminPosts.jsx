@@ -11,6 +11,8 @@ import PersonIcon from "@mui/icons-material/Person";
 import BlockIcon from "@mui/icons-material/Block";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { SUPABASE_URL } from '../../config/supabase';
+import CloudflareStreamPlayer from '../../components/CloudflareStreamPlayer';
+import { isCloudflareStreamUrl } from '../../utils/mediaUtils';
 
 const AdminPosts = () => {
   const [searchInput, setSearchInput] = useState('');
@@ -352,10 +354,22 @@ const AdminPosts = () => {
                   </div>
                 </div>
 
-                {/* 미디어 섹션 - 1:1 비율 (이미지/비디오 지원) */}
+                {/* 미디어 섹션 - 1:1 비율 (이미지/비디오/Stream 지원) */}
                 {images.length > 0 && (
                   <div className="relative w-full" style={{ paddingBottom: '100%' }}>
-                    {isVideoFile(images[0]) ? (
+                    {isCloudflareStreamUrl(images[0]) ? (
+                      <div className="absolute inset-0">
+                        <CloudflareStreamPlayer
+                          url={images[0]}
+                          autoplay={false}
+                          muted={true}
+                          loop={false}
+                          controls={true}
+                          aspectRatio="square"
+                          className="w-full h-full"
+                        />
+                      </div>
+                    ) : isVideoFile(images[0]) ? (
                       <video
                         src={getImageUrl(images[0])}
                         className="absolute inset-0 w-full h-full object-cover"
@@ -526,7 +540,19 @@ const AdminPosts = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
                       {getPostImages(selectedPost).map((media, index) => (
                         <div key={index} className="relative" style={{ paddingBottom: '100%' }}>
-                          {isVideoFile(media) ? (
+                          {isCloudflareStreamUrl(media) ? (
+                            <div className="absolute inset-0">
+                              <CloudflareStreamPlayer
+                                url={media}
+                                autoplay={false}
+                                muted={true}
+                                loop={false}
+                                controls={true}
+                                aspectRatio="square"
+                                className="w-full h-full rounded-lg"
+                              />
+                            </div>
+                          ) : isVideoFile(media) ? (
                             <video
                               src={getImageUrl(media)}
                               className="absolute inset-0 w-full h-full object-cover rounded-lg"
