@@ -1103,8 +1103,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           onMouseLeave={() => setShowControls(false)}
           onDoubleClick={handleMediaDoubleTap}
         >
-          {/* 1:1 비율 컨테이너 */}
-          <div className="relative w-full aspect-square overflow-hidden">
+          {/* 4:5 비율 컨테이너 (인스타그램 피드 스타일) */}
+          <div className="relative w-full aspect-[4/5] overflow-hidden">
             {/* 숨김 처리된 게시물 오버레이 (본인에게만 표시) */}
             {post.is_hidden && currentUser?.id === post.userId && (
               <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
@@ -1125,7 +1125,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   loop={true}
                   controls={false}
                   showMuteToggle={true}
-                  aspectRatio="square"
+                  aspectRatio="4-5"
                   className="w-full h-full"
                   onClick={() => {
                     setMediaModalIndex(0);
@@ -1205,7 +1205,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               <ImageSlider
                 images={normalizedMediaFiles}
                 baseUrl=""
-                aspectRatio="square"
+                aspectRatio="4-5"
                 onMediaClick={(index, currentTime = 0) => {
                   setMediaModalTime(currentTime);
                   setMediaModalIndex(index);

@@ -241,6 +241,8 @@ const CloudflareStreamPlayer = ({
   const aspectRatioClass = {
     'square': 'aspect-square',
     'video': 'aspect-video',
+    '4-5': 'aspect-[4/5]',
+    '9-16': 'aspect-[9/16]',
     'auto': '',
   }[aspectRatio] || 'aspect-square';
 

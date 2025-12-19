@@ -99,13 +99,15 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
     };
 
     // 컨테이너 스타일 결정
-    const containerClass = aspectRatio === "square"
-        ? "w-full h-full"
-        : "w-full h-auto";
+    const containerClass =
+        aspectRatio === "square" ? "w-full h-full" :
+        aspectRatio === "4-5" ? "w-full h-full" :
+        "w-full h-auto";
 
-    const mediaClass = aspectRatio === "square"
-        ? "w-full h-full object-cover"
-        : "w-full h-auto object-contain";
+    const mediaClass =
+        aspectRatio === "square" ? "w-full h-full object-cover" :
+        aspectRatio === "4-5" ? "w-full h-full object-cover" :
+        "w-full h-auto object-contain";
 
     // 미디어가 없거나 1개 이하면 슬라이더 없이 단순 표시
     if (!normalizedImages || normalizedImages.length === 0) {

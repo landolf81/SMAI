@@ -358,28 +358,28 @@ const MediaModal = ({
         </div>
       )}
 
-      {/* 메인 미디어 영역 */}
+      {/* 메인 미디어 영역 - 9:16 비율 (릴스/스토리 스타일) */}
       <div
         ref={mediaRef}
         className="w-full h-full flex items-center justify-center overflow-hidden"
         onDoubleClick={handleDoubleTap}
       >
         {isCloudflareStream ? (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative h-full max-h-full aspect-[9/16] flex items-center justify-center">
             <iframe
               src={getCloudflareStreamIframeUrl(currentMedia)}
-              className="w-full h-full max-w-4xl max-h-[80vh]"
+              className="w-full h-full"
               style={{ border: 'none' }}
               allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           </div>
         ) : isVideo ? (
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div className="relative h-full max-h-full aspect-[9/16] flex items-center justify-center bg-black">
             <video
               ref={videoRef}
               src={currentMedia}
-              className="max-w-full max-h-full object-contain"
+              className="w-full h-full object-cover"
               style={{ willChange: 'transform' }}
               preload="auto"
               autoPlay
@@ -423,17 +423,19 @@ const MediaModal = ({
             </div>
           </div>
         ) : (
-          <img
-            ref={imageRef}
-            src={currentMedia}
-            alt={`미디어 ${currentIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
-            style={{
-              willChange: 'transform',
-              transform: 'scale(1) translate(0px, 0px)'
-            }}
-            draggable={false}
-          />
+          <div className="relative h-full max-h-full aspect-[9/16] flex items-center justify-center bg-black">
+            <img
+              ref={imageRef}
+              src={currentMedia}
+              alt={`미디어 ${currentIndex + 1}`}
+              className="w-full h-full object-cover"
+              style={{
+                willChange: 'transform',
+                transform: 'scale(1) translate(0px, 0px)'
+              }}
+              draggable={false}
+            />
+          </div>
         )}
       </div>
 
