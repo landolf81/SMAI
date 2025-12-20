@@ -457,13 +457,20 @@ const PostEditor = () => {
 
             <label
               htmlFor="imageInput"
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
+              className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
             >
               <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-gray-400" />
               <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 파일 업로드</span></p>
               <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
-              <p className="text-xs text-green-600 mt-1">MP4/WebM은 빠른 업로드, 그 외는 자동 변환</p>
             </label>
+
+            {/* 개인정보 노출 경고 */}
+            <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-xs text-yellow-700 flex items-start">
+                <span className="mr-1.5 mt-0.5">⚠️</span>
+                <span>사진에 개인정보(차량번호, 주민번호 등)가 포함되지 않도록 주의해주세요.</span>
+              </p>
+            </div>
             <input
               id="imageInput"
               type="file"
@@ -580,11 +587,17 @@ const PostEditor = () => {
             <div className="relative">
               <textarea
                 placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
-                className={`w-full min-h-[200px] p-4 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                className={`w-full h-[180px] p-4 pb-6 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 ${
                   isListening ? 'border-red-400 bg-red-50' : 'border-gray-200'
                 }`}
                 value={desc}
-                onChange={(e) => setDesc(e.target.value)}
+                onChange={(e) => {
+                  // 200자 제한 (한글 기준)
+                  if (e.target.value.length <= 200) {
+                    setDesc(e.target.value);
+                  }
+                }}
+                maxLength={200}
               />
               {isListening && (
                 <div className="absolute bottom-4 left-4 flex items-center gap-2 text-red-500 text-sm">
@@ -592,6 +605,10 @@ const PostEditor = () => {
                   음성 인식 중...
                 </div>
               )}
+              {/* 글자 수 표시 */}
+              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+                {desc.length}/200
+              </div>
             </div>
 
             {gpsData && (

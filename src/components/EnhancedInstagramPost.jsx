@@ -38,7 +38,7 @@ import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
-const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
+const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause, disableAutoplay = false }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
   const navigate = useNavigate();
   const featurePermissions = useFeaturePermissions();
@@ -1120,11 +1120,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 // Cloudflare Stream 동영상
                 <CloudflareStreamPlayer
                   url={mediaFiles[0]}
-                  autoplay={isVisible}
+                  autoplay={!disableAutoplay && isVisible}
                   muted={true}
                   loop={true}
-                  controls={false}
-                  showMuteToggle={true}
+                  controls={disableAutoplay} // 자동재생 비활성화 시 컨트롤 표시
+                  showMuteToggle={!disableAutoplay}
                   aspectRatio="4-5"
                   className="w-full h-full"
                   onClick={() => {
@@ -1141,7 +1141,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   </div>
                 ) : (
                   <>
-                    {/* 피드 동영상: 자동재생, 무음, 재생 완료 후 1초 대기 후 재시작, 클릭시 모달 */}
+                    {/* 피드 동영상: 자동재생(커뮤니티만), 무음, 재생 완료 후 1초 대기 후 재시작, 클릭시 모달 */}
                     <video
                       ref={videoRef}
                       src={normalizedMediaFiles[0]}
@@ -1153,7 +1153,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                         setMediaModalIndex(0);
                         setShowMediaModal(true);
                       }}
-                      autoPlay
+                      autoPlay={!disableAutoplay}
+                      controls={disableAutoplay} // 프로필에서는 컨트롤 표시
                       muted
                       playsInline
                       preload="auto"
@@ -1161,22 +1162,26 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                       onEnded={handleVideoEnded}
                     />
 
-                    {/* 동영상 아이콘 표시 */}
-                    <div className="absolute top-3 left-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                      <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
-                      <span>동영상</span>
-                    </div>
+                    {/* 동영상 아이콘 표시 (자동재생 비활성화 시에만) */}
+                    {disableAutoplay && (
+                      <div className="absolute top-3 left-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                        <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+                        <span>동영상</span>
+                      </div>
+                    )}
 
-                    {/* 음소거 토글 버튼 */}
-                    <button
-                      onClick={handleMuteToggle}
-                      className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
-                    >
-                      <FontAwesomeIcon
-                        icon={isMuted ? faVolumeMute : faVolumeUp}
-                        className="w-4 h-4"
-                      />
-                    </button>
+                    {/* 음소거 토글 버튼 (자동재생 활성화 시에만) */}
+                    {!disableAutoplay && (
+                      <button
+                        onClick={handleMuteToggle}
+                        className="absolute bottom-3 right-3 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
+                      >
+                        <FontAwesomeIcon
+                          icon={isMuted ? faVolumeMute : faVolumeUp}
+                          className="w-4 h-4"
+                        />
+                      </button>
+                    )}
                   </>
                 )
               ) : (
@@ -1206,6 +1211,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 images={normalizedMediaFiles}
                 baseUrl=""
                 aspectRatio="4-5"
+                disableAutoplay={disableAutoplay}
                 onMediaClick={(index, currentTime = 0) => {
                   setMediaModalTime(currentTime);
                   setMediaModalIndex(index);

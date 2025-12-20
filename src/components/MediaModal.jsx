@@ -404,11 +404,12 @@ const MediaModal = ({
       >
         {isCloudflareStream ? (
           <div
-            className="relative flex items-center justify-center overflow-hidden"
+            className="relative flex items-center justify-center overflow-hidden aspect-[9/16]"
             style={{
-              width: 'calc(100vh * 9 / 16)',
-              maxWidth: '100vw',
-              height: '100vh'
+              // 화면 비율에 따라 너비 또는 높이 기준으로 9:16 유지
+              // 화면이 9:16보다 넓으면 높이 기준, 좁으면 너비 기준
+              width: 'min(100vw, calc(100vh * 9 / 16))',
+              height: 'min(100vh, calc(100vw * 16 / 9))'
             }}
           >
             <CloudflareStreamPlayer
@@ -424,11 +425,10 @@ const MediaModal = ({
           </div>
         ) : isVideo ? (
           <div
-            className="relative flex items-center justify-center overflow-hidden"
+            className="relative flex items-center justify-center overflow-hidden aspect-[9/16]"
             style={{
-              width: 'calc(100vh * 9 / 16)',
-              maxWidth: '100vw',
-              height: '100vh'
+              width: 'min(100vw, calc(100vh * 9 / 16))',
+              height: 'min(100vh, calc(100vw * 16 / 9))'
             }}
           >
             <video
@@ -461,11 +461,10 @@ const MediaModal = ({
           </div>
         ) : (
           <div
-            className="relative flex items-center justify-center overflow-hidden"
+            className="relative flex items-center justify-center overflow-hidden aspect-[9/16]"
             style={{
-              width: 'calc(100vh * 9 / 16)',
-              maxWidth: '100vw',
-              height: '100vh'
+              width: 'min(100vw, calc(100vh * 9 / 16))',
+              height: 'min(100vh, calc(100vw * 16 / 9))'
             }}
           >
             <img

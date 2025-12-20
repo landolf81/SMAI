@@ -26,7 +26,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
   // 무한 스크롤 시 스크롤 위치 보존용 (마지막 게시물 기준)
   const lastPostBeforeFetchRef = useRef(null);
-  const prevDataUpdatedAtRef = useRef(null);
+  const isInitialLoadRef = useRef(true); // 초기 로딩 여부 추적
 
   // 초기 광고 노출 횟수 스냅샷 (광고 순서 안정화용)
   const initialAdViewCountsRef = useRef(null);
@@ -237,7 +237,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     const observerOptions = {
       root: null,
       rootMargin: '100px 0px',  // 화면 상하 100px 여유 (빠른 스크롤 대응)
-      threshold: [0, 0.5]  // 0% (진입/퇴출), 50% (중앙)
+      threshold: [0, 0.2, 0.5]  // 0% (진입/퇴출), 20% (동영상 재생 기준), 50% (중앙)
     };
 
     // 이미 추적된 광고 ID를 ref로 관리 (리렌더링 방지)
@@ -289,8 +289,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
         // 게시물 가시성 추적 (requestAnimationFrame 배칭)
         if (postId) {
-          // 50% 이상 보일 때만 "visible"로 간주 (동영상 재생)
-          const isNowVisible = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+          // 20% 이상 보일 때 "visible"로 간주 (4:5 비율 게시물 대응)
+          const isNowVisible = entry.isIntersecting && entry.intersectionRatio >= 0.2;
 
           if (isNowVisible) {
             pendingUpdates.add.add(postId);
@@ -327,6 +327,24 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     postElements.forEach((element) => {
       observerRef.current.observe(element);
     });
+
+    // 초기 로딩 시에만 첫 번째 게시물 자동 활성화
+    // 무한 스크롤 중에는 실행하지 않음 (isInitialLoadRef로 체크)
+    if (isInitialLoadRef.current && postElements.length > 0 && visiblePosts.size === 0) {
+      const firstPost = postElements[0];
+      const postId = firstPost.dataset.postId;
+      if (postId) {
+        // 약간의 지연 후 첫 게시물 가시성 설정 (Observer가 아직 트리거 안 된 경우 대비)
+        requestAnimationFrame(() => {
+          setVisiblePosts(prev => {
+            if (prev.size === 0) {
+              return new Set([postId]);
+            }
+            return prev;
+          });
+        });
+      }
+    }
 
     return () => {
       if (observerRef.current) {
@@ -366,6 +384,17 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     }
   }, [highlightPostId, data]);
 
+  // 초기 로딩 완료 감지
+  useEffect(() => {
+    if (!isLoading && data?.pages?.length > 0) {
+      // 초기 로딩 완료 후 약간의 지연을 두어 초기 로딩 플래그 해제
+      const timer = setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, data]);
+
   // 무한 스크롤 처리 (IntersectionObserver 사용 - scroll 이벤트 제거)
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -374,11 +403,13 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        // 초기 로딩 중에는 무한 스크롤 트리거 안함
+        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage && !isInitialLoadRef.current) {
           // 현재 화면에 보이는 게시물의 ID 저장 (레이아웃 시프트 방지)
           const container = postsContainerRef.current;
           if (container) {
-            const posts = container.querySelectorAll('[data-post-id]');
+            // 광고가 아닌 실제 게시물만 선택 (광고는 위치가 동적으로 변할 수 있음)
+            const posts = container.querySelectorAll('[data-post-id]:not([data-ad-id])');
 
             // 뷰포트 상단에 가장 가까운 게시물 찾기
             let closestPost = null;
@@ -418,14 +449,15 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     return () => {
       observer.disconnect();
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, data?.pages?.length]);
 
   // 무한스크롤 로딩 완료 후 스크롤 위치 보존 (DOM 기준 복원)
   useEffect(() => {
-    // 데이터가 실제로 업데이트되었고, 저장된 위치 정보가 있을 때만 복원
-    const dataChanged = dataUpdatedAt !== prevDataUpdatedAtRef.current;
+    // 초기 로딩 중이거나 저장된 위치 정보가 없으면 스킵
+    if (isInitialLoadRef.current || !lastPostBeforeFetchRef.current) return;
 
-    if (dataChanged && lastPostBeforeFetchRef.current && !isFetchingNextPage) {
+    // fetch 완료 후에만 복원
+    if (!isFetchingNextPage) {
       const { postId, offsetFromTop } = lastPostBeforeFetchRef.current;
 
       // 스크롤 복원 시작 이벤트 발생 (헤더/메뉴바 깜빡임 방지)
@@ -453,10 +485,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         });
       });
     }
-
-    // 현재 dataUpdatedAt 저장
-    prevDataUpdatedAtRef.current = dataUpdatedAt;
-  }, [dataUpdatedAt, isFetchingNextPage]);
+  }, [isFetchingNextPage]);
 
   // 동영상 재생 관리 (개선된 버전)
   const handleVideoPlay = useCallback((postId) => {
@@ -665,6 +694,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                   onVideoPlay={handleVideoPlay}
                   onVideoPause={handleVideoPause}
                   isVisible={visiblePosts.has(itemId)}
+                  disableAutoplay={!!userId} // 프로필 화면에서는 자동재생 비활성화
                 />
               ) : (
                 <MobileAdDisplay ad={item.data} />

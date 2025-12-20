@@ -297,7 +297,7 @@ const CloudflareStreamPlayer = ({
           }}
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-purple-600 rounded-full p-4 mb-2 hover:bg-purple-700 transition-colors">
+          <div className="bg-gradient-to-r from-orange-500 to-pink-500 rounded-full p-4 mb-2 hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg">
             <FontAwesomeIcon icon={faPlay} className="w-8 h-8 text-white ml-1" />
           </div>
           <span className="text-white text-xs">클릭하여 재생</span>
