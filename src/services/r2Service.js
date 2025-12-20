@@ -31,6 +31,62 @@ const generateRandomFilename = (originalFilename) => {
 };
 
 /**
+ * iOS Safari 감지
+ * @returns {boolean}
+ */
+const isIOSSafari = () => {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS/.test(ua);
+  return isIOS && isSafari;
+};
+
+/**
+ * XMLHttpRequest를 사용한 업로드 (iOS Safari 폴백)
+ * @param {string} url - 업로드 URL
+ * @param {FormData} formData - 업로드할 데이터
+ * @returns {Promise<Object>}
+ */
+const uploadWithXHR = (url, formData) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const result = JSON.parse(xhr.responseText);
+          resolve(result);
+        } catch {
+          reject(new Error('응답 파싱 실패'));
+        }
+      } else {
+        let errorMessage = `업로드 실패: ${xhr.status}`;
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          if (xhr.responseText) errorMessage = xhr.responseText;
+        }
+        reject(new Error(errorMessage));
+      }
+    };
+
+    xhr.onerror = () => {
+      reject(new Error('네트워크 오류가 발생했습니다.'));
+    };
+
+    xhr.ontimeout = () => {
+      reject(new Error('업로드 시간이 초과되었습니다.'));
+    };
+
+    // 타임아웃 60초
+    xhr.timeout = 60000;
+    xhr.send(formData);
+  });
+};
+
+/**
  * 파일을 R2에 업로드 (Worker 프록시 사용)
  * @param {File} file - 업로드할 파일
  * @param {string} folder - 저장할 폴더 경로 (예: 'posts', 'profiles')
@@ -41,18 +97,27 @@ export const uploadToR2 = async (file, folder = 'uploads') => {
     // 랜덤 파일명 생성
     const randomFilename = generateRandomFilename(file.name);
 
-    // FormData 생성 - iOS Safari 호환성을 위해 원본 File 객체 사용
-    // filename 파라미터로 이름 변경 (new File 대신)
+    // FormData 생성
     const formData = new FormData();
     formData.append('file', file, randomFilename);
     formData.append('folder', folder);
 
-    // Worker 프록시로 업로드
-    // iOS Safari에서 CORS 문제 방지를 위해 mode 생략 (simple request)
-    const response = await fetch(`${R2_WORKER_URL}/upload`, {
+    const uploadUrl = `${R2_WORKER_URL}/upload`;
+
+    // iOS Safari에서는 XMLHttpRequest 사용 (fetch가 불안정)
+    if (isIOSSafari()) {
+      console.log('📱 iOS Safari 감지 - XHR 업로드 사용');
+      const result = await uploadWithXHR(uploadUrl, formData);
+      return {
+        url: result.url,
+        key: result.key,
+      };
+    }
+
+    // 다른 브라우저는 fetch 사용
+    const response = await fetch(uploadUrl, {
       method: 'POST',
       body: formData,
-      // iOS Safari 호환성: credentials 및 mode 설정 생략
     });
 
     if (!response.ok) {
@@ -75,10 +140,6 @@ export const uploadToR2 = async (file, folder = 'uploads') => {
     };
   } catch (error) {
     console.error('❌ R2 업로드 실패:', error);
-    // iOS Safari에서 "load failed"는 네트워크 문제 - 사용자에게 친화적인 메시지
-    if (error.message === 'Load failed' || error.message.includes('load failed')) {
-      throw new Error('네트워크 연결을 확인해주세요. Wi-Fi나 모바일 데이터가 켜져 있는지 확인하세요.');
-    }
     throw new Error(`파일 업로드 실패: ${error.message}`);
   }
 };

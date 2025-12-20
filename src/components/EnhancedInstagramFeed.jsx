@@ -34,6 +34,9 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   // 글쓰기 버튼 회전 애니메이션 상태
   // 글쓰기 버튼 관련 상태는 App.jsx로 이동됨
 
+  // 페이지당 로드 개수 (일관성 유지)
+  const PAGE_SIZE = 10;
+
   // 무한 스크롤 데이터 fetch
   const {
     data,
@@ -53,17 +56,17 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         search: search,
         userId: userId,
         postType: userId ? undefined : 'general', // 사용자 프로필에서는 모든 타입, 커뮤니티에서는 general만
-        limit: pageParam === 0 ? 2 : 10, // 첫 페이지는 2개, 이후 10개씩 (빠른 초기 렌더링)
-        offset: pageParam === 0 ? 0 : 2 + (pageParam - 1) * 10, // 오프셋 조정
+        limit: PAGE_SIZE,
+        offset: pageParam * PAGE_SIZE,
         sortBy: userId ? 'latest' : 'algorithm' // 프로필: 최신순, 커뮤니티: 알고리즘
       });
 
       return posts;
     },
     getNextPageParam: (lastPage, pages) => {
-      // 첫 페이지는 2개, 이후 10개 기준으로 다음 페이지 판단
-      const expectedLength = pages.length === 1 ? 2 : 10;
-      return lastPage.length === expectedLength ? pages.length : undefined;
+      // 페이지 크기만큼 받았으면 다음 페이지 있음
+      // 필터링은 클라이언트에서 하므로 원본 데이터 기준으로 판단
+      return lastPage.length === PAGE_SIZE ? pages.length : undefined;
     },
     staleTime: 5 * 60 * 1000,  // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션

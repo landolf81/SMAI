@@ -91,12 +91,15 @@ export const isStreamVideoReady = (url) => {
 
 /**
  * 게시물이 인코딩 중인 동영상을 포함하는지 확인
- * Stream 동영상이 있고, 생성된 지 2분 이내면 인코딩 중으로 간주
+ * 인코딩 중인 동영상이 있는 게시물만 필터링 (이미지만 있는 게시물은 통과)
  * @param {Object} post - 게시물 객체
  * @returns {boolean} 인코딩 중인 동영상 포함 여부
  */
 export const hasEncodingVideo = (post) => {
-  if (!post || !post.photo) return false;
+  if (!post) return false;
+
+  // photo 필드가 없으면 동영상 없음
+  if (!post.photo) return false;
 
   let photos = post.photo;
   if (typeof photos === 'string') {
@@ -112,14 +115,24 @@ export const hasEncodingVideo = (post) => {
   // Cloudflare Stream URL이 있는지 확인
   const hasStreamVideo = photos.some(photo => isCloudflareStreamUrl(photo));
 
+  // Stream 동영상이 없으면 인코딩 중이 아님 (이미지 게시물은 통과)
   if (!hasStreamVideo) return false;
 
-  // 생성된 지 2분 이내면 인코딩 중으로 간주
+  // Stream 동영상이 있는 경우:
+  // 생성된 지 1분 이내이고, 동영상만 있는 게시물만 필터링
+  // (이미지 + 동영상 혼합 게시물은 이미지라도 보여주기 위해 통과)
   const createdAt = new Date(post.created_at || post.createdAt);
   const now = new Date();
   const diffMinutes = (now - createdAt) / (1000 * 60);
 
-  return diffMinutes < 2;
+  // 1분 이상 지났으면 인코딩 완료로 간주
+  if (diffMinutes >= 1) return false;
+
+  // 1분 이내이고, 미디어가 동영상만 있는 경우에만 필터링
+  const hasImage = photos.some(photo => !isCloudflareStreamUrl(photo));
+  if (hasImage) return false; // 이미지가 있으면 통과
+
+  return true; // 동영상만 있고 1분 이내면 인코딩 중
 };
 
 /**

@@ -116,22 +116,53 @@ const loadImageFromBlob = (blob) => {
 };
 
 /**
- * Canvas를 WebP Blob으로 변환
+ * iOS Safari 감지
+ * @returns {boolean}
+ */
+const isIOSSafari = () => {
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|FxiOS/.test(ua);
+  return isIOS && isSafari;
+};
+
+/**
+ * Canvas를 Blob으로 변환 (iOS Safari는 JPEG, 그 외는 WebP)
  * @param {HTMLCanvasElement} canvas - Canvas 엘리먼트
- * @param {number} quality - WebP 품질 (0-1, 기본: 0.85)
- * @returns {Promise<Blob>}
+ * @param {number} quality - 품질 (0-1, 기본: 0.85)
+ * @returns {Promise<{blob: Blob, mimeType: string, extension: string}>}
  */
 const canvasToBlob = (canvas, quality = 0.85) => {
   return new Promise((resolve, reject) => {
+    // iOS Safari에서는 WebP가 불안정하므로 JPEG 사용
+    const useJpeg = isIOSSafari();
+    const mimeType = useJpeg ? 'image/jpeg' : 'image/webp';
+    const extension = useJpeg ? 'jpg' : 'webp';
+
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          resolve(blob);
+          resolve({ blob, mimeType, extension });
         } else {
-          reject(new Error('이미지 변환에 실패했습니다.'));
+          // WebP 실패 시 JPEG로 폴백
+          if (!useJpeg) {
+            canvas.toBlob(
+              (jpegBlob) => {
+                if (jpegBlob) {
+                  resolve({ blob: jpegBlob, mimeType: 'image/jpeg', extension: 'jpg' });
+                } else {
+                  reject(new Error('이미지 변환에 실패했습니다.'));
+                }
+              },
+              'image/jpeg',
+              quality
+            );
+          } else {
+            reject(new Error('이미지 변환에 실패했습니다.'));
+          }
         }
       },
-      'image/webp',
+      mimeType,
       quality
     );
   });
@@ -170,17 +201,17 @@ export const convertImageToPng = async (file, options = {}) => {
     // 3. 리사이즈
     const canvas = resizeImageToCanvas(img, maxWidth);
 
-    onProgress?.(80, 'WebP 변환 중...');
+    onProgress?.(80, '이미지 변환 중...');
 
-    // 4. WebP로 변환 (용량 최적화)
-    const webpBlob = await canvasToBlob(canvas, quality);
+    // 4. Blob으로 변환 (iOS Safari: JPEG, 그 외: WebP)
+    const { blob: convertedBlob, mimeType, extension } = await canvasToBlob(canvas, quality);
 
-    // 5. File 객체로 변환 (원본 파일명 유지하되 확장자만 .webp로)
+    // 5. File 객체로 변환 (원본 파일명 유지하되 확장자 변경)
     const originalName = file.name.replace(/\.[^.]+$/, '');
-    const newFileName = `${originalName}.webp`;
+    const newFileName = `${originalName}.${extension}`;
 
-    const convertedFile = new File([webpBlob], newFileName, {
-      type: 'image/webp',
+    const convertedFile = new File([convertedBlob], newFileName, {
+      type: mimeType,
       lastModified: Date.now(),
     });
 
