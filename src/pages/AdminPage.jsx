@@ -27,7 +27,7 @@ const AdminPage = () => {
     
     return (
         <AdminOnly>
-            <div className="admin-page bg-gray-50 min-h-screen">
+            <div className="admin-page bg-gray-50 min-h-screen pt-14">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* 헤더 */}
                     <div className="mb-8">

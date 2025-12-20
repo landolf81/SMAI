@@ -208,7 +208,7 @@ const AdminMarketSettings = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <div className="container mx-auto p-4 pt-20 max-w-4xl">
       {/* 헤더 */}
       <div className="flex items-center gap-4 mb-6">
         <button

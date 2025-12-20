@@ -16,15 +16,41 @@ import StorageIcon from "@mui/icons-material/Storage";
 import CachedIcon from "@mui/icons-material/Cached";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BackupIcon from "@mui/icons-material/Backup";
-import { useContext } from "react";
+import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import { useAdminPermissions } from "../hooks/usePermissions";
+import { reportService } from "../services";
 
 const AdminLeftbar = () => {
   const { currentUser } = useContext(AuthContext);
   const location = useLocation();
   const adminPermissions = useAdminPermissions();
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
+
+  // 미처리 신고 건수 가져오기 (페이지 로딩 시)
+  useEffect(() => {
+    const fetchPendingReports = async () => {
+      if (adminPermissions.isAdmin) {
+        const count = await reportService.getPendingReportsCount();
+        setPendingReportsCount(count);
+      }
+    };
+    fetchPendingReports();
+  }, [adminPermissions.isAdmin]);
+
+  // 신고 처리 완료 이벤트 리스너
+  useEffect(() => {
+    const handleReportResolved = async () => {
+      if (adminPermissions.isAdmin) {
+        const count = await reportService.getPendingReportsCount();
+        setPendingReportsCount(count);
+      }
+    };
+
+    window.addEventListener('reportResolved', handleReportResolved);
+    return () => window.removeEventListener('reportResolved', handleReportResolved);
+  }, [adminPermissions.isAdmin]);
 
   if (!adminPermissions.isAdmin) {
     return null;
@@ -84,7 +110,7 @@ const AdminLeftbar = () => {
           path: "/admin/reports",
           icon: ReportIcon,
           label: "신고 처리",
-          badge: "3"
+          badge: pendingReportsCount > 0 ? pendingReportsCount.toString() : null
         }
       ]
     },

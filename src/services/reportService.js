@@ -208,6 +208,24 @@ export const reportService = {
   },
 
   /**
+   * 미처리 신고 건수 조회 (관리자용)
+   */
+  async getPendingReportsCount() {
+    try {
+      const { count, error } = await supabase
+        .from('reports')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('미처리 신고 건수 조회 오류:', error);
+      return 0;
+    }
+  },
+
+  /**
    * 신고 목록 조회 (관리자용)
    */
   async getReports() {

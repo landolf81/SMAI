@@ -135,6 +135,9 @@ const AdminReports = () => {
       setIsFalseReport(false);
       setDisableReporterOnFalse(false);
 
+      // 사이드바 미처리 건수 갱신 이벤트
+      window.dispatchEvent(new CustomEvent('reportResolved'));
+
       // 성공 토스트
       const toast = document.createElement('div');
       toast.className = 'toast toast-top toast-center';
@@ -380,7 +383,7 @@ const AdminReports = () => {
   const totalPages = reportsData?.totalPages || 1;
 
   return (
-    <div className="p-6">
+    <div className="p-6 pt-20">
       <Box mb={3}>
         <Typography variant="h4" component="h1" gutterBottom>
           <ReportIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
