@@ -38,24 +38,33 @@ const generateRandomFilename = (originalFilename) => {
  */
 export const uploadToR2 = async (file, folder = 'uploads') => {
   try {
-    // 랜덤 파일명으로 새 File 객체 생성
+    // 랜덤 파일명 생성
     const randomFilename = generateRandomFilename(file.name);
-    const renamedFile = new File([file], randomFilename, { type: file.type });
 
-    // FormData 생성
+    // FormData 생성 - iOS Safari 호환성을 위해 원본 File 객체 사용
+    // filename 파라미터로 이름 변경 (new File 대신)
     const formData = new FormData();
-    formData.append('file', renamedFile);
+    formData.append('file', file, randomFilename);
     formData.append('folder', folder);
 
     // Worker 프록시로 업로드
+    // iOS Safari에서 CORS 문제 방지를 위해 mode 생략 (simple request)
     const response = await fetch(`${R2_WORKER_URL}/upload`, {
       method: 'POST',
       body: formData,
+      // iOS Safari 호환성: credentials 및 mode 설정 생략
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `업로드 실패: ${response.status}`);
+      const errorText = await response.text().catch(() => '');
+      let errorMessage = `업로드 실패: ${response.status}`;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorMessage;
+      } catch {
+        if (errorText) errorMessage = errorText;
+      }
+      throw new Error(errorMessage);
     }
 
     const result = await response.json();
@@ -66,6 +75,10 @@ export const uploadToR2 = async (file, folder = 'uploads') => {
     };
   } catch (error) {
     console.error('❌ R2 업로드 실패:', error);
+    // iOS Safari에서 "load failed"는 네트워크 문제 - 사용자에게 친화적인 메시지
+    if (error.message === 'Load failed' || error.message.includes('load failed')) {
+      throw new Error('네트워크 연결을 확인해주세요. Wi-Fi나 모바일 데이터가 켜져 있는지 확인하세요.');
+    }
     throw new Error(`파일 업로드 실패: ${error.message}`);
   }
 };
