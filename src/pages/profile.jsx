@@ -132,7 +132,7 @@ const Profile = () => {
   const isOwnProfile = data.id === currentUser.id;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-gray-50 min-h-screen pt-14">
       {/* 업데이트 알림 */}
       {updateNotification && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
@@ -161,7 +161,7 @@ const Profile = () => {
               {!data.coverPic && (
                 <div className="text-center">
                   <AgricultureIcon className="text-6xl text-market-500 mb-2" />
-                  <p className="text-market-700 font-medium">성주참외 경락정보</p>
+                  <p className="text-market-700 font-medium">선남 참외 이야기</p>
                 </div>
               )}
             </div>

@@ -119,7 +119,7 @@ const Register = () => {
         <div className="text-center">
           <CheckCircleIcon className="text-6xl text-green-500 mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">회원가입 완료!</h2>
-          <p className="text-gray-600 mb-4">성주참외 경락정보에 오신 것을 환영합니다.</p>
+          <p className="text-gray-600 mb-4">선남 참외 이야기에 오신 것을 환영합니다.</p>
           <p className="text-sm text-gray-500">잠시 후 커뮤니티 화면으로 이동됩니다...</p>
         </div>
       </div>
@@ -153,8 +153,8 @@ const Register = () => {
         <div className="text-center max-w-3xl mx-auto">
           {/* 로고 이미지 */}
           <img
-            src="https://pub-1d5977ce7cec48079bcd6f847b2f3dd1.r2.dev/logos/logo-512.png"
-            alt="성주참외 로고"
+            src="/favicon.png"
+            alt="선남 참외 이야기 로고"
             className="h-24 md:h-32 mx-auto mb-8 object-contain"
           />
           <p className="text-xl md:text-2xl text-gray-600 font-light">

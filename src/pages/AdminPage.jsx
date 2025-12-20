@@ -32,7 +32,7 @@ const AdminPage = () => {
                     {/* 헤더 */}
                     <div className="mb-8">
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
-                        <p className="text-gray-600">성주참외 경락정보 웹앱 관리 페이지입니다.</p>
+                        <p className="text-gray-600">선남 참외 이야기 웹앱 관리 페이지입니다.</p>
                         
                         {/* 권한 정보 표시 */}
                         <div className="mt-4 flex flex-wrap gap-2">
