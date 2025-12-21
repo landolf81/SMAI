@@ -1397,47 +1397,53 @@ export const postService = {
         return { success: false, reason: 'invalid_post_id' };
       }
 
-      // 기존 열람 기록 확인 (없으면 null 반환)
-      const { data: existingView } = await supabase
-        .from('user_post_views')
-        .select('view_count')
-        .eq('user_id', user.id)
-        .eq('post_id', postIdInt)
-        .maybeSingle();
+      // RPC 함수 사용하여 upsert 처리 (중복 키 에러 방지)
+      const { error } = await supabase.rpc('upsert_user_post_view', {
+        p_user_id: user.id,
+        p_post_id: postIdInt
+      });
 
-      if (existingView) {
-        // 기존 기록 있으면 횟수 증가
-        const { error } = await supabase
-          .from('user_post_views')
-          .update({
-            view_count: existingView.view_count + 1,
-            viewed_at: new Date().toISOString()
-          })
-          .eq('user_id', user.id)
-          .eq('post_id', postIdInt);
+      if (error) {
+        // RPC 함수가 없으면 기존 방식 시도 (PGRST202: 함수 없음, 42883: 시그니처 없음)
+        if (error.code === '42883' || error.code === 'PGRST202') {
+          // 기존 기록 확인
+          const { data: existingView } = await supabase
+            .from('user_post_views')
+            .select('view_count')
+            .eq('user_id', user.id)
+            .eq('post_id', postIdInt)
+            .maybeSingle();
 
-        if (error) {
-          console.warn('열람 횟수 증가 실패:', error);
-          return { success: false, reason: error.message };
+          if (existingView) {
+            // 기존 기록 있으면 업데이트 (횟수 증가는 생략 - 조회 시간만 업데이트)
+            await supabase
+              .from('user_post_views')
+              .update({ viewed_at: new Date().toISOString() })
+              .eq('user_id', user.id)
+              .eq('post_id', postIdInt);
+            return { success: true, reason: 'updated' };
+          } else {
+            // 신규 기록 추가
+            const { error: insertError } = await supabase
+              .from('user_post_views')
+              .insert({
+                user_id: user.id,
+                post_id: postIdInt,
+                view_count: 1,
+                viewed_at: new Date().toISOString()
+              });
+
+            // 중복 키 에러는 무시 (race condition)
+            if (insertError && insertError.code !== '23505') {
+              return { success: false, reason: insertError.message };
+            }
+            return { success: true, viewCount: 1 };
+          }
         }
-        return { success: true, viewCount: existingView.view_count + 1 };
-      } else {
-        // 신규 기록 추가
-        const { error } = await supabase
-          .from('user_post_views')
-          .insert({
-            user_id: user.id,
-            post_id: postIdInt,
-            view_count: 1,
-            viewed_at: new Date().toISOString()
-          });
-
-        if (error) {
-          console.warn('열람 기록 저장 실패:', error);
-          return { success: false, reason: error.message };
-        }
-        return { success: true, viewCount: 1 };
+        return { success: false, reason: error.message };
       }
+
+      return { success: true };
     } catch (error) {
       console.error('열람 기록 저장 예외:', error);
       return { success: false, reason: error.message };

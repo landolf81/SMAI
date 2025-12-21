@@ -11,7 +11,7 @@ import ReportModal from './ReportModal';
 import ProfileModal from './ProfileModal';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
-const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm }) => {
+const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments }) => {
   const { currentUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -142,10 +142,15 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
   // 중고거래 게시물인지 확인
   const isSecondHand = postTag === 'secondhand' || postTag === '중고거래';
 
-  // 댓글 조회 (기본 3개 미리보기, 전체 보기 시 전부 로드)
+  // 댓글 조회 (previewMode: 2개, 일반: 3개 또는 전체)
   const { data: commentsData, isLoading } = useQuery({
-    queryKey: ['comments', postId, showAllComments],
+    queryKey: ['comments', postId, showAllComments, previewMode],
     queryFn: () => {
+      // previewMode일 때는 최신 2개만
+      if (previewMode) {
+        return commentService.getComments(postId, { limit: 2, offset: 0 });
+      }
+      // 일반 모드: 전체 보기 시 100개, 아니면 3개
       const limit = showAllComments ? 100 : 3;
       return commentService.getComments(postId, { limit, offset: 0 });
     },
@@ -282,8 +287,16 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
   // commentService.getComments()는 배열을 직접 반환
   const comments = Array.isArray(commentsData) ? commentsData : [];
   const displayedCount = comments.length;
-  // 3개 미리보기 상태에서 정확히 3개가 로드되었다면 더 있을 가능성이 있음
-  const hasMore = !showAllComments && displayedCount === 3;
+  // previewMode: 2개 표시, 더 있으면 "댓글 더 보기" 표시
+  // 일반 모드: 3개 미리보기 상태에서 정확히 3개가 로드되었다면 더 있을 가능성이 있음
+  const hasMore = previewMode
+    ? displayedCount === 2  // previewMode에서 2개가 로드되면 더 있을 가능성
+    : (!showAllComments && displayedCount === 3);
+
+  // previewMode이고 댓글이 없으면 아무것도 렌더링하지 않음
+  if (previewMode && comments.length === 0) {
+    return null;
+  }
 
   return (
     <div className="border-t border-gray-100 bg-gray-50">
@@ -546,7 +559,14 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
           {/* 더 보기 버튼 */}
           {hasMore && (
             <button
-              onClick={() => setShowAllComments(true)}
+              onClick={() => {
+                if (previewMode && onShowAllComments) {
+                  // previewMode에서는 부모 컴포넌트에 알려서 전체 댓글 보기 모드로 전환
+                  onShowAllComments();
+                } else {
+                  setShowAllComments(true);
+                }
+              }}
               className="text-sm text-gray-500 hover:text-gray-700 mt-2 font-medium"
             >
               댓글 더 보기
@@ -555,8 +575,8 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
         </div>
       )}
 
-      {/* 댓글 작성 토글 버튼 - 로그인한 사용자에게만 표시 */}
-      {currentUser && !showCommentForm && onToggleCommentForm && (
+      {/* 댓글 작성 토글 버튼 - 로그인한 사용자에게만, previewMode가 아닐 때만 표시 */}
+      {!previewMode && currentUser && !showCommentForm && onToggleCommentForm && (
         <div className="px-4 py-2 border-t border-gray-200">
           <button
             onClick={onToggleCommentForm}
@@ -637,7 +657,8 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
         </form>
       )}
 
-      {comments.length === 0 && (
+      {/* 댓글이 없을 때 메시지 - previewMode에서는 표시하지 않음 */}
+      {comments.length === 0 && !previewMode && (
         <div className="px-4 py-6 text-center text-gray-500 text-sm">
           첫 번째 댓글을 작성해보세요!
         </div>

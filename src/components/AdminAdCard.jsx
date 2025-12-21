@@ -192,10 +192,12 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
     <div className="w-full max-w-md mx-auto mb-6">
       {/* 관리자 정보 섹션 */}
       <div className="bg-white rounded-t-xl p-4 border-x border-t border-gray-200">
-        {/* 상태 및 ID */}
+        {/* 상태 및 액션 버튼 */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">ID: {ad.id}</span>
+            <span className={`badge ${ad.is_active ? 'badge-success' : 'badge-ghost'} badge-sm`}>
+              {ad.is_active ? '활성' : '비활성'}
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <button

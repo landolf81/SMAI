@@ -1375,42 +1375,22 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           </div>
         )}
 
-        {/* 첫 댓글 미리보기 */}
-        {post.firstComment && post.firstComment.content && !showComments && (
-          <div className="mt-1 text-sm">
-            <div className="flex items-start">
-              <span className="font-semibold mr-1">{post.firstComment.userName || '사용자'}</span>
-              <span className="text-gray-700 flex-1 break-words">{post.firstComment.content}</span>
-            </div>
-            {(post.commentsCount || 0) > 1 && (
-              <button
-                onClick={() => {
-                  setShowComments(true);
-                  setShowCommentForm(false);
-                }}
-                className="text-gray-500 hover:text-gray-700 text-xs mt-0.5"
-              >
-                댓글 {(post.commentsCount || 0) - 1}개 더 보기
-              </button>
-            )}
-          </div>
-        )}
-
       </div>
 
-      {/* 댓글 섹션 */}
-      {showComments && (
-        <div className="border-t border-gray-100">
-          <CommentsPreview
-            postId={post.id}
-            showCommentForm={showCommentForm}
-            onToggleCommentForm={() => setShowCommentForm(!showCommentForm)}
-          />
-        </div>
-      )}
-      
-      {/* 댓글 작성 버튼 (댓글이 보이지 않을 때) */}
-      {!showComments && (
+      {/* 댓글 섹션 - 항상 표시 (기본 2개 미리보기, 토글 시 전체) */}
+      <div className="border-t border-gray-100">
+        <CommentsPreview
+          postId={post.id}
+          postTag={post.tag}
+          showCommentForm={showCommentForm}
+          onToggleCommentForm={() => setShowCommentForm(!showCommentForm)}
+          previewMode={!showComments}
+          onShowAllComments={() => setShowComments(true)}
+        />
+      </div>
+
+      {/* 댓글 작성 버튼 (댓글 폼이 보이지 않을 때) */}
+      {!showCommentForm && (
         <div className="px-3 py-1.5 border-t border-gray-100">
           <button
             onClick={() => {

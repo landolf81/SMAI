@@ -20,6 +20,7 @@ const CloudflareStreamPlayer = ({
   showMuteToggle = false,
   hideOverlay = false, // 모든 오버레이 UI 숨김 (광고용)
   paused = false, // 외부에서 강제 일시정지 (모달 열릴 때 등)
+  disableClickToggle = false, // 전체 영역 클릭으로 음소거 토글 비활성화 (버튼만 사용)
   onMuteToggle, // 외부에서 음소거 상태 제어
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
@@ -351,8 +352,8 @@ const CloudflareStreamPlayer = ({
           }}
         />
       )}
-      {/* hideOverlay만 있고 onClick이 없으면 음소거 토글 */}
-      {hideOverlay && !onClick && !controls && (
+      {/* hideOverlay만 있고 onClick이 없고 disableClickToggle이 false면 음소거 토글 */}
+      {hideOverlay && !onClick && !controls && !disableClickToggle && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
           onClick={handleMuteToggle}
@@ -364,16 +365,6 @@ const CloudflareStreamPlayer = ({
         <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
           <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
           <span>동영상</span>
-        </div>
-      )}
-
-      {/* 음소거 아이콘 - hideOverlay일 때 우하단에 작게 표시 (onClick이 없을 때만, 모달 내에서) */}
-      {hideOverlay && !onClick && (
-        <div className="absolute bottom-3 right-3 z-20 bg-black bg-opacity-50 text-white p-1.5 rounded-full pointer-events-none">
-          <FontAwesomeIcon
-            icon={isMuted ? faVolumeMute : faVolumeUp}
-            className="w-3 h-3"
-          />
         </div>
       )}
 

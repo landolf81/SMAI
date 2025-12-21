@@ -112,7 +112,12 @@ const QnAForm = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['qna-questions'] });
       queryClient.invalidateQueries({ queryKey: ['qna-trending'] });
-      navigate('/qna');
+      // 작성한 질문 상세 페이지로 이동
+      if (response?.id) {
+        navigate(`/qna/${response.id}`);
+      } else {
+        navigate('/qna');
+      }
     },
     onError: (error) => {
       console.error('질문 작성 실패:', error);

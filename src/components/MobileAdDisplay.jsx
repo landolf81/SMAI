@@ -279,7 +279,7 @@ const MobileAdDisplay = ({ ad }) => {
     }
   };
 
-  // 광고 클릭 핸들러
+  // 광고 클릭 핸들러 (항상 모달로 열기)
   const handleAdClick = () => {
     if (!ad) return;
 
@@ -288,19 +288,20 @@ const MobileAdDisplay = ({ ad }) => {
       console.warn('광고 클릭 추적 실패:', err);
     });
 
-    // 외부 링크가 있으면 바로 이동
-    if (ad.link_url) {
-      window.open(ad.link_url, '_blank');
-      return;
-    }
-
-    // 외부 링크가 없으면 모달로 열기
+    // 항상 모달로 열기 (링크 유무와 관계없이)
     setModalVideoMuted(false);
     setModalMediaIndex(0); // 첫 번째 미디어부터 시작
     setShowLandingModal(true);
 
     // body 스크롤 방지
     document.body.style.overflow = 'hidden';
+  };
+
+  // 모달 미디어 클릭 핸들러 (링크로 이동)
+  const handleModalMediaClick = () => {
+    if (ad?.link_url) {
+      window.open(ad.link_url, '_blank');
+    }
   };
 
   // 모달 닫기
@@ -436,7 +437,7 @@ const MobileAdDisplay = ({ ad }) => {
           
           {/* 내용 */}
           {ad.content && (
-            <p className="text-sm text-gray-700 mb-3 leading-relaxed line-clamp-3">
+            <p className="text-sm text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap line-clamp-2">
               {ad.content.replace(/<[^>]*>/g, '')}
             </p>
           )}
@@ -477,21 +478,52 @@ const MobileAdDisplay = ({ ad }) => {
 
             {/* 모달 콘텐츠 */}
             <div className="p-4 overflow-y-auto flex-1">
-              {/* 미디어 표시 (자동 순환) */}
+              {/* 미디어 표시 (자동 순환) - 링크가 있으면 클릭 시 이동 */}
               {getModalMedia(modalMediaIndex) && (
-                <div className="mb-4">
+                <div
+                  className={`mb-4 relative ${ad.link_url ? 'cursor-pointer' : ''}`}
+                  onClick={ad.link_url ? handleModalMediaClick : undefined}
+                >
                   {getModalMedia(modalMediaIndex).type === 'stream' ? (
-                    // Cloudflare Stream 동영상 - 모달에서는 오디오 재생, 터치 시 오디오 토글, 1초 간격 자동재생
+                    // Cloudflare Stream 동영상 - 모달에서는 오디오 토글 버튼만 클릭 가능
                     <div className="relative rounded-lg overflow-hidden">
-                      <CloudflareStreamPlayer
-                        uid={getCloudflareStreamUid(getModalMedia(modalMediaIndex).path) || getModalMedia(modalMediaIndex).path}
-                        autoplay={true}
-                        muted={modalVideoMuted}
-                        controls={false}
-                        aspectRatio="auto"
-                        hideOverlay={true}
-                        onMuteToggle={(muted) => setModalVideoMuted(muted)}
-                      />
+                      <div onClick={(e) => ad.link_url && e.stopPropagation()}>
+                        <CloudflareStreamPlayer
+                          uid={getCloudflareStreamUid(getModalMedia(modalMediaIndex).path) || getModalMedia(modalMediaIndex).path}
+                          autoplay={true}
+                          muted={modalVideoMuted}
+                          controls={false}
+                          aspectRatio="auto"
+                          hideOverlay={true}
+                          disableClickToggle={true}
+                        />
+                      </div>
+                      {/* 음소거 토글 버튼 */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setModalVideoMuted(!modalVideoMuted);
+                        }}
+                        className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 z-10"
+                        title={modalVideoMuted ? '음소거 해제' : '음소거'}
+                      >
+                        {modalVideoMuted ? (
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                          </svg>
+                        )}
+                      </button>
+                      {/* 링크 클릭 오버레이 */}
+                      {ad.link_url && (
+                        <div
+                          className="absolute inset-0 z-[5]"
+                          onClick={handleModalMediaClick}
+                        />
+                      )}
                     </div>
                   ) : getModalMedia(modalMediaIndex).type?.startsWith('video') ? (
                     <div className="relative">
@@ -499,7 +531,6 @@ const MobileAdDisplay = ({ ad }) => {
                         key={modalMediaIndex}
                         src={getImageUrl(getModalMedia(modalMediaIndex).path)}
                         className="w-full h-auto object-contain rounded-lg"
-                        controls
                         muted={modalVideoMuted}
                         autoPlay
                         playsInline
@@ -513,8 +544,11 @@ const MobileAdDisplay = ({ ad }) => {
 
                       {/* 음소거 토글 버튼 */}
                       <button
-                        onClick={() => setModalVideoMuted(!modalVideoMuted)}
-                        className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setModalVideoMuted(!modalVideoMuted);
+                        }}
+                        className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 z-10"
                         title={modalVideoMuted ? '음소거 해제' : '음소거'}
                       >
                         {modalVideoMuted ? (
@@ -539,14 +573,19 @@ const MobileAdDisplay = ({ ad }) => {
                       }}
                     />
                   )}
+                  {/* 링크 있을 때 안내 표시 */}
+                  {ad.link_url && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
+                      탭하여 자세히 보기
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* 광고 내용 */}
               {ad.content && (
                 <div className="mb-4">
-                  <h4 className="text-md font-semibold text-gray-900 mb-2">광고 내용</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                  <p className="text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {ad.content.replace(/<[^>]*>/g, '')}
                   </p>
                 </div>

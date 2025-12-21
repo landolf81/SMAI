@@ -89,7 +89,6 @@ const AdminAdsSimple = () => {
                       <h3 className="font-bold text-lg">{ad.title}</h3>
                       <p className="text-gray-600 mt-2">{ad.content}</p>
                       <div className="flex gap-4 mt-2 text-sm text-gray-500">
-                        <span>ID: {ad.id}</span>
                         <span>노출: {ad.view_count || 0}</span>
                         <span>클릭: {ad.click_count || 0}</span>
                         <span>활성: {ad.is_active ? '예' : '아니오'}</span>
