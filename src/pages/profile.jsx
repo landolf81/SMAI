@@ -255,6 +255,17 @@ const Profile = () => {
                     <LogoutIcon className="w-5 h-5" />
                     <span className="font-semibold text-base">로그아웃</span>
                   </button>
+                  <a
+                    href="http://pf.kakao.com/_kxiADG/chat"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 px-8 py-3 bg-[#FEE500] text-[#191919] rounded-2xl hover:bg-[#FDD835] transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 3C6.477 3 2 6.463 2 10.742c0 2.72 1.753 5.097 4.388 6.463-.17.598-.614 2.169-.702 2.505-.108.41.15.405.316.295.13-.087 2.07-1.366 2.903-1.92.689.1 1.401.152 2.095.152 5.523 0 10-3.463 10-7.742S17.523 3 12 3z"/>
+                    </svg>
+                    <span className="font-semibold text-base">고객센터 문의</span>
+                  </a>
                 </>
               ) : currentUser ? (
                 <>
