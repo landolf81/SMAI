@@ -1,21 +1,13 @@
 import { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import MobileBottomNav from '../components/MobileBottomNav';
 import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
-import { generateRandomId, generateRandomNickname } from '../utils/randomGenerator';
 
 const Register = () => {
-  const { register: registerUser, loginWithKakao } = useContext(AuthContext);
-  const [inputs, setInputs] = useState({
-    email: "",
-    password: "",
-  });
-  const [err, setErr] = useState(null);
+  const { loginWithKakao, currentUser } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(true);
   const navigate = useNavigate();
 
   // 스크롤 애니메이션을 위한 ref
@@ -24,32 +16,34 @@ const Register = () => {
   const section3Ref = useRef(null);
   const section4Ref = useRef(null);
 
-  // 디바이스 감지
+  // PC 접근 시 랜딩페이지로 리다이렉트
   useEffect(() => {
     const checkDevice = () => {
-      setIsMobile(isMobileDevice() || isTabletDevice() || window.innerWidth <= 768);
+      const mobile = isMobileDevice() || isTabletDevice();
+      setIsMobile(mobile);
+
+      if (!mobile) {
+        navigate('/landing');
+      }
     };
 
     checkDevice();
     window.addEventListener('resize', checkDevice);
 
     return () => window.removeEventListener('resize', checkDevice);
-  }, []);
+  }, [navigate]);
 
   // 페이지 진입 시 스크롤 최상단으로 이동
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // 회원가입 성공 시 커뮤니티로 이동
+  // 이미 로그인된 경우 홈으로 리다이렉트
   useEffect(() => {
-    if (success) {
-      const timer = setTimeout(() => {
-        window.location.href = "/community";
-      }, 2000);
-      return () => clearTimeout(timer);
+    if (currentUser) {
+      navigate('/');
     }
-  }, [success]);
+  }, [currentUser, navigate]);
 
   // Intersection Observer로 스크롤 애니메이션
   useEffect(() => {
@@ -78,52 +72,19 @@ const Register = () => {
     return () => observer.disconnect();
   }, []);
 
-  const handleChange = (e) => {
-    setInputs((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleKakaoLogin = async () => {
     setLoading(true);
-    setErr(null);
-
     try {
-      // 랜덤 ID와 별명 생성
-      const username = generateRandomId();
-      const name = generateRandomNickname();
-
-      await registerUser({ ...inputs, username, name });
-      setSuccess(true);
+      await loginWithKakao();
     } catch (error) {
-      console.error('회원가입 오류:', error);
-      // 에러 메시지 한글화
-      let errorMessage = "회원가입 중 오류가 발생했습니다.";
-      if (error.message?.includes('already registered') || error.message?.includes('already exists')) {
-        errorMessage = "이미 가입된 이메일입니다. 탈퇴한 계정의 이메일로는 재가입이 불가능하니, 다른 이메일을 사용해주세요.";
-      } else if (error.message?.includes('invalid email') || error.message?.includes('Invalid email')) {
-        errorMessage = "올바른 이메일 형식을 입력해주세요.";
-      } else if (error.message?.includes('password') && error.message?.includes('6')) {
-        errorMessage = "비밀번호는 최소 6자 이상이어야 합니다.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      setErr(errorMessage);
-    } finally {
+      console.error('카카오 로그인 에러:', error);
       setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <CheckCircleIcon className="text-6xl text-green-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">회원가입 완료!</h2>
-          <p className="text-gray-600 mb-4">선남 참외 이야기에 오신 것을 환영합니다.</p>
-          <p className="text-sm text-gray-500">잠시 후 커뮤니티 화면으로 이동됩니다...</p>
-        </div>
-      </div>
-    );
+  // PC에서는 렌더링하지 않음 (리다이렉트 됨)
+  if (!isMobile) {
+    return null;
   }
 
   return (
@@ -230,7 +191,7 @@ const Register = () => {
         </div>
       </section>
 
-      {/* 섹션 4: 회원가입 폼 */}
+      {/* 섹션 4: 시작하기 */}
       <section
         ref={section4Ref}
         className="min-h-screen flex flex-col items-center justify-center px-6 py-20 opacity-0 translate-y-16 transition-all duration-700"
@@ -238,130 +199,53 @@ const Register = () => {
         <div className="max-w-md mx-auto w-full">
           <div className="text-center mb-10">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              회원가입 안내
+              지금 시작하세요
             </h2>
             <p className="text-xl text-gray-600 font-light">
-              아직 계정이 없으신가요?
+              카카오톡으로 간편하게 가입하고
             </p>
             <p className="text-lg text-gray-500 mt-2">
-              회원가입 후 시세 조회와 커뮤니티 이용이 가능합니다.
+              시세 조회와 커뮤니티를 이용해보세요.
             </p>
           </div>
 
-          {/* 회원가입 폼 */}
+          {/* 카카오 로그인 카드 */}
           <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  이메일
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  autoComplete="email"
-                  value={inputs.email}
-                  onChange={handleChange}
-                  placeholder="example@email.com"
-                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  비밀번호
-                </label>
-                <input
-                  type="password"
-                  name="password"
-                  autoComplete="new-password"
-                  value={inputs.password}
-                  onChange={handleChange}
-                  placeholder="8자 이상"
-                  className="w-full px-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition-all text-lg"
-                  required
-                  minLength={8}
-                />
-              </div>
-
-              {/* 이용약관 동의 */}
-              <div className="space-y-3 pt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    className="w-5 h-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
-                  />
-                  <span className="text-sm text-gray-600">
-                    <span className="font-medium text-gray-800">[필수]</span> 이용약관 동의
-                    <Link to="/terms" target="_blank" className="text-yellow-600 hover:text-yellow-700 ml-1 underline">보기</Link>
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    className="w-5 h-5 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400"
-                  />
-                  <span className="text-sm text-gray-600">
-                    <span className="font-medium text-gray-800">[필수]</span> 개인정보 처리방침 동의
-                    <Link to="/privacy" target="_blank" className="text-yellow-600 hover:text-yellow-700 ml-1 underline">보기</Link>
-                  </span>
-                </label>
-              </div>
-
-              {err && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                  {err}
+            {/* 카카오 로그인 버튼 */}
+            <button
+              type="button"
+              onClick={handleKakaoLogin}
+              disabled={loading}
+              className="w-full bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] font-bold py-4 px-4 rounded-xl transition-all text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-gray-800 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  로그인 중...
                 </div>
+              ) : (
+                <>
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3C6.477 3 2 6.463 2 10.742c0 2.72 1.753 5.097 4.388 6.463-.17.598-.614 2.169-.702 2.505-.108.41.15.405.316.295.13-.087 2.07-1.366 2.903-1.92.689.1 1.401.152 2.095.152 5.523 0 10-3.463 10-7.742S17.523 3 12 3z"/>
+                  </svg>
+                  카카오톡으로 시작하기
+                </>
               )}
+            </button>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold py-4 px-4 rounded-xl transition-all text-lg shadow-lg shadow-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
-              >
-                {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    가입 중...
-                  </div>
-                ) : (
-                  '회원가입'
-                )}
-              </button>
-            </form>
-
-            {/* 소셜 회원가입 (카카오톡) */}
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-3 bg-white text-gray-500">또는</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={loginWithKakao}
-                disabled={loading}
-                className="mt-4 w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-4 px-4 rounded-xl transition-all text-lg shadow-lg shadow-yellow-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 3C6.477 3 2 6.463 2 10.742c0 2.72 1.753 5.097 4.388 6.463-.17.598-.614 2.169-.702 2.505-.108.41.15.405.316.295.13-.087 2.07-1.366 2.903-1.92.689.1 1.401.152 2.095.152 5.523 0 10-3.463 10-7.742S17.523 3 12 3z"/>
-                </svg>
-                카카오톡으로 시작하기
-              </button>
-            </div>
+            {/* 약관 안내 */}
+            <p className="mt-4 text-center text-xs text-gray-400">
+              시작하기를 누르면{' '}
+              <Link to="/terms" className="underline">이용약관</Link> 및{' '}
+              <Link to="/privacy" className="underline">개인정보처리방침</Link>에 동의하게 됩니다.
+            </p>
 
             {/* 로그인 링크 */}
-            <div className="mt-6 text-center">
-              <p className="text-gray-500">
+            <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+              <p className="text-gray-500 text-sm">
                 이미 계정이 있으신가요?
                 <Link to="/login" className="text-yellow-600 hover:text-yellow-700 font-semibold ml-2">
-                  로그인 →
+                  로그인
                 </Link>
               </p>
             </div>

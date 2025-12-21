@@ -76,6 +76,7 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Terms = lazy(() => import('./pages/Terms'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const TradingPolicy = lazy(() => import('./pages/TradingPolicy'));
+const PCLanding = lazy(() => import('./pages/PCLanding'));
 
 function App() {
 
@@ -545,6 +546,10 @@ useEffect(() => {
     {
       path: '/auth/callback',
       element: <Suspense fallback={<PageLoader />}><AuthCallback /></Suspense>,
+    },
+    {
+      path: '/landing',
+      element: <Suspense fallback={<PageLoader />}><PCLanding /></Suspense>,
     },
   ], {
     future: {
