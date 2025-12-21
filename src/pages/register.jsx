@@ -153,7 +153,7 @@ const Register = () => {
         <div className="text-center max-w-3xl mx-auto">
           {/* 로고 이미지 */}
           <img
-            src="/favicon.png"
+            src="/logo.svg"
             alt="선남 참외 이야기 로고"
             className="h-24 md:h-32 mx-auto mb-8 object-contain"
           />
