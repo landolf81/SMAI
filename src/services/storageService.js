@@ -3,11 +3,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { API_BASE_URL } from '../config/api.js';
 import { uploadToR2, uploadMultipleToR2, deleteFromR2, isR2Url } from './r2Service.js';
 import { uploadVideo } from './videoUploadService.js';
+import { uploadImageToCloudflare, uploadMultipleImages, isCloudflareImagesUrl, getImageUrl, IMAGE_VARIANTS } from './cfImagesService.js';
 
 /**
  * Storage 서비스
- * Cloudflare R2를 기본으로 사용 (Supabase Storage는 레거시 지원)
+ * - 이미지: Cloudflare Images (자동 최적화, CDN)
+ * - 동영상: Cloudflare Stream
+ * - 기타 파일: Cloudflare R2 (레거시 폴백)
  */
+
+// Cloudflare Images 사용 여부 (true: CF Images, false: R2)
+const USE_CF_IMAGES = import.meta.env.VITE_CF_IMAGES_ACCOUNT_HASH ? true : false;
 
 // 버킷 이름 상수 (R2 폴더명으로도 사용)
 export const BUCKETS = {
@@ -24,7 +30,7 @@ const USE_R2 = true;
 
 export const storageService = {
   /**
-   * 파일 업로드 (R2 우선 사용)
+   * 파일 업로드 (이미지: CF Images, 기타: R2)
    * @param {string} bucket - 버킷/폴더 이름
    * @param {string} filePath - 저장할 경로 (R2에서는 폴더로 사용)
    * @param {File} file - 파일 객체
@@ -33,7 +39,23 @@ export const storageService = {
    */
   async uploadFile(bucket, filePath, file, options = {}) {
     try {
-      // R2로 업로드
+      // 이미지 파일이고 CF Images가 활성화된 경우
+      if (USE_CF_IMAGES && file.type.startsWith('image/')) {
+        const result = await uploadImageToCloudflare(file, {
+          metadata: { bucket, originalPath: filePath },
+          onProgress: options.onProgress
+        });
+        return {
+          success: true,
+          path: result.id,
+          url: result.url,
+          fullPath: result.id,
+          type: 'cloudflare-images',
+          variants: result.variants
+        };
+      }
+
+      // R2로 업로드 (이미지가 아니거나 CF Images 비활성화)
       if (USE_R2) {
         const result = await uploadToR2(file, bucket);
         return {
@@ -73,7 +95,7 @@ export const storageService = {
   },
 
   /**
-   * 여러 파일 업로드 (R2 우선 사용)
+   * 여러 파일 업로드 (이미지: CF Images, 기타: R2)
    * @param {string} bucket - 버킷 이름
    * @param {string} folderPath - 폴더 경로
    * @param {File[]} files - 파일 배열
@@ -82,26 +104,65 @@ export const storageService = {
    */
   async uploadFiles(bucket, folderPath, files, options = {}) {
     try {
-      // R2로 업로드
-      if (USE_R2) {
-        const results = await uploadMultipleToR2(files, bucket);
-        return results.map(result => ({
-          success: true,
-          path: result.key,
-          url: result.url,
-          fullPath: result.key
-        }));
+      // 이미지 파일들만 분리
+      const imageFiles = files.filter(f => f.type.startsWith('image/'));
+      const otherFiles = files.filter(f => !f.type.startsWith('image/'));
+
+      const results = [];
+
+      // 이미지 파일: Cloudflare Images로 업로드
+      if (USE_CF_IMAGES && imageFiles.length > 0) {
+        const cfResults = await uploadMultipleImages(imageFiles, {
+          metadata: { bucket, folderPath },
+          onProgress: options.onProgress
+        });
+        cfResults.forEach(result => {
+          results.push({
+            success: true,
+            path: result.id,
+            url: result.url,
+            fullPath: result.id,
+            type: 'cloudflare-images',
+            variants: result.variants
+          });
+        });
+      } else if (imageFiles.length > 0) {
+        // CF Images 비활성화시 R2로
+        const r2Results = await uploadMultipleToR2(imageFiles, bucket);
+        r2Results.forEach(result => {
+          results.push({
+            success: true,
+            path: result.key,
+            url: result.url,
+            fullPath: result.key
+          });
+        });
       }
 
-      // Supabase Storage (폴백)
-      const uploadPromises = files.map((file) => {
-        const ext = file.name.split('.').pop();
-        const filename = `${uuidv4()}.${ext}`;
-        const filePath = `${folderPath}/${filename}`;
-        return this.uploadFile(bucket, filePath, file, options);
-      });
+      // 기타 파일: R2로 업로드
+      if (otherFiles.length > 0) {
+        if (USE_R2) {
+          const r2Results = await uploadMultipleToR2(otherFiles, bucket);
+          r2Results.forEach(result => {
+            results.push({
+              success: true,
+              path: result.key,
+              url: result.url,
+              fullPath: result.key
+            });
+          });
+        } else {
+          // Supabase Storage (폴백)
+          for (const file of otherFiles) {
+            const ext = file.name.split('.').pop();
+            const filename = `${uuidv4()}.${ext}`;
+            const filePath = `${folderPath}/${filename}`;
+            const result = await this.uploadFile(bucket, filePath, file, options);
+            results.push(result);
+          }
+        }
+      }
 
-      const results = await Promise.all(uploadPromises);
       return results;
     } catch (error) {
       console.error('여러 파일 업로드 오류:', error);
@@ -441,7 +502,39 @@ export const storageService = {
       console.error('QnA 여러 이미지 업로드 오류:', error);
       throw error;
     }
-  }
+  },
+
+  /**
+   * Cloudflare Images URL 변환 (variant 변경)
+   * @param {string} url - 이미지 URL
+   * @param {string} variant - 원하는 variant (thumbnail, small, medium, large, avatar, cover)
+   * @returns {string} 변환된 URL
+   */
+  getOptimizedImageUrl(url, variant = 'public') {
+    // Cloudflare Images URL인 경우
+    if (isCloudflareImagesUrl(url)) {
+      // URL에서 이미지 ID 추출 후 새 variant로 URL 생성
+      const parts = url.split('/');
+      if (parts.length >= 5) {
+        const imageId = parts[4];
+        return getImageUrl(imageId, variant);
+      }
+    }
+    // 다른 URL은 그대로 반환
+    return url;
+  },
+
+  /**
+   * 이미지 URL이 Cloudflare Images인지 확인
+   * @param {string} url
+   * @returns {boolean}
+   */
+  isCloudflareImagesUrl(url) {
+    return isCloudflareImagesUrl(url);
+  },
+
+  // Cloudflare Images variant 상수 내보내기
+  IMAGE_VARIANTS
 };
 
 export default storageService;

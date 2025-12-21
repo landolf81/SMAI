@@ -9,7 +9,6 @@ import { YouTubePreviewCard } from '../components/YouTubeEmbed';
 import { postService, storageService } from '../services';
 import { getMediaType, getAcceptedFileTypes } from '../utils/mediaUtils';
 import { uploadVideo, validateVideo } from '../services/videoUploadService';
-import { convertImageToPng, isImageFile, isHeicFile } from '../utils/imageConverter';
 import { v4 as uuidv4 } from 'uuid';
 
 const PostEditor = () => {
@@ -35,7 +34,6 @@ const PostEditor = () => {
   const [existingImages, setExistingImages] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [gpsData, setGpsData] = useState(null);
-  const [imageConvertProgress, setImageConvertProgress] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(null);
   const [uploadedVideos, setUploadedVideos] = useState([]); // Cloudflare Stream 동영상 정보
 
@@ -151,39 +149,16 @@ const PostEditor = () => {
       console.log('파일 개수:', files.length);
       const postId = uuidv4();
 
-      // 이미지 PNG 변환 + 압축 (업로드 시점에 처리)
-      let processedFiles = [];
-      if (files.length > 0) {
-        console.log('이미지 처리 시작...');
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          console.log(`파일 ${i + 1}/${files.length}: ${file.name}, 타입: ${file.type}`);
-          const mediaType = getMediaType(file);
-          if (mediaType.isImage) {
-            try {
-              // convertImageToPng에서 PNG 변환 + 리사이징 처리
-              console.log(`이미지 변환 시작: ${file.name}`);
-              const processedImage = await convertImageToPng(file, {
-                maxWidth: 1024
-              });
-              console.log(`이미지 변환 완료: ${processedImage.name}, 크기: ${processedImage.size}`);
-              processedFiles.push(processedImage);
-            } catch (convertError) {
-              console.error(`이미지 변환 실패: ${file.name}`, convertError);
-              throw convertError;
-            }
-          }
-          // 동영상은 이미 uploadedVideos에 있으므로 건너뜀
-        }
-        console.log(`이미지 처리 완료: ${processedFiles.length}개`);
-      }
+      // 이미지 파일만 필터링 (동영상은 이미 uploadedVideos에 있음)
+      const imageFiles = files.filter(file => getMediaType(file).isImage);
+      console.log(`이미지 파일: ${imageFiles.length}개`);
 
-      // 이미지를 Supabase Storage에 업로드
+      // 이미지를 Cloudflare Images에 업로드 (자동 최적화)
       let imageUrls = [];
-      if (processedFiles.length > 0) {
+      if (imageFiles.length > 0) {
         console.log('이미지 업로드 시작...');
         try {
-          const uploadResults = await storageService.uploadPostImages(postId, processedFiles);
+          const uploadResults = await storageService.uploadPostImages(postId, imageFiles);
           console.log('업로드 결과:', uploadResults);
           imageUrls = uploadResults.map(result => result.url);
           console.log('이미지 URL:', imageUrls);
@@ -265,13 +240,11 @@ const PostEditor = () => {
     const videoFiles = [];
 
     for (const file of selectedFiles) {
-      if (isImageFile(file) || isHeicFile(file)) {
+      const mediaType = getMediaType(file);
+      if (mediaType.isImage) {
         imageFiles.push(file);
-      } else {
-        const mediaType = getMediaType(file);
-        if (mediaType.isVideo) {
-          videoFiles.push(file);
-        }
+      } else if (mediaType.isVideo) {
+        videoFiles.push(file);
       }
     }
 
@@ -286,37 +259,8 @@ const PostEditor = () => {
       }
     }
 
-    // HEIC 파일만 미리보기용으로 변환 (브라우저에서 표시 불가하므로)
-    // 일반 이미지는 원본 유지, 업로드 시점에 PNG 변환 + 압축 처리
-    const processedImages = [];
-    if (imageFiles.length > 0) {
-      for (let i = 0; i < imageFiles.length; i++) {
-        const file = imageFiles[i];
-        try {
-          if (isHeicFile(file)) {
-            // HEIC는 미리보기를 위해 변환 필요
-            setImageConvertProgress({
-              current: i + 1,
-              total: imageFiles.length,
-              status: `${file.name} 변환 중...`
-            });
-            const convertedFile = await convertImageToPng(file, { maxWidth: 1024 });
-            processedImages.push(convertedFile);
-          } else {
-            // 일반 이미지는 원본 유지 (업로드 시 처리)
-            processedImages.push(file);
-          }
-        } catch (err) {
-          console.error(`이미지 처리 실패: ${file.name}`, err);
-          if (!isHeicFile(file)) {
-            processedImages.push(file);
-          } else {
-            setError(`${file.name} 변환에 실패했습니다.`);
-          }
-        }
-      }
-      setImageConvertProgress(null);
-    }
+    // Cloudflare Images가 자동 최적화하므로 원본 그대로 사용
+    const processedImages = [...imageFiles];
 
     // 동영상 업로드 (1개만 허용)
     // 이미 동영상이 있으면 새 동영상 추가 불가
@@ -480,22 +424,6 @@ const PostEditor = () => {
               onChange={handleFileChange}
             />
 
-            {/* 이미지 변환 진행률 */}
-            {imageConvertProgress && (
-              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="flex items-center space-x-3">
-                  <div className="loading loading-spinner w-2 h-2 text-blue-500"></div>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-blue-700">
-                      이미지 변환 중... ({imageConvertProgress.current}/{imageConvertProgress.total})
-                    </div>
-                    <div className="w-full bg-blue-200 rounded-full h-2 mt-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${(imageConvertProgress.current / imageConvertProgress.total) * 100}%` }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* 동영상 업로드 진행률 */}
             {videoUploadProgress && (
@@ -649,9 +577,9 @@ const PostEditor = () => {
             </button>
             <button
               type="submit"
-              disabled={loading || imageConvertProgress || videoUploadProgress || !desc.trim()}
+              disabled={loading || videoUploadProgress || !desc.trim()}
               className={`flex-1 py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
-                loading || imageConvertProgress || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
+                loading || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
               }`}
             >
               {loading ? <span className="loading loading-spinner w-2 h-2 mr-2"></span> : <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />}

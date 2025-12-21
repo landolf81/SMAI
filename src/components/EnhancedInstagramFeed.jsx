@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { postService, adService } from '../services';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
@@ -8,6 +8,7 @@ import { shouldShowAds } from '../utils/deviceDetector';
 import { hasEncodingVideo } from '../utils/mediaUtils';
 
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
+  const queryClient = useQueryClient();
   const [currentPlayingVideo, setCurrentPlayingVideo] = useState(null);
   // 각 게시물의 가시성 상태 추적 (Set<postId>)
   const [visiblePosts, setVisiblePosts] = useState(new Set());
@@ -541,6 +542,10 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   const handleTouchEnd = useCallback(async () => {
     if (isPullingRef.current && pullDistanceRef.current > 80) {
       try {
+        // 캐시 무효화 후 새로고침
+        await queryClient.invalidateQueries({
+          queryKey: ['enhanced-instagram-posts', tag, search, userId]
+        });
         await refetch();
       } catch (error) {
         console.error('새로고침 실패:', error);
@@ -556,7 +561,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     if (pullIndicatorRef.current) {
       pullIndicatorRef.current.style.display = 'none';
     }
-  }, [refetch]);
+  }, [queryClient, refetch, tag, search, userId]);
 
   // Native event listeners로 passive: false 설정 (preventDefault 가능)
   useEffect(() => {

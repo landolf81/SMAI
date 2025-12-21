@@ -13,7 +13,6 @@ import { useScrollRestore } from '../hooks/useScrollRestore';
 // Icons
 import EditIcon from "@mui/icons-material/Edit";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import AgricultureIcon from "@mui/icons-material/Agriculture";
 import ArticleIcon from "@mui/icons-material/Article";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
@@ -160,7 +159,7 @@ const Profile = () => {
             >
               {!data.coverPic && (
                 <div className="text-center">
-                  <AgricultureIcon className="text-6xl text-market-500 mb-2" />
+                  <img src="/logo.svg" alt="로고" className="w-20 h-20 mx-auto mb-2" />
                   <p className="text-market-700 font-medium">선남 참외 이야기</p>
                 </div>
               )}

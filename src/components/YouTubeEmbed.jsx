@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from '../utils/linkDetector';
@@ -7,9 +7,9 @@ import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from '../u
  * YouTube 동영상 임베드 컴포넌트
  * 인스타그램 스타일의 깔끔한 디자인
  */
-const YouTubeEmbed = ({ 
-  url, 
-  autoplay = false, 
+const YouTubeEmbed = ({
+  url,
+  autoplay = false,
   showThumbnail = true,
   className = "",
   onPlay,
@@ -19,8 +19,32 @@ const YouTubeEmbed = ({
   const [isPlaying, setIsPlaying] = useState(autoplay);
   const [thumbnailError, setThumbnailError] = useState(false);
   const [embedError, setEmbedError] = useState(false);
+  const containerRef = useRef(null);
 
   const videoId = getYouTubeVideoId(url);
+
+  // 화면에서 벗어나면 재생 중지 (IntersectionObserver)
+  useEffect(() => {
+    if (!isPlaying || !containerRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          // 화면에서 50% 이상 벗어나면 재생 중지
+          if (!entry.isIntersecting) {
+            setIsPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isPlaying]);
   
   if (!videoId) {
     return (
@@ -33,7 +57,7 @@ const YouTubeEmbed = ({
   const thumbnailUrl = getYouTubeThumbnail(videoId, 'hqdefault');
   const embedUrl = getYouTubeEmbedUrl(videoId, {
     autoplay: isPlaying,
-    mute: true,
+    mute: false, // 유튜브는 자동재생 안되므로 음소거 불필요
     controls: true,
     showRelated: false
   });
@@ -59,7 +83,7 @@ const YouTubeEmbed = ({
   // 임베드가 활성화된 경우
   if (isPlaying && !embedError) {
     return (
-      <div className={`relative w-full rounded-lg overflow-hidden bg-black ${className}`} style={{ aspectRatio: '16/9' }}>
+      <div ref={containerRef} className={`relative w-full rounded-lg overflow-hidden bg-black ${className}`} style={{ aspectRatio: '16/9' }}>
         <iframe
           src={embedUrl}
           className="w-full h-full"

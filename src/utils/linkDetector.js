@@ -116,9 +116,9 @@ export const getFirstLinkInfo = (text) => {
     if (videoId) {
       linkInfo.videoId = videoId;
       linkInfo.thumbnailUrl = getYouTubeThumbnail(videoId);
-      linkInfo.embedUrl = getYouTubeEmbedUrl(videoId, { 
-        autoplay: false, 
-        mute: true,
+      linkInfo.embedUrl = getYouTubeEmbedUrl(videoId, {
+        autoplay: false,
+        mute: false, // 유튜브는 자동재생 안되므로 음소거 불필요
         controls: true
       });
     }
