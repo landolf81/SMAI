@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../config/supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 // Cloudflare Images 계정 해시 (delivery URL에 사용)
 // 형식: https://imagedelivery.net/{account_hash}/{image_id}/{variant}
@@ -102,9 +103,13 @@ export const uploadImageToCloudflare = async (file, options = {}) => {
 
     const { uploadURL, id } = uploadData;
 
-    // 2. 이미지 파일 업로드
+    // 2. 이미지 파일 업로드 (파일명 UUID로 변경)
+    const ext = file.name.split('.').pop() || 'jpg';
+    const randomFileName = `${uuidv4()}.${ext}`;
+    const renamedFile = new File([file], randomFileName, { type: file.type });
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', renamedFile);
 
     let result;
     if (isIOSSafari()) {

@@ -19,6 +19,7 @@ const CloudflareStreamPlayer = ({
   controls = false,
   showMuteToggle = false,
   hideOverlay = false, // 모든 오버레이 UI 숨김 (광고용)
+  paused = false, // 외부에서 강제 일시정지 (모달 열릴 때 등)
   onMuteToggle, // 외부에서 음소거 상태 제어
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
@@ -62,9 +63,23 @@ const CloudflareStreamPlayer = ({
     }
   }, [autoplay]);
 
+  // 외부 강제 일시정지 (paused prop)
+  useEffect(() => {
+    if (!videoRef.current || !isHlsReady) return;
+
+    if (paused) {
+      videoRef.current.pause();
+      videoRef.current.muted = true;
+      setIsMuted(true);
+    }
+  }, [paused, isHlsReady]);
+
   // 재생/정지 제어 (isHlsReady와 autoplay 기반)
   useEffect(() => {
     if (!videoRef.current || !isHlsReady) return;
+
+    // paused가 true면 재생하지 않음
+    if (paused) return;
 
     if (autoplay) {
       // 화면에 들어오면 재생

@@ -1125,6 +1125,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   loop={true}
                   controls={disableAutoplay} // 자동재생 비활성화 시 컨트롤 표시
                   showMuteToggle={!disableAutoplay}
+                  paused={showMediaModal} // 모달 열리면 피드 동영상 일시정지
                   aspectRatio="4-5"
                   className="w-full h-full"
                   onClick={() => {
@@ -1233,15 +1234,15 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       />
 
       {/* 액션 버튼들 */}
-      <div className="px-3 pt-1 pb-1">
-        <div className="flex items-center justify-between mb-1">
+      <div className="px-3 py-0.5">
+        <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1">
             <button
               onClick={() => {
                 // 좋아요 버튼 클릭 로그 제거
                 handleLike(false);
               }}
-              className={`flex items-center justify-center transition-all duration-200 cursor-pointer p-1.5 rounded-full focus:outline-none focus:ring-0 ${localIsLiked ? 'scale-105' : 'hover:scale-105'}`}
+              className={`flex items-center justify-center transition-all duration-200 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${localIsLiked ? 'scale-105' : 'hover:scale-105'}`}
             >
               <FontAwesomeIcon
                 icon={faHeart}
@@ -1258,7 +1259,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 setShowComments(!showComments);
                 if (!showComments) setShowCommentForm(false);
               }}
-              className={`flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer p-1.5 rounded-full focus:outline-none focus:ring-0 ${
+              className={`flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${
                 showComments ? 'text-blue-500' : (post.commentsCount || 0) > 0 ? 'text-blue-600' : 'text-gray-700 hover:text-blue-500'
               }`}
             >
@@ -1273,7 +1274,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 // 공유 버튼 클릭 로그 제거
                 handleShare();
               }}
-              className="text-gray-700 hover:text-green-500 transition-all duration-200 hover:scale-105 cursor-pointer p-1.5 rounded-full focus:outline-none focus:ring-0"
+              className="text-gray-700 hover:text-green-500 transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0"
             >
               <FontAwesomeIcon icon={faShare} className="w-5 h-5" />
             </button>
@@ -1282,7 +1283,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             {(post.report_count > 0) && (
               <button
                 onClick={() => setShowReportDetailsModal(true)}
-                className="flex items-center text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-105 cursor-pointer p-1.5 rounded-full focus:outline-none focus:ring-0"
+                className="flex items-center text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0"
                 title={`신고 ${post.report_count}건`}
               >
                 <FontAwesomeIcon icon={faFlag} className="w-4 h-4" />
@@ -1313,7 +1314,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               document.body.appendChild(toast);
               setTimeout(() => document.body.removeChild(toast), 2000);
             }}
-            className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1.5 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'}`}
+            className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'}`}
           >
             <FontAwesomeIcon icon={faBookmark} className="w-5 h-5" />
           </button>
