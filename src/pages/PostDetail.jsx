@@ -14,6 +14,7 @@ import 'swiper/css/pagination';
 // 컴포넌트
 import MobileAdDisplay from '../components/MobileAdDisplay';
 import ProfileModal from '../components/ProfileModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // 아이콘
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -302,7 +303,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="loading loading-spinner loading-lg text-orange-500"></div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -597,8 +598,8 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
         <div className="bg-white mt-2">
           {/* 댓글 로딩 상태 */}
           {commentsLoading && (
-            <div className="px-4 py-8 text-center">
-              <div className="loading loading-spinner loading-md text-orange-500"></div>
+            <div className="px-4 py-8 flex flex-col items-center">
+              <LoadingSpinner size="md" />
               <p className="text-gray-500 mt-2">댓글을 불러오는 중...</p>
             </div>
           )}
