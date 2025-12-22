@@ -117,7 +117,7 @@ const AuthNew = () => {
   const renderChooseMethod = () => (
     <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">성주마이 로그인</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">선남 참외 이야기 로그인</h1>
         <p className="text-gray-600">로그인 방법을 선택해주세요</p>
       </div>
 

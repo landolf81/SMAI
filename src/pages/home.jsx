@@ -450,7 +450,7 @@ const Home = () => {
                 <StoreIcon className="text-6xl text-white" />
               </div>
               <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent mb-4">
-                성주마이
+                선남 참외 이야기
               </h1>
               <p className="text-xl text-gray-600">
                 성주 지역 농산물 거래와 소통을 위한 커뮤니티 플랫폼
