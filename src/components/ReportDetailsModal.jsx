@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faFlag, faExclamationTriangle, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
 import { reportService } from "../services";
+import LoadingSpinner from './LoadingSpinner';
 import moment from 'moment';
 
 const ReportDetailsModal = ({ postId, isOpen, onClose }) => {
@@ -106,7 +107,7 @@ const ReportDetailsModal = ({ postId, isOpen, onClose }) => {
             {/* 로딩 상태 */}
             {loading && (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <LoadingSpinner size="md" />
                 <span className="ml-2 text-gray-600">로딩 중...</span>
               </div>
             )}

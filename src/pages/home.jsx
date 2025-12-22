@@ -7,6 +7,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { marketService } from '../services';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
@@ -429,7 +430,7 @@ const Home = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 loading-container safe-area-top safe-area-bottom">
         <div className="text-center">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <LoadingSpinner size="lg" className="mx-auto" />
           <p className="mt-4 text-gray-600">경락가 정보를 불러오는 중...</p>
           <div className="mt-2 text-sm text-gray-500">
             {formatDateSimple(selectedDate)} 데이터 조회 중

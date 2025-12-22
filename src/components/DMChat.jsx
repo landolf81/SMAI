@@ -4,6 +4,7 @@ import { dmService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
 import 'moment/locale/ko';
+import LoadingSpinner from './LoadingSpinner';
 
 // 아이콘
 import CloseIcon from '@mui/icons-material/Close';
@@ -315,7 +316,7 @@ const DMChat = ({ conversation, onClose }) => {
               }`}
             >
               {sendMessageMutation.isPending ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <LoadingSpinner size="sm" />
               ) : (
                 <SendIcon />
               )}

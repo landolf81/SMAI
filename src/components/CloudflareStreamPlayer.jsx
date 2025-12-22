@@ -1,8 +1,9 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faSpinner, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { getCloudflareStreamUid } from '../utils/mediaUtils';
+import LoadingSpinner from './LoadingSpinner';
 import Hls from 'hls.js';
 
 /**
@@ -289,7 +290,7 @@ const CloudflareStreamPlayer = ({
         />
         {/* 인코딩 중 오버레이 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60">
-          <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin mb-2" />
+          <LoadingSpinner size="md" className="mb-2" />
           <span className="text-white text-sm">동영상 인코딩 중...</span>
           <span className="text-gray-400 text-xs mt-1">잠시 후 다시 시도해주세요</span>
         </div>
@@ -327,7 +328,7 @@ const CloudflareStreamPlayer = ({
     <div className={`relative bg-gray-900 ${aspectRatioClass} overflow-hidden ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
-          <FontAwesomeIcon icon={faSpinner} className="w-8 h-8 text-white animate-spin" />
+          <LoadingSpinner size="md" />
         </div>
       )}
 

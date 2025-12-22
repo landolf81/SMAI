@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { marketService } from '../services';
+import LoadingSpinner from './LoadingSpinner';
 
 const MarketInfo = () => {
     const [selectedMarket, setSelectedMarket] = useState('성주참외공판장');
@@ -94,7 +95,7 @@ const MarketInfo = () => {
             {/* 로딩 상태 */}
             {loading && (
                 <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+                    <LoadingSpinner size="lg" className="mx-auto" />
                     <p className="mt-4 text-gray-600">데이터를 불러오는 중...</p>
                 </div>
             )}

@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-quer
 import { postService, adService } from '../services';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
+import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { hasEncodingVideo } from '../utils/mediaUtils';
 
@@ -718,11 +719,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
           {isFetchingNextPage && (
             <div className="w-full py-12 flex justify-center bg-white">
               <div className="flex flex-col items-center space-y-3 text-gray-500">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                </div>
+                <LoadingSpinner size="md" />
                 <span className="text-sm font-medium">새로운 게시글을 불러오는 중...</span>
               </div>
             </div>

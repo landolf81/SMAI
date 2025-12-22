@@ -14,6 +14,7 @@ import './App.css';
 import Navbar from './components/Navbar';
 import Leftbar from './components/Leftbar';
 import MobileBottomNav from './components/MobileBottomNav';
+import LoadingSpinner from './components/LoadingSpinner';
 import { AuthContext } from './context/AuthContext';
 import { isMobileDevice, isTabletDevice } from './utils/deviceDetector';
 import { useScrollDirection } from './hooks/useScrollDirection';
@@ -32,7 +33,7 @@ import CloseIcon from '@mui/icons-material/Close';
 // 로딩 컴포넌트
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[50vh]">
-    <div className="loading loading-spinner loading-lg text-orange-500"></div>
+    <LoadingSpinner size="lg" />
   </div>
 );
 

@@ -265,3 +265,35 @@ body {
 .animate-fade-in-up {
   animation: fadeInUp 0.3s ease-out forwards;
 }
+
+/* 참외 로고 로딩 스피너 */
+.melon-spinner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.melon-rot {
+  transform-origin: 50% 50%;
+  animation: melon-spin 2s linear infinite;
+}
+
+.melon-petal {
+  opacity: .25;
+  animation: melon-pulse 1.5s ease-in-out infinite;
+}
+
+.melon-p1 { animation-delay: 0s; }
+.melon-p2 { animation-delay: .18s; }
+.melon-p3 { animation-delay: .36s; }
+.melon-p4 { animation-delay: .54s; }
+.melon-p5 { animation-delay: .72s; }
+
+@keyframes melon-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes melon-pulse {
+  0%, 100% { opacity: .25; }
+  50% { opacity: 1; }
+}

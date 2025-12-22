@@ -10,6 +10,7 @@ import 'moment/locale/ko';
 import MobileAdDisplay from './MobileAdDisplay';
 import { isMobileDevice } from '../utils/deviceDetector';
 import ProfileModal from './ProfileModal';
+import LoadingSpinner from './LoadingSpinner';
 
 // 아이콘
 import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
@@ -235,7 +236,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="loading loading-spinner loading-lg"></div>
+        <LoadingSpinner size="lg" />
         <span className="ml-3">질문을 불러오는 중...</span>
       </div>
     );

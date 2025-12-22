@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { marketService } from '../services';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // 공판장별 뱃지 색상 (MarketCards.jsx와 동일)
 const getMarketBadgeColor = (marketName) => {
@@ -154,7 +155,7 @@ const Prices = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-center">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <LoadingSpinner size="lg" className="mx-auto" />
           <p className="mt-4 text-gray-600">경락가격 정보를 불러오는 중...</p>
           {marketName && (
             <p className="text-sm text-gray-500 mt-2">{marketName} - {selectedDate}</p>

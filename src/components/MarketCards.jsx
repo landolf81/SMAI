@@ -3,6 +3,7 @@ import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { adService } from '../services';
 import MobileAdDisplay from './MobileAdDisplay';
+import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 
 // 스크롤 시 요소가 화면 중앙에 가까워지면 선명해지는 커스텀 훅
@@ -257,7 +258,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 loading-container safe-area-top safe-area-bottom">
         <div className="text-center">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
+          <LoadingSpinner size="lg" className="mx-auto" />
           <p className="mt-4 text-gray-600">경락가 정보를 불러오는 중...</p>
           <div className="mt-2 text-sm text-gray-500">
             {formatDateForDisplay(selectedDate)} 데이터 조회 중

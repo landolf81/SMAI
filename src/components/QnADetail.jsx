@@ -10,6 +10,7 @@ import { faEllipsisH, faMicrophone, faStop } from "@fortawesome/free-solid-svg-i
 import { v4 as uuidv4 } from 'uuid';
 import MobileAdDisplay from './MobileAdDisplay';
 import ProfileModal from './ProfileModal';
+import LoadingSpinner from './LoadingSpinner';
 import { isMobileDevice } from '../utils/deviceDetector';
 import { getAcceptedFileTypes } from '../utils/mediaUtils';
 
@@ -446,7 +447,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="loading loading-spinner loading-lg"></div>
+        <LoadingSpinner size="lg" />
         <span className="ml-3">질문을 불러오는 중...</span>
       </div>
     );

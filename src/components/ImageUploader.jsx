@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { storageService } from '../services';
 import { v4 as uuidv4 } from 'uuid';
+import LoadingSpinner from './LoadingSpinner';
 
 const ImageUploader = ({
     onImageUploaded,
@@ -171,7 +172,7 @@ const ImageUploader = ({
                         {uploading && (
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                                 <div className="text-center text-white">
-                                    <div className="w-16 h-16 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                    <LoadingSpinner size="lg" className="mx-auto mb-2" />
                                     <p className="text-sm">업로드 중... {uploadProgress}%</p>
                                 </div>
                             </div>

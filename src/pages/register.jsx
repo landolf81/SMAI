@@ -2,6 +2,7 @@ import { useState, useContext, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import MobileBottomNav from '../components/MobileBottomNav';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
 
 const Register = () => {
@@ -220,7 +221,7 @@ const Register = () => {
             >
               {loading ? (
                 <div className="flex items-center justify-center">
-                  <div className="w-5 h-5 border-2 border-gray-800 border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <LoadingSpinner size="sm" className="mr-2" />
                   로그인 중...
                 </div>
               ) : (
