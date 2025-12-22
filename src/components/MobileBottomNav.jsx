@@ -153,7 +153,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
 
   return (
     <div
-      className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-150 will-change-transform md:hidden ${
+      className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-150 will-change-transform lg:hidden ${
         scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
       }`}
     >
