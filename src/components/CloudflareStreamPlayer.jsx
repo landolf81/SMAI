@@ -290,7 +290,7 @@ const CloudflareStreamPlayer = ({
         />
         {/* 인코딩 중 오버레이 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60">
-          <LoadingSpinner size="md" className="mb-2" />
+          <LoadingSpinner size="lg" className="mb-2" />
           <span className="text-white text-sm">동영상 인코딩 중...</span>
           <span className="text-gray-400 text-xs mt-1">잠시 후 다시 시도해주세요</span>
         </div>
@@ -328,7 +328,7 @@ const CloudflareStreamPlayer = ({
     <div className={`relative bg-gray-900 ${aspectRatioClass} overflow-hidden ${className}`}>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
-          <LoadingSpinner size="md" />
+          <LoadingSpinner size="lg" />
         </div>
       )}
 

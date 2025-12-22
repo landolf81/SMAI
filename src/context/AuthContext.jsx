@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useRef } from "react";
 import { supabase, supabaseHelpers } from "../config/supabase.js";
 import { generateRandomId, generateRandomNickname } from "../utils/randomGenerator";
 
@@ -8,11 +8,19 @@ export const AuthContext = createContext();
 export const AuthContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const initializedRef = useRef(false);
 
   // 세션 변경 감지 및 사용자 정보 업데이트
   useEffect(() => {
     // 초기 세션 확인
     const initializeAuth = async () => {
+      // React Strict Mode에서 이중 실행 방지
+      if (initializedRef.current) {
+        console.log("⏭️ 이미 초기화됨, 스킵");
+        return;
+      }
+      initializedRef.current = true;
+
       try {
         console.log("🚀 인증 초기화 시작...");
 
@@ -29,9 +37,7 @@ export const AuthContextProvider = ({ children }) => {
 
         if (session?.user) {
           // 사용자 프로필 정보 조회
-          console.log("🔍 초기 프로필 조회 시작:", session.user.id);
           const userProfile = await supabaseHelpers.getUserProfile(session.user.id);
-          console.log("✅ 초기 프로필 조회 성공:", userProfile);
           setCurrentUser(userProfile);
         } else {
           setCurrentUser(null);
@@ -64,10 +70,11 @@ export const AuthContextProvider = ({ children }) => {
           return;
         }
 
-        // SIGNED_IN, TOKEN_REFRESHED 같은 이벤트는 프로필 재조회 불필요
+        // SIGNED_IN, TOKEN_REFRESHED, INITIAL_SESSION 같은 이벤트는 프로필 재조회 불필요
         // SIGNED_IN: login 함수에서 이미 처리
         // TOKEN_REFRESHED: 백그라운드 토큰 갱신 (프로필 변경 없음)
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // INITIAL_SESSION: initializeAuth()에서 이미 처리
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
           console.log(`⏭️ ${event} 이벤트는 프로필 재조회 불필요, 스킵`);
           return;
         }
