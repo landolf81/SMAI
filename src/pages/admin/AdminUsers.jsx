@@ -400,6 +400,9 @@ const UserListContent = ({
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{user.username || user.name}</div>
+                        {user.nickname && (
+                          <div className="text-sm text-blue-600">@{user.nickname}</div>
+                        )}
                         <div className="text-sm text-gray-500">{user.email}</div>
                       </div>
                     </div>
