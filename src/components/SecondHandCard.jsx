@@ -85,7 +85,7 @@ const SecondHandCard = ({ post, onCardClick }) => {
 
   const handleClick = () => {
     if (onCardClick) {
-      onCardClick(post.id);
+      onCardClick(post.id, post.title || post.name);
     } else {
       navigate(`/post/${post.id}`);
     }

@@ -282,7 +282,7 @@ useEffect(() => {
                       <button
                         onClick={() => {
                           closeWriteMenu();
-                          if (currentUser?.is_verified) {
+                          if (currentUser?.is_verified || currentUser?.verified) {
                             navigate('/secondhand/new');
                           } else {
                             alert('인증된 사용자만 사고팔고 게시글을 작성할 수 있습니다.');

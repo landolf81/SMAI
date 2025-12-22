@@ -21,8 +21,8 @@ const SecondHandEditor = () => {
 
   const isEditMode = !!id;
 
-  // 인증 확인 (is_verified 체크)
-  const isVerified = currentUser?.is_verified === true;
+  // 인증 확인 (is_verified 또는 verified 체크)
+  const isVerified = currentUser?.is_verified === true || currentUser?.verified === true;
 
   // 비인증 사용자는 접근 불가
   useEffect(() => {
@@ -509,9 +509,9 @@ const SecondHandEditor = () => {
               className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              maxLength={100}
+              maxLength={20}
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/100</p>
+            <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/20</p>
           </div>
 
           {/* 파일 업로드 */}
@@ -648,7 +648,9 @@ const SecondHandEditor = () => {
               className="w-full min-h-[150px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              maxLength={200}
             />
+            <p className="text-xs text-gray-400 mt-1 text-right">{content.length}/200</p>
 
             {gpsData && (
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">

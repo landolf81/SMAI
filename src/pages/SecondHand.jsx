@@ -24,7 +24,7 @@ const SecondHand = () => {
   const [isMobile] = useState(() => isMobileDevice());
 
   // 상세보기 모달 상태
-  const [selectedPostId, setSelectedPostId] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null); // { id, title }
   const modalRef = useRef(null);
 
   // 검색 모드 진입 이벤트 리스너 - startTransition으로 최적화
@@ -50,7 +50,7 @@ const SecondHand = () => {
 
   // 모달 열릴 때 배경 스크롤 막기 및 최상단 이동
   useEffect(() => {
-    if (selectedPostId) {
+    if (selectedPost) {
       // 모달이 열리면 body 스크롤 막기
       document.body.style.overflow = 'hidden';
       // 모달 최상단으로 스크롤
@@ -66,7 +66,7 @@ const SecondHand = () => {
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [selectedPostId]);
+  }, [selectedPost]);
 
   // 순차적 렌더링을 위한 상태
   const [renderedCount, setRenderedCount] = useState(0);
@@ -309,7 +309,7 @@ const SecondHand = () => {
                   >
                     <SecondHandCard
                       post={item.data}
-                      onCardClick={(postId) => setSelectedPostId(postId)}
+                      onCardClick={(postId, title) => setSelectedPost({ id: postId, title })}
                     />
                   </div>
                 );
@@ -338,7 +338,7 @@ const SecondHand = () => {
                   <p className="text-gray-500 mb-4">첫 번째 상품을 등록해보세요!</p>
                   <button
                     onClick={() => {
-                      if (currentUser?.is_verified) {
+                      if (currentUser?.is_verified || currentUser?.verified) {
                         navigate('/secondhand/new');
                       } else {
                         alert('인증된 사용자만 사고팔고 게시글을 작성할 수 있습니다.');
@@ -356,14 +356,16 @@ const SecondHand = () => {
       </div>
 
       {/* 상세보기 모달 - Portal로 body에 직접 렌더링 */}
-      {selectedPostId && createPortal(
+      {selectedPost && createPortal(
         <div ref={modalRef} className="fixed inset-0 z-[9999] bg-white overflow-y-auto">
           {/* 헤더 - 닫기 버튼 */}
           <div className="sticky top-0 z-[10000] bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">상세보기</h2>
+            <h2 className="text-lg font-semibold text-gray-800 truncate pr-2">
+              {selectedPost.title || '상세보기'}
+            </h2>
             <button
-              onClick={() => setSelectedPostId(null)}
-              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              onClick={() => setSelectedPost(null)}
+              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors flex-shrink-0"
               title="닫기"
             >
               <CloseIcon className="text-gray-600" />
@@ -372,15 +374,15 @@ const SecondHand = () => {
 
           {/* 콘텐츠 */}
           <PostDetail
-            postId={selectedPostId}
+            postId={selectedPost.id}
             isModal={true}
-            onClose={() => setSelectedPostId(null)}
+            onClose={() => setSelectedPost(null)}
           />
 
           {/* 하단 닫기 버튼 - 콘텐츠 바로 아래 */}
           <div className="px-4 pb-4 pt-2">
             <button
-              onClick={() => setSelectedPostId(null)}
+              onClick={() => setSelectedPost(null)}
               className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >
               <CloseIcon fontSize="small" />
