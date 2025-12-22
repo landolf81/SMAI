@@ -426,21 +426,7 @@ const Home = () => {
     touchStartTime.current = 0;
   }, [goToNextDay, goToPreviousDay]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 loading-container safe-area-top safe-area-bottom">
-        <div className="text-center">
-          <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="mt-4 text-gray-600">경락가 정보를 불러오는 중...</p>
-          <div className="mt-2 text-sm text-gray-500">
-            {formatDateSimple(selectedDate)} 데이터 조회 중
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // PC 사용자를 위한 안내 화면
+// PC 사용자를 위한 안내 화면
   if (!isMobile) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 flex items-center justify-center relative overflow-hidden">
