@@ -78,12 +78,12 @@ const Login = () => {
         {/* 로고 */}
         <img
           src="/logo.svg"
-          alt="선남 참외 이야기"
+          alt="참외 이야기"
           className="w-24 h-24 mb-6 object-contain"
         />
 
         {/* 타이틀 */}
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">선남 참외 이야기</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">참외 이야기</h1>
         <p className="text-gray-500 mb-8">성주 지역 농업인 커뮤니티</p>
 
         {/* 로그인 카드 */}

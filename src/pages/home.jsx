@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -7,7 +7,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { marketService } from '../services';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
-import { isMobileDevice, isTabletDevice } from '../utils/deviceDetector';
+import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
 // 색상 정의
@@ -20,6 +20,11 @@ const COLORS = {
 };
 
 const Home = () => {
+  // PC 접속 시 랜딩 페이지로 리다이렉트
+  if (isDesktopDevice()) {
+    return <Navigate to="/landing" replace />;
+  }
+
   const [marketData, setMarketData] = useState([]);
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -450,7 +455,7 @@ const Home = () => {
                 <StoreIcon className="text-6xl text-white" />
               </div>
               <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent mb-4">
-                선남 참외 이야기
+                참외 이야기
               </h1>
               <p className="text-xl text-gray-600">
                 성주 지역 농산물 거래와 소통을 위한 커뮤니티 플랫폼

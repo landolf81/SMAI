@@ -115,7 +115,7 @@ const Register = () => {
           {/* 로고 이미지 */}
           <img
             src="/logo.svg"
-            alt="선남 참외 이야기 로고"
+            alt="참외 이야기 로고"
             className="h-24 md:h-32 mx-auto mb-8 object-contain"
           />
           <p className="text-xl md:text-2xl text-gray-600 font-light">

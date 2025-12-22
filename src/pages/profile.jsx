@@ -160,7 +160,7 @@ const Profile = () => {
               {!data.coverPic && (
                 <div className="text-center">
                   <img src="/logo.svg" alt="로고" className="w-20 h-20 mx-auto mb-2" />
-                  <p className="text-market-700 font-medium">선남 참외 이야기</p>
+                  <p className="text-market-700 font-medium">참외 이야기</p>
                 </div>
               )}
             </div>

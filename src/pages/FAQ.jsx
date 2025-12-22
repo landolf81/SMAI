@@ -11,8 +11,8 @@ const FAQ = () => {
       category: '서비스 이용',
       items: [
         {
-          question: '선남 참외 이야기는 어떤 서비스인가요?',
-          answer: '선남 참외 이야기는 성주군 농업인을 위한 종합 커뮤니티 플랫폼입니다. 경락 정보 조회, 커뮤니티 소통, 중고거래, QnA 등 다양한 기능을 제공합니다.'
+          question: '참외 이야기는 어떤 서비스인가요?',
+          answer: '참외 이야기는 성주군 농업인을 위한 종합 커뮤니티 플랫폼입니다. 경락 정보 조회, 커뮤니티 소통, 중고거래, QnA 등 다양한 기능을 제공합니다.'
         },
         {
           question: '회원가입은 어떻게 하나요?',
@@ -123,7 +123,7 @@ const FAQ = () => {
         <div className="max-w-3xl mx-auto text-center">
           <HelpOutlineIcon style={{ fontSize: 48 }} className="mb-2" />
           <h1 className="text-2xl font-bold mb-2">자주 묻는 질문</h1>
-          <p className="text-amber-50">선남 참외 이야기 이용에 대한 궁금증을 해결해드립니다</p>
+          <p className="text-amber-50">참외 이야기 이용에 대한 궁금증을 해결해드립니다</p>
         </div>
       </div>
 

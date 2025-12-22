@@ -29,13 +29,13 @@ const PCLanding = () => {
         {/* 로고 */}
         <img
           src="/logo.svg"
-          alt="선남 참외 이야기"
+          alt="참외 이야기"
           className="w-32 h-32 mx-auto mb-8 object-contain"
         />
 
         {/* 타이틀 */}
         <h1 className="text-5xl font-bold bg-gradient-to-r from-yellow-500 to-green-500 bg-clip-text text-transparent mb-4">
-          선남 참외 이야기
+          참외 이야기
         </h1>
 
         <p className="text-xl text-gray-600 mb-12">
@@ -50,7 +50,7 @@ const PCLanding = () => {
             모바일에서 이용해주세요
           </h2>
           <p className="text-gray-600 leading-relaxed">
-            선남 참외 이야기는 모바일에 최적화된 서비스입니다.<br />
+            참외 이야기는 모바일에 최적화된 서비스입니다.<br />
             스마트폰으로 접속하시면 더 편리하게 이용하실 수 있습니다.
           </p>
 
@@ -90,7 +90,7 @@ const PCLanding = () => {
 
       {/* 푸터 */}
       <div className="absolute bottom-6 text-center text-gray-400 text-sm">
-        <p>선남 참외 이야기 &copy; 2024</p>
+        <p>참외 이야기 &copy; 2024</p>
       </div>
 
       {/* 관리자 로그인 모달 */}
