@@ -7,6 +7,7 @@ import EnhancedInstagramFeed from "../components/EnhancedInstagramFeed";
 import LikedPosts from "../components/LikedPosts";
 import UserComments from "../components/UserComments";
 import Update from "../components/update";
+import LoadingSpinner from "../components/LoadingSpinner";
 import DMList from "../components/DMList";
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
@@ -113,7 +114,7 @@ const Profile = () => {
   if (isPending) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50">
-        <div className="loading loading-spinner loading-lg text-orange-500"></div>
+        <LoadingSpinner size="lg" />
         <p className="mt-4 text-gray-600 text-lg">프로필을 불러오는 중...</p>
       </div>
     );

@@ -5,6 +5,7 @@ import { useNavigationType, useNavigate } from 'react-router-dom';
 import { postService, adService } from '../services';
 import SecondHandCard from '../components/SecondHandCard';
 import MobileAdDisplay from '../components/MobileAdDisplay';
+import LoadingSpinner from '../components/LoadingSpinner';
 import PostDetail from './PostDetail';
 import { AuthContext } from '../context/AuthContext';
 import { isMobileDevice } from '../utils/deviceDetector';
@@ -271,7 +272,7 @@ const SecondHand = () => {
         <div className="px-4 py-4">
           {isLoading ? (
             <div className="flex justify-center py-12">
-              <div className="loading loading-spinner loading-lg text-orange-500"></div>
+              <LoadingSpinner size="lg" />
             </div>
           ) : error ? (
             <div className="text-center py-12">

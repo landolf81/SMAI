@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faReply, faEllipsisV, faTrash, faEdit, faFlag, faHeart as faHeartSolid, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import ReportModal from './ReportModal';
+import LoadingSpinner from './LoadingSpinner';
 
 const CommentsSection = ({ postId, postTag, post }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
@@ -299,8 +300,8 @@ const CommentsSection = ({ postId, postTag, post }) => {
   if (isLoading) {
     return (
       <div className="border-t border-gray-100 animate-fadeIn bg-gray-50">
-        <div className="p-4 text-center">
-          <div className="loading loading-spinner loading-sm"></div>
+        <div className="p-4 text-center flex items-center justify-center">
+          <LoadingSpinner size="sm" />
           <span className="ml-2 text-gray-500">댓글을 불러오는 중...</span>
         </div>
       </div>
@@ -365,7 +366,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                   className="ml-auto px-3 py-1.5 bg-orange-500 text-white rounded-lg text-sm font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                 >
                   {addCommentMutation.isPending ? (
-                    <span className="loading loading-spinner loading-xs mr-1"></span>
+                    <LoadingSpinner size={14} className="mr-1" />
                   ) : null}
                   작성
                 </button>
