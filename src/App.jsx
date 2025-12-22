@@ -15,7 +15,7 @@ import Navbar from './components/Navbar';
 import Leftbar from './components/Leftbar';
 import MobileBottomNav from './components/MobileBottomNav';
 import { AuthContext } from './context/AuthContext';
-import { isMobileDevice } from './utils/deviceDetector';
+import { isMobileDevice, isTabletDevice } from './utils/deviceDetector';
 import { useScrollDirection } from './hooks/useScrollDirection';
 import {
   QueryClient,
@@ -214,7 +214,7 @@ useEffect(() => {
         </div>
 
         {/* 플로팅 글쓰기 버튼 + 팝업 메뉴 */}
-        {isCommunityPage && currentUser && !isBanned && (isMobileDevice() || window.innerWidth <= 768) && (
+        {isCommunityPage && currentUser && !isBanned && (isMobileDevice() || isTabletDevice() || window.innerWidth <= 768) && (
           <div className={`fixed right-4 z-40 transition-all duration-300 ${
             scrollDirection === 'down' ? 'bottom-4' : 'bottom-20'
           }`}>
@@ -355,8 +355,8 @@ useEffect(() => {
           </div>
         )}
 
-        {/* 모바일용 하단 네비게이션 - 스크롤 방향에 따라 숨김/표시 */}
-        {(isMobileDevice() || window.innerWidth <= 768) && (
+        {/* 모바일/태블릿용 하단 네비게이션 - 스크롤 방향에 따라 숨김/표시 */}
+        {(isMobileDevice() || isTabletDevice() || window.innerWidth <= 768) && (
           <MobileBottomNav scrollDirection={scrollDirection} />
         )}
       </div>
