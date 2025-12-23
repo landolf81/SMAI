@@ -161,9 +161,10 @@ export const adService = {
       if (updates.title !== undefined) updateData.title = updates.title;
       if (updates.content !== undefined) updateData.content = updates.content;
       if (updates.image_url !== undefined) updateData.image_url = updates.image_url;
-      if (updates.link_url !== undefined) updateData.link_url = updates.link_url;
-      if (updates.start_date !== undefined) updateData.start_date = updates.start_date;
-      if (updates.end_date !== undefined) updateData.end_date = updates.end_date;
+      if (updates.link_url !== undefined) updateData.link_url = updates.link_url || null;
+      // 빈 문자열은 null로 변환 (PostgreSQL date 타입은 빈 문자열 불가)
+      if (updates.start_date !== undefined) updateData.start_date = updates.start_date || null;
+      if (updates.end_date !== undefined) updateData.end_date = updates.end_date || null;
       if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
       if (updates.priority !== undefined) updateData.priority = updates.priority;
       if (updates.priority_boost !== undefined) updateData.priority = updates.priority_boost;

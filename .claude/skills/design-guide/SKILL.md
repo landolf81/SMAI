@@ -1,10 +1,10 @@
 ---
 name: design-guide
-description: 성주마이 프로젝트의 Tailwind CSS, DaisyUI 디자인. 반응형 레이아웃, 색상 테마, 컴포넌트 스타일링, UI/UX 개선.
+description: 참외이야기 프로젝트의 Tailwind CSS, DaisyUI 디자인. 반응형 레이아웃, 색상 테마, 컴포넌트 스타일링, UI/UX 개선.
 allowed-tools: Read, Grep, Glob
 ---
 
-# 성주마이 디자인 가이드
+# 참외이야기 디자인 가이드
 
 ## 기술 스택
 - Tailwind CSS

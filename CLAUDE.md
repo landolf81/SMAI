@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-성주마이 (SMAI) - 성주군 농업인을 위한 커뮤니티 웹앱. React + Vite 기반.
+참외이야기 - 성주군 농업인을 위한 커뮤니티 웹앱. React + Vite 기반.
 
 ## Development Commands
 

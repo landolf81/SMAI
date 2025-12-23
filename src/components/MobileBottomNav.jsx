@@ -11,7 +11,7 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import PersonIcon from '@mui/icons-material/Person';
 
-// 커스텀 홈 아이콘 (성주마이 로고)
+// 커스텀 홈 아이콘 (참외이야기 로고)
 const HomeIcon = ({ className, isActive }) => (
   <svg
     viewBox="0 0 603 603"
