@@ -71,11 +71,8 @@ const MobileBottomNav = ({ scrollDirection }) => {
     return () => observer.disconnect();
   }, []);
 
-  // 커뮤니티 모드 감지
-  const isCommunityMode = ['/community', '/qna', '/secondhand'].includes(location.pathname);
-
-  // 일반 모드 버튼 구성 (4개, 텍스트+아이콘)
-  const normalModeButtons = [
+  // 메뉴 버튼 구성 (5개, 아이콘+한글명)
+  const buttons = [
     {
       id: 'home',
       path: '/',
@@ -95,39 +92,10 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'community',
       path: '/community',
-      label: '커뮤니티',
+      label: '커뮤',
       icon: ForumIcon,
       showLabel: true,
-      activeColor: 'text-[#FFC425]'
-    },
-    {
-      id: 'profile',
-      path: currentUser ? `/profile/${currentUser.id}` : '/login',
-      label: currentUser ? '프로필' : '로그인',
-      icon: PersonIcon,
-      showLabel: true,
-      isProfile: true,
-      activeColor: 'text-purple-600'
-    }
-  ];
-
-  // 커뮤니티 모드 버튼 구성 (5개, 홈/프로필만 아이콘)
-  const communityModeButtons = [
-    {
-      id: 'home',
-      path: '/',
-      label: '홈',
-      icon: HomeIcon,
-      showLabel: false,  // 아이콘만 표시
-      activeColor: 'text-[#FFC600]'
-    },
-    {
-      id: 'community',
-      path: '/community',
-      label: '커뮤니티',
-      icon: ForumIcon,
-      showLabel: true,
-      activeColor: 'text-[#FFC425]'
+      activeColor: 'text-green-700'
     },
     {
       id: 'qna',
@@ -135,29 +103,29 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: 'Q&A',
       icon: HelpOutlineIcon,
       showLabel: true,
-      activeColor: 'text-blue-600'
-    },
-    {
-      id: 'secondhand',
-      path: '/secondhand',
-      label: '사고팔고',
-      icon: ShoppingBagIcon,
-      showLabel: true,
-      activeColor: 'text-green-600'
+      activeColor: 'text-blue-600',
+      hideIndicator: true
     },
     {
       id: 'profile',
       path: currentUser ? `/profile/${currentUser.id}` : '/login',
       label: currentUser ? '프로필' : '로그인',
       icon: PersonIcon,
-      showLabel: false,  // 아이콘만 표시
+      showLabel: true,
       isProfile: true,
       activeColor: 'text-purple-600'
     }
   ];
 
-  // 현재 모드에 맞는 버튼 선택
-  const buttons = isCommunityMode ? communityModeButtons : normalModeButtons;
+  // 사고팔고 메뉴 (비활성화 - 차후 적용)
+  // {
+  //   id: 'secondhand',
+  //   path: '/secondhand',
+  //   label: '사고팔고',
+  //   icon: ShoppingBagIcon,
+  //   showLabel: true,
+  //   activeColor: 'text-green-600'
+  // },
 
   // 버튼 클릭 핸들러
   const handleButtonClick = (button) => {
@@ -236,7 +204,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
                 )}
 
                 {/* 활성 인디케이터 */}
-                {isActive && (
+                {isActive && !button.hideIndicator && (
                   <div className={`w-1 h-1 rounded-full mt-1 ${button.activeColor.replace('text-', 'bg-')}`}></div>
                 )}
               </button>

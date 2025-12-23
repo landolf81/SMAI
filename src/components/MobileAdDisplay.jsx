@@ -343,7 +343,7 @@ const MobileAdDisplay = ({ ad }) => {
         </div>
 
         {/* 메인 미디어 */}
-        <div 
+        <div
           className="relative bg-gray-100 cursor-pointer overflow-hidden aspect-square"
           onClick={handleAdClick}
         >
@@ -423,9 +423,6 @@ const MobileAdDisplay = ({ ad }) => {
               </div>
             </div>
           )}
-          
-          {/* 오버레이 그라데이션 */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
         </div>
         
         {/* 콘텐츠 영역 */}
