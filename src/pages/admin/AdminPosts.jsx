@@ -294,7 +294,7 @@ const AdminPosts = () => {
                 {/* 상단 헤더 - 작성자 정보 & 고정 상태 */}
                 <div className="p-4 border-b">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-1">
                       {/* 프로필 이미지 */}
                       <div className="avatar">
                         <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
@@ -316,7 +316,12 @@ const AdminPosts = () => {
                       </div>
                       <div>
                         <div className="font-semibold">{authorName}</div>
-                        <div className="text-xs text-gray-500">ID: {post.user_id?.substring(0, 8) || 'N/A'}...</div>
+                        <div className="text-xs text-gray-500">#{post.id || 'N/A'}</div>
+                      </div>
+                      {/* hot_score 표시 */}
+                      <div className="ml-auto text-right">
+                        <div className="text-xs text-gray-400">HOT</div>
+                        <div className="font-bold text-orange-500">{(post.hot_score || 0).toFixed(1)}</div>
                       </div>
                     </div>
                     <div className="flex gap-1">

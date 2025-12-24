@@ -15,8 +15,10 @@ const MobileAdDisplay = ({ ad }) => {
   const [modalVideoMuted, setModalVideoMuted] = useState(false); // false = 음소거 해제
   const [modalMediaIndex, setModalMediaIndex] = useState(0); // 모달 내 미디어 인덱스
   const [isVisible, setIsVisible] = useState(false);
+  const [hasTrackedImpression, setHasTrackedImpression] = useState(false); // IAB 표준 노출 추적
   const videoRef = React.useRef(null);
   const adCardRef = React.useRef(null);
+  const impressionTimerRef = React.useRef(null); // 노출 타이머
 
   // 추가 미디어 불러오기
   useEffect(() => {
@@ -39,27 +41,37 @@ const MobileAdDisplay = ({ ad }) => {
     fetchAdMedia();
   }, [ad]);
 
-  // 광고 노출 추적
-  useEffect(() => {
-    if (ad && ad.id) {
-      adService.trackAdImpression(ad.id).catch(() => {});
-    }
-  }, [ad]);
 
-  // Intersection Observer로 스크롤 시 동영상 자동 재생/정지
+  // Intersection Observer로 스크롤 시 동영상 자동 재생/정지 + IAB 표준 노출 추적
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           setIsVisible(entry.isIntersecting);
 
+          // 동영상 재생/정지 (기존 로직 유지)
           if (videoRef.current) {
             if (entry.isIntersecting) {
-              // 화면에 보이면 재생
               videoRef.current.play().catch(() => {});
             } else {
-              // 화면에서 벗어나면 일시정지
               videoRef.current.pause();
+            }
+          }
+
+          // IAB 표준 노출 추적: 50% 이상 보이고 1초 이상 지속 시 카운트
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            // 50% 이상 보일 때 1초 타이머 시작
+            if (!hasTrackedImpression && !impressionTimerRef.current && ad?.id) {
+              impressionTimerRef.current = setTimeout(() => {
+                adService.trackAdImpression(ad.id).catch(() => {});
+                setHasTrackedImpression(true);
+              }, 1000); // 1초 후 카운트
+            }
+          } else {
+            // 화면에서 벗어나면 타이머 취소
+            if (impressionTimerRef.current) {
+              clearTimeout(impressionTimerRef.current);
+              impressionTimerRef.current = null;
             }
           }
         });
@@ -77,8 +89,12 @@ const MobileAdDisplay = ({ ad }) => {
       if (adCardRef.current) {
         observer.unobserve(adCardRef.current);
       }
+      // 타이머 정리
+      if (impressionTimerRef.current) {
+        clearTimeout(impressionTimerRef.current);
+      }
     };
-  }, [currentMediaIndex]); // currentMediaIndex 변경 시 다시 설정
+  }, [currentMediaIndex, hasTrackedImpression, ad]); // 의존성 추가
 
   // 파일 확장자로 미디어 타입 판단
   const getMediaTypeFromPath = (path, mediaType) => {

@@ -6,7 +6,7 @@ import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
 import 'moment/locale/ko';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEllipsisH, faMicrophone, faStop } from "@fortawesome/free-solid-svg-icons";
+import { faEllipsisH, faMicrophone, faStop, faImage, faTimes } from "@fortawesome/free-solid-svg-icons";
 import { v4 as uuidv4 } from 'uuid';
 import MobileAdDisplay from './MobileAdDisplay';
 import ProfileModal from './ProfileModal';
@@ -62,6 +62,11 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const [answerContent, setAnswerContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnswerFormOpen, setIsAnswerFormOpen] = useState(false);
+
+  // 답변 파일 업로드 상태
+  const [answerFiles, setAnswerFiles] = useState([]);
+  const [answerPreviews, setAnswerPreviews] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   // 프로필 모달 상태
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -187,15 +192,29 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
   // 답변 작성 뮤테이션
   const createAnswerMutation = useMutation({
-    mutationFn: (content) => qnaService.addAnswer(questionId, content),
+    mutationFn: async ({ content, files }) => {
+      // 1. 파일 업로드
+      let imageUrls = [];
+      if (files && files.length > 0) {
+        setUploadProgress({ current: 0, total: files.length });
+        const uploadResults = await storageService.uploadQnAImages(questionId, files);
+        imageUrls = uploadResults.map(r => r.url);
+        setUploadProgress(null);
+      }
+      // 2. 답변 생성
+      return qnaService.addAnswer(questionId, content, imageUrls);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['qna-question', questionId]);
       setAnswerContent('');
+      setAnswerFiles([]);
+      setAnswerPreviews([]);
       setIsSubmitting(false);
     },
     onError: (error) => {
       console.error('답변 작성 실패:', error);
       alert('답변 작성에 실패했습니다: ' + error.message);
+      setUploadProgress(null);
       setIsSubmitting(false);
     }
   });
@@ -292,6 +311,48 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
     }
   });
 
+  // 답변 파일 선택 핸들러
+  const handleAnswerFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    const validFiles = selectedFiles.filter(file => {
+      if (file.size > maxSize) {
+        alert(`${file.name}은(는) 50MB를 초과합니다.`);
+        return false;
+      }
+      return file.type.startsWith('image/') || file.type.startsWith('video/');
+    });
+
+    // 동영상 1개 제한
+    const existingVideos = answerFiles.filter(f => f.type.startsWith('video/')).length;
+    const newVideos = validFiles.filter(f => f.type.startsWith('video/')).length;
+    if (existingVideos + newVideos > 1) {
+      alert('동영상은 1개만 업로드할 수 있습니다.');
+      return;
+    }
+
+    setAnswerFiles(prev => [...prev, ...validFiles]);
+
+    // 미리보기 생성
+    const newPreviews = validFiles.map(file => ({
+      url: URL.createObjectURL(file),
+      type: file.type,
+      name: file.name
+    }));
+    setAnswerPreviews(prev => [...prev, ...newPreviews]);
+  };
+
+  // 답변 파일 제거 핸들러
+  const handleRemoveAnswerFile = (index) => {
+    setAnswerFiles(prev => prev.filter((_, i) => i !== index));
+    setAnswerPreviews(prev => {
+      // URL 해제
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
   // 답변 작성 핸들러
   const handleSubmitAnswer = (e) => {
     e.preventDefault();
@@ -312,7 +373,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
     }
 
     setIsSubmitting(true);
-    createAnswerMutation.mutate(answerContent.trim());
+    createAnswerMutation.mutate({ content: answerContent.trim(), files: answerFiles });
   };
 
   // 답변 좋아요 핸들러
@@ -718,6 +779,44 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                       <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
                     </div>
 
+                    {/* 답변 이미지/영상 */}
+                    {answer.photo && (() => {
+                      let images = [];
+                      try {
+                        images = JSON.parse(answer.photo);
+                      } catch {
+                        images = [answer.photo];
+                      }
+                      if (!Array.isArray(images) || images.length === 0) return null;
+
+                      return (
+                        <div className="mb-4 flex flex-wrap justify-center gap-2">
+                          {images.map((imgUrl, idx) => {
+                            const isVideo = imgUrl.includes('.mp4') || imgUrl.includes('.mov') || imgUrl.includes('.webm') || imgUrl.includes('stream');
+                            return isVideo ? (
+                              <video
+                                key={idx}
+                                src={imgUrl}
+                                controls
+                                className="max-w-full rounded-lg"
+                                style={{ maxHeight: '300px' }}
+                                preload="metadata"
+                              />
+                            ) : (
+                              <img
+                                key={idx}
+                                src={imgUrl}
+                                alt={`답변 이미지 ${idx + 1}`}
+                                className="max-w-full h-auto rounded-lg cursor-pointer hover:opacity-90"
+                                style={{ maxHeight: '300px' }}
+                                onClick={() => window.open(imgUrl, '_blank')}
+                              />
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
+
                     {/* 답변 액션 및 메타 정보 */}
                     <div className="flex items-center justify-between pt-4 border-t">
                       <div className="flex items-center gap-4">
@@ -816,24 +915,76 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
                 disabled={isSubmitting}
               />
+
+              {/* 이미지/영상 미리보기 */}
+              {answerPreviews.length > 0 && (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {answerPreviews.map((preview, index) => (
+                    <div key={index} className="relative">
+                      {preview.type.startsWith('video/') ? (
+                        <div className="w-full h-20 bg-gray-800 rounded-lg flex items-center justify-center">
+                          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <img
+                          src={preview.url}
+                          alt={`미리보기 ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg"
+                        />
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveAnswerFile(index)}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600"
+                      >
+                        <FontAwesomeIcon icon={faTimes} className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* 업로드 진행률 */}
+              {uploadProgress && (
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="text-sm text-blue-700">파일 업로드 중...</div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between mt-3">
-                {/* 음성 입력 버튼 */}
-                {speechSupported && (
-                  <button
-                    type="button"
-                    onClick={toggleSpeechRecognition}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
-                      isListening
-                        ? 'bg-red-500 text-white animate-pulse'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    disabled={isSubmitting}
-                    title={isListening ? '음성 입력 중지' : '음성 입력'}
-                  >
-                    <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-4 h-4" />
-                  </button>
-                )}
-                {!speechSupported && <div />}
+                <div className="flex items-center gap-2">
+                  {/* 이미지 업로드 버튼 */}
+                  <label className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-all">
+                    <FontAwesomeIcon icon={faImage} className="w-4 h-4" />
+                    <input
+                      type="file"
+                      accept={getAcceptedFileTypes()}
+                      multiple
+                      className="hidden"
+                      onChange={handleAnswerFileChange}
+                      disabled={isSubmitting}
+                    />
+                  </label>
+
+                  {/* 음성 입력 버튼 */}
+                  {speechSupported && (
+                    <button
+                      type="button"
+                      onClick={toggleSpeechRecognition}
+                      className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
+                        isListening
+                          ? 'bg-red-500 text-white animate-pulse'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      disabled={isSubmitting}
+                      title={isListening ? '음성 입력 중지' : '음성 입력'}
+                    >
+                      <FontAwesomeIcon icon={isListening ? faStop : faMicrophone} className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
                 <button
                   type="submit"
                   disabled={!answerContent.trim() || isSubmitting}

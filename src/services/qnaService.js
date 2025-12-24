@@ -342,7 +342,8 @@ export const qnaService = {
         created_at: comment.created_at,
         is_accepted: comment.is_accepted || false,
         likes_count: comment.likes_count || 0,
-        user_liked: false // TODO: 사용자 좋아요 여부 확인 필요
+        user_liked: false, // TODO: 사용자 좋아요 여부 확인 필요
+        photo: comment.photo // 이미지/영상 URL 배열 (JSON 문자열)
       }));
 
       // QnADetail 컴포넌트에서 기대하는 형식으로 반환
@@ -462,13 +463,15 @@ export const qnaService = {
    * 답변 추가
    * @param {string} questionId - 질문 ID
    * @param {string} content - 답변 내용
+   * @param {string[]} images - 이미지 URL 배열
    */
-  async addAnswer(questionId, content) {
+  async addAnswer(questionId, content, images = []) {
     try {
       // commentService를 사용하여 Supabase에 직접 추가
       const comment = await commentService.createComment({
         postId: questionId,
-        content: content
+        content: content,
+        images: images
       });
 
       return comment;

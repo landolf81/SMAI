@@ -173,6 +173,7 @@ export const commentService = {
    * @param {string} commentData.content - 댓글 내용
    * @param {string} commentData.parentId - 부모 댓글 ID (답글인 경우)
    * @param {boolean} commentData.isSecret - 비밀 댓글 여부
+   * @param {string[]} commentData.images - 이미지 URL 배열
    */
   async createComment(commentData) {
     try {
@@ -187,7 +188,8 @@ export const commentService = {
           post_id: commentData.postId,
           description: commentData.content,
           parent_id: commentData.parentId || null,
-          is_secret: commentData.isSecret || false
+          is_secret: commentData.isSecret || false,
+          photo: commentData.images?.length > 0 ? JSON.stringify(commentData.images) : null
           // created_at은 DB 기본값(NOW())을 사용 - 타임존 문제 방지
         }])
         .select(`

@@ -42,7 +42,10 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
   // 모달 ref
   const modalRef = useRef(null);
 
-  // 모달 열릴 때 배경 스크롤 막기 및 최상단 이동
+  // 뒤로가기로 모달 닫기 위한 ref
+  const hasAddedHistoryRef = useRef(false);
+
+  // 모달 열릴 때 배경 스크롤 막기 및 최상단 이동 + 뒤로가기 처리
   useEffect(() => {
     if (selectedQuestionId) {
       // 모달이 열리면 body 스크롤 막기
@@ -51,9 +54,29 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
       if (modalRef.current) {
         modalRef.current.scrollTo({ top: 0, behavior: 'instant' });
       }
+
+      // 히스토리에 상태 추가 (뒤로가기로 모달 닫기 위해)
+      if (!hasAddedHistoryRef.current) {
+        window.history.pushState({ qnaModal: true }, '');
+        hasAddedHistoryRef.current = true;
+      }
+
+      // 뒤로가기 이벤트 리스너
+      const handlePopState = () => {
+        setSelectedQuestionId(null);
+        hasAddedHistoryRef.current = false;
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+        document.body.style.overflow = 'unset';
+      };
     } else {
       // 모달이 닫히면 body 스크롤 복원
       document.body.style.overflow = 'unset';
+      hasAddedHistoryRef.current = false;
     }
 
     // 컴포넌트 언마운트 시 정리
