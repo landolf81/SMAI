@@ -12,7 +12,7 @@ import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
-const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments }) => {
+const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments, onOpenCommentsModal }) => {
   const { currentUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -561,7 +561,10 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
           {hasMore && (
             <button
               onClick={() => {
-                if (previewMode && onShowAllComments) {
+                if (onOpenCommentsModal) {
+                  // 모달로 전체 댓글 보기
+                  onOpenCommentsModal();
+                } else if (previewMode && onShowAllComments) {
                   // previewMode에서는 부모 컴포넌트에 알려서 전체 댓글 보기 모드로 전환
                   onShowAllComments();
                 } else {

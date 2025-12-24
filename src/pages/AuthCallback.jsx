@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, supabaseHelpers } from '../config/supabase';
 import { generateRandomId, generateRandomNickname } from '../utils/randomGenerator';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -249,7 +250,9 @@ const AuthCallback = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
-        <div className="loading loading-spinner loading-lg text-primary mb-4"></div>
+        <div className="flex justify-center mb-4">
+          <LoadingSpinner size="lg" />
+        </div>
         <h2 className="text-xl font-bold text-gray-900 mb-2">카카오 로그인</h2>
         <p className="text-gray-600">{status}</p>
       </div>

@@ -25,6 +25,7 @@ import { useFeaturePermissions } from '../hooks/usePermissions';
 import moment from 'moment';
 import ImageSlider from './ImageSlider';
 import CommentsPreview from './CommentsPreview';
+import CommentsModal from './CommentsModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import ReportModal from './ReportModal';
 import ReportDetailsModal from './ReportDetailsModal';
@@ -95,6 +96,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [mediaModalIndex, setMediaModalIndex] = useState(0);
   const [mediaModalTime, setMediaModalTime] = useState(0);  // 동영상 시작 시간
   const [showLoginModal, setShowLoginModal] = useState(false); // 로그인 필요 모달
+  const [showCommentsModal, setShowCommentsModal] = useState(false); // 댓글 모달
 
   // 더블탭 좋아요를 위한 상태
   const [lastTap, setLastTap] = useState(0);
@@ -433,14 +435,15 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       }
       // isLoadingRef.current === true인 경우: 이미 로드 중이므로 아무것도 안 함
     } else {
-      // 화면에서 벗어남 - 정지 전에 debounce 적용 (빠른 상태 변경 무시)
+      // 화면에서 벗어남 - 오디오는 즉시 음소거, 정지는 debounce
+      video.muted = true;
+      video.volume = 0;
+
       pauseTimeoutRef.current = setTimeout(() => {
         // 다시 보이는 상태가 되었으면 정지하지 않음
         if (lastVisibleRef.current) return;
 
         video.pause();
-        video.muted = true;
-        video.volume = 0;
 
         setIsPlaying(false);
         onVideoPause && onVideoPause(post.id);
@@ -1255,12 +1258,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
             <button
               onClick={() => {
-                // 댓글 버튼 클릭 로그 제거
-                setShowComments(!showComments);
-                if (!showComments) setShowCommentForm(false);
+                // 댓글 버튼 클릭 시 모달 열기
+                setShowCommentsModal(true);
               }}
               className={`flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${
-                showComments ? 'text-blue-500' : (post.commentsCount || 0) > 0 ? 'text-blue-600' : 'text-gray-700 hover:text-blue-500'
+                (post.commentsCount || 0) > 0 ? 'text-blue-600' : 'text-gray-700 hover:text-blue-500'
               }`}
             >
               <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
@@ -1330,15 +1332,12 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
         {/* 게시물 내용 */}
         {(post.Desc || post.desc) && (
-          <div className="text-sm text-gray-900 mb-1">
-            {post.post_type !== 'question' && (
-              <span className={`font-semibold mr-2 ${!canClickProfile ? 'text-gray-500' : ''}`}>{authorName}</span>
-            )}
+          <div className="text-base text-gray-900 mb-1 pl-2">
             <span className="whitespace-pre-wrap break-words">{displayDescription}</span>
             {shouldShowMore && (
               <button
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-gray-500 ml-2 hover:text-gray-700"
+                className="text-gray-500 ml-2 hover:text-gray-700 text-sm"
               >
                 {showFullDescription ? '간략히' : '더보기'}
               </button>
@@ -1377,8 +1376,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
       </div>
 
-      {/* 댓글 섹션 - 항상 표시 (기본 2개 미리보기, 토글 시 전체) */}
-      <div className="border-t border-gray-100">
+      {/* 댓글 섹션 - 항상 표시 (기본 2개 미리보기, 더보기 시 모달) */}
+      <div>
         <CommentsPreview
           postId={post.id}
           postTag={post.tag}
@@ -1386,27 +1385,20 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           onToggleCommentForm={() => setShowCommentForm(!showCommentForm)}
           previewMode={!showComments}
           onShowAllComments={() => setShowComments(true)}
+          onOpenCommentsModal={() => setShowCommentsModal(true)}
         />
       </div>
 
-      {/* 댓글 작성 버튼 (댓글 폼이 보이지 않을 때) */}
-      {!showCommentForm && (
-        <div className="px-3 py-1.5 border-t border-gray-100">
-          <button
-            onClick={() => {
-              if (!currentUser) {
-                setShowLoginModal(true);
-                return;
-              }
-              setShowComments(true);
-              setShowCommentForm(true);
-            }}
-            className="text-gray-500 text-xs hover:text-gray-700 transition-colors"
-          >
-            💬 댓글 작성하기
-          </button>
-        </div>
-      )}
+      {/* 댓글 모달 */}
+      <CommentsModal
+        isOpen={showCommentsModal}
+        onClose={() => setShowCommentsModal(false)}
+        postId={post.id}
+        postTag={post.tag}
+      />
+
+      {/* 하단 여백 */}
+      <div className="h-2" />
     </article>
 
     {/* 삭제 확인 모달 */}
