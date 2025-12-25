@@ -36,34 +36,35 @@ const CommentsModal = ({ isOpen, onClose, postId, postTag }) => {
   const recognitionRef = useRef(null);
   const replyRecognitionRef = useRef(null);
   const commentsContainerRef = useRef(null);
+  const scrollYRef = useRef(0);
 
   // 모달이 열리면 배경 스크롤 막기 (터치 포함)
   useEffect(() => {
     if (isOpen) {
+      // 현재 스크롤 위치 저장
+      scrollYRef.current = window.scrollY;
       // 스크롤 막기
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
-      document.body.style.top = `-${window.scrollY}px`;
+      document.body.style.top = `-${scrollYRef.current}px`;
     } else {
       // 스크롤 복원
-      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
       document.body.style.top = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
-      }
+      // 저장된 위치로 복원
+      window.scrollTo(0, scrollYRef.current);
     }
     return () => {
-      const scrollY = document.body.style.top;
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
       document.body.style.top = '';
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      // cleanup 시에도 저장된 위치로 복원
+      if (scrollYRef.current > 0) {
+        window.scrollTo(0, scrollYRef.current);
       }
     };
   }, [isOpen]);
