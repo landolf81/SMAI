@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
@@ -16,9 +16,10 @@ const MobileAdDisplay = ({ ad }) => {
   const [modalMediaIndex, setModalMediaIndex] = useState(0); // 모달 내 미디어 인덱스
   const [isVisible, setIsVisible] = useState(false);
   const [hasTrackedImpression, setHasTrackedImpression] = useState(false); // IAB 표준 노출 추적
-  const videoRef = React.useRef(null);
-  const adCardRef = React.useRef(null);
-  const impressionTimerRef = React.useRef(null); // 노출 타이머
+  const videoRef = useRef(null);
+  const adCardRef = useRef(null);
+  const impressionTimerRef = useRef(null); // 노출 타이머
+  const scrollYRef = useRef(0); // 스크롤 위치 저장
 
   // 추가 미디어 불러오기
   useEffect(() => {
@@ -304,13 +305,17 @@ const MobileAdDisplay = ({ ad }) => {
       console.warn('광고 클릭 추적 실패:', err);
     });
 
+    // 스크롤 위치 저장 및 배경 스크롤 잠금
+    scrollYRef.current = window.scrollY;
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.top = `-${scrollYRef.current}px`;
+
     // 항상 모달로 열기 (링크 유무와 관계없이)
     setModalVideoMuted(false);
     setModalMediaIndex(0); // 첫 번째 미디어부터 시작
     setShowLandingModal(true);
-
-    // body 스크롤 방지
-    document.body.style.overflow = 'hidden';
   };
 
   // 모달 미디어 클릭 핸들러 (링크로 이동)
@@ -332,8 +337,12 @@ const MobileAdDisplay = ({ ad }) => {
     // 다음 모달 열 때를 위해 음소거 해제 상태로 초기화
     setModalVideoMuted(false);
 
-    // body 스크롤 복원
-    document.body.style.overflow = 'auto';
+    // 배경 스크롤 복원
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.width = '';
+    document.body.style.top = '';
+    window.scrollTo(0, scrollYRef.current);
   };
 
   // PC에서는 광고 숨김
@@ -474,14 +483,14 @@ const MobileAdDisplay = ({ ad }) => {
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] landing-modal">
             <div className="bg-white w-full h-full flex flex-col overflow-hidden sm:rounded-lg sm:max-w-md sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:mx-4">
             {/* 모달 헤더 */}
-            <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center justify-between py-2 px-4 border-b">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs font-bold">AD</span>
                 </div>
                 <h3 className="text-lg font-bold text-gray-900">{ad.title}</h3>
               </div>
-              <button 
+              <button
                 onClick={closeLandingModal}
                 className="text-gray-500 hover:text-gray-700 text-xl font-bold"
               >
