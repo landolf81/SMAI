@@ -3,9 +3,20 @@
  * - HEIC/HEIF (아이폰 기본 사진 형식) 지원
  * - 모든 이미지를 가로 1024px WebP로 변환 (용량 최적화)
  * - PNG, JPEG, BMP, TIFF 등 다양한 입력 형식 지원
+ *
+ * heic2any는 동적 import로 HEIC 파일 선택 시에만 로드됩니다.
+ * 초기 번들 크기: ~1.3MB 감소
  */
 
-import heic2any from 'heic2any';
+// heic2any 동적 import (HEIC 파일 선택 시에만 로드)
+let heic2anyModule = null;
+const getHeic2any = async () => {
+  if (!heic2anyModule) {
+    const module = await import('heic2any');
+    heic2anyModule = module.default;
+  }
+  return heic2anyModule;
+};
 
 /**
  * 지원되는 이미지 MIME 타입
@@ -45,6 +56,9 @@ export const isHeicFile = (file) => {
  */
 const convertHeicToBlob = async (file) => {
   try {
+    // 동적으로 heic2any 로드
+    const heic2any = await getHeic2any();
+
     const convertedBlob = await heic2any({
       blob: file,
       toType: 'image/jpeg',
