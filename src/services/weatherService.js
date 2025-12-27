@@ -282,7 +282,13 @@ const parseVilageFcst = (items, minMaxData = null) => {
     if (item.category === 'POP') {
       dailyMap[date].pops.push(parseInt(item.fcstValue));
     }
-    // TMN/TMX는 02시 발표 값 고정 (덮어쓰지 않음)
+    // TMN/TMX: 현재 발표에 값이 있으면 최신 값으로 업데이트
+    if (item.category === 'TMN') {
+      dailyMap[date].tmn = parseFloat(item.fcstValue);
+    }
+    if (item.category === 'TMX') {
+      dailyMap[date].tmx = parseFloat(item.fcstValue);
+    }
   });
 
   // 시간별 예보 정리
