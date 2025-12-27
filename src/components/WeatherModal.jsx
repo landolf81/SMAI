@@ -290,49 +290,38 @@ const WeatherModal = ({ isOpen, onClose }) => {
               {/* 주간 탭 */}
               {activeTab === 'weekly' && (
                 <div className="space-y-2">
-                  {/* 단기예보 (3일) */}
-                  {weather?.daily?.map((day, idx) => (
+                  {/* 단기예보 (3일) + 중기예보 (4-10일) 통합 */}
+                  {[...(weather?.daily || []), ...(weather?.midTerm || [])].map((day, idx) => (
                     <div
-                      key={`daily-${idx}`}
+                      key={`weekly-${idx}`}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
-                          {getWeatherIcon(day.sky, day.pty)?.icon || '☀️'}
+                          {day.icon || getWeatherIcon(day.sky, day.pty)?.icon || '☀️'}
                         </span>
-                        <div className="font-medium text-gray-800">
-                          {formatDate(day.date)}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-blue-600">{day.minTemp}°</span>
-                        <span className="text-red-500">{day.maxTemp}°</span>
-                      </div>
-                    </div>
-                  ))}
-
-                  {/* 중기예보 (4-10일) */}
-                  {weather?.midTerm?.map((day, idx) => (
-                    <div
-                      key={`mid-${idx}`}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{day.icon}</span>
                         <div>
                           <div className="font-medium text-gray-800">
                             {formatDate(day.date)}
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {day.weather}
-                          </div>
+                          {day.weather && (
+                            <div className="text-xs text-gray-500">
+                              {day.weather}
+                            </div>
+                          )}
                         </div>
                       </div>
-                      {day.pop > 0 && (
-                        <div className="text-sm text-blue-500">
-                          ☔ {day.pop}%
+                      <div className="flex items-center gap-3">
+                        {day.pop > 0 && (
+                          <div className="text-xs text-blue-500">
+                            ☔{day.pop}%
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 min-w-[70px] justify-end">
+                          <span className="text-blue-600">{day.minTemp ?? '--'}°</span>
+                          <span className="text-red-500">{day.maxTemp ?? '--'}°</span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
 

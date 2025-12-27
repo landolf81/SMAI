@@ -36,8 +36,8 @@ const DEFAULT_LOCATION = {
   ny: 93,  // 격자 Y
   lat: 35.87,
   lng: 128.35,
-  regId: '11H10701', // 중기예보 지역코드 (경북 북부)
-  regIdTemp: '11H10701' // 중기기온 지역코드
+  regIdLand: '11H10000', // 중기육상예보 지역코드 (경상북도)
+  regIdTemp: '11H10701' // 중기기온 지역코드 (성주)
 };
 
 // 날씨 코드 → 아이콘/설명 매핑
@@ -209,7 +209,7 @@ const parseVilageFcst = (items) => {
     hourlyMap[dateTime][item.category] = item.fcstValue;
 
     if (!dailyMap[date]) {
-      dailyMap[date] = { date, temps: [], skys: [], ptys: [] };
+      dailyMap[date] = { date, temps: [], skys: [], ptys: [], pops: [] };
     }
 
     if (item.category === 'TMP') {
@@ -220,6 +220,9 @@ const parseVilageFcst = (items) => {
     }
     if (item.category === 'PTY') {
       dailyMap[date].ptys.push(parseInt(item.fcstValue));
+    }
+    if (item.category === 'POP') {
+      dailyMap[date].pops.push(parseInt(item.fcstValue));
     }
   });
 
@@ -246,7 +249,9 @@ const parseVilageFcst = (items) => {
       // 가장 빈도 높은 하늘상태
       sky: d.skys.length > 0 ? getMostFrequent(d.skys) : 1,
       // 강수가 있으면 강수형태 우선
-      pty: d.ptys.some(p => p > 0) ? d.ptys.find(p => p > 0) : 0
+      pty: d.ptys.some(p => p > 0) ? d.ptys.find(p => p > 0) : 0,
+      // 하루 중 최대 강수확률
+      pop: d.pops.length > 0 ? Math.max(...d.pops) : 0
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
@@ -260,9 +265,9 @@ const getMostFrequent = (arr) => {
   return Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || arr[0];
 };
 
-// 중기예보 API 호출 (6-10일)
+// 중기예보 API 호출 (4-10일)
 // 참고: 공공데이터포털에서 '기상청_중기예보 조회서비스' 활용신청 필요
-const getMidFcst = async (regId = DEFAULT_LOCATION.regId) => {
+const getMidFcst = async (regIdLand = DEFAULT_LOCATION.regIdLand) => {
   // 중기예보는 06시, 18시 발표
   const now = new Date();
   const hour = now.getHours();
@@ -285,7 +290,7 @@ const getMidFcst = async (regId = DEFAULT_LOCATION.regId) => {
     numOfRows: '10',
     pageNo: '1',
     dataType: 'JSON',
-    regId: regId,
+    regId: regIdLand,
     tmFc: tmFc
   });
 
@@ -317,11 +322,11 @@ const parseMidFcst = (item) => {
   const result = [];
   const now = new Date();
 
-  for (let i = 3; i <= 10; i++) {
+  for (let i = 3; i <= 10; i++) {  // 3일 후부터 (단기예보와 병합)
     const targetDate = new Date(now);
     targetDate.setDate(targetDate.getDate() + i);
 
-    const dayStr = i <= 7 ? `${i}` : `${i}`;
+    const dayStr = `${i}`;
     const amKey = `wf${dayStr}Am`;
     const pmKey = `wf${dayStr}Pm`;
     const rnAmKey = `rnSt${dayStr}Am`;
@@ -337,11 +342,72 @@ const parseMidFcst = (item) => {
     if (weather) {
       result.push({
         date: formatDate(targetDate),
+        dayOffset: i,
         weather,
         pop,
         icon: getWeatherIcon(weather)
       });
     }
+  }
+
+  return result;
+};
+
+// 중기기온예보 API 호출
+const getMidTa = async (regIdTemp = DEFAULT_LOCATION.regIdTemp) => {
+  const now = new Date();
+  const hour = now.getHours();
+  let tmFc;
+
+  if (hour < 6) {
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    tmFc = formatDate(yesterday) + '1800';
+  } else if (hour < 18) {
+    tmFc = formatDate(now) + '0600';
+  } else {
+    tmFc = formatDate(now) + '1800';
+  }
+
+  const url = buildKmaUrl('/1360000/MidFcstInfoService/getMidTa', {
+    numOfRows: '10',
+    pageNo: '1',
+    dataType: 'JSON',
+    regId: regIdTemp,
+    tmFc: tmFc
+  });
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.warn('중기기온 API 오류');
+      return null;
+    }
+    const data = await response.json();
+    if (data.response?.header?.resultCode === '00') {
+      return parseMidTa(data.response.body.items.item[0]);
+    }
+    return null;
+  } catch (error) {
+    console.warn('중기기온 API 호출 실패:', error.message);
+    return null;
+  }
+};
+
+// 중기기온 데이터 파싱
+const parseMidTa = (item) => {
+  const result = {};
+  const now = new Date();
+
+  for (let i = 3; i <= 10; i++) {
+    const targetDate = new Date(now);
+    targetDate.setDate(targetDate.getDate() + i);
+    const dateStr = formatDate(targetDate);
+
+    result[dateStr] = {
+      minTemp: item[`taMin${i}`],
+      maxTemp: item[`taMax${i}`]
+    };
   }
 
   return result;
@@ -481,18 +547,53 @@ const getWeatherData = async (useCurrentLocation = false) => {
     }
   }
 
-  const [current, forecast, midForecast] = await Promise.all([
+  const [current, forecast, midForecast, midTemp] = await Promise.all([
     getUltraSrtNcst(location.nx, location.ny),
     getVilageFcst(location.nx, location.ny),
-    getMidFcst()
+    getMidFcst(),
+    getMidTa()
   ]);
+
+  // 중기예보 데이터를 날짜별 맵으로 변환
+  const midForecastMap = {};
+  (midForecast || []).forEach(day => {
+    const temp = midTemp?.[day.date];
+    midForecastMap[day.date] = {
+      ...day,
+      minTemp: temp?.minTemp ?? null,
+      maxTemp: temp?.maxTemp ?? null
+    };
+  });
+
+  // 단기예보에 중기예보 정보 병합 (겹치는 날짜는 중기 정보 우선)
+  const dailyDates = new Set();
+  const dailyWithMid = (forecast?.daily || []).map(day => {
+    dailyDates.add(day.date);
+    const midData = midForecastMap[day.date];
+    if (midData) {
+      // 중기예보 정보가 있으면 병합 (날씨 설명, 강수확률은 중기 우선)
+      return {
+        ...day,
+        weather: midData.weather,
+        icon: midData.icon,
+        pop: midData.pop > 0 ? midData.pop : day.pop, // 중기 강수확률 우선
+        minTemp: midData.minTemp ?? day.minTemp,
+        maxTemp: midData.maxTemp ?? day.maxTemp
+      };
+    }
+    return day;
+  });
+
+  // 중기예보 중 단기예보에 없는 날짜만 추가
+  const midTermOnly = Object.values(midForecastMap)
+    .filter(day => !dailyDates.has(day.date));
 
   return {
     location: location.name || '현재 위치',
     current,
     shortTerm: forecast?.hourly || [],
-    daily: forecast?.daily || [],
-    midTerm: midForecast || [],
+    daily: dailyWithMid,
+    midTerm: midTermOnly,
     updatedAt: new Date().toISOString()
   };
 };
