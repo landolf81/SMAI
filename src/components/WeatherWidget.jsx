@@ -35,19 +35,8 @@ const WeatherWidget = ({ onClick }) => {
     return iconData?.icon || '☀️';
   };
 
-  if (loading) {
-    return (
-      <button
-        onClick={onClick}
-        className="flex items-center gap-1 animate-pulse"
-      >
-        <span className="text-xl">🌡️</span>
-        <span className="text-gray-500 text-base font-medium">--°</span>
-      </button>
-    );
-  }
-
-  if (!weather?.current) {
+  // 로딩 중이거나 데이터 없으면 아무것도 표시하지 않음
+  if (loading || !weather?.current) {
     return null;
   }
 

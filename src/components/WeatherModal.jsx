@@ -95,7 +95,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
               </h2>
               {weather?.updatedAt && (
                 <p className="text-xs opacity-80">
-                  {new Date(weather.updatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 업데이트
+                  {new Date(weather.updatedAt).getHours()}시 기준
                 </p>
               )}
             </div>
