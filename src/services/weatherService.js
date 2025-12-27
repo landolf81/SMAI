@@ -164,6 +164,46 @@ const parseUltraSrtNcst = (items) => {
   };
 };
 
+// TMN/TMX 전용 API 호출 (02시 발표 기준 - 오늘 최저/최고 기온 포함)
+const getTodayMinMax = async (nx = DEFAULT_LOCATION.nx, ny = DEFAULT_LOCATION.ny) => {
+  const now = new Date();
+  const today = formatDate(now);
+
+  const url = buildKmaUrl('/1360000/VilageFcstInfoService_2.0/getVilageFcst', {
+    numOfRows: '300',
+    pageNo: '1',
+    dataType: 'JSON',
+    base_date: today,
+    base_time: '0200',
+    nx: nx.toString(),
+    ny: ny.toString()
+  });
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data.response?.header?.resultCode !== '00') return null;
+
+    const items = data.response.body.items.item;
+    const result = {};
+
+    items.forEach(item => {
+      const date = item.fcstDate;
+      if (!result[date]) {
+        result[date] = { tmn: null, tmx: null };
+      }
+      if (item.category === 'TMN') result[date].tmn = parseFloat(item.fcstValue);
+      if (item.category === 'TMX') result[date].tmx = parseFloat(item.fcstValue);
+    });
+
+    return result;
+  } catch {
+    return null;
+  }
+};
+
 // 단기예보 API 호출
 const getVilageFcst = async (nx = DEFAULT_LOCATION.nx, ny = DEFAULT_LOCATION.ny) => {
   const { baseDate, baseTime } = getLatestBaseTime();
@@ -190,7 +230,9 @@ const getVilageFcst = async (nx = DEFAULT_LOCATION.nx, ny = DEFAULT_LOCATION.ny)
     const data = await response.json();
 
     if (data.response?.header?.resultCode === '00') {
-      return parseVilageFcst(data.response.body.items.item);
+      // 02시 발표 기준 TMN/TMX 가져오기
+      const minMaxData = await getTodayMinMax(nx, ny);
+      return parseVilageFcst(data.response.body.items.item, minMaxData);
     }
     console.warn('단기예보 API 오류:', data.response?.header?.resultMsg);
     return null;
@@ -201,7 +243,7 @@ const getVilageFcst = async (nx = DEFAULT_LOCATION.nx, ny = DEFAULT_LOCATION.ny)
 };
 
 // 단기예보 데이터 파싱 (시간별/일별 정리)
-const parseVilageFcst = (items) => {
+const parseVilageFcst = (items, minMaxData = null) => {
   const hourlyMap = {};
   const dailyMap = {};
 
@@ -215,7 +257,17 @@ const parseVilageFcst = (items) => {
     hourlyMap[dateTime][item.category] = item.fcstValue;
 
     if (!dailyMap[date]) {
-      dailyMap[date] = { date, temps: [], skys: [], ptys: [], pops: [], tmn: null, tmx: null };
+      // 02시 발표 기준 TMN/TMX로 초기화
+      const minMax = minMaxData?.[date];
+      dailyMap[date] = {
+        date,
+        temps: [],
+        skys: [],
+        ptys: [],
+        pops: [],
+        tmn: minMax?.tmn ?? null,
+        tmx: minMax?.tmx ?? null
+      };
     }
 
     if (item.category === 'TMP') {
@@ -230,7 +282,7 @@ const parseVilageFcst = (items) => {
     if (item.category === 'POP') {
       dailyMap[date].pops.push(parseInt(item.fcstValue));
     }
-    // 일 최저/최고 기온 (기상청 공식 값)
+    // 현재 발표에 TMN/TMX가 있으면 덮어쓰기
     if (item.category === 'TMN') {
       dailyMap[date].tmn = parseFloat(item.fcstValue);
     }

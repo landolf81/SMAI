@@ -104,6 +104,47 @@ const getUltraSrtNcst = async () => {
   }
 }
 
+// TMN/TMX 전용 API 호출 (02시 발표 기준 - 오늘 최저/최고 기온 포함)
+const getTodayMinMax = async () => {
+  const now = new Date()
+  const today = formatDate(now)
+
+  // 02시 발표 데이터 조회 (TMN/TMX 포함)
+  const url = buildKmaUrl('/1360000/VilageFcstInfoService_2.0/getVilageFcst', {
+    numOfRows: '300',
+    pageNo: '1',
+    dataType: 'JSON',
+    base_date: today,
+    base_time: '0200',
+    nx: DEFAULT_LOCATION.nx.toString(),
+    ny: DEFAULT_LOCATION.ny.toString()
+  })
+
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+
+    const data = await response.json()
+    if (data.response?.header?.resultCode !== '00') return null
+
+    const items = data.response.body.items.item
+    const result: Record<string, { tmn: number | null; tmx: number | null }> = {}
+
+    items.forEach((item: { fcstDate: string; category: string; fcstValue: string }) => {
+      const date = item.fcstDate
+      if (!result[date]) {
+        result[date] = { tmn: null, tmx: null }
+      }
+      if (item.category === 'TMN') result[date].tmn = parseFloat(item.fcstValue)
+      if (item.category === 'TMX') result[date].tmx = parseFloat(item.fcstValue)
+    })
+
+    return result
+  } catch {
+    return null
+  }
+}
+
 // 단기예보 API
 const getVilageFcst = async () => {
   const { baseDate, baseTime } = getLatestBaseTime()
@@ -124,6 +165,9 @@ const getVilageFcst = async () => {
   const data = await response.json()
   if (data.response?.header?.resultCode !== '00') return null
 
+  // 02시 발표 기준 TMN/TMX 가져오기
+  const minMaxData = await getTodayMinMax()
+
   const items = data.response.body.items.item
   const hourlyMap: Record<string, Record<string, string>> = {}
   const dailyMap: Record<string, { date: string; temps: number[]; skys: number[]; ptys: number[]; pops: number[]; tmn: number | null; tmx: number | null }> = {}
@@ -138,14 +182,24 @@ const getVilageFcst = async () => {
     hourlyMap[dateTime][item.category] = item.fcstValue
 
     if (!dailyMap[date]) {
-      dailyMap[date] = { date, temps: [], skys: [], ptys: [], pops: [], tmn: null, tmx: null }
+      // 02시 발표 기준 TMN/TMX로 초기화
+      const minMax = minMaxData?.[date]
+      dailyMap[date] = {
+        date,
+        temps: [],
+        skys: [],
+        ptys: [],
+        pops: [],
+        tmn: minMax?.tmn ?? null,
+        tmx: minMax?.tmx ?? null
+      }
     }
 
     if (item.category === 'TMP') dailyMap[date].temps.push(parseFloat(item.fcstValue))
     if (item.category === 'SKY') dailyMap[date].skys.push(parseInt(item.fcstValue))
     if (item.category === 'PTY') dailyMap[date].ptys.push(parseInt(item.fcstValue))
     if (item.category === 'POP') dailyMap[date].pops.push(parseInt(item.fcstValue))
-    // 일 최저/최고 기온 (기상청 공식 값)
+    // 현재 발표에 TMN/TMX가 있으면 덮어쓰기
     if (item.category === 'TMN') dailyMap[date].tmn = parseFloat(item.fcstValue)
     if (item.category === 'TMX') dailyMap[date].tmx = parseFloat(item.fcstValue)
   })
