@@ -8,6 +8,8 @@ import { marketService } from '../services';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
 import LoadingSpinner from '../components/LoadingSpinner';
+import WeatherWidget from '../components/WeatherWidget';
+import WeatherModal from '../components/WeatherModal';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
@@ -34,6 +36,9 @@ const Home = () => {
 
   // 날짜 선택기 모달 상태
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+
+  // 날씨 모달 상태
+  const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -502,23 +507,34 @@ const Home = () => {
 
       {/* 날짜 선택기 헤더 - 카드 상단 고정 */}
       <div
-        className="flex items-center justify-center gap-1 py-2 shadow-sm border-b sticky top-14 z-30 bg-white/90 backdrop-blur-sm"
+        className="flex items-center justify-between px-3 py-2 shadow-sm border-b sticky top-14 z-30 bg-white/90 backdrop-blur-sm"
         style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
       >
-        <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">
-          <ChevronLeftIcon style={{ fontSize: '20px' }} />
-        </button>
-        <button onClick={() => setIsDatePickerOpen(true)} className="flex items-center haptic-feedback">
-          <span className="font-bold text-lg">{selectedDate}</span>
-          <KeyboardArrowDownIcon style={{ fontSize: '22px' }} />
-        </button>
-        <button
-          onClick={goToNextDay}
-          disabled={isToday}
-          className={`p-0.5 haptic-feedback ${isToday ? 'opacity-30' : ''}`}
-        >
-          <ChevronRightIcon style={{ fontSize: '20px' }} />
-        </button>
+        {/* 왼쪽 여백 (날씨 위젯과 균형) */}
+        <div className="w-16"></div>
+
+        {/* 중앙: 날짜 선택기 */}
+        <div className="flex items-center gap-1">
+          <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">
+            <ChevronLeftIcon style={{ fontSize: '20px' }} />
+          </button>
+          <button onClick={() => setIsDatePickerOpen(true)} className="flex items-center haptic-feedback">
+            <span className="font-bold text-lg">{selectedDate}</span>
+            <KeyboardArrowDownIcon style={{ fontSize: '22px' }} />
+          </button>
+          <button
+            onClick={goToNextDay}
+            disabled={isToday}
+            className={`p-0.5 haptic-feedback ${isToday ? 'opacity-30' : ''}`}
+          >
+            <ChevronRightIcon style={{ fontSize: '20px' }} />
+          </button>
+        </div>
+
+        {/* 오른쪽: 날씨 위젯 */}
+        <div className="w-16 flex justify-end">
+          <WeatherWidget onClick={() => setIsWeatherModalOpen(true)} />
+        </div>
       </div>
 
       {/* DatePicker 모달 */}
@@ -531,6 +547,12 @@ const Home = () => {
           fetchMarketData(date);
         }}
         maxDate={getKoreanToday()}
+      />
+
+      {/* 날씨 모달 */}
+      <WeatherModal
+        isOpen={isWeatherModalOpen}
+        onClose={() => setIsWeatherModalOpen(false)}
       />
 
       {/* 메인 콘텐츠 - 스와이프 영역 */}

@@ -20,6 +20,15 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: '0.0.0.0',  // 모든 네트워크 인터페이스에서 접근 허용
     port: 3000,       // 포트 명시적 설정
+    proxy: {
+      // 기상청 API 프록시 (CORS 우회)
+      '/api/kma': {
+        target: 'https://apis.data.go.kr',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/kma/, ''),
+        secure: true,
+      }
+    }
   },
   build: {
     minify: 'esbuild',
