@@ -70,12 +70,13 @@ const buildKmaUrl = (apiPath: string, params: Record<string, string>): string =>
 }
 
 // 초단기실황 API (KST 기준)
+// 매시 정각 발표, 10분 후 API 제공
 const getUltraSrtNcst = async () => {
   const now = getKoreanTime()
   let baseDateTime = now
 
-  // 40분 이전이면 이전 시간 사용 (날짜도 함께 조정)
-  if (now.getUTCMinutes() < 40) {
+  // 10분 이전이면 이전 시간 사용 (정시 발표 → 10분 후 제공)
+  if (now.getUTCMinutes() < 10) {
     baseDateTime = new Date(now.getTime() - 60 * 60 * 1000)
   }
 
