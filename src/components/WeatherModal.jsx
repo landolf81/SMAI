@@ -99,9 +99,9 @@ const WeatherModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[10000]">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-[10000] pt-16">
       <div
-        className="bg-white w-full max-w-lg rounded-t-3xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up"
+        className="bg-white w-full max-w-lg rounded-3xl max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden animate-slide-down mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -358,16 +358,18 @@ const WeatherModal = ({ isOpen, onClose }) => {
       </div>
 
       <style>{`
-        @keyframes slide-up {
+        @keyframes slide-down {
           from {
-            transform: translateY(100%);
+            transform: translateY(-100%);
+            opacity: 0;
           }
           to {
             transform: translateY(0);
+            opacity: 1;
           }
         }
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out;
         }
       `}</style>
     </div>,
