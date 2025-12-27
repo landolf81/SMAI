@@ -368,22 +368,6 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // 기존 캐시에서 오늘의 TMN/TMX 가져오기 (값 유지용)
-    const { data: existingCache } = await supabase
-      .from('weather_cache')
-      .select('data')
-      .eq('location_key', 'default')
-      .single()
-
-    const existingDailyMap: Record<string, { minTemp: number | null; maxTemp: number | null }> = {}
-    if (existingCache?.data?.daily) {
-      existingCache.data.daily.forEach((day: { date: string; minTemp: number | null; maxTemp: number | null }) => {
-        if (day.minTemp !== null || day.maxTemp !== null) {
-          existingDailyMap[day.date] = { minTemp: day.minTemp, maxTemp: day.maxTemp }
-        }
-      })
-    }
-
     // 모든 API 병렬 호출
     const [current, forecast, midForecast, midTemp] = await Promise.all([
       getUltraSrtNcst(),
@@ -403,16 +387,15 @@ Deno.serve(async (req) => {
       }
     })
 
-    // 단기 + 중기 병합 + 기존 캐시 TMN/TMX 유지
+    // 단기 + 중기 병합
     const dailyDates = new Set<string>()
     const dailyWithMid = (forecast?.daily || []).map(day => {
       dailyDates.add(day.date)
       const midData = midForecastMap[day.date]
-      const existingTemp = existingDailyMap[day.date]
 
-      // 우선순위: 기존 캐시 > 새 API 데이터 > 중기예보
-      let minTemp = existingTemp?.minTemp ?? day.minTemp ?? midData?.minTemp ?? null
-      let maxTemp = existingTemp?.maxTemp ?? day.maxTemp ?? midData?.maxTemp ?? null
+      // 우선순위: 새 API TMN/TMX > 중기예보
+      let minTemp = day.minTemp ?? midData?.minTemp ?? null
+      let maxTemp = day.maxTemp ?? midData?.maxTemp ?? null
 
       if (midData) {
         return {
