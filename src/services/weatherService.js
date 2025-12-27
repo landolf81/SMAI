@@ -1,8 +1,14 @@
 // 기상청 API 날씨 서비스
 // 공공데이터포털 단기예보/중기예보 API 사용
+// Supabase 캐시를 통한 빠른 로딩 지원
+
+import { supabase } from '../config/supabase';
 
 // 기상청 API 키 (이미 인코딩된 형태로 사용)
 const KMA_API_KEY_RAW = import.meta.env.VITE_KMA_API_KEY;
+
+// 캐시 설정
+const CACHE_DURATION_MS = 60 * 60 * 1000; // 1시간
 
 // API 베이스 URL 생성 (serviceKey는 수동으로 추가해야 함 - 이중 인코딩 방지)
 const buildKmaUrl = (apiPath, params) => {
@@ -29,9 +35,9 @@ const buildKmaUrl = (apiPath, params) => {
   return `/api/weather?endpoint=${encodeURIComponent(endpoint)}`;
 };
 
-// 성주군 선남면 기상청 격자 좌표 (위도 35.87, 경도 128.35 기준)
+// 성주군 기상청 격자 좌표 (성주군 삼산리 측정지점 기준)
 const DEFAULT_LOCATION = {
-  name: '선남',
+  name: '성주',
   nx: 83,  // 격자 X
   ny: 93,  // 격자 Y
   lat: 35.87,
@@ -528,25 +534,54 @@ const getSavedLocation = () => {
   return null;
 };
 
-// 통합 날씨 데이터 가져오기
-const getWeatherData = async (useCurrentLocation = false) => {
-  let location = DEFAULT_LOCATION;
+// 캐시에서 날씨 데이터 가져오기
+const getCachedWeather = async (locationKey) => {
+  try {
+    const { data, error } = await supabase
+      .from('weather_cache')
+      .select('data, updated_at')
+      .eq('location_key', locationKey)
+      .single();
 
-  if (useCurrentLocation) {
-    const savedLocation = getSavedLocation();
-    if (savedLocation) {
-      location = savedLocation;
-    } else {
-      try {
-        const currentLocation = await getCurrentLocation();
-        saveLocation(currentLocation);
-        location = currentLocation;
-      } catch (e) {
-        console.warn('현재 위치 가져오기 실패, 기본 위치 사용:', e);
-      }
+    if (error || !data) return null;
+
+    // 캐시 유효성 검사 (1시간 이내)
+    const updatedAt = new Date(data.updated_at);
+    const now = new Date();
+    if (now - updatedAt > CACHE_DURATION_MS) {
+      return null; // 캐시 만료
     }
-  }
 
+    return data.data;
+  } catch (e) {
+    console.warn('캐시 조회 실패:', e);
+    return null;
+  }
+};
+
+// 캐시에 날씨 데이터 저장
+const setCachedWeather = async (locationKey, weatherData) => {
+  try {
+    const { error } = await supabase
+      .from('weather_cache')
+      .upsert({
+        location_key: locationKey,
+        data: weatherData,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'location_key'
+      });
+
+    if (error) {
+      console.warn('캐시 저장 실패:', error);
+    }
+  } catch (e) {
+    console.warn('캐시 저장 중 오류:', e);
+  }
+};
+
+// 기상청 API에서 직접 날씨 데이터 가져오기 (캐시 우회)
+const fetchWeatherFromApi = async (location) => {
   const [current, forecast, midForecast, midTemp] = await Promise.all([
     getUltraSrtNcst(location.nx, location.ny),
     getVilageFcst(location.nx, location.ny),
@@ -571,12 +606,11 @@ const getWeatherData = async (useCurrentLocation = false) => {
     dailyDates.add(day.date);
     const midData = midForecastMap[day.date];
     if (midData) {
-      // 중기예보 정보가 있으면 병합 (날씨 설명, 강수확률은 중기 우선)
       return {
         ...day,
         weather: midData.weather,
         icon: midData.icon,
-        pop: midData.pop > 0 ? midData.pop : day.pop, // 중기 강수확률 우선
+        pop: midData.pop > 0 ? midData.pop : day.pop,
         minTemp: midData.minTemp ?? day.minTemp,
         maxTemp: midData.maxTemp ?? day.maxTemp
       };
@@ -598,11 +632,29 @@ const getWeatherData = async (useCurrentLocation = false) => {
   };
 };
 
+// 통합 날씨 데이터 가져오기 (캐시 우선)
+const getWeatherData = async () => {
+  const locationKey = 'default';
+
+  // 1. 캐시에서 먼저 조회
+  const cachedData = await getCachedWeather(locationKey);
+  if (cachedData) {
+    console.log('캐시된 날씨 데이터 사용');
+    return cachedData;
+  }
+
+  // 2. 캐시가 없거나 만료된 경우 API 호출
+  console.log('기상청 API에서 날씨 데이터 가져오는 중...');
+  const weatherData = await fetchWeatherFromApi(DEFAULT_LOCATION);
+
+  // 3. 결과를 캐시에 저장 (백그라운드)
+  setCachedWeather(locationKey, weatherData);
+
+  return weatherData;
+};
+
 export const weatherService = {
   getWeatherData,
-  getCurrentLocation,
-  saveLocation,
-  getSavedLocation,
   getWeatherIconFromCode,
   DEFAULT_LOCATION,
   SKY_CODES,

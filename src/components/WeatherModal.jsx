@@ -8,8 +8,6 @@ const WeatherModal = ({ isOpen, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('today'); // today, hourly, weekly
-  const [useCurrentLocation, setUseCurrentLocation] = useState(false);
-  const [locationLoading, setLocationLoading] = useState(false);
   const scrollYRef = useRef(0);
 
   // 스크롤 잠금
@@ -44,7 +42,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await weatherService.getWeatherData(useCurrentLocation);
+        const data = await weatherService.getWeatherData();
         setWeather(data);
       } catch (err) {
         console.error('날씨 데이터 로드 실패:', err);
@@ -55,24 +53,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
     };
 
     fetchWeather();
-  }, [isOpen, useCurrentLocation]);
-
-  // 현재 위치 사용 토글
-  const handleLocationToggle = async () => {
-    if (!useCurrentLocation) {
-      try {
-        setLocationLoading(true);
-        await weatherService.getCurrentLocation();
-        setUseCurrentLocation(true);
-      } catch (err) {
-        alert('위치 정보를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
-      } finally {
-        setLocationLoading(false);
-      }
-    } else {
-      setUseCurrentLocation(false);
-    }
-  };
+  }, [isOpen]);
 
   // 날짜 포맷
   const formatDate = (dateStr) => {
@@ -126,29 +107,6 @@ const WeatherModal = ({ isOpen, onClose }) => {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
-        </div>
-
-        {/* 현재 위치 버튼 */}
-        <div className="px-4 py-2 border-b bg-gray-50">
-          <button
-            onClick={handleLocationToggle}
-            disabled={locationLoading}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              useCurrentLocation
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-            }`}
-          >
-            {locationLoading ? (
-              <span className="animate-spin">⏳</span>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            )}
-            {useCurrentLocation ? '현재 위치' : '현재 위치 사용'}
           </button>
         </div>
 
