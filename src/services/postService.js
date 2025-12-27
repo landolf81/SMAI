@@ -761,34 +761,35 @@ export const postService = {
         return { success: false };
       }
 
-      // 로그인 사용자: post_views 테이블로 중복 방지
-      if (user) {
-        const { error: viewError } = await supabase
-          .from('post_views')
-          .insert([{
-            post_id: postIdInt,
-            user_id: user.id,
-            viewed_at: new Date().toISOString(),
-            ip_address: 'unknown',
-            session_id: null
-          }]);
+      // 비로그인 사용자용 고유 세션 ID (localStorage에 영구 저장)
+      const getOrCreateSessionId = () => {
+        let sessionId = localStorage.getItem('anonymous_session_id');
+        if (!sessionId) {
+          sessionId = 'anon_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+          localStorage.setItem('anonymous_session_id', sessionId);
+        }
+        return sessionId;
+      };
 
-        // 중복 키 에러(23505)면 이미 조회한 것 - 조회수 증가 안 함
-        if (viewError && viewError.code === '23505') {
-          return { success: true, alreadyViewed: true };
-        }
+      // post_views 테이블에 조회 기록 삽입 (로그인/비로그인 모두)
+      const { error: viewError } = await supabase
+        .from('post_views')
+        .insert([{
+          post_id: postIdInt,
+          user_id: user?.id || null,
+          viewed_at: new Date().toISOString(),
+          ip_address: 'unknown',
+          session_id: user ? null : getOrCreateSessionId()
+        }]);
 
-        if (viewError) {
-          console.warn('조회 기록 추가 실패:', viewError.code, viewError.message);
-          return { success: false };
-        }
-      } else {
-        // 비로그인 사용자: sessionStorage로 중복 방지
-        const viewedKey = `post_viewed_${postIdInt}`;
-        if (sessionStorage.getItem(viewedKey)) {
-          return { success: true, alreadyViewed: true };
-        }
-        sessionStorage.setItem(viewedKey, 'true');
+      // 중복 키 에러(23505)면 이미 조회한 것 - 조회수 증가 안 함
+      if (viewError && viewError.code === '23505') {
+        return { success: true, alreadyViewed: true };
+      }
+
+      if (viewError) {
+        console.warn('조회 기록 추가 실패:', viewError.code, viewError.message);
+        return { success: false };
       }
 
       // posts.views_count 증가

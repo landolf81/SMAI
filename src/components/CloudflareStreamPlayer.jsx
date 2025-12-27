@@ -176,7 +176,13 @@ const CloudflareStreamPlayer = ({
     } else if (Hls.isSupported()) {
       const hls = new Hls({
         enableWorker: true,
-        lowLatencyMode: true,
+        lowLatencyMode: false, // 화질 우선
+        startLevel: -1, // 자동 선택하되 아래 설정으로 높은 화질 유도
+        abrEwmaDefaultEstimate: 5000000, // 초기 대역폭 추정 5Mbps (높게 시작)
+        abrBandWidthFactor: 0.95, // 대역폭 95% 활용
+        abrBandWidthUpFactor: 0.7, // 화질 상향 시 70%만 확보해도 상향
+        maxBufferLength: 30, // 버퍼 30초
+        maxMaxBufferLength: 60, // 최대 버퍼 60초
       });
 
       hlsRef.current = hls;
@@ -326,9 +332,18 @@ const CloudflareStreamPlayer = ({
   // video 태그 플레이어 (object-fit: cover로 크롭)
   return (
     <div className={`relative bg-gray-900 ${aspectRatioClass} overflow-hidden ${className}`}>
+      {/* 로딩 중 썸네일 배경 + 스피너 */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 z-20">
-          <LoadingSpinner size="lg" />
+        <div className="absolute inset-0 z-20">
+          <img
+            src={getThumbnailUrl()}
+            alt="동영상 썸네일"
+            className="w-full h-full object-cover"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
+            <LoadingSpinner size="lg" />
+          </div>
         </div>
       )}
 

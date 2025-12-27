@@ -126,7 +126,7 @@ const getVilageFcst = async () => {
 
   const items = data.response.body.items.item
   const hourlyMap: Record<string, Record<string, string>> = {}
-  const dailyMap: Record<string, { date: string; temps: number[]; skys: number[]; ptys: number[]; pops: number[] }> = {}
+  const dailyMap: Record<string, { date: string; temps: number[]; skys: number[]; ptys: number[]; pops: number[]; tmn: number | null; tmx: number | null }> = {}
 
   items.forEach((item: { fcstDate: string; fcstTime: string; category: string; fcstValue: string }) => {
     const dateTime = `${item.fcstDate}_${item.fcstTime}`
@@ -138,13 +138,16 @@ const getVilageFcst = async () => {
     hourlyMap[dateTime][item.category] = item.fcstValue
 
     if (!dailyMap[date]) {
-      dailyMap[date] = { date, temps: [], skys: [], ptys: [], pops: [] }
+      dailyMap[date] = { date, temps: [], skys: [], ptys: [], pops: [], tmn: null, tmx: null }
     }
 
     if (item.category === 'TMP') dailyMap[date].temps.push(parseFloat(item.fcstValue))
     if (item.category === 'SKY') dailyMap[date].skys.push(parseInt(item.fcstValue))
     if (item.category === 'PTY') dailyMap[date].ptys.push(parseInt(item.fcstValue))
     if (item.category === 'POP') dailyMap[date].pops.push(parseInt(item.fcstValue))
+    // 일 최저/최고 기온 (기상청 공식 값)
+    if (item.category === 'TMN') dailyMap[date].tmn = parseFloat(item.fcstValue)
+    if (item.category === 'TMX') dailyMap[date].tmx = parseFloat(item.fcstValue)
   })
 
   const getMostFrequent = (arr: number[]): number => {
@@ -167,11 +170,12 @@ const getVilageFcst = async () => {
     }))
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
 
+  // TMN/TMX가 있으면 우선 사용, 없으면 시간별 기온에서 계산
   const daily = Object.values(dailyMap)
     .map(d => ({
       date: d.date,
-      minTemp: d.temps.length > 0 ? Math.min(...d.temps) : null,
-      maxTemp: d.temps.length > 0 ? Math.max(...d.temps) : null,
+      minTemp: d.tmn !== null ? Math.round(d.tmn) : (d.temps.length > 0 ? Math.round(Math.min(...d.temps)) : null),
+      maxTemp: d.tmx !== null ? Math.round(d.tmx) : (d.temps.length > 0 ? Math.round(Math.max(...d.temps)) : null),
       sky: d.skys.length > 0 ? getMostFrequent(d.skys) : 1,
       pty: d.ptys.some(p => p > 0) ? d.ptys.find(p => p > 0) : 0,
       pop: d.pops.length > 0 ? Math.max(...d.pops) : 0
