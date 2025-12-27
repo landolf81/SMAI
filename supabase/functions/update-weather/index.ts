@@ -16,22 +16,29 @@ const DEFAULT_LOCATION = {
   regIdTemp: '11H10701'
 }
 
-// 날짜 포맷
+// 한국 시간 가져오기 (UTC+9)
+const getKoreanTime = (): Date => {
+  const now = new Date()
+  // UTC 시간에 9시간 추가
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000)
+}
+
+// 날짜 포맷 (KST 기준)
 const formatDate = (date: Date): string => {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
   return `${year}${month}${day}`
 }
 
 const formatTime = (date: Date): string => {
-  return String(date.getHours()).padStart(2, '0') + '00'
+  return String(date.getUTCHours()).padStart(2, '0') + '00'
 }
 
-// 가장 최근 발표 시각 계산
+// 가장 최근 발표 시각 계산 (KST 기준)
 const getLatestBaseTime = (): { baseDate: string; baseTime: string } => {
-  const now = new Date()
-  const hour = now.getHours()
+  const now = getKoreanTime()
+  const hour = now.getUTCHours()
   const baseTimes = [2, 5, 8, 11, 14, 17, 20, 23]
 
   let baseTime = baseTimes[0]
@@ -42,8 +49,7 @@ const getLatestBaseTime = (): { baseDate: string; baseTime: string } => {
   }
 
   if (hour < 3) {
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
     return {
       baseDate: formatDate(yesterday),
       baseTime: '2300'
@@ -63,12 +69,12 @@ const buildKmaUrl = (apiPath: string, params: Record<string, string>): string =>
   return `https://apis.data.go.kr${apiPath}?serviceKey=${encodedKey}&${searchParams.toString()}`
 }
 
-// 초단기실황 API
+// 초단기실황 API (KST 기준)
 const getUltraSrtNcst = async () => {
-  const now = new Date()
+  const now = getKoreanTime()
   const baseDate = formatDate(now)
   let baseTime = formatTime(now)
-  if (now.getMinutes() < 40) {
+  if (now.getUTCMinutes() < 40) {
     const prevHour = new Date(now.getTime() - 60 * 60 * 1000)
     baseTime = formatTime(prevHour)
   }
@@ -104,9 +110,9 @@ const getUltraSrtNcst = async () => {
   }
 }
 
-// TMN/TMX 전용 API 호출 (02시 발표 기준 - 오늘 최저/최고 기온 포함)
+// TMN/TMX 전용 API 호출 (02시 발표 기준 - 오늘 최저/최고 기온 포함, KST)
 const getTodayMinMax = async () => {
-  const now = new Date()
+  const now = getKoreanTime()
   const today = formatDate(now)
 
   // 02시 발표 데이터 조회 (TMN/TMX 포함)
@@ -239,15 +245,14 @@ const getVilageFcst = async () => {
   return { hourly, daily }
 }
 
-// 중기예보 API
+// 중기예보 API (KST 기준)
 const getMidFcst = async () => {
-  const now = new Date()
-  const hour = now.getHours()
+  const now = getKoreanTime()
+  const hour = now.getUTCHours()
   let tmFc: string
 
   if (hour < 6) {
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
     tmFc = formatDate(yesterday) + '1800'
   } else if (hour < 18) {
     tmFc = formatDate(now) + '0600'
@@ -306,15 +311,14 @@ const getMidFcst = async () => {
   return result
 }
 
-// 중기기온예보 API
+// 중기기온예보 API (KST 기준)
 const getMidTa = async () => {
-  const now = new Date()
-  const hour = now.getHours()
+  const now = getKoreanTime()
+  const hour = now.getUTCHours()
   let tmFc: string
 
   if (hour < 6) {
-    const yesterday = new Date(now)
-    yesterday.setDate(yesterday.getDate() - 1)
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
     tmFc = formatDate(yesterday) + '1800'
   } else if (hour < 18) {
     tmFc = formatDate(now) + '0600'
