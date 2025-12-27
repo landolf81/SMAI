@@ -12,8 +12,8 @@ const DEFAULT_LOCATION = {
   name: '성주',
   nx: 83,
   ny: 91,
-  regIdLand: '11H10000',
-  regIdTemp: '11H10701'
+  regIdLand: '11H10000',  // 경상북도 (중기육상예보)
+  regIdTemp: '11H10605'   // 성주 (중기기온예보)
 }
 
 // 한국 시간 가져오기 (UTC+9)
@@ -235,7 +235,14 @@ const getVilageFcst = async () => {
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
 
   // TMN/TMX가 있으면 우선 사용, 없으면 시간별 기온에서 계산
+  // 단, 기온 데이터가 불완전한 날(TMN/TMX 없고 시간별 데이터도 4개 미만)은 제외
   const daily = Object.values(dailyMap)
+    .filter(d => {
+      // TMN/TMX가 있으면 유효
+      if (d.tmn !== null || d.tmx !== null) return true
+      // 시간별 기온이 4개 이상이면 유효 (최소한 min/max 계산 가능)
+      return d.temps.length >= 4
+    })
     .map(d => ({
       date: d.date,
       minTemp: d.tmn !== null ? Math.round(d.tmn) : (d.temps.length > 0 ? Math.round(Math.min(...d.temps)) : null),
@@ -249,37 +256,13 @@ const getVilageFcst = async () => {
   return { hourly, daily }
 }
 
-// 중기예보 API (KST 기준)
+// 중기육상예보 API (KST 기준)
+// 6시 발표: +4일 ~ +10일 제공
+// 18시 발표: +5일 ~ +10일 제공
 const getMidFcst = async () => {
   const now = getKoreanTime()
   const hour = now.getUTCHours()
-  let tmFc: string
-
-  if (hour < 6) {
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    tmFc = formatDate(yesterday) + '1800'
-  } else if (hour < 18) {
-    tmFc = formatDate(now) + '0600'
-  } else {
-    tmFc = formatDate(now) + '1800'
-  }
-
-  const url = buildKmaUrl('/1360000/MidFcstInfoService/getMidLandFcst', {
-    numOfRows: '10',
-    pageNo: '1',
-    dataType: 'JSON',
-    regId: DEFAULT_LOCATION.regIdLand,
-    tmFc: tmFc
-  })
-
-  const response = await fetch(url)
-  if (!response.ok) return null
-
-  const data = await response.json()
-  if (data.response?.header?.resultCode !== '00') return null
-
-  const item = data.response.body.items.item[0]
-  const result: { date: string; dayOffset: number; weather: string; pop: number; icon: string }[] = []
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
   const getWeatherIcon = (weather: string): string => {
     if (!weather) return '☀️'
@@ -290,73 +273,146 @@ const getMidFcst = async () => {
     return '☀️'
   }
 
-  for (let i = 3; i <= 10; i++) {
-    const targetDate = new Date(now)
-    targetDate.setDate(targetDate.getDate() + i)
+  // 시도할 발표 시각 목록 (우선순위 순)
+  type FcstConfig = { tmFc: string; baseDate: Date; startDay: number }
+  const attempts: FcstConfig[] = []
 
-    const weather = item[`wf${i}Am`] || item[`wf${i}Pm`] || item[`wf${i}`]
-    const pop = Math.max(
-      parseInt(item[`rnSt${i}Am`]) || 0,
-      parseInt(item[`rnSt${i}Pm`]) || 0,
-      parseInt(item[`rnSt${i}`]) || 0
-    )
-
-    if (weather) {
-      result.push({
-        date: formatDate(targetDate),
-        dayOffset: i,
-        weather,
-        pop,
-        icon: getWeatherIcon(weather)
-      })
+  if (hour >= 6 && hour < 18) {
+    // 06시~17시: 오늘 06시 발표 사용 (+4일~+10일)
+    attempts.push({ tmFc: formatDate(now) + '0600', baseDate: now, startDay: 4 })
+    // 폴백: 어제 18시 발표
+    attempts.push({ tmFc: formatDate(yesterday) + '1800', baseDate: yesterday, startDay: 5 })
+  } else {
+    // 18시~05시: 18시 발표 사용 (+5일~+10일)
+    if (hour >= 18) {
+      // 오늘 18시 발표
+      attempts.push({ tmFc: formatDate(now) + '1800', baseDate: now, startDay: 5 })
+      // 폴백: 오늘 06시 발표
+      attempts.push({ tmFc: formatDate(now) + '0600', baseDate: now, startDay: 4 })
+    } else {
+      // 00시~05시: 어제 18시 발표
+      attempts.push({ tmFc: formatDate(yesterday) + '1800', baseDate: yesterday, startDay: 5 })
+      // 폴백: 어제 06시 발표
+      attempts.push({ tmFc: formatDate(yesterday) + '0600', baseDate: yesterday, startDay: 4 })
     }
   }
 
-  return result
+  for (const { tmFc, baseDate, startDay } of attempts) {
+    const url = buildKmaUrl('/1360000/MidFcstInfoService/getMidLandFcst', {
+      numOfRows: '10',
+      pageNo: '1',
+      dataType: 'JSON',
+      regId: DEFAULT_LOCATION.regIdLand,
+      tmFc: tmFc
+    })
+
+    const response = await fetch(url)
+    if (!response.ok) continue
+
+    const data = await response.json()
+    if (data.response?.header?.resultCode !== '00') continue
+
+    const item = data.response.body.items.item[0]
+    const result: { date: string; dayOffset: number; weather: string; pop: number; icon: string }[] = []
+
+    // 6시 발표: +4일 ~ +10일 (wf4Am~wf10)
+    // 18시 발표: +5일 ~ +10일 (wf5Am~wf10)
+    for (let i = startDay; i <= 10; i++) {
+      const targetDate = new Date(baseDate)
+      targetDate.setUTCDate(targetDate.getUTCDate() + i)
+
+      const weather = item[`wf${i}Am`] || item[`wf${i}Pm`] || item[`wf${i}`]
+      const pop = Math.max(
+        parseInt(item[`rnSt${i}Am`]) || 0,
+        parseInt(item[`rnSt${i}Pm`]) || 0,
+        parseInt(item[`rnSt${i}`]) || 0
+      )
+
+      if (weather) {
+        result.push({
+          date: formatDate(targetDate),
+          dayOffset: i,
+          weather,
+          pop,
+          icon: getWeatherIcon(weather)
+        })
+      }
+    }
+
+    console.log(`중기육상예보: ${tmFc} 발표 사용`)
+    return result
+  }
+
+  return null
 }
 
 // 중기기온예보 API (KST 기준)
+// 6시 발표: +4일 ~ +10일 제공
+// 18시 발표: +5일 ~ +10일 제공
 const getMidTa = async () => {
   const now = getKoreanTime()
   const hour = now.getUTCHours()
-  let tmFc: string
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
 
-  if (hour < 6) {
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    tmFc = formatDate(yesterday) + '1800'
-  } else if (hour < 18) {
-    tmFc = formatDate(now) + '0600'
+  // 시도할 발표 시각 목록 (우선순위 순)
+  type FcstConfig = { tmFc: string; baseDate: Date; startDay: number }
+  const attempts: FcstConfig[] = []
+
+  if (hour >= 6 && hour < 18) {
+    // 06시~17시: 오늘 06시 발표 사용 (+4일~+10일)
+    attempts.push({ tmFc: formatDate(now) + '0600', baseDate: now, startDay: 4 })
+    // 폴백: 어제 18시 발표
+    attempts.push({ tmFc: formatDate(yesterday) + '1800', baseDate: yesterday, startDay: 5 })
   } else {
-    tmFc = formatDate(now) + '1800'
-  }
-
-  const url = buildKmaUrl('/1360000/MidFcstInfoService/getMidTa', {
-    numOfRows: '10',
-    pageNo: '1',
-    dataType: 'JSON',
-    regId: DEFAULT_LOCATION.regIdTemp,
-    tmFc: tmFc
-  })
-
-  const response = await fetch(url)
-  if (!response.ok) return null
-
-  const data = await response.json()
-  if (data.response?.header?.resultCode !== '00') return null
-
-  const item = data.response.body.items.item[0]
-  const result: Record<string, { minTemp: number; maxTemp: number }> = {}
-
-  for (let i = 3; i <= 10; i++) {
-    const targetDate = new Date(now)
-    targetDate.setDate(targetDate.getDate() + i)
-    result[formatDate(targetDate)] = {
-      minTemp: item[`taMin${i}`],
-      maxTemp: item[`taMax${i}`]
+    // 18시~05시: 18시 발표 사용 (+5일~+10일)
+    if (hour >= 18) {
+      // 오늘 18시 발표
+      attempts.push({ tmFc: formatDate(now) + '1800', baseDate: now, startDay: 5 })
+      // 폴백: 오늘 06시 발표
+      attempts.push({ tmFc: formatDate(now) + '0600', baseDate: now, startDay: 4 })
+    } else {
+      // 00시~05시: 어제 18시 발표
+      attempts.push({ tmFc: formatDate(yesterday) + '1800', baseDate: yesterday, startDay: 5 })
+      // 폴백: 어제 06시 발표
+      attempts.push({ tmFc: formatDate(yesterday) + '0600', baseDate: yesterday, startDay: 4 })
     }
   }
 
-  return result
+  for (const { tmFc, baseDate, startDay } of attempts) {
+    const url = buildKmaUrl('/1360000/MidFcstInfoService/getMidTa', {
+      numOfRows: '10',
+      pageNo: '1',
+      dataType: 'JSON',
+      regId: DEFAULT_LOCATION.regIdTemp,
+      tmFc: tmFc
+    })
+
+    const response = await fetch(url)
+    if (!response.ok) continue
+
+    const data = await response.json()
+    if (data.response?.header?.resultCode !== '00') continue
+
+    const item = data.response.body.items.item[0]
+    const result: Record<string, { minTemp: number; maxTemp: number }> = {}
+
+    // 6시 발표: +4일 ~ +10일 (taMin4~taMax10)
+    // 18시 발표: +5일 ~ +10일 (taMin5~taMax10)
+    for (let i = startDay; i <= 10; i++) {
+      const targetDate = new Date(baseDate)
+      targetDate.setUTCDate(targetDate.getUTCDate() + i)
+      const minTemp = item[`taMin${i}`]
+      const maxTemp = item[`taMax${i}`]
+      if (minTemp !== undefined && maxTemp !== undefined) {
+        result[formatDate(targetDate)] = { minTemp, maxTemp }
+      }
+    }
+
+    console.log(`중기기온예보: ${tmFc} 발표 사용`)
+    return result
+  }
+
+  return null
 }
 
 Deno.serve(async (req) => {

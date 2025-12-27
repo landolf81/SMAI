@@ -43,7 +43,7 @@ const DEFAULT_LOCATION = {
   lat: 35.87,
   lng: 128.35,
   regIdLand: '11H10000', // 중기육상예보 지역코드 (경상북도)
-  regIdTemp: '11H10701' // 중기기온 지역코드 (성주)
+  regIdTemp: '11H10605' // 중기기온 지역코드 (성주)
 };
 
 // 날씨 코드 → 아이콘/설명 매핑
