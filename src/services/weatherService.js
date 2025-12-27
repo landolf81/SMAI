@@ -35,11 +35,11 @@ const buildKmaUrl = (apiPath, params) => {
   return `/api/weather?endpoint=${encodeURIComponent(endpoint)}`;
 };
 
-// 성주군 기상청 격자 좌표 (성주군 삼산리 측정지점 기준)
+// 성주군 기상청 격자 좌표 (성주읍 삼산리 측정지점 기준)
 const DEFAULT_LOCATION = {
   name: '성주',
   nx: 83,  // 격자 X
-  ny: 93,  // 격자 Y
+  ny: 91,  // 격자 Y
   lat: 35.87,
   lng: 128.35,
   regIdLand: '11H10000', // 중기육상예보 지역코드 (경상북도)

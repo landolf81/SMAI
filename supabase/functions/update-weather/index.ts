@@ -7,11 +7,11 @@ const KMA_API_KEY = Deno.env.get('KMA_API_KEY')!
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-// 성주군 기상청 격자 좌표
+// 성주군 기상청 격자 좌표 (성주읍 삼산리 기준)
 const DEFAULT_LOCATION = {
   name: '성주',
   nx: 83,
-  ny: 93,
+  ny: 91,
   regIdLand: '11H10000',
   regIdTemp: '11H10701'
 }
