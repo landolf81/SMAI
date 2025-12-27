@@ -177,10 +177,7 @@ const CloudflareStreamPlayer = ({
       const hls = new Hls({
         enableWorker: true,
         lowLatencyMode: false, // 화질 우선
-        startLevel: -1, // 자동 선택하되 아래 설정으로 높은 화질 유도
-        abrEwmaDefaultEstimate: 5000000, // 초기 대역폭 추정 5Mbps (높게 시작)
-        abrBandWidthFactor: 0.95, // 대역폭 95% 활용
-        abrBandWidthUpFactor: 0.7, // 화질 상향 시 70%만 확보해도 상향
+        startLevel: -1, // MANIFEST_PARSED에서 720p로 고정
         maxBufferLength: 30, // 버퍼 30초
         maxMaxBufferLength: 60, // 최대 버퍼 60초
       });
@@ -190,7 +187,23 @@ const CloudflareStreamPlayer = ({
       hls.loadSource(playbackUrl);
       hls.attachMedia(video);
 
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        // 720p 레벨 찾기 (없으면 가장 높은 화질)
+        const levels = hls.levels;
+        let targetLevel = levels.length - 1; // 기본: 가장 높은 화질
+
+        for (let i = 0; i < levels.length; i++) {
+          if (levels[i].height === 720) {
+            targetLevel = i;
+            break;
+          }
+        }
+
+        // 720p 고정 (자동 전환 비활성화)
+        hls.currentLevel = targetLevel;
+        hls.autoLevelEnabled = false;
+
+        console.log(`HLS: 720p 고정 (level ${targetLevel}, ${levels[targetLevel]?.height}p)`);
         onHlsReady();
       });
 
