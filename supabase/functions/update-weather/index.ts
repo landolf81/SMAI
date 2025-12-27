@@ -72,12 +72,15 @@ const buildKmaUrl = (apiPath: string, params: Record<string, string>): string =>
 // 초단기실황 API (KST 기준)
 const getUltraSrtNcst = async () => {
   const now = getKoreanTime()
-  const baseDate = formatDate(now)
-  let baseTime = formatTime(now)
+  let baseDateTime = now
+
+  // 40분 이전이면 이전 시간 사용 (날짜도 함께 조정)
   if (now.getUTCMinutes() < 40) {
-    const prevHour = new Date(now.getTime() - 60 * 60 * 1000)
-    baseTime = formatTime(prevHour)
+    baseDateTime = new Date(now.getTime() - 60 * 60 * 1000)
   }
+
+  const baseDate = formatDate(baseDateTime)
+  const baseTime = formatTime(baseDateTime)
 
   const url = buildKmaUrl('/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst', {
     numOfRows: '10',
