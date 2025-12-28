@@ -6,9 +6,9 @@ const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-14">
       {/* 헤더 */}
-      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b shadow-sm">
         <div className="flex items-center p-4">
           <button
             onClick={() => navigate(-1)}
@@ -21,12 +21,12 @@ const PrivacyPolicy = () => {
       </div>
 
       {/* 내용 */}
-      <div className="max-w-3xl mx-auto p-4">
+      <div className="max-w-3xl mx-auto p-4 pb-20">
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
 
           <section>
             <p className="text-gray-600 mb-4">
-              [서비스명](이하 "서비스")은 이용자의 개인정보를 중요시하며,
+              참외이야기(이하 "서비스")는 이용자의 개인정보를 중요시하며,
               「개인정보 보호법」을 준수합니다.
             </p>
           </section>
@@ -83,7 +83,17 @@ const PrivacyPolicy = () => {
                 <tbody>
                   <tr>
                     <td className="border px-4 py-2">Supabase Inc.</td>
-                    <td className="border px-4 py-2">데이터베이스 호스팅</td>
+                    <td className="border px-4 py-2">데이터베이스 호스팅, 인증</td>
+                    <td className="border px-4 py-2">미국</td>
+                  </tr>
+                  <tr>
+                    <td className="border px-4 py-2">Vercel Inc.</td>
+                    <td className="border px-4 py-2">웹사이트 호스팅, CDN</td>
+                    <td className="border px-4 py-2">미국</td>
+                  </tr>
+                  <tr>
+                    <td className="border px-4 py-2">Cloudflare Inc.</td>
+                    <td className="border px-4 py-2">CDN, 동영상 스트리밍</td>
                     <td className="border px-4 py-2">미국</td>
                   </tr>
                 </tbody>
@@ -96,28 +106,28 @@ const PrivacyPolicy = () => {
             <ul className="list-disc list-inside text-gray-600 space-y-1">
               <li>개인정보 열람, 정정, 삭제, 처리정지 요청 가능</li>
               <li>회원 탈퇴를 통해 개인정보 삭제 가능</li>
-              <li>요청 방법: [이메일 주소] 또는 앱 내 문의</li>
+              <li>요청 방법: landolf@naver.com 또는 앱 내 문의</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">7. 개인정보 보호책임자</h2>
             <ul className="list-disc list-inside text-gray-600 space-y-1">
-              <li>담당자: [이름]</li>
-              <li>연락처: [이메일]</li>
+              <li>담당자: 정병근</li>
+              <li>연락처: landolf@naver.com</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">8. 개인정보 처리방침 변경</h2>
             <ul className="list-disc list-inside text-gray-600 space-y-1">
-              <li>본 방침은 [시행일]부터 적용됩니다.</li>
+              <li>본 방침은 2025년 1월 1일부터 적용됩니다.</li>
               <li>변경 시 공지사항을 통해 안내합니다.</li>
             </ul>
           </section>
 
           <div className="pt-4 border-t text-sm text-gray-500">
-            <p>시행일: 2024년 ○월 ○일</p>
+            <p>시행일: 2025년 1월 1일</p>
           </div>
         </div>
       </div>
