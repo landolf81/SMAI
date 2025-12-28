@@ -304,22 +304,24 @@ body {
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif !important;
   display: flex !important;
   flex-direction: column !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 .cs-chat-container {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
+  overflow: hidden !important;
 }
 
-/* 헤더 고정 */
+/* 헤더 고정 - flex로 고정 */
 .cs-conversation-header {
   background-color: white !important;
   border-bottom: 1px solid #d1d5db !important;
   padding: 14px 16px !important;
   flex-shrink: 0 !important;
-  position: sticky !important;
-  top: 0 !important;
+  flex-grow: 0 !important;
   z-index: 10 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
@@ -344,12 +346,15 @@ body {
   border: 2px solid #22c55e !important;
 }
 
-/* 메시지 목록 */
+/* 메시지 목록 - 스크롤 영역 */
 .cs-message-list {
   background-color: #f9fafb !important;
   padding: 12px !important;
-  flex: 1 !important;
+  flex: 1 1 auto !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 0 !important; /* flex 스크롤을 위해 필수 */
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* 보낸 메시지 - 연한 노랑 */
