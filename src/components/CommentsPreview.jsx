@@ -12,7 +12,7 @@ import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
-const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments, onOpenCommentsModal }) => {
+const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments, onOpenCommentsModal, filterByUserId = null }) => {
   const { currentUser } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -286,7 +286,13 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
   }
 
   // commentService.getComments()는 배열을 직접 반환
-  const comments = Array.isArray(commentsData) ? commentsData : [];
+  let comments = Array.isArray(commentsData) ? commentsData : [];
+
+  // filterByUserId가 있으면 해당 사용자의 댓글만 필터링
+  if (filterByUserId) {
+    comments = comments.filter(comment => comment.userId === filterByUserId);
+  }
+
   const displayedCount = comments.length;
   // previewMode: 2개 표시, 더 있으면 "댓글 더 보기" 표시
   // 일반 모드: 3개 미리보기 상태에서 정확히 3개가 로드되었다면 더 있을 가능성이 있음

@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { userService } from '../services';
+import { userService, adService } from '../services';
+import EnhancedInstagramPost from './EnhancedInstagramPost';
+import MobileAdDisplay from './MobileAdDisplay';
 import CommentIcon from '@mui/icons-material/Comment';
-import PersonIcon from '@mui/icons-material/Person';
-import ArticleIcon from '@mui/icons-material/Article';
-import PostDetailModal from './PostDetailModal';
+import LoadingSpinner from './LoadingSpinner';
+import { shouldShowAds } from '../utils/deviceDetector';
 
 const UserComments = ({ userId }) => {
-  const [selectedPostId, setSelectedPostId] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   // 사용자 댓글 내역 조회
   const { data: userComments, isLoading, error } = useQuery({
     queryKey: ['userComments', userId],
@@ -16,11 +15,23 @@ const UserComments = ({ userId }) => {
     enabled: !!userId,
   });
 
+  // 광고 데이터 가져오기 (모바일에서만)
+  const { data: adsData } = useQuery({
+    queryKey: ['ads', 'active'],
+    queryFn: async () => {
+      if (!shouldShowAds()) return [];
+      const ads = await adService.getActiveAds();
+      return ads || [];
+    },
+    staleTime: 10 * 60 * 1000,
+    enabled: shouldShowAds(),
+  });
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="loading loading-spinner loading-lg text-primary"></div>
-        <span className="ml-3">댓글 내역을 불러오는 중...</span>
+      <div className="flex flex-col justify-center items-center py-12">
+        <LoadingSpinner size="lg" />
+        <span className="mt-4 text-gray-600">댓글 내역을 불러오는 중...</span>
       </div>
     );
   }
@@ -37,75 +48,58 @@ const UserComments = ({ userId }) => {
   if (!userComments || userComments.length === 0) {
     return (
       <div className="text-center py-12">
-        <CommentIcon className="text-6xl text-gray-300 mb-4" />
+        <CommentIcon className="text-6xl text-gray-300 mb-4" sx={{ fontSize: 64 }} />
         <p className="text-gray-500">작성한 댓글이 없습니다</p>
       </div>
     );
   }
 
-  const handlePostClick = (postId) => {
-    setSelectedPostId(postId);
-    setShowModal(true);
-  };
+  // 댓글이 달린 게시물 목록 추출 (중복 제거)
+  const postsWithComments = [];
+  const seenPostIds = new Set();
+
+  userComments.forEach((comment) => {
+    if (comment.post && !seenPostIds.has(comment.post.id)) {
+      seenPostIds.add(comment.post.id);
+      postsWithComments.push({
+        ...comment.post,
+        // 이 게시물에 대한 내 댓글들
+        myComments: userComments.filter(c => c.post?.id === comment.post.id)
+      });
+    }
+  });
+
+  const ads = adsData || [];
 
   return (
-    <>
-      <div className="space-y-4">
-        {userComments.map((comment) => (
-          <div
-            key={comment.id}
-            className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer"
-            onClick={() => comment.post?.id && handlePostClick(comment.post.id)}
-          >
-            <div className="space-y-3">
-              {/* 댓글 헤더 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <CommentIcon className="text-blue-500" fontSize="small" />
-                  <span className="text-sm font-medium text-gray-900">댓글</span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(comment.created_at).toLocaleDateString('ko-KR')}
-                  </span>
-                </div>
-                <ArticleIcon className="text-gray-400" fontSize="small" />
-              </div>
-
-              {/* 댓글 내용 */}
-              <div className="bg-white rounded-lg p-3 border-l-4 border-blue-500">
-                <p className="text-gray-700 text-sm mb-2">
-                  {comment.description || comment.desc}
-                </p>
-              </div>
-
-              {/* 원본 게시물 정보 */}
-              {comment.post && (
-                <div className="bg-white rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <PersonIcon className="text-gray-400" fontSize="small" />
-                    <span className="text-xs font-medium text-gray-600">
-                      {comment.post.username || comment.post.name}의 게시물
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-xs line-clamp-2">
-                    {comment.post.description || comment.post.desc || comment.post.content}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* 게시물 상세 모달 */}
-      <PostDetailModal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setSelectedPostId(null);
-        }}
-        postId={selectedPostId}
-      />
-    </>
+    <div className="space-y-4">
+      {postsWithComments.map((post, index) => (
+        <React.Fragment key={post.id}>
+          <EnhancedInstagramPost
+            post={{
+              ...post,
+              // 필드 매핑
+              Desc: post.description || post.desc || post.content,
+              desc: post.description || post.desc || post.content,
+              img: post.photo || post.img,
+              profilePic: post.users?.profile_pic || post.user?.profile_pic || post.profilePic,
+              username: post.users?.username || post.user?.username || post.username,
+              name: post.users?.name || post.user?.name || post.name,
+              user: post.users || post.user,
+              userId: post.user_id || post.userId,
+              createdAt: post.created_at || post.createdAt,
+            }}
+            isVisible={true}
+            disableAutoplay={true}
+            filterCommentsByUserId={userId}
+          />
+          {/* 3개마다 광고 삽입 */}
+          {(index + 1) % 3 === 0 && ads.length > 0 && (
+            <MobileAdDisplay ad={ads[Math.floor(index / 3) % ads.length]} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
   );
 };
 

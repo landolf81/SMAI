@@ -1518,6 +1518,139 @@ export const postService = {
       console.error('hot_score 갱신 오류:', error);
       throw error;
     }
+  },
+
+  /**
+   * 게시물 저장 (Supabase saved_posts 테이블)
+   * @param {string} postId - 게시물 ID
+   * @param {string} userId - 사용자 ID
+   */
+  async savePost(postId, userId) {
+    try {
+      const { error } = await supabase
+        .from('saved_posts')
+        .insert([{
+          user_id: userId,
+          post_id: postId
+        }]);
+
+      if (error) {
+        // 이미 저장된 경우 (중복) 무시
+        if (error.code === '23505') {
+          return { success: true, alreadySaved: true };
+        }
+        throw error;
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('게시물 저장 오류:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 게시물 저장 취소
+   * @param {string} postId - 게시물 ID
+   * @param {string} userId - 사용자 ID
+   */
+  async unsavePost(postId, userId) {
+    try {
+      const { error } = await supabase
+        .from('saved_posts')
+        .delete()
+        .eq('user_id', userId)
+        .eq('post_id', postId);
+
+      if (error) throw error;
+      return { success: true };
+    } catch (error) {
+      console.error('게시물 저장 취소 오류:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 게시물 저장 여부 확인
+   * @param {string} postId - 게시물 ID
+   * @param {string} userId - 사용자 ID
+   */
+  async isPostSaved(postId, userId) {
+    try {
+      const { data, error } = await supabase
+        .from('saved_posts')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('post_id', postId)
+        .maybeSingle();
+
+      if (error) throw error;
+      return !!data;
+    } catch (error) {
+      console.error('저장 여부 확인 오류:', error);
+      return false;
+    }
+  },
+
+  /**
+   * 저장된 게시물 목록 조회 (상세 정보 포함)
+   * @param {string} userId - 사용자 ID
+   */
+  async getSavedPosts(userId) {
+    try {
+      // saved_posts에서 저장된 게시물 ID 조회 (최신순)
+      const { data: savedData, error: savedError } = await supabase
+        .from('saved_posts')
+        .select('post_id, created_at')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (savedError) throw savedError;
+      if (!savedData || savedData.length === 0) return [];
+
+      const postIds = savedData.map(s => s.post_id);
+
+      // 저장된 게시물 상세 정보 조회
+      const { data: posts, error: postsError } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          users:user_id (
+            id,
+            username,
+            name,
+            profile_pic
+          )
+        `)
+        .in('id', postIds)
+        .or('is_hidden.is.null,is_hidden.eq.false');
+
+      if (postsError) throw postsError;
+
+      // 저장 순서 유지 (최신 저장이 맨 앞)
+      const postsMap = {};
+      posts.forEach(p => { postsMap[p.id] = p; });
+
+      const orderedPosts = postIds
+        .map(id => postsMap[id])
+        .filter(p => p !== undefined);
+
+      // 데이터 변환
+      return orderedPosts.map(post => ({
+        ...post,
+        desc: post.description,
+        content: post.description,
+        img: post.photo,
+        userId: post.user_id,
+        createdAt: post.created_at,
+        username: post.users?.username || '',
+        name: post.users?.name || '',
+        profilePic: post.users?.profile_pic || 'defaultAvatar.png',
+        user: post.users || null
+      }));
+    } catch (error) {
+      console.error('저장된 게시물 조회 오류:', error);
+      return [];
+    }
   }
 };
 

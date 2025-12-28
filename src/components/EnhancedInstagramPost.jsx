@@ -39,7 +39,7 @@ import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
-const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause, disableAutoplay = false }) => {
+const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause, disableAutoplay = false, hideComments = false, filterCommentsByUserId = null }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
   const navigate = useNavigate();
   const featurePermissions = useFeaturePermissions();
@@ -79,6 +79,15 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
+  // 저장 상태 초기화 (비동기)
+  useEffect(() => {
+    if (currentUser) {
+      postService.isPostSaved(post.id, currentUser.id).then(saved => {
+        setIsSaved(saved);
+      });
+    }
+  }, [currentUser, post.id]);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [mediaLoadError, setMediaLoadError] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -1298,23 +1307,35 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
           {/* 저장 버튼 */}
           <button
-            onClick={() => {
+            onClick={async () => {
               // 비로그인 시 로그인 필요 모달 표시
               if (!currentUser) {
                 setShowLoginModal(true);
                 return;
               }
-              setIsSaved(!isSaved);
-              // 저장 토스트 메시지
-              const toast = document.createElement('div');
-              toast.className = 'toast toast-top toast-center z-50';
-              toast.innerHTML = `
-                <div class="alert ${!isSaved ? 'alert-success' : 'alert-info'}">
-                  <span>${!isSaved ? '🔖 게시글이 저장되었습니다!' : '📌 게시글 저장이 취소되었습니다.'}</span>
-                </div>
-              `;
-              document.body.appendChild(toast);
-              setTimeout(() => document.body.removeChild(toast), 2000);
+
+              // 실제 저장/저장취소 처리 (비동기)
+              try {
+                if (isSaved) {
+                  await postService.unsavePost(post.id, currentUser.id);
+                } else {
+                  await postService.savePost(post.id, currentUser.id);
+                }
+                setIsSaved(!isSaved);
+
+                // 저장 토스트 메시지
+                const toast = document.createElement('div');
+                toast.className = 'toast toast-top toast-center z-50';
+                toast.innerHTML = `
+                  <div class="alert ${!isSaved ? 'alert-success' : 'alert-info'}">
+                    <span>${!isSaved ? '🔖 게시글이 저장되었습니다!' : '📌 게시글 저장이 취소되었습니다.'}</span>
+                  </div>
+                `;
+                document.body.appendChild(toast);
+                setTimeout(() => document.body.removeChild(toast), 2000);
+              } catch (error) {
+                console.error('저장 처리 오류:', error);
+              }
             }}
             className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'}`}
           >
@@ -1377,17 +1398,20 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       </div>
 
       {/* 댓글 섹션 - 항상 표시 (기본 2개 미리보기, 더보기 시 모달) */}
-      <div>
-        <CommentsPreview
-          postId={post.id}
-          postTag={post.tag}
-          showCommentForm={showCommentForm}
-          onToggleCommentForm={() => setShowCommentForm(!showCommentForm)}
-          previewMode={!showComments}
-          onShowAllComments={() => setShowComments(true)}
-          onOpenCommentsModal={() => setShowCommentsModal(true)}
-        />
-      </div>
+      {!hideComments && (
+        <div>
+          <CommentsPreview
+            postId={post.id}
+            postTag={post.tag}
+            showCommentForm={showCommentForm}
+            onToggleCommentForm={() => setShowCommentForm(!showCommentForm)}
+            previewMode={!showComments}
+            onShowAllComments={() => setShowComments(true)}
+            onOpenCommentsModal={() => setShowCommentsModal(true)}
+            filterByUserId={filterCommentsByUserId}
+          />
+        </div>
+      )}
 
       {/* 댓글 모달 */}
       <CommentsModal

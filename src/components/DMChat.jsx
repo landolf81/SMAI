@@ -17,8 +17,10 @@ const DMChat = ({ conversation, onClose }) => {
   const { currentUser } = useContext(AuthContext);
   const [message, setMessage] = useState('');
   const [conversationId, setConversationId] = useState(conversation.id);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const containerRef = useRef(null);
   const queryClient = useQueryClient();
 
   // 대화 ID는 상대방 사용자 ID를 사용
@@ -122,6 +124,41 @@ const DMChat = ({ conversation, onClose }) => {
     };
   }, []);
 
+  // 모바일 키보드 감지 (visualViewport API)
+  useEffect(() => {
+    const handleViewportResize = () => {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        const newKeyboardHeight = windowHeight - viewportHeight;
+
+        // 키보드가 올라온 경우에만 높이 설정
+        if (newKeyboardHeight > 50) {
+          setKeyboardHeight(newKeyboardHeight);
+          // 키보드가 올라올 때 스크롤을 맨 아래로
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+          }, 100);
+        } else {
+          setKeyboardHeight(0);
+        }
+      }
+    };
+
+    // visualViewport API 지원 확인
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener('scroll', handleViewportResize);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleViewportResize);
+        window.visualViewport.removeEventListener('scroll', handleViewportResize);
+      }
+    };
+  }, []);
+
   // 메시지 날짜 그룹핑
   const groupMessagesByDate = (messages) => {
     const groups = {};
@@ -151,11 +188,16 @@ const DMChat = ({ conversation, onClose }) => {
       onClick={handleOverlayClick}
     >
       <div
-        className="bg-white shadow-xl w-full h-full flex flex-col absolute inset-0 md:relative md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:h-[90vh] md:max-h-[700px] md:max-w-2xl md:rounded-lg"
+        ref={containerRef}
+        className="bg-white shadow-2xl w-full flex flex-col absolute inset-x-0 top-0 md:relative md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:h-[90vh] md:max-h-[700px] md:max-w-2xl md:rounded-2xl md:border md:border-market-200"
+        style={{
+          height: keyboardHeight > 0 ? `calc(100% - ${keyboardHeight}px)` : '100%',
+          transition: 'height 0.1s ease-out'
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-green-50 to-blue-50">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-yellow-50 via-green-50 to-market-50">
           <div className="flex items-center space-x-3">
             <img
               src={
@@ -168,17 +210,17 @@ const DMChat = ({ conversation, onClose }) => {
                   : '/default/default_profile.png'
               }
               alt={conversation.other_user_username}
-              className="w-10 h-10 rounded-full object-cover border-2 border-white shadow"
+              className="w-10 h-10 rounded-full object-cover border-2 border-market-200 shadow-md ring-2 ring-market-100"
               onError={(e) => {
                 e.target.onerror = null;
                 e.target.src = '/default/default_profile.png';
               }}
             />
             <div>
-              <p className="font-semibold text-gray-900">
+              <p className="font-semibold text-market-800">
                 {conversation.other_user_username || conversation.other_user_name}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-market-600">
                 {conversation.other_user_name && conversation.other_user_name !== conversation.other_user_username && (
                   <span>{conversation.other_user_name}</span>
                 )}
@@ -187,14 +229,14 @@ const DMChat = ({ conversation, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-market-500 hover:text-market-700 hover:bg-market-100 p-1 rounded-full transition-colors"
           >
             <CloseIcon />
           </button>
         </div>
 
-        {/* 메시지 영역 */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 bg-gray-50">
+        {/* 메시지 영역 - flex-1로 남은 공간 모두 차지, overflow-y-auto로 스크롤 */}
+        <div className="flex-1 overflow-y-auto p-2 sm:p-3 bg-gradient-to-b from-yellow-50/30 to-green-50/30 min-h-0">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="loading loading-spinner loading-md"></div>
@@ -204,8 +246,8 @@ const DMChat = ({ conversation, onClose }) => {
               {Object.entries(messageGroups).map(([date, msgs]) => (
                 <div key={date}>
                   {/* 날짜 구분선 */}
-                  <div className="flex items-center justify-center my-2">
-                    <div className="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">
+                  <div className="flex items-center justify-center my-3">
+                    <div className="bg-gradient-to-r from-market-100 to-yellow-100 text-market-700 text-xs px-4 py-1.5 rounded-full shadow-sm border border-market-200">
                       {moment(date).calendar(null, {
                         sameDay: '오늘',
                         lastDay: '어제',
@@ -224,44 +266,40 @@ const DMChat = ({ conversation, onClose }) => {
                         key={msg.id}
                         className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
                       >
-                        <div className={`group relative max-w-md ${isMyMessage ? 'items-end' : 'items-start'}`}>
-                          {/* 메시지 버블 */}
+                        <div className={`group relative max-w-[75%] flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+                          {/* 메시지 버블 - 텍스트만 */}
                           <div
-                            className={`px-4 py-2 rounded-lg shadow ${
+                            className={`px-4 py-2.5 rounded-2xl shadow-sm ${
                               isMyMessage
-                                ? 'bg-green-500 text-white'
-                                : 'bg-white text-gray-900 border'
+                                ? 'bg-yellow-100 text-gray-800 rounded-br-md'
+                                : 'bg-white text-gray-800 border border-gray-100 rounded-bl-md'
                             }`}
                           >
                             {/* 텍스트 메시지 */}
                             {msg.content && msg.content.trim() && (
                               <p className="whitespace-pre-wrap break-words">{msg.content}</p>
                             )}
-                            <div className={`flex items-center space-x-2 mt-1 ${
-                              isMyMessage ? 'justify-end' : 'justify-start'
-                            }`}>
-                              <span className={`text-xs ${
-                                isMyMessage ? 'text-green-100' : 'text-gray-500'
-                              }`}>
-                                {moment(msg.created_at).format('HH:mm')}
+                          </div>
+
+                          {/* 시간 - 버블 아래 */}
+                          <div className={`flex items-center gap-1 mt-1 px-1`}>
+                            <span className="text-xs text-gray-400">
+                              {moment(msg.created_at).format('HH:mm')}
+                            </span>
+                            {msg.is_edited && (
+                              <span className="text-xs text-gray-400">
+                                (수정됨)
                               </span>
-                              {msg.is_edited && (
-                                <span className={`text-xs ${
-                                  isMyMessage ? 'text-green-100' : 'text-gray-500'
-                                }`}>
-                                  (수정됨)
-                                </span>
-                              )}
-                            </div>
+                            )}
                           </div>
 
                           {/* 삭제 버튼 (본인 메시지만) */}
                           {isMyMessage && (
                             <button
                               onClick={() => handleDeleteMessage(msg.id)}
-                              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full p-1 transition-opacity"
+                              className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 bg-red-500 hover:bg-red-600 text-white rounded-full p-1.5 transition-all shadow-md"
                             >
-                              <DeleteIcon fontSize="small" />
+                              <DeleteIcon sx={{ fontSize: 14 }} />
                             </button>
                           )}
                         </div>
@@ -273,9 +311,12 @@ const DMChat = ({ conversation, onClose }) => {
               <div ref={messagesEndRef} />
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <p className="text-lg">💬 새로운 대화</p>
-              <p className="text-sm mt-2">대화를 시작해보세요!</p>
+            <div className="flex flex-col items-center justify-center h-full text-market-600">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-yellow-100 to-market-100 flex items-center justify-center mb-4">
+                <SendIcon sx={{ fontSize: 32 }} className="text-market-500" />
+              </div>
+              <p className="text-lg font-medium text-market-700">새로운 대화</p>
+              <p className="text-sm mt-1 text-market-500">대화를 시작해보세요!</p>
             </div>
           )}
         </div>
@@ -283,9 +324,9 @@ const DMChat = ({ conversation, onClose }) => {
         {/* 입력 영역 */}
         <form
           onSubmit={handleSendMessage}
-          className="p-2 sm:p-3 border-t bg-white flex-shrink-0"
+          className="p-2 sm:p-3 border-t border-market-100 bg-gradient-to-r from-yellow-50/50 to-market-50/50 flex-shrink-0"
         >
-          <div className="flex items-end space-x-2">
+          <div className="flex items-end">
             {/* 메시지 입력 */}
             <div className="flex-1">
               <textarea
@@ -298,35 +339,13 @@ const DMChat = ({ conversation, onClose }) => {
                     handleSendMessage(e);
                   }
                 }}
-                placeholder="메시지를 입력하세요..."
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+                placeholder="메시지를 입력하세요... (Enter로 전송)"
+                className="w-full px-4 py-2.5 rounded-2xl focus:outline-none resize-none bg-yellow-50"
                 rows="1"
-                style={{ minHeight: '40px', maxHeight: '120px' }}
+                style={{ minHeight: '44px', maxHeight: '120px' }}
               />
             </div>
-
-            {/* 전송 버튼 */}
-            <button
-              type="submit"
-              disabled={!message.trim() || sendMessageMutation.isPending}
-              className={`p-2 rounded-lg transition-colors ${
-                message.trim()
-                  ? 'bg-green-500 text-white hover:bg-green-600'
-                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              {sendMessageMutation.isPending ? (
-                <LoadingSpinner size="sm" />
-              ) : (
-                <SendIcon />
-              )}
-            </button>
           </div>
-
-          {/* 안내 텍스트 */}
-          <p className="text-xs text-gray-500 mt-1">
-            Enter로 전송, Shift+Enter로 줄바꿈
-          </p>
         </form>
       </div>
     </div>

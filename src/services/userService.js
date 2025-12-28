@@ -254,7 +254,9 @@ export const userService = {
 
       return data.map(like => ({
         ...like.posts,
+        img: like.posts.photo,
         user: like.posts.users,
+        profilePic: like.posts.users?.profile_pic,
         tags: [],
         liked_at: like.created_at
       }));
@@ -275,13 +277,12 @@ export const userService = {
         .select(`
           *,
           posts (
-            id,
-            title,
-            description,
-            user_id,
+            *,
             users:user_id (
+              id,
               username,
-              name
+              name,
+              profile_pic
             )
           )
         `)
@@ -297,8 +298,11 @@ export const userService = {
           ...comment.posts,
           desc: comment.posts.description,
           content: comment.posts.description,
+          img: comment.posts.photo,
           username: comment.posts.users?.username,
-          name: comment.posts.users?.name
+          name: comment.posts.users?.name,
+          profilePic: comment.posts.users?.profile_pic,
+          user: comment.posts.users
         } : null
       }));
     } catch (error) {

@@ -6,6 +6,7 @@ import { userService, badgeService, dmService } from "../services";
 import EnhancedInstagramFeed from "../components/EnhancedInstagramFeed";
 import LikedPosts from "../components/LikedPosts";
 import UserComments from "../components/UserComments";
+import SavedPosts from "../components/SavedPosts";
 import Update from "../components/update";
 import LoadingSpinner from "../components/LoadingSpinner";
 import DMList from "../components/DMList";
@@ -17,6 +18,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ArticleIcon from "@mui/icons-material/Article";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import CommentIcon from "@mui/icons-material/Comment";
+import BookmarkIcon from "@mui/icons-material/Bookmark";
 import MessageIcon from "@mui/icons-material/Message";
 
 import VerifiedIcon from "@mui/icons-material/Verified";
@@ -335,7 +337,22 @@ const Profile = () => {
               >
                 <CommentIcon fontSize="small" />
               </button>
-              
+
+              {/* 저장 탭 (본인 프로필에서만 표시) */}
+              {currentUser && currentUser.id === userId && (
+                <button
+                  onClick={() => setActiveTab('saved')}
+                  className={`flex items-center justify-center px-4 py-3 font-medium ${
+                    activeTab === 'saved'
+                      ? 'text-market-600 border-b-2 border-market-600'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                  title="저장"
+                >
+                  <BookmarkIcon fontSize="small" />
+                </button>
+              )}
+
               {/* 메시지 탭 (본인 프로필에서만 표시) */}
               {currentUser && currentUser.id === userId && (
                 <button
@@ -369,6 +386,9 @@ const Profile = () => {
             )}
             {activeTab === 'comments' && (
               <UserComments userId={userId} />
+            )}
+            {activeTab === 'saved' && currentUser && currentUser.id === userId && (
+              <SavedPosts userId={userId} />
             )}
             {activeTab === 'messages' && currentUser && currentUser.id === userId && (
               <DMList />

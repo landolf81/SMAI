@@ -1,17 +1,17 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { userService, adService } from '../services';
+import { postService, adService } from '../services';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
-import FavoriteIcon from '@mui/icons-material/Favorite';
+import BookmarkIcon from '@mui/icons-material/Bookmark';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 
-const LikedPosts = ({ userId }) => {
-  // 좋아요한 게시물 조회
-  const { data: likedPosts, isLoading, error } = useQuery({
-    queryKey: ['likedPosts', userId],
-    queryFn: () => userService.getUserLikedPosts(userId),
+const SavedPosts = ({ userId }) => {
+  // 저장된 게시물 조회
+  const { data: savedPosts, isLoading, error } = useQuery({
+    queryKey: ['savedPosts', userId],
+    queryFn: () => postService.getSavedPosts(userId),
     enabled: !!userId,
   });
 
@@ -31,7 +31,7 @@ const LikedPosts = ({ userId }) => {
     return (
       <div className="flex flex-col justify-center items-center py-12">
         <LoadingSpinner size="lg" />
-        <span className="mt-4 text-gray-600">좋아요한 게시물을 불러오는 중...</span>
+        <span className="mt-4 text-gray-600">저장된 게시물을 불러오는 중...</span>
       </div>
     );
   }
@@ -45,11 +45,12 @@ const LikedPosts = ({ userId }) => {
     );
   }
 
-  if (!likedPosts || likedPosts.length === 0) {
+  if (!savedPosts || savedPosts.length === 0) {
     return (
       <div className="text-center py-12">
-        <FavoriteIcon className="text-6xl text-gray-300 mb-4" sx={{ fontSize: 64 }} />
-        <p className="text-gray-500">좋아요한 게시물이 없습니다</p>
+        <BookmarkIcon className="text-6xl text-gray-300 mb-4" sx={{ fontSize: 64 }} />
+        <p className="text-gray-500">저장된 게시물이 없습니다</p>
+        <p className="text-sm text-gray-400 mt-2">게시물의 북마크 아이콘을 눌러 저장해보세요</p>
       </div>
     );
   }
@@ -58,7 +59,7 @@ const LikedPosts = ({ userId }) => {
 
   return (
     <div className="space-y-4">
-      {likedPosts.map((post, index) => (
+      {savedPosts.map((post, index) => (
         <React.Fragment key={post.id}>
           <EnhancedInstagramPost
             post={{
@@ -87,4 +88,4 @@ const LikedPosts = ({ userId }) => {
   );
 };
 
-export default LikedPosts;
+export default SavedPosts;
