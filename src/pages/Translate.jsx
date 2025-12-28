@@ -642,25 +642,6 @@ const Translate = () => {
                   {LANGUAGES.find(l => l.code === targetLang)?.flag} {LANGUAGES.find(l => l.code === targetLang)?.name}
                 </label>
                 <div className="flex gap-2">
-                  {/* 개발용 TTS 테스트 버튼 */}
-                  <button
-                    onClick={async () => {
-                      try {
-                        toast.loading('TTS 테스트 중...');
-                        const audioBlob = await geminiService.textToSpeech(translations.target, targetLang);
-                        console.log('✅ TTS 테스트 성공, Blob 크기:', audioBlob.size);
-                        toast.dismiss();
-                        toast.success('TTS 테스트 성공!');
-                      } catch (error) {
-                        console.error('❌ TTS 테스트 실패:', error);
-                        toast.dismiss();
-                        toast.error('TTS 테스트 실패: ' + error.message);
-                      }
-                    }}
-                    className="flex items-center gap-1 px-3 py-2 rounded-xl font-medium transition-all shadow-md bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 text-xs"
-                  >
-                    🧪 TTS 테스트
-                  </button>
                   <button
                     onClick={handleTTS}
                     disabled={isSpeaking}

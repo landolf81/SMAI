@@ -85,7 +85,10 @@ const Login = () => {
 
         {/* 타이틀 */}
         <h1 className="text-2xl font-bold text-gray-800 mb-2">참외 이야기</h1>
-        <p className="text-gray-500 mb-8">성주 지역 농업인 커뮤니티</p>
+        <p className="text-gray-500 mb-8 text-center leading-relaxed">
+          참외가 자라기 전의 이야기<br />
+          농부의 이야기 밭의 이야기
+        </p>
 
         {/* 로그인 카드 */}
         <div className="w-full max-w-sm bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 p-6">

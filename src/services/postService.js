@@ -772,22 +772,44 @@ export const postService = {
       };
 
       // post_views 테이블에 조회 기록 삽입 (로그인/비로그인 모두)
+      // partial unique index는 upsert에서 사용 불가하므로 조회 후 insert 방식 사용
+      const sessionId = user ? null : getOrCreateSessionId();
+
+      // 기존 조회 기록 확인
+      let existingViewQuery = supabase
+        .from('post_views')
+        .select('id')
+        .eq('post_id', postIdInt);
+
+      if (user) {
+        existingViewQuery = existingViewQuery.eq('user_id', user.id);
+      } else {
+        existingViewQuery = existingViewQuery.eq('session_id', sessionId);
+      }
+
+      const { data: existingView } = await existingViewQuery.maybeSingle();
+
+      // 이미 조회한 경우 조회수 증가하지 않음
+      if (existingView) {
+        return { success: true, alreadyViewed: true };
+      }
+
+      // 새로운 조회 기록 추가
       const { error: viewError } = await supabase
         .from('post_views')
-        .insert([{
+        .insert({
           post_id: postIdInt,
           user_id: user?.id || null,
           viewed_at: new Date().toISOString(),
           ip_address: 'unknown',
-          session_id: user ? null : getOrCreateSessionId()
-        }]);
-
-      // 중복 키 에러(23505)면 이미 조회한 것 - 조회수 증가 안 함
-      if (viewError && viewError.code === '23505') {
-        return { success: true, alreadyViewed: true };
-      }
+          session_id: sessionId
+        });
 
       if (viewError) {
+        // 동시 삽입으로 인한 중복 에러는 무시 (이미 다른 요청에서 삽입됨)
+        if (viewError.code === '23505') {
+          return { success: true, alreadyViewed: true };
+        }
         console.warn('조회 기록 추가 실패:', viewError.code, viewError.message);
         return { success: false };
       }

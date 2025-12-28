@@ -2,8 +2,10 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { postService, adService } from '../services';
+import { fetchNews } from '../services/newsService';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
+import NewsCard from './NewsCard';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { hasEncodingVideo } from '../utils/mediaUtils';
@@ -99,6 +101,15 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     enabled: shouldShowAds(),
   });
 
+  // 뉴스 데이터 가져오기 (커뮤니티 피드에서만)
+  const { data: newsData } = useQuery({
+    queryKey: ['news', 'feed'],
+    queryFn: fetchNews,
+    staleTime: 60 * 60 * 1000, // 1시간 캐시
+    gcTime: 2 * 60 * 60 * 1000, // 2시간 가비지 컬렉션
+    enabled: !userId, // 프로필 페이지에서는 비활성화
+  });
+
   // 광고 우선순위 알고리즘
   // 1. 마감 임박 광고 우선 (3일 이내)
   // 2. priority + priority_boost 반영
@@ -173,17 +184,21 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     return posts.filter(post => !hasEncodingVideo(post));
   }, [data, userId]);
 
-  // 게시물과 광고를 합친 목록 생성 (3개마다 광고 삽입, 또는 게시물 끝에 항상 표시)
+  // 게시물, 광고, 뉴스를 합친 목록 생성
+  // - 광고: 3개마다 삽입
+  // - 뉴스: 7개마다 삽입 (광고보다 낮은 빈도)
   const postsWithAds = useMemo(() => {
     const result = [];
     const ads = shuffledAds || [];
+    const news = newsData || [];
 
-    if (ads.length === 0) {
-      // 광고가 없으면 게시물만 반환
+    if (ads.length === 0 && news.length === 0) {
+      // 광고와 뉴스가 없으면 게시물만 반환
       return allPosts.map((post, index) => ({ type: 'post', data: post, key: `post-${post.id}-${index}` }));
     }
 
     let adIndex = 0; // 현재 광고 인덱스
+    let newsIndex = 0; // 현재 뉴스 인덱스
 
     allPosts.forEach((post, index) => {
       // 게시물 추가
@@ -191,16 +206,28 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
       // 3개마다 광고 삽입 (인덱스가 2, 5, 8, ... 일 때)
       if ((index + 1) % 3 === 0 && ads.length > 0) {
-        const ad = ads[adIndex % ads.length]; // 셔플된 광고 순서대로 선택
-
-        // 광고 데이터 유효성 검증
+        const ad = ads[adIndex % ads.length];
         if (ad && ad.id) {
           result.push({
             type: 'ad',
             data: ad,
-            key: `ad-${ad.id}-pos${index}` // 안정적인 키 (Date.now 제거)
+            key: `ad-${ad.id}-pos${index}`
           });
           adIndex++;
+        }
+      }
+
+      // 7개마다 뉴스 삽입 (인덱스가 6, 13, 20, ... 일 때)
+      // 광고와 겹치지 않게 조정 (3의 배수 피함)
+      if ((index + 1) % 7 === 0 && news.length > 0) {
+        const newsItem = news[newsIndex % news.length];
+        if (newsItem && newsItem.title) {
+          result.push({
+            type: 'news',
+            data: newsItem,
+            key: `news-${newsIndex}-pos${index}`
+          });
+          newsIndex++;
         }
       }
     });
@@ -212,13 +239,25 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         result.push({
           type: 'ad',
           data: ad,
-          key: `ad-${ad.id}-last` // 안정적인 키 (Date.now 제거)
+          key: `ad-${ad.id}-last`
+        });
+      }
+    }
+
+    // 게시물이 7개 미만이고 뉴스가 있으면 마지막에 뉴스 1개 추가
+    if (allPosts.length >= 3 && allPosts.length < 7 && news.length > 0 && newsIndex === 0) {
+      const newsItem = news[0];
+      if (newsItem && newsItem.title) {
+        result.push({
+          type: 'news',
+          data: newsItem,
+          key: `news-0-last`
         });
       }
     }
 
     return result;
-  }, [allPosts, shuffledAds]);
+  }, [allPosts, shuffledAds, newsData]);
 
   // 광고 노출 추적 함수
   const trackAdView = useCallback((adId) => {
@@ -688,7 +727,12 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">
           {postsWithAds.map((item) => {
             const isAd = item.type === 'ad';
-            const itemId = isAd ? `ad-${item.data.id}` : item.data.id.toString();
+            const isNews = item.type === 'news';
+            const itemId = isAd
+              ? `ad-${item.data.id}`
+              : isNews
+                ? `news-${item.key}`
+                : item.data.id.toString();
 
             return (
             <div
@@ -705,8 +749,10 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                   isVisible={visiblePosts.has(itemId)}
                   disableAutoplay={!!userId} // 프로필 화면에서는 자동재생 비활성화
                 />
-              ) : (
+              ) : item.type === 'ad' ? (
                 <MobileAdDisplay ad={item.data} />
+              ) : (
+                <NewsCard news={item.data} />
               )}
             </div>
             );
