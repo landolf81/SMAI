@@ -66,20 +66,47 @@ const DMChatPage = () => {
     staleTime: 2000,
   });
 
-  // 메시지 전송 뮤테이션
+  // 메시지 전송 뮤테이션 (Optimistic Update)
   const sendMessageMutation = useMutation({
     mutationFn: (content) =>
       dmService.sendMessage({
         receiverId: userId,
         content
       }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['messages', userId]);
-      setMessageText('');
+    // 즉시 UI에 반영 (Optimistic Update)
+    onMutate: async (content) => {
+      // 진행 중인 refetch 취소
+      await queryClient.cancelQueries(['messages', userId]);
+
+      // 이전 데이터 저장
+      const previousMessages = queryClient.getQueryData(['messages', userId]);
+
+      // 임시 메시지 추가
+      const tempMessage = {
+        id: `temp-${Date.now()}`,
+        sender_id: currentUser?.id,
+        receiver_id: userId,
+        content,
+        created_at: new Date().toISOString(),
+        is_read: false,
+        _isOptimistic: true
+      };
+
+      queryClient.setQueryData(['messages', userId], (old = []) => [...old, tempMessage]);
+
+      return { previousMessages };
     },
-    onError: (error) => {
+    onError: (error, content, context) => {
+      // 에러 시 이전 데이터로 롤백
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['messages', userId], context.previousMessages);
+      }
       console.error('메시지 전송 실패:', error);
       alert('메시지 전송에 실패했습니다.');
+    },
+    onSettled: () => {
+      // 성공/실패 상관없이 서버 데이터로 동기화
+      queryClient.invalidateQueries(['messages', userId]);
     }
   });
 
@@ -88,6 +115,7 @@ const DMChatPage = () => {
     e.preventDefault();
     const text = messageText.trim();
     if (text) {
+      setMessageText(''); // 즉시 입력창 비우기
       sendMessageMutation.mutate(text);
     }
   }, [messageText, sendMessageMutation]);
