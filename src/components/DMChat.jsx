@@ -132,13 +132,12 @@ const DMChat = ({ conversation, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[60] bg-black bg-opacity-50"
+      className="fixed inset-0 z-[60] bg-black/50 flex items-center justify-center"
       onClick={handleOverlayClick}
     >
       <div
-        className="fixed inset-0 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:h-[90vh] md:max-h-[700px] md:rounded-2xl overflow-hidden"
+        className="w-full h-full md:w-full md:max-w-2xl md:h-[90vh] md:max-h-[700px] md:rounded-2xl overflow-hidden bg-white flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ height: '100%' }}
       >
         <MainContainer
           style={{

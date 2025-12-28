@@ -302,79 +302,115 @@ body {
 .cs-main-container {
   --cs-main-container-bg: white;
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
+.cs-chat-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+}
+
+/* 헤더 고정 */
 .cs-conversation-header {
   background-color: white !important;
-  border-bottom: 1px solid #e5e7eb !important;
-  padding: 12px 16px !important;
+  border-bottom: 1px solid #d1d5db !important;
+  padding: 14px 16px !important;
+  flex-shrink: 0 !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 .cs-conversation-header__user-name {
   color: #111827 !important;
-  font-weight: 600 !important;
+  font-weight: 700 !important;
+  font-size: 17px !important;
 }
 
 .cs-conversation-header__info {
-  color: #374151 !important;
-  font-size: 13px !important;
+  color: #6b7280 !important;
+  font-size: 14px !important;
+}
+
+.cs-avatar {
+  width: 44px !important;
+  height: 44px !important;
 }
 
 .cs-avatar > img {
-  border: 2px solid #bbf7d0 !important;
+  border: 2px solid #22c55e !important;
 }
 
+/* 메시지 목록 */
 .cs-message-list {
-  background: linear-gradient(to bottom, rgba(254, 252, 232, 0.3), rgba(240, 253, 244, 0.3)) !important;
-  padding: 8px !important;
+  background-color: #f9fafb !important;
+  padding: 12px !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
 }
 
 /* 보낸 메시지 - 연한 노랑 */
 .cs-message--outgoing .cs-message__content {
-  background-color: #fef9c3 !important;
+  background-color: #fef08a !important;
   color: #1f2937 !important;
   border-radius: 18px 18px 4px 18px !important;
+  font-size: 15px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* 받은 메시지 - 흰색 */
 .cs-message--incoming .cs-message__content {
   background-color: white !important;
   color: #1f2937 !important;
-  border: 1px solid #f3f4f6 !important;
+  border: 1px solid #e5e7eb !important;
   border-radius: 18px 18px 18px 4px !important;
+  font-size: 15px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .cs-message__footer {
-  font-size: 11px !important;
+  font-size: 12px !important;
   color: #9ca3af !important;
+  margin-top: 4px !important;
 }
 
+/* 날짜 구분선 */
 .cs-message-separator {
-  color: #166534 !important;
-  font-size: 12px !important;
+  color: #374151 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  margin: 16px 0 !important;
 }
 
 .cs-message-separator::before,
 .cs-message-separator::after {
-  background-color: #bbf7d0 !important;
+  background-color: #d1d5db !important;
 }
 
-/* 입력창 */
+/* 입력창 - iOS 확대 방지를 위해 font-size 16px 이상 */
 .cs-message-input {
-  background: linear-gradient(to right, rgba(254, 252, 232, 0.5), rgba(240, 253, 244, 0.5)) !important;
-  border-top: 1px solid #dcfce7 !important;
-  padding: 8px 12px !important;
-  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0)) !important;
+  background-color: white !important;
+  border-top: 1px solid #e5e7eb !important;
+  padding: 10px 12px !important;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0)) !important;
+  flex-shrink: 0 !important;
 }
 
 .cs-message-input__content-editor-wrapper {
-  background-color: #fefce8 !important;
-  border-radius: 20px !important;
-  border: none !important;
+  background-color: #f3f4f6 !important;
+  border-radius: 22px !important;
+  border: 1px solid #e5e7eb !important;
 }
 
 .cs-message-input__content-editor {
   background-color: transparent !important;
+  font-size: 16px !important; /* iOS 확대 방지 */
+  min-height: 40px !important;
 }
 
 .cs-message-input__content-editor-container {
@@ -383,16 +419,25 @@ body {
 
 /* 전송 버튼 */
 .cs-button--send {
-  color: #16a34a !important;
+  color: #22c55e !important;
+  font-size: 18px !important;
 }
 
 .cs-button--send:hover {
-  color: #15803d !important;
+  color: #16a34a !important;
 }
 
 /* iOS Safari 대응 */
 @supports (-webkit-touch-callout: none) {
   .cs-main-container {
     height: -webkit-fill-available !important;
+  }
+
+  /* iOS 입력창 확대 방지 */
+  .cs-message-input__content-editor,
+  .cs-message-input input,
+  .cs-message-input textarea {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
   }
 }
