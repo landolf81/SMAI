@@ -1,10 +1,10 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthContext } from '../context/AuthContext';
 import { dmService } from '../services';
 import moment from 'moment';
 import 'moment/locale/ko';
-import DMChat from './DMChat';
 
 // 아이콘
 import MessageIcon from '@mui/icons-material/Message';
@@ -15,8 +15,8 @@ moment.locale('ko');
 
 const DMList = () => {
   const { currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedConversation, setSelectedConversation] = useState(null);
   const queryClient = useQueryClient();
 
   // Supabase에서 대화 목록 조회
@@ -33,28 +33,13 @@ const DMList = () => {
     conv.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
-  // 대화 선택 핸들러
+  // 대화 선택 핸들러 - 별도 페이지로 이동
   const handleConversationSelect = (conversation) => {
-    setSelectedConversation({
-      id: conversation.id,
-      other_user_id: conversation.other_user_id,
-      other_user_name: conversation.other_user_name,
-      other_user_username: conversation.other_user_username,
-      other_user_profile: conversation.other_user_profile
-    });
-    
     // 읽지 않은 메시지 수 업데이트
     queryClient.invalidateQueries(['unreadCount']);
+    // DM 채팅 페이지로 이동
+    navigate(`/dm/${conversation.other_user_id}`);
   };
-
-  if (selectedConversation) {
-    return (
-      <DMChat
-        conversation={selectedConversation}
-        onClose={() => setSelectedConversation(null)}
-      />
-    );
-  }
 
   return (
     <div className="max-w-4xl mx-auto">

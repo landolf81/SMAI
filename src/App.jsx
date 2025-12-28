@@ -78,6 +78,7 @@ const Terms = lazy(() => import('./pages/Terms'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const TradingPolicy = lazy(() => import('./pages/TradingPolicy'));
 const PCLanding = lazy(() => import('./pages/PCLanding'));
+const DMChatPage = lazy(() => import('./pages/DMChatPage'));
 
 function App() {
 
@@ -480,6 +481,10 @@ useEffect(() => {
         {
           path: '/settings',
           element: <ProtectedRoute><Settings /></ProtectedRoute>,
+        },
+        {
+          path: '/dm/:userId',
+          element: <ProtectedRoute><DMChatPage /></ProtectedRoute>,
         },
         // 관리자 페이지들 (로그인 필요)
         {

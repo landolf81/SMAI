@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
 import { userService, badgeService, dmService } from "../services";
@@ -27,14 +27,13 @@ import EmailIcon from "@mui/icons-material/Email";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
-import DMChat from "../components/DMChat";
 
 const Profile = () => {
   const [openUpdate, setOpenUpdate] = useState(false);
   const [activeTab, setActiveTab] = useState('posts'); // posts, likes, comments, messages
   const [updateNotification, setUpdateNotification] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [openDMChat, setOpenDMChat] = useState(false);
+  const navigate = useNavigate();
 
   const userId = useLocation().pathname.split("/")[2]; // UUID string, not integer
   const { currentUser, logout } = useContext(AuthContext);
@@ -272,8 +271,8 @@ const Profile = () => {
                 </>
               ) : currentUser ? (
                 <>
-                  <button 
-                    onClick={() => setOpenDMChat(true)}
+                  <button
+                    onClick={() => navigate(`/dm/${userId}`)}
                     className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl hover:from-blue-600 hover:to-blue-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg"
                   >
                     <MailOutlineIcon className="w-5 h-5" />
@@ -405,19 +404,6 @@ const Profile = () => {
           onUpdateComplete={handleUpdateComplete}
           isUpdating={isUpdating}
           setIsUpdating={setIsUpdating}
-        />
-      )}
-      
-      {/* DM 채팅 창 */}
-      {openDMChat && data && currentUser && currentUser.id !== userId && (
-        <DMChat
-          conversation={{
-            other_user_id: data.id,
-            other_user_username: data.username,
-            other_user_name: data.name,
-            other_user_profile: data.profilePic
-          }}
-          onClose={() => setOpenDMChat(false)}
         />
       )}
     </div>

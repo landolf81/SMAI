@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -6,14 +6,12 @@ import PersonIcon from '@mui/icons-material/Person';
 import CloseIcon from '@mui/icons-material/Close';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import BadgeDisplay from './BadgeDisplay';
-import DMChat from './DMChat';
 import { badgeService, userService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 
 const ProfileModal = ({ isOpen, onClose, user }) => {
   const navigate = useNavigate();
   const { currentUser } = useContext(AuthContext);
-  const [showDMChat, setShowDMChat] = useState(false);
 
   const userId = user?.userId || user?.user_id || user?.id;
 
@@ -170,7 +168,10 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
                 {/* DM 아이콘 - 본인이 아닌 경우에만 표시 */}
                 {currentUser && currentUser.id !== userId && (
                   <button
-                    onClick={() => setShowDMChat(true)}
+                    onClick={() => {
+                      onClose();
+                      navigate(`/dm/${userId}`);
+                    }}
                     className="text-blue-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
                     title="메시지 보내기"
                   >
@@ -212,19 +213,6 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
           )}
         </div>
       </div>
-
-      {/* DM 채팅 모달 */}
-      {showDMChat && displayUser && (
-        <DMChat
-          conversation={{
-            other_user_id: userId,
-            other_user_username: displayUser.username,
-            other_user_name: displayUser.name || displayUser.user_name,
-            other_user_profile: displayUser.profilePic || displayUser.profile_pic
-          }}
-          onClose={() => setShowDMChat(false)}
-        />
-      )}
     </div>,
     document.body
   );
