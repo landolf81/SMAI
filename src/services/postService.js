@@ -505,7 +505,17 @@ export const postService = {
       for (const url of mediaUrls) {
         if (!url) continue;
         try {
-          if (isR2Url(url)) {
+          if (url.includes('cloudflarestream.com')) {
+            // Cloudflare Stream 동영상 삭제
+            // URL 형식: https://customer-xxx.cloudflarestream.com/{uid}/...
+            const uidMatch = url.match(/cloudflarestream\.com\/([a-zA-Z0-9]+)/);
+            if (uidMatch && uidMatch[1]) {
+              const uid = uidMatch[1];
+              await supabase.functions.invoke('delete-video', {
+                body: { uid }
+              });
+            }
+          } else if (isR2Url(url)) {
             // R2 URL에서 키 추출 후 삭제
             const key = url.split('.r2.dev/')[1] || url.split('r2.cloudflarestorage.com/')[1];
             if (key) {
@@ -521,10 +531,12 @@ export const postService = {
           }
         } catch (mediaError) {
           // 삭제 실패해도 계속 진행
+          console.warn('미디어 삭제 실패:', url, mediaError);
         }
       }
     } catch (error) {
       // 첨부파일 삭제 실패해도 게시물 삭제는 계속
+      console.warn('첨부파일 삭제 중 오류:', error);
     }
   },
 
