@@ -362,7 +362,7 @@ const MobileAdDisplay = ({ ad }) => {
             <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-bold">AD</span>
             </div>
-            <span className="text-sm font-semibold text-gray-900 line-clamp-1">{ad.title}</span>
+            <span className="text-base font-bold text-gray-900 line-clamp-1">{ad.title}</span>
           </div>
           <span className="text-xs text-gray-500">광고</span>
         </div>
