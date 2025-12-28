@@ -23,7 +23,7 @@ const DMChatPage = () => {
   // 상대방 정보 가져오기
   const { data: otherUser } = useQuery({
     queryKey: ['user', userId],
-    queryFn: () => userService.getUserById(userId),
+    queryFn: () => userService.getUser(userId),
     enabled: !!userId,
   });
 
