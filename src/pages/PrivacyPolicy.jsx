@@ -6,9 +6,9 @@ const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-14">
+    <div className="min-h-screen bg-gray-50 pt-28">
       {/* 헤더 */}
-      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b shadow-sm">
+      <div className="fixed top-14 left-0 right-0 z-40 bg-white border-b shadow-sm">
         <div className="flex items-center p-4">
           <button
             onClick={() => navigate(-1)}
