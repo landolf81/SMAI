@@ -507,13 +507,18 @@ export const postService = {
         try {
           if (url.includes('cloudflarestream.com')) {
             // Cloudflare Stream 동영상 삭제
-            // URL 형식: https://customer-xxx.cloudflarestream.com/{uid}/...
-            const uidMatch = url.match(/cloudflarestream\.com\/([a-zA-Z0-9]+)/);
+            // URL 형식: https://customer-xxx.cloudflarestream.com/{uid}/iframe 또는 /manifest/video.m3u8
+            // customer- 서브도메인 다음의 실제 동영상 UID 추출
+            const uidMatch = url.match(/cloudflarestream\.com\/([a-f0-9]{32})/);
             if (uidMatch && uidMatch[1]) {
               const uid = uidMatch[1];
-              await supabase.functions.invoke('delete-video', {
-                body: { uid }
-              });
+              try {
+                await supabase.functions.invoke('delete-video', {
+                  body: { uid }
+                });
+              } catch (deleteError) {
+                console.warn('Cloudflare Stream 삭제 실패:', uid, deleteError);
+              }
             }
           } else if (isR2Url(url)) {
             // R2 URL에서 키 추출 후 삭제
