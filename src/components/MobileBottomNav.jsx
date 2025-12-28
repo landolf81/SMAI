@@ -72,6 +72,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
   }, []);
 
   // 메뉴 버튼 구성 (5개, 아이콘+한글명)
+  // 노랑 → 청색 그라데이션 단색 배치
   const buttons = [
     {
       id: 'home',
@@ -79,7 +80,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: '홈',
       icon: HomeIcon,
       showLabel: true,
-      activeColor: 'text-[#FFC600]'
+      activeColor: 'text-[#FFC600]' // 노랑
     },
     {
       id: 'translate',
@@ -87,7 +88,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: '번역',
       icon: TranslateIcon,
       showLabel: true,
-      activeColor: 'text-indigo-600'
+      activeColor: 'text-[#7CB342]' // 연두
     },
     {
       id: 'community',
@@ -95,7 +96,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: '커뮤',
       icon: ForumIcon,
       showLabel: true,
-      activeColor: 'text-green-700'
+      activeColor: 'text-[#26A69A]' // 청록
     },
     {
       id: 'qna',
@@ -103,7 +104,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: 'Q&A',
       icon: HelpOutlineIcon,
       showLabel: true,
-      activeColor: 'text-blue-600',
+      activeColor: 'text-[#42A5F5]', // 하늘
       hideIndicator: true
     },
     {
@@ -113,7 +114,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       icon: PersonIcon,
       showLabel: true,
       isProfile: true,
-      activeColor: 'text-purple-600'
+      activeColor: 'text-[#1976D2]' // 청색
     }
   ];
 
