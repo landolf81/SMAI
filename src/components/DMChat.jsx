@@ -175,29 +175,27 @@ const DMChat = ({ conversation, onClose }) => {
               loadingMore={false}
               loadingMorePosition="top"
             >
-              {Object.entries(messageGroups).map(([date, msgs]) => (
-                <React.Fragment key={date}>
-                  <MessageSeparator content={formatDate(date)} />
-                  {msgs.map((msg) => {
-                    const isMyMessage = msg.sender_id === currentUser.id;
-                    return (
-                      <Message
-                        key={msg.id}
-                        model={{
-                          message: msg.content,
-                          sentTime: moment(msg.created_at).format('HH:mm'),
-                          direction: isMyMessage ? 'outgoing' : 'incoming',
-                          position: 'single',
-                        }}
-                      >
-                        <Message.Footer
-                          sentTime={moment(msg.created_at).format('HH:mm')}
-                        />
-                      </Message>
-                    );
-                  })}
-                </React.Fragment>
-              ))}
+              {Object.entries(messageGroups).flatMap(([date, msgs]) => [
+                <MessageSeparator key={`sep-${date}`} content={formatDate(date)} />,
+                ...msgs.map((msg) => {
+                  const isMyMessage = msg.sender_id === currentUser.id;
+                  return (
+                    <Message
+                      key={msg.id}
+                      model={{
+                        message: msg.content,
+                        sentTime: moment(msg.created_at).format('HH:mm'),
+                        direction: isMyMessage ? 'outgoing' : 'incoming',
+                        position: 'single',
+                      }}
+                    >
+                      <Message.Footer
+                        sentTime={moment(msg.created_at).format('HH:mm')}
+                      />
+                    </Message>
+                  );
+                })
+              ])}
             </MessageList>
 
             <MessageInput
