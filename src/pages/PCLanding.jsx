@@ -54,10 +54,14 @@ const PCLanding = () => {
             스마트폰으로 접속하시면 더 편리하게 이용하실 수 있습니다.
           </p>
 
-          {/* QR 코드 영역 (추후 실제 QR 추가 가능) */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-xl inline-block">
-            <div className="w-32 h-32 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-              <span className="text-gray-400 text-sm">QR Code</span>
+          {/* QR 코드 영역 */}
+          <div className="mt-6 flex flex-col items-center">
+            <div className="p-4 bg-gray-50 rounded-xl">
+              <img
+                src="https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://www.seonnam.com"
+                alt="QR Code - seonnam.com"
+                className="w-32 h-32 rounded-lg"
+              />
             </div>
             <p className="text-sm text-gray-500 mt-2">스마트폰으로 스캔하세요</p>
           </div>
@@ -73,7 +77,7 @@ const PCLanding = () => {
       </div>
 
       {/* 푸터 */}
-      <div className="absolute bottom-6 text-center text-gray-400 text-sm space-y-1">
+      <div className="relative mt-8 pb-6 text-center text-gray-400 text-sm space-y-1">
         <p>&copy; 2025 참외이야기. All rights reserved.</p>
         <p>
           <a href="/privacy" className="hover:text-gray-600 transition-colors">개인정보처리방침</a>
