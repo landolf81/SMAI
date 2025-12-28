@@ -98,100 +98,14 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     navigate(`/prices?market=${encodeURIComponent(marketName)}&date=${selectedDate}`);
   };
 
-  // 공판장별 색상 테마 정의 (WCAG 4.5:1 대비 충족 뱃지 색상)
-  // 흰색 텍스트와 최소 4.5:1 이상 대비되는 어두운 색상 사용
-  const getMarketTheme = (marketName) => {
-    const themes = {
-      // 가락공판장 - 청록색 계열
-      '가락': {
-        bg: 'from-[#00B140] to-[#1D4F91]',
-        badgeColor: '#0F766E', // Teal-700 (대비 5.0:1)
-        text: 'text-[#1D4F91]',
-        light: 'bg-blue-50',
-        gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
-      },
-      // 선남농협 - 진한 녹색
-      '선남': {
-        bg: 'from-[#006400] to-[#FFCC00]',
-        badgeColor: '#166534', // Green-800 (대비 6.1:1)
-        text: 'text-[#006400]',
-        light: 'bg-[#F5F9E0]',
-        gradient: 'linear-gradient(135deg, rgba(0, 100, 0, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
-      },
-      // 성주원예 - 미드나잇 블루
-      '성주원예': {
-        bg: 'from-[#1D4F91] to-[#FFCC00]',
-        badgeColor: '#1E40AF', // Blue-800 (대비 7.0:1)
-        text: 'text-[#1D4F91]',
-        light: 'bg-yellow-50',
-        gradient: 'linear-gradient(135deg, rgba(29, 79, 145, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
-      },
-      // 성주조공 - 진한 호박색
-      '성주조공': {
-        bg: 'from-[#FFCC00] to-[#1D4F91]',
-        badgeColor: '#B45309', // Amber-700 (대비 4.6:1)
-        text: 'text-[#1D4F91]',
-        light: 'bg-blue-50',
-        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(29, 79, 145, 0.05) 100%)'
-      },
-      // 용암농협 - 진한 에메랄드
-      '용암': {
-        bg: 'from-[#00B140] to-[#FFCC00]',
-        badgeColor: '#047857', // Emerald-700 (대비 4.9:1)
-        text: 'text-[#00B140]',
-        light: 'bg-yellow-50',
-        gradient: 'linear-gradient(135deg, rgba(0, 177, 64, 0.15) 0%, rgba(255, 204, 0, 0.05) 100%)'
-      },
-      // 초전농협 - 진한 인디고
-      '초전': {
-        bg: 'from-[#1D4F91] to-[#00B140]',
-        badgeColor: '#3730A3', // Indigo-800 (대비 8.6:1)
-        text: 'text-[#00B140]',
-        light: 'bg-green-50',
-        gradient: 'linear-gradient(135deg, rgba(29, 79, 145, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
-      },
-      // 대전공판장 - 진한 적갈색
-      '대전': {
-        bg: 'from-[#FFCC00] to-[#00B140]',
-        badgeColor: '#9A3412', // Orange-800 (대비 5.9:1)
-        text: 'text-[#00B140]',
-        light: 'bg-green-50',
-        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
-      },
-      // 기본 성주 농협들 - 진한 라임
-      '성주': {
-        bg: 'from-[#FFCC00] to-[#00B140]',
-        badgeColor: '#4D7C0F', // Lime-700 (대비 4.6:1)
-        text: 'text-[#00B140]',
-        light: 'bg-green-50',
-        gradient: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(0, 177, 64, 0.05) 100%)'
-      }
+  // 공판장 카드 통일 테마 (파랑 뱃지 + 흰색 배경 + 파랑-녹색 그라데이션 버튼)
+  const getMarketTheme = () => {
+    return {
+      badgeColor: '#1D4ED8', // 파랑 (Blue-700)
+      text: 'text-[#1D4ED8]', // 파랑 텍스트
+      buttonGradient: 'from-[#1D4ED8] to-[#16A34A]', // 파랑 → 녹색 그라데이션
+      cardBackground: '#FFFFFF' // 흰색 배경
     };
-
-    // 시장명에서 키워드 매칭 (정확한 매칭)
-    for (const [key, theme] of Object.entries(themes)) {
-      if (marketName.includes(key)) {
-        return theme;
-      }
-    }
-
-    // 기본 테마 (성주/녹색)
-    return themes['성주'];
-  };
-
-  // 카드 배경색 생성 함수 (PANTONE 색상 기반)
-  const getCardBackgroundColor = (theme) => {
-    const colorMap = {
-      'from-[#00B140] to-[#1D4F91]': 'rgba(0, 177, 64, 0.08)',      // Green → Blue
-      'from-[#006400] to-[#FFCC00]': 'rgba(0, 100, 0, 0.08)',       // Dark Green → Yellow
-      'from-[#1D4F91] to-[#FFCC00]': 'rgba(29, 79, 145, 0.08)',     // Blue → Yellow
-      'from-[#FFCC00] to-[#1D4F91]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Blue
-      'from-[#00B140] to-[#FFCC00]': 'rgba(0, 177, 64, 0.08)',      // Green → Yellow
-      'from-[#1D4F91] to-[#00B140]': 'rgba(29, 79, 145, 0.08)',     // Blue → Green
-      'from-[#FFCC00] to-[#00B140]': 'rgba(255, 204, 0, 0.08)',     // Yellow → Green
-    };
-
-    return colorMap[theme.bg] || 'rgba(0, 177, 64, 0.08)'; // 기본값: Green
   };
 
   // 등락 계산 및 표시 함수 (금액차만 표시, 중앙 정렬)
@@ -280,22 +194,23 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     return (
       <div className="space-y-4">
         <div className="text-center py-12">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 max-w-md mx-auto">
-            <div className="mb-6">
-              <img 
-                src="/images/AS_110.png" 
-                alt="경락가 정보 없음" 
-                className="w-full h-auto mx-auto opacity-80 rounded-lg"
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
+            <div className="mb-4">
+              <img
+                src="/logo.svg"
+                alt="참외이야기 로고"
+                className="w-24 h-24 mx-auto"
               />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 mb-3">경락가 정보가 없습니다</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">경락가 정보가 없습니다</h3>
+            <p className="text-sm text-gray-500">아직 데이터가 업데이트 되지 않았거나 경매가 없습니다.</p>
           </div>
         </div>
-        
+
         {/* 경락가 정보가 없을 때 광고 표시 */}
         {shouldShowAds() && adsData && adsData.length > 0 && (
           <div className="mt-4">
-            <MobileAdDisplay 
+            <MobileAdDisplay
               ad={adsData[0]}
             />
           </div>
@@ -330,7 +245,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
       {/* 모바일 전용 레이아웃 - 세로 스택 */}
       <div className="space-y-4 flex flex-col items-center w-full">
         {marketData.slice(0, renderedCount).map((market, index) => {
-          const theme = getMarketTheme(market.name);
+          const theme = getMarketTheme();
           const cardId = `card-${market.id}`;
           const cardTranslateY = getCardTranslateY(cardId, index);
           const cardScale = getCardScale(cardId, index);
@@ -348,7 +263,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`
               }}
             >
-              {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 (공판장별 단색 배경) */}
+              {/* 공판장명 뱃지 - 파랑 */}
               <div className="absolute -top-0 left-4 z-10">
                 <span
                   className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md"
@@ -359,10 +274,10 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 </span>
               </div>
 
-              {/* 카드 본체 - 그라데이션 배경 적용 */}
+              {/* 카드 본체 - 흰색 배경 */}
               <div
                 className="rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 haptic-feedback no-select market-card cursor-pointer"
-                style={{ background: theme.gradient }}
+                style={{ backgroundColor: theme.cardBackground }}
                 onClick={() => handleCardClick(market.name)}
               >
               {/* 가격 정보 영역 */}
@@ -401,7 +316,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                     {/* 평균가 */}
                     <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
                       <div className="text-xs text-gray-500 mb-0.5">평균가</div>
-                      <div className={`text-base font-bold ${theme.text}`}>
+                      <div className="text-base font-bold text-gray-900">
                         {formatPrice(market.averagePrice)}원
                       </div>
                       <div className="mt-0.5 min-h-[18px]">
@@ -446,14 +361,14 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 </>
               )}
               
-              {/* 액션 버튼 - 광고 카드 스타일과 일관성 */}
+              {/* 액션 버튼 - 파랑-녹색 그라데이션 */}
               <div className="mt-4">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleCardClick(market.name);
                   }}
-                  className={`w-full bg-gradient-to-r ${theme.bg} text-white font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5`}
+                  className={`w-full bg-gradient-to-r ${theme.buttonGradient} text-white font-semibold py-3 px-4 rounded-lg hover:opacity-90 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5`}
                 >
                   상세 가격 보기
                 </button>

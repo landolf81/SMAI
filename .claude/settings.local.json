@@ -10,7 +10,8 @@
       "Bash(npm run build:prod:*)",
       "Bash(git restore:*)",
       "Bash(npm run dev:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(xargs ls:*)"
     ],
     "deny": [],
     "ask": []

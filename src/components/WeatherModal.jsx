@@ -77,6 +77,31 @@ const WeatherModal = ({ isOpen, onClose }) => {
     return weatherService.getWeatherIconFromCode(sky, pty);
   };
 
+  // 현재 시각에 가장 가까운 예보 데이터 가져오기
+  const getCurrentForecast = () => {
+    if (!weather?.shortTerm?.length) return null;
+
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+    const currentTime = String(currentHour).padStart(2, '0') + '00';
+
+    let bestMatch = null;
+    for (const forecast of weather.shortTerm) {
+      const forecastDateTime = forecast.date + forecast.time;
+      const currentDateTime = currentDate + currentTime;
+
+      if (forecastDateTime <= currentDateTime) {
+        bestMatch = forecast;
+      } else if (forecastDateTime > currentDateTime && !bestMatch) {
+        bestMatch = forecast;
+        break;
+      }
+    }
+
+    return bestMatch;
+  };
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -145,18 +170,27 @@ const WeatherModal = ({ isOpen, onClose }) => {
           ) : (
             <>
               {/* 오늘 탭 */}
-              {activeTab === 'today' && weather?.current && (
+              {activeTab === 'today' && (weather?.current || weather?.shortTerm?.length) && (() => {
+                const currentForecast = getCurrentForecast();
+                const currentTemp = currentForecast?.temp ?? weather.current?.temp;
+                const currentSky = currentForecast?.sky || weather.shortTerm?.[0]?.sky || 1;
+                const currentPty = currentForecast?.pty ?? weather.current?.pty ?? 0;
+                const currentHumidity = currentForecast?.humidity ?? weather.current?.humidity;
+                const currentWindSpeed = currentForecast?.windSpeed ?? weather.current?.windSpeed;
+                const currentPrecipitation = weather.current?.precipitation || '0';
+
+                return (
                 <div className="space-y-4">
                   {/* 현재 날씨 카드 */}
                   <div className="bg-gradient-to-br from-sky-100 to-blue-100 rounded-2xl p-6 text-center">
                     <div className="text-6xl mb-2">
-                      {getWeatherIcon(weather.shortTerm?.[0]?.sky || 1, weather.current.pty)?.icon || '☀️'}
+                      {getWeatherIcon(currentSky, currentPty)?.icon || '☀️'}
                     </div>
                     <div className="text-5xl font-bold text-gray-800 mb-1">
-                      {weather.current.temp}°
+                      {currentTemp}°
                     </div>
                     <div className="text-gray-600">
-                      {getWeatherIcon(weather.shortTerm?.[0]?.sky || 1, weather.current.pty)?.text || '맑음'}
+                      {getWeatherIcon(currentSky, currentPty)?.text || '맑음'}
                     </div>
                   </div>
 
@@ -165,17 +199,17 @@ const WeatherModal = ({ isOpen, onClose }) => {
                     <div className="bg-gray-50 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">💧</div>
                       <div className="text-xs text-gray-500">습도</div>
-                      <div className="font-bold text-gray-700">{weather.current.humidity || '--'}%</div>
+                      <div className="font-bold text-gray-700">{currentHumidity || '--'}%</div>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">🌬️</div>
                       <div className="text-xs text-gray-500">풍속</div>
-                      <div className="font-bold text-gray-700">{weather.current.windSpeed || '--'}m/s</div>
+                      <div className="font-bold text-gray-700">{currentWindSpeed || '--'}m/s</div>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">☔</div>
                       <div className="text-xs text-gray-500">강수</div>
-                      <div className="font-bold text-gray-700">{weather.current.precipitation || '0'}mm</div>
+                      <div className="font-bold text-gray-700">{currentPrecipitation}mm</div>
                     </div>
                   </div>
 
@@ -194,7 +228,8 @@ const WeatherModal = ({ isOpen, onClose }) => {
                     </div>
                   )}
                 </div>
-              )}
+                );
+              })()}
 
               {/* 시간별 탭 */}
               {activeTab === 'hourly' && (

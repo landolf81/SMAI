@@ -298,31 +298,100 @@ body {
   50% { opacity: 1; }
 }
 
-/* DM 채팅 모달 - iOS Safari 키보드 대응 */
-.dm-chat-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  z-index: 60;
+/* Chatscope 테마 커스터마이징 - 참외이야기 */
+.cs-main-container {
+  --cs-main-container-bg: white;
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
+.cs-conversation-header {
+  background: linear-gradient(to right, #fefce8, #f0fdf4, #f0fdf4) !important;
+  border-bottom: 1px solid #bbf7d0 !important;
+  padding: 12px 16px !important;
+}
+
+.cs-conversation-header__user-name {
+  color: #166534 !important;
+  font-weight: 600 !important;
+}
+
+.cs-conversation-header__info {
+  color: #16a34a !important;
+}
+
+.cs-avatar > img {
+  border: 2px solid #bbf7d0 !important;
+}
+
+.cs-message-list {
+  background: linear-gradient(to bottom, rgba(254, 252, 232, 0.3), rgba(240, 253, 244, 0.3)) !important;
+  padding: 8px !important;
+}
+
+/* 보낸 메시지 - 연한 노랑 */
+.cs-message--outgoing .cs-message__content {
+  background-color: #fef9c3 !important;
+  color: #1f2937 !important;
+  border-radius: 18px 18px 4px 18px !important;
+}
+
+/* 받은 메시지 - 흰색 */
+.cs-message--incoming .cs-message__content {
+  background-color: white !important;
+  color: #1f2937 !important;
+  border: 1px solid #f3f4f6 !important;
+  border-radius: 18px 18px 18px 4px !important;
+}
+
+.cs-message__footer {
+  font-size: 11px !important;
+  color: #9ca3af !important;
+}
+
+.cs-message-separator {
+  color: #166534 !important;
+  font-size: 12px !important;
+}
+
+.cs-message-separator::before,
+.cs-message-separator::after {
+  background-color: #bbf7d0 !important;
+}
+
+/* 입력창 */
+.cs-message-input {
+  background: linear-gradient(to right, rgba(254, 252, 232, 0.5), rgba(240, 253, 244, 0.5)) !important;
+  border-top: 1px solid #dcfce7 !important;
+  padding: 8px 12px !important;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0)) !important;
+}
+
+.cs-message-input__content-editor-wrapper {
+  background-color: #fefce8 !important;
+  border-radius: 20px !important;
+  border: none !important;
+}
+
+.cs-message-input__content-editor {
+  background-color: transparent !important;
+}
+
+.cs-message-input__content-editor-container {
+  background-color: transparent !important;
+}
+
+/* 전송 버튼 */
+.cs-button--send {
+  color: #16a34a !important;
+}
+
+.cs-button--send:hover {
+  color: #15803d !important;
+}
+
+/* iOS Safari 대응 */
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari 전용 */
-  .dm-chat-container {
-    height: -webkit-fill-available;
-    min-height: -webkit-fill-available;
+  .cs-main-container {
+    height: -webkit-fill-available !important;
   }
-}
-
-/* 입력창이 포커스될 때 키보드 위에 고정 */
-.dm-input-area {
-  position: sticky;
-  bottom: 0;
-  background: inherit;
-  padding-bottom: env(safe-area-inset-bottom, 0);
 }

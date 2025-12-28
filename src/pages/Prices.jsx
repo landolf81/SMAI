@@ -4,24 +4,9 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { marketService } from '../services';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-// 공판장별 뱃지 색상 (MarketCards.jsx와 동일)
-const getMarketBadgeColor = (marketName) => {
-  const colors = {
-    '가락': '#00B140',      // Green
-    '선남': '#006400',      // Dark Green
-    '성주원예': '#1D4F91',  // Midnight Blue
-    '성주조공': '#FFCC00',  // Yellow
-    '용암': '#00B140',      // Green
-    '초전': '#1D4F91',      // Midnight Blue
-    '성주': '#FFCC00',      // Yellow (기본)
-  };
-
-  for (const [key, color] of Object.entries(colors)) {
-    if (marketName.includes(key)) {
-      return color;
-    }
-  }
-  return '#004225'; // 기본값
+// 뱃지 색상 - 파랑으로 통일
+const getMarketBadgeColor = () => {
+  return '#1D4ED8'; // Blue-700
 };
 
 const Prices = () => {
@@ -306,7 +291,7 @@ const Prices = () => {
                 <div className="absolute -top-0 left-4 z-10">
                   <span
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-sm font-bold rounded-full shadow-md"
-                    style={{ backgroundColor: getMarketBadgeColor(marketName) }}
+                    style={{ backgroundColor: getMarketBadgeColor() }}
                   >
                     <span className="w-2 h-2 bg-white rounded-full"></span>
                     {marketName}
@@ -333,7 +318,7 @@ const Prices = () => {
                     {/* 평균가 */}
                     <div className="bg-gray-50 rounded-lg py-3 px-1">
                       <div className="text-xs text-gray-500 mb-1">평균가</div>
-                      <div className="text-base font-bold text-[#004225] whitespace-nowrap">
+                      <div className="text-base font-bold text-gray-900 whitespace-nowrap">
                         {formatPrice(marketData.summary.overall_avg_price)}
                       </div>
                     </div>
@@ -377,7 +362,7 @@ const Prices = () => {
                     <div className="absolute -top-0 left-4 z-10">
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-sm font-bold rounded-full shadow-md"
-                        style={{ backgroundColor: getMarketBadgeColor(marketName) }}
+                        style={{ backgroundColor: getMarketBadgeColor() }}
                       >
                         <span className="w-2 h-2 bg-white rounded-full"></span>
                         {item.grade}
@@ -401,7 +386,7 @@ const Prices = () => {
                         {/* 평균가 */}
                         <div className="bg-gray-50 rounded-lg py-3 px-1">
                           <div className="text-xs text-gray-500 mb-1">평균가</div>
-                          <div className="text-base font-bold text-[#004225] whitespace-nowrap">
+                          <div className="text-base font-bold text-gray-900 whitespace-nowrap">
                             {formatPrice(item.avg_price)}
                           </div>
                         </div>

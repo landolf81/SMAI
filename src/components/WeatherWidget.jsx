@@ -25,18 +25,74 @@ const WeatherWidget = ({ onClick }) => {
     return () => clearInterval(interval);
   }, []);
 
+  // 현재 시각에 가장 가까운 예보 온도 가져오기
+  const getCurrentTemp = () => {
+    if (!weather) return null;
+
+    // shortTerm에서 현재 시각에 맞는 예보 찾기
+    if (weather.shortTerm && weather.shortTerm.length > 0) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentDate = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+      const currentTime = String(currentHour).padStart(2, '0') + '00';
+
+      // 정확히 일치하는 시간 또는 가장 가까운 과거 시간 찾기
+      let bestMatch = null;
+      for (const forecast of weather.shortTerm) {
+        const forecastDateTime = forecast.date + forecast.time;
+        const currentDateTime = currentDate + currentTime;
+
+        if (forecastDateTime <= currentDateTime) {
+          bestMatch = forecast;
+        } else if (forecastDateTime > currentDateTime && !bestMatch) {
+          // 아직 bestMatch가 없고 미래 예보라면 그것을 사용
+          bestMatch = forecast;
+          break;
+        }
+      }
+
+      if (bestMatch && bestMatch.temp !== null) {
+        return bestMatch.temp;
+      }
+    }
+
+    // shortTerm에서 찾지 못하면 current.temp 사용
+    return weather.current?.temp ?? null;
+  };
+
   // 날씨 아이콘 결정
   const getIcon = () => {
-    if (!weather?.current) return '☀️';
-    const { pty } = weather.current;
-    const sky = weather.shortTerm?.[0]?.sky || 1;
+    if (!weather?.shortTerm?.length && !weather?.current) return '☀️';
 
+    // shortTerm에서 현재 시각에 맞는 예보 찾기
+    if (weather.shortTerm && weather.shortTerm.length > 0) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentDate = now.toISOString().slice(0, 10).replace(/-/g, '');
+      const currentTime = String(currentHour).padStart(2, '0') + '00';
+
+      for (const forecast of weather.shortTerm) {
+        const forecastDateTime = forecast.date + forecast.time;
+        const currentDateTime = currentDate + currentTime;
+
+        if (forecastDateTime >= currentDateTime) {
+          const iconData = weatherService.getWeatherIconFromCode(forecast.sky, forecast.pty);
+          return iconData?.icon || '☀️';
+        }
+      }
+    }
+
+    // fallback
+    const pty = weather.current?.pty || 0;
+    const sky = weather.shortTerm?.[0]?.sky || 1;
     const iconData = weatherService.getWeatherIconFromCode(sky, pty);
     return iconData?.icon || '☀️';
   };
 
-  // 로딩 중이거나 데이터 없으면 아무것도 표시하지 않음
-  if (loading || !weather?.current) {
+  const currentTemp = getCurrentTemp();
+
+  // 로딩 중이거나 온도 데이터 없으면 아무것도 표시하지 않음
+  if (loading || currentTemp === null) {
     return null;
   }
 
@@ -46,7 +102,7 @@ const WeatherWidget = ({ onClick }) => {
       className="flex items-center gap-1 active:scale-95"
     >
       <span className="text-xl">{getIcon()}</span>
-      <span className="text-gray-700 text-base font-bold">{weather.current.temp}°</span>
+      <span className="text-gray-700 text-base font-bold">{currentTemp}°</span>
     </button>
   );
 };
