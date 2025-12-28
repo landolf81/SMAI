@@ -22,6 +22,7 @@ const CloudflareStreamPlayer = ({
   hideOverlay = false, // 모든 오버레이 UI 숨김 (광고용)
   paused = false, // 외부에서 강제 일시정지 (모달 열릴 때 등)
   disableClickToggle = false, // 전체 영역 클릭으로 음소거 토글 비활성화 (버튼만 사용)
+  showQualityInfo = false, // 화질 정보 표시 (디버깅용)
   onMuteToggle, // 외부에서 음소거 상태 제어
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
@@ -38,6 +39,8 @@ const CloudflareStreamPlayer = ({
   // HLS 로딩 완료 여부 (재생 제어용)
   const [isHlsReady, setIsHlsReady] = useState(false);
   const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
+  // 화질 정보 (디버깅용)
+  const [qualityInfo, setQualityInfo] = useState(null);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
   const replayTimeoutRef = useRef(null);
@@ -48,8 +51,8 @@ const CloudflareStreamPlayer = ({
   // Customer subdomain (from your Cloudflare account)
   const customerSubdomain = 'customer-xi3tfx9anf8ild8c';
 
-  // HLS playback URL
-  const playbackUrl = uid ? `https://${customerSubdomain}.cloudflarestream.com/${uid}/manifest/video.m3u8` : '';
+  // HLS playback URL (clientBandwidthHint=10으로 iOS Safari에서도 고화질 시작)
+  const playbackUrl = uid ? `https://${customerSubdomain}.cloudflarestream.com/${uid}/manifest/video.m3u8?clientBandwidthHint=10` : '';
 
   // 썸네일 URL 생성
   const getThumbnailUrl = useCallback(() => {
@@ -152,12 +155,26 @@ const CloudflareStreamPlayer = ({
       if (onReady) onReady();
     };
 
-    // Safari는 네이티브 HLS 지원
+    // Safari는 네이티브 HLS 지원 (iOS에서 HLS.js가 작동하지 않음)
     if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = playbackUrl;
 
       const handleLoadedMetadata = () => {
+        setQualityInfo({
+          width: video.videoWidth,
+          height: video.videoHeight,
+          bitrate: null,
+          availableLevels: 'Native HLS (자동)'
+        });
         onHlsReady();
+      };
+
+      const handleResize = () => {
+        setQualityInfo(prev => ({
+          ...prev,
+          width: video.videoWidth,
+          height: video.videoHeight
+        }));
       };
 
       const handleError = () => {
@@ -167,10 +184,12 @@ const CloudflareStreamPlayer = ({
       };
 
       video.addEventListener('loadedmetadata', handleLoadedMetadata);
+      video.addEventListener('resize', handleResize);
       video.addEventListener('error', handleError);
 
       return () => {
         video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        video.removeEventListener('resize', handleResize);
         video.removeEventListener('error', handleError);
       };
     } else if (Hls.isSupported()) {
@@ -203,8 +222,32 @@ const CloudflareStreamPlayer = ({
         hls.currentLevel = targetLevel;
         hls.autoLevelEnabled = false;
 
+        // 화질 정보 저장 (디버깅용)
+        const currentLevel = levels[targetLevel];
+        if (currentLevel) {
+          setQualityInfo({
+            width: currentLevel.width,
+            height: currentLevel.height,
+            bitrate: currentLevel.bitrate,
+            availableLevels: levels.map(l => `${l.height}p`).join(', ')
+          });
+        }
+
         console.log(`HLS: 720p 고정 (level ${targetLevel}, ${levels[targetLevel]?.height}p)`);
         onHlsReady();
+      });
+
+      // 레벨 변경 시 화질 정보 업데이트
+      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+        const level = hls.levels[data.level];
+        if (level) {
+          setQualityInfo(prev => ({
+            ...prev,
+            width: level.width,
+            height: level.height,
+            bitrate: level.bitrate
+          }));
+        }
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -408,6 +451,17 @@ const CloudflareStreamPlayer = ({
             className="w-4 h-4"
           />
         </button>
+      )}
+
+      {/* 화질 정보 표시 (디버깅용) */}
+      {showQualityInfo && qualityInfo && (
+        <div className="absolute top-3 right-3 z-30 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs font-mono">
+          <div>{qualityInfo.width}x{qualityInfo.height}</div>
+          {qualityInfo.bitrate && (
+            <div>{Math.round(qualityInfo.bitrate / 1000)}kbps</div>
+          )}
+          <div className="text-gray-400 text-[10px]">{qualityInfo.availableLevels}</div>
+        </div>
       )}
     </div>
   );

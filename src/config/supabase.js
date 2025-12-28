@@ -53,34 +53,23 @@ export const supabaseHelpers = {
 
   // 사용자 프로필 조회
   getUserProfile: async (userId) => {
-    console.log('🔍 getUserProfile 호출:', userId);
-
     // 타임아웃 설정 (3초) - 빠른 실패
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error('getUserProfile 타임아웃 (3초)')), 3000)
     );
 
-    const queryPromise = supabase
+    // 1. users 테이블 조회
+    const userQueryPromise = supabase
       .from('users')
-      .select(`
-        *,
-        admin_roles (
-          role,
-          can_manage_posts,
-          can_manage_tags,
-          can_assign_tag_permissions,
-          can_manage_users,
-          can_manage_ads
-        )
-      `)
+      .select('*')
       .eq('id', userId)
       .single();
 
-    const { data, error } = await Promise.race([queryPromise, timeoutPromise])
+    const { data, error } = await Promise.race([userQueryPromise, timeoutPromise])
       .catch(err => {
         console.error('⏱️ Promise.race 에러:', err);
         return { data: null, error: err };
-      })
+      });
 
     if (error) {
       console.error('❌ getUserProfile 에러:', error);
@@ -101,13 +90,21 @@ export const supabaseHelpers = {
       throw error;
     }
 
-    // admin_roles 정보를 기반으로 role 정보 추가
-    // Supabase는 1:1 관계일 때 객체를 반환, 1:N 관계일 때 배열을 반환
-    const adminRole = Array.isArray(data.admin_roles)
-      ? data.admin_roles[0]
-      : data.admin_roles;
+    // 2. admin_roles 테이블 별도 조회 (외래키 조인 문제 우회)
+    let adminRole = null;
+    try {
+      const { data: adminRoleData, error: adminError } = await supabase
+        .from('admin_roles')
+        .select('role, can_manage_posts, can_manage_tags, can_assign_tag_permissions, can_manage_users, can_manage_ads')
+        .eq('user_id', userId)
+        .maybeSingle();
 
-    console.log('🔍 admin_roles 타입:', Array.isArray(data.admin_roles) ? '배열' : '객체', adminRole);
+      if (!adminError) {
+        adminRole = adminRoleData;
+      }
+    } catch (e) {
+      // admin_roles 조회 실패해도 일반 사용자로 진행
+    }
 
     const userProfile = {
       ...data,
@@ -123,7 +120,6 @@ export const supabaseHelpers = {
       }
     };
 
-    console.log('✅ getUserProfile 성공:', userProfile);
     return userProfile;
   },
 
