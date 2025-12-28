@@ -157,8 +157,8 @@ const DMChat = ({ conversation, onClose }) => {
                 }}
               />
               <ConversationHeader.Content
-                userName={conversation.other_user_username || conversation.other_user_name}
-                info={conversation.other_user_name && conversation.other_user_name !== conversation.other_user_username ? conversation.other_user_name : ''}
+                userName={conversation.other_user_name || conversation.other_user_username}
+                info={conversation.other_user_username && conversation.other_user_username !== conversation.other_user_name ? `@${conversation.other_user_username}` : ''}
               />
               <ConversationHeader.Actions>
                 <button
