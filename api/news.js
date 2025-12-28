@@ -29,6 +29,61 @@ function matchesKeywords(title, description) {
   return FILTER_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
 }
 
+// 제목에서 핵심 키워드 추출 (불용어 제거)
+function extractKeywords(title) {
+  if (!title) return [];
+  // 불용어 (조사, 어미, 일반적인 단어)
+  const stopWords = ['의', '가', '이', '은', '는', '을', '를', '에', '에서', '으로', '로', '와', '과', '도', '만', '뉴스', '속보', '단독', '종합'];
+  return title
+    .replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, ' ')  // 특수문자 제거
+    .split(/\s+/)
+    .filter(word => word.length >= 2 && !stopWords.includes(word))
+    .slice(0, 8);  // 최대 8개 키워드
+}
+
+// 두 제목의 유사도 계산 (Jaccard similarity)
+function calculateSimilarity(title1, title2) {
+  const keywords1 = new Set(extractKeywords(title1));
+  const keywords2 = new Set(extractKeywords(title2));
+
+  if (keywords1.size === 0 || keywords2.size === 0) return 0;
+
+  const intersection = [...keywords1].filter(k => keywords2.has(k)).length;
+  const union = new Set([...keywords1, ...keywords2]).size;
+
+  return intersection / union;
+}
+
+// 유사한 제목 필터링 (7일 이내 기사 중 60% 이상 유사하면 중복으로 판단)
+function filterSimilarTitles(items, threshold = 0.6) {
+  const result = [];
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+  for (const item of items) {
+    const itemDate = item.pubDate ? new Date(item.pubDate) : null;
+
+    // 이미 추가된 기사 중 유사한 것이 있는지 확인
+    const hasSimilar = result.some(existing => {
+      const existingDate = existing.pubDate ? new Date(existing.pubDate) : null;
+
+      // 7일 이내 기사만 유사도 비교
+      if (itemDate && existingDate) {
+        const daysDiff = Math.abs(itemDate - existingDate);
+        if (daysDiff > SEVEN_DAYS_MS) return false;
+      }
+
+      const similarity = calculateSimilarity(item.title, existing.title);
+      return similarity >= threshold;
+    });
+
+    if (!hasSimilar) {
+      result.push(item);
+    }
+  }
+
+  return result;
+}
+
 // XML을 JSON으로 파싱 (간단한 RSS 파서)
 function parseRSS(xml, sourceName) {
   const items = [];
@@ -184,10 +239,9 @@ export default async function handler(req, res) {
     const results = await Promise.all(fetchPromises);
     results.forEach(items => allItems.push(...items));
 
-    // 중복 제거 (링크 기준)
+    // 1단계: 링크 기준 중복 제거
     const seenLinks = new Set();
-    const uniqueItems = allItems.filter(item => {
-      // 링크 정규화 (쿼리 파라미터 제거하여 비교)
+    const linkUniqueItems = allItems.filter(item => {
       const normalizedLink = item.link?.split('?')[0] || item.link;
       if (seenLinks.has(normalizedLink)) {
         return false;
@@ -196,12 +250,15 @@ export default async function handler(req, res) {
       return true;
     });
 
-    // 날짜순 정렬 (최신순)
-    uniqueItems.sort((a, b) => {
+    // 날짜순 정렬 (최신순) - 유사도 필터 전에 정렬하여 최신 기사 우선
+    linkUniqueItems.sort((a, b) => {
       const dateA = a.pubDate ? new Date(a.pubDate) : new Date(0);
       const dateB = b.pubDate ? new Date(b.pubDate) : new Date(0);
       return dateB - dateA;
     });
+
+    // 2단계: 제목 유사도 기준 중복 제거 (같은 날 60% 이상 유사하면 제거)
+    const uniqueItems = filterSimilarTitles(linkUniqueItems, 0.6);
 
     // 최대 20개만 반환
     const limitedItems = uniqueItems.slice(0, 20);

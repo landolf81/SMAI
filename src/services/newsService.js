@@ -26,6 +26,47 @@ const matchesKeywords = (title, description) => {
   return FILTER_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
 };
 
+// 제목에서 핵심 키워드 추출 (불용어 제거)
+const extractKeywords = (title) => {
+  if (!title) return [];
+  const stopWords = ['의', '가', '이', '은', '는', '을', '를', '에', '에서', '으로', '로', '와', '과', '도', '만', '뉴스', '속보', '단독', '종합'];
+  return title
+    .replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, ' ')
+    .split(/\s+/)
+    .filter(word => word.length >= 2 && !stopWords.includes(word))
+    .slice(0, 8);
+};
+
+// 두 제목의 유사도 계산 (Jaccard similarity)
+const calculateSimilarity = (title1, title2) => {
+  const keywords1 = new Set(extractKeywords(title1));
+  const keywords2 = new Set(extractKeywords(title2));
+  if (keywords1.size === 0 || keywords2.size === 0) return 0;
+  const intersection = [...keywords1].filter(k => keywords2.has(k)).length;
+  const union = new Set([...keywords1, ...keywords2]).size;
+  return intersection / union;
+};
+
+// 유사한 제목 필터링 (7일 이내 기사 중 60% 이상 유사하면 중복)
+const filterSimilarTitles = (items, threshold = 0.6) => {
+  const result = [];
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+  for (const item of items) {
+    const itemDate = item.pubDate ? new Date(item.pubDate) : null;
+    const hasSimilar = result.some(existing => {
+      const existingDate = existing.pubDate ? new Date(existing.pubDate) : null;
+      // 7일 이내 기사만 유사도 비교
+      if (itemDate && existingDate) {
+        if (Math.abs(itemDate - existingDate) > SEVEN_DAYS_MS) return false;
+      }
+      return calculateSimilarity(item.title, existing.title) >= threshold;
+    });
+    if (!hasSimilar) result.push(item);
+  }
+  return result;
+};
+
 /**
  * RSS XML 파싱 (클라이언트용 간단 파서)
  */
@@ -104,19 +145,22 @@ export const fetchNews = async () => {
         }
       }
 
-      // 중복 제거 (링크 기준)
+      // 1단계: 링크 기준 중복 제거
       const seenLinks = new Set();
-      const uniqueItems = allItems.filter(item => {
+      const linkUniqueItems = allItems.filter(item => {
         const normalizedLink = item.link?.split('?')[0] || item.link;
         if (seenLinks.has(normalizedLink)) return false;
         seenLinks.add(normalizedLink);
         return true;
       });
 
-      // 날짜순 정렬 후 최대 10개 반환
-      return uniqueItems
-        .sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate))
-        .slice(0, 10);
+      // 날짜순 정렬 (유사도 필터 전에 정렬하여 최신 기사 우선)
+      linkUniqueItems.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+      // 2단계: 제목 유사도 기준 중복 제거
+      const uniqueItems = filterSimilarTitles(linkUniqueItems, 0.6);
+
+      return uniqueItems.slice(0, 10);
     }
 
     // 프로덕션: Vercel serverless function 사용
