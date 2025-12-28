@@ -6,10 +6,11 @@ const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-28">
-      {/* 헤더 */}
-      <div className="fixed top-14 left-0 right-0 z-40 bg-white border-b shadow-sm">
-        <div className="flex items-center p-4">
+    <div className="min-h-screen bg-gray-50 pt-14">
+      {/* 내용 */}
+      <div className="max-w-3xl mx-auto p-4 pb-20">
+        {/* 헤더 */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
             className="p-2 -ml-2 hover:bg-gray-100 rounded-full"
@@ -18,10 +19,6 @@ const PrivacyPolicy = () => {
           </button>
           <h1 className="ml-2 text-lg font-semibold">개인정보 처리방침</h1>
         </div>
-      </div>
-
-      {/* 내용 */}
-      <div className="max-w-3xl mx-auto p-4 pb-20">
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
 
           <section>
