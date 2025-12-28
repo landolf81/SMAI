@@ -40,7 +40,7 @@ const PCLanding = () => {
 
         <p className="text-xl text-gray-600 mb-12">
           참외가 자라기 전의 이야기<br />
-          농부의 이야기, 밭의 이야기
+          농부의 이야기 밭의 이야기
         </p>
 
         {/* 모바일 안내 카드 */}
@@ -63,22 +63,6 @@ const PCLanding = () => {
           </div>
         </div>
 
-        {/* 주요 기능 안내 */}
-        <div className="grid grid-cols-3 gap-4 mb-12">
-          <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-yellow-200">
-            <div className="text-3xl mb-2">📊</div>
-            <div className="font-semibold text-gray-800 text-sm">참외 시세</div>
-          </div>
-          <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-green-200">
-            <div className="text-3xl mb-2">💬</div>
-            <div className="font-semibold text-gray-800 text-sm">커뮤니티</div>
-          </div>
-          <div className="bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-orange-200">
-            <div className="text-3xl mb-2">🛒</div>
-            <div className="font-semibold text-gray-800 text-sm">중고거래</div>
-          </div>
-        </div>
-
         {/* 관리자 로그인 버튼 */}
         <button
           onClick={() => setShowAdminModal(true)}
@@ -89,8 +73,15 @@ const PCLanding = () => {
       </div>
 
       {/* 푸터 */}
-      <div className="absolute bottom-6 text-center text-gray-400 text-sm">
-        <p>참외 이야기 &copy; 2024</p>
+      <div className="absolute bottom-6 text-center text-gray-400 text-sm space-y-1">
+        <p>&copy; 2025 참외이야기. All rights reserved.</p>
+        <p>
+          <a href="/privacy" className="hover:text-gray-600 transition-colors">개인정보처리방침</a>
+          <span className="mx-2">|</span>
+          <a href="/terms" className="hover:text-gray-600 transition-colors">이용약관</a>
+          <span className="mx-2">|</span>
+          <a href="mailto:support@chamoe.kr" className="hover:text-gray-600 transition-colors">문의</a>
+        </p>
       </div>
 
       {/* 관리자 로그인 모달 */}
