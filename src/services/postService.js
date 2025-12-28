@@ -520,6 +520,20 @@ export const postService = {
                 console.warn('Cloudflare Stream 삭제 실패:', uid, deleteError);
               }
             }
+          } else if (url.includes('imagedelivery.net')) {
+            // Cloudflare Images 삭제
+            // URL 형식: https://imagedelivery.net/{account_hash}/{image_id}/{variant}
+            const parts = url.split('/');
+            if (parts.length >= 5) {
+              const imageId = parts[4]; // image_id
+              try {
+                await supabase.functions.invoke('delete-image', {
+                  body: { imageId }
+                });
+              } catch (deleteError) {
+                console.warn('Cloudflare Images 삭제 실패:', imageId, deleteError);
+              }
+            }
           } else if (isR2Url(url)) {
             // R2 URL에서 키 추출 후 삭제
             const key = url.split('.r2.dev/')[1] || url.split('r2.cloudflarestorage.com/')[1];
