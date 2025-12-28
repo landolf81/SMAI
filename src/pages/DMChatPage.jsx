@@ -110,9 +110,9 @@ const DMChatPage = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gray-50">
+    <div className="fixed inset-0 flex flex-col bg-gray-50" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
       {/* 헤더 - 고정 */}
-      <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm z-10">
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
@@ -199,7 +199,7 @@ const DMChatPage = () => {
       </main>
 
       {/* 입력창 - 고정 */}
-      <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-3 safe-area-bottom">
+      <footer className="flex-shrink-0 bg-white border-t border-gray-200 p-3" style={{ paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0))' }}>
         <form onSubmit={handleSend} className="flex items-center gap-2">
           <input
             type="text"

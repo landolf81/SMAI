@@ -109,6 +109,7 @@ useEffect(() => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const isAdminPage = location.pathname.startsWith('/admin');
+    const isDMPage = location.pathname.startsWith('/dm/');
     const scrollDirection = useScrollDirection();
 
     // 글쓰기 버튼 상태
@@ -186,6 +187,15 @@ useEffect(() => {
       window.addEventListener('close-floating-menu', handleCloseFloatingMenu);
       return () => window.removeEventListener('close-floating-menu', handleCloseFloatingMenu);
     }, []);
+
+    // DM 페이지는 전체 화면으로 렌더링 (Navbar, Leftbar, BottomNav 숨김)
+    if (isDMPage) {
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      );
+    }
 
     return (
       <div className="min-h-screen bg-gray-50">
