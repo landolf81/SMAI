@@ -6,10 +6,11 @@ const Terms = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="sticky top-0 z-40 bg-white border-b shadow-sm">
-        <div className="flex items-center p-4">
+    <div className="min-h-screen bg-gray-50 pt-14">
+      {/* 내용 */}
+      <div className="max-w-3xl mx-auto p-4 pb-20">
+        {/* 헤더 */}
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
             className="p-2 -ml-2 hover:bg-gray-100 rounded-full"
@@ -18,16 +19,12 @@ const Terms = () => {
           </button>
           <h1 className="ml-2 text-lg font-semibold">이용약관</h1>
         </div>
-      </div>
-
-      {/* 내용 */}
-      <div className="max-w-3xl mx-auto p-4">
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
 
           <section>
             <h2 className="text-lg font-semibold text-gray-900 mb-3">제1조 (목적)</h2>
             <p className="text-gray-600">
-              이 약관은 [서비스명](이하 "서비스")이 제공하는 농업 커뮤니티 서비스의
+              이 약관은 참외이야기(이하 "서비스")가 제공하는 농업 커뮤니티 서비스의
               이용조건 및 절차, 회원과 서비스 간의 권리, 의무, 책임사항 등을 규정함을 목적으로 합니다.
             </p>
           </section>
@@ -136,8 +133,15 @@ const Terms = () => {
             </ul>
           </section>
 
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">제12조 (문의)</h2>
+            <ul className="list-disc list-inside text-gray-600 space-y-1">
+              <li>서비스 관련 문의: landolf@naver.com</li>
+            </ul>
+          </section>
+
           <div className="pt-4 border-t text-sm text-gray-500">
-            <p>시행일: 2024년 ○월 ○일</p>
+            <p>시행일: 2025년 1월 1일</p>
           </div>
         </div>
       </div>

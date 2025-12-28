@@ -194,16 +194,16 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     return (
       <div className="space-y-4">
         <div className="text-center py-12">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-8 max-w-md mx-auto shadow-sm">
+          <div className="bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl p-8 max-w-md mx-auto shadow-[0_0_40px_rgba(59,130,246,0.5)]">
             <div className="mb-4">
               <img
                 src="/logo.svg"
                 alt="참외이야기 로고"
-                className="w-24 h-24 mx-auto"
+                className="w-24 h-24 mx-auto brightness-0 invert"
               />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">경락가 정보가 없습니다</h3>
-            <p className="text-sm text-gray-500">아직 데이터가 업데이트 되지 않았거나 경매가 없습니다.</p>
+            <h3 className="text-xl font-bold text-white mb-2">경락가 정보가 없습니다</h3>
+            <p className="text-sm text-white/80">아직 데이터가 업데이트 되지 않았거나 경매가 없습니다.</p>
           </div>
         </div>
 
