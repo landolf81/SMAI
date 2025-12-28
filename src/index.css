@@ -297,3 +297,32 @@ body {
   0%, 100% { opacity: .25; }
   50% { opacity: 1; }
 }
+
+/* DM 채팅 모달 - iOS Safari 키보드 대응 */
+.dm-chat-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  z-index: 60;
+}
+
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari 전용 */
+  .dm-chat-container {
+    height: -webkit-fill-available;
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* 입력창이 포커스될 때 키보드 위에 고정 */
+.dm-input-area {
+  position: sticky;
+  bottom: 0;
+  background: inherit;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}

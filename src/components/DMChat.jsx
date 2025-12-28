@@ -17,10 +17,11 @@ const DMChat = ({ conversation, onClose }) => {
   const { currentUser } = useContext(AuthContext);
   const [message, setMessage] = useState('');
   const [conversationId, setConversationId] = useState(conversation.id);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const queryClient = useQueryClient();
 
   // 대화 ID는 상대방 사용자 ID를 사용
@@ -124,38 +125,29 @@ const DMChat = ({ conversation, onClose }) => {
     };
   }, []);
 
-  // 모바일 키보드 감지 (visualViewport API)
+  // 모바일 키보드 감지 - focus/blur 기반으로 단순화
   useEffect(() => {
-    const handleViewportResize = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        const newKeyboardHeight = windowHeight - viewportHeight;
+    const input = inputRef.current;
+    if (!input) return;
 
-        // 키보드가 올라온 경우에만 높이 설정
-        if (newKeyboardHeight > 50) {
-          setKeyboardHeight(newKeyboardHeight);
-          // 키보드가 올라올 때 스크롤을 맨 아래로
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-          }, 100);
-        } else {
-          setKeyboardHeight(0);
-        }
-      }
+    const handleFocus = () => {
+      setIsKeyboardOpen(true);
+      // 키보드가 올라올 때 스크롤을 맨 아래로
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+      }, 300);
     };
 
-    // visualViewport API 지원 확인
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
-      window.visualViewport.addEventListener('scroll', handleViewportResize);
-    }
+    const handleBlur = () => {
+      setIsKeyboardOpen(false);
+    };
+
+    input.addEventListener('focus', handleFocus);
+    input.addEventListener('blur', handleBlur);
 
     return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportResize);
-        window.visualViewport.removeEventListener('scroll', handleViewportResize);
-      }
+      input.removeEventListener('focus', handleFocus);
+      input.removeEventListener('blur', handleBlur);
     };
   }, []);
 
@@ -189,15 +181,11 @@ const DMChat = ({ conversation, onClose }) => {
     >
       <div
         ref={containerRef}
-        className="bg-white shadow-2xl w-full flex flex-col absolute inset-x-0 top-0 md:relative md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:h-[90vh] md:max-h-[700px] md:max-w-2xl md:rounded-2xl md:border md:border-market-200"
-        style={{
-          height: keyboardHeight > 0 ? `calc(100% - ${keyboardHeight}px)` : '100%',
-          transition: 'height 0.1s ease-out'
-        }}
+        className="dm-chat-container md:relative md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:h-[90vh] md:max-h-[700px] md:max-w-2xl md:rounded-2xl md:border md:border-market-200 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 헤더 */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-yellow-50 via-green-50 to-market-50">
+        {/* 헤더 - 고정 */}
+        <div className="flex-shrink-0 flex items-center justify-between p-4 border-b bg-gradient-to-r from-yellow-50 via-green-50 to-market-50 sticky top-0 z-10">
           <div className="flex items-center space-x-3">
             <img
               src={
@@ -236,7 +224,10 @@ const DMChat = ({ conversation, onClose }) => {
         </div>
 
         {/* 메시지 영역 - flex-1로 남은 공간 모두 차지, overflow-y-auto로 스크롤 */}
-        <div className="flex-1 overflow-y-auto p-2 sm:p-3 bg-gradient-to-b from-yellow-50/30 to-green-50/30 min-h-0">
+        <div
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto p-2 sm:p-3 bg-gradient-to-b from-yellow-50/30 to-green-50/30 min-h-0 overscroll-contain"
+        >
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
               <div className="loading loading-spinner loading-md"></div>
@@ -324,7 +315,7 @@ const DMChat = ({ conversation, onClose }) => {
         {/* 입력 영역 */}
         <form
           onSubmit={handleSendMessage}
-          className="p-2 sm:p-3 border-t border-market-100 bg-gradient-to-r from-yellow-50/50 to-market-50/50 flex-shrink-0"
+          className="dm-input-area p-2 sm:p-3 border-t border-market-100 bg-gradient-to-r from-yellow-50/50 to-market-50/50 flex-shrink-0"
         >
           <div className="flex items-end">
             {/* 메시지 입력 */}
