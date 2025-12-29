@@ -327,22 +327,11 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start">
-                    <span
-                      onClick={() => {
-                        if (isProfileClickable(comment)) {
-                          setSelectedUser(comment);
-                          setShowProfileModal(true);
-                        }
-                      }}
-                      className={`font-semibold text-sm mr-2 ${isProfileClickable(comment) ? 'text-gray-800 cursor-pointer hover:underline' : 'text-gray-500 cursor-default'}`}
-                    >
-                      {getDisplayName(comment)}
-                      {comment.is_secret && (
-                        <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-                          🔒 비밀글
-                        </span>
-                      )}
-                    </span>
+                    {comment.is_secret && (
+                      <span className="mr-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+                        🔒 비밀글
+                      </span>
+                    )}
                     <span className="text-sm text-gray-700 flex-1 break-words">
                       {comment.canView === false ? (
                         <span className="text-gray-500 italic">🔒 비밀 댓글입니다.</span>
@@ -350,7 +339,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                         comment.desc
                       )}
                     </span>
-                    {currentUser && (
+                    {currentUser && !previewMode && (
                       <div className="dropdown dropdown-end ml-2">
                         <div tabIndex={0} role="button" className="text-gray-400 hover:text-gray-600 cursor-pointer">
                           <FontAwesomeIcon icon={faEllipsisV} className="w-3 h-3" />
@@ -392,11 +381,11 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center space-x-4 -mt-0.5">
+                  <div className="flex items-center space-x-4 mt-1">
                     <span className="text-xs text-gray-500">
                       {moment(comment.created_at).fromNow()}
                     </span>
-                    {currentUser && (
+                    {currentUser && !previewMode && (
                       <button
                         onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
                         className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"
@@ -523,22 +512,11 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start">
-                          <span
-                            onClick={() => {
-                              if (isProfileClickable(reply)) {
-                                setSelectedUser(reply);
-                                setShowProfileModal(true);
-                              }
-                            }}
-                            className={`font-semibold text-xs mr-2 ${isProfileClickable(reply) ? 'text-gray-800 cursor-pointer hover:underline' : 'text-gray-500 cursor-default'}`}
-                          >
-                            {getDisplayName(reply)}
-                            {reply.is_secret && (
-                              <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
-                                🔒 비밀글
-                              </span>
-                            )}
-                          </span>
+                          {reply.is_secret && (
+                            <span className="mr-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+                              🔒 비밀글
+                            </span>
+                          )}
                           <span className="text-xs text-gray-700 flex-1 break-words">
                             {reply.canView === false ? (
                               <span className="text-gray-500 italic">🔒 비밀 댓글입니다.</span>
@@ -547,7 +525,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                             )}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500 -mt-0.5">
+                        <span className="text-xs text-gray-500 mt-1">
                           {moment(reply.created_at).fromNow()}
                         </span>
                       </div>
