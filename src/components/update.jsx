@@ -53,6 +53,8 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   const [originalCoverImage, setOriginalCoverImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [deleteProfilePic, setDeleteProfilePic] = useState(false);
+  const [deleteCoverPic, setDeleteCoverPic] = useState(false);
   
   // 업로드 진행률 및 최적화 관련 상태
   const [uploadProgress, setUploadProgress] = useState({});
@@ -85,6 +87,8 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       setCover(null);
       setProfilePreview(null);
       setCoverPreview(null);
+      setDeleteProfilePic(false);
+      setDeleteCoverPic(false);
     }
   }, [user]);
 
@@ -347,7 +351,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   };
 
   // Supabase Storage를 사용한 아바타 업로드
-  const uploadAvatar = async(file, type = 'profile')=>{
+  const uploadAvatar = async(file, type = 'profile', oldImageUrl = null)=>{
     try {
       // Blob을 File 객체로 변환 (name 속성 추가)
       let fileToUpload = file;
@@ -357,7 +361,8 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       }
 
       console.log(`${type} 이미지 업로드 시작:`, fileToUpload.name, fileToUpload.size);
-      const uploadResult = await storageService.uploadAvatar(fileToUpload, type);
+      // 기존 이미지 URL 전달하여 Cloudflare에서 삭제
+      const uploadResult = await storageService.uploadAvatar(fileToUpload, type, oldImageUrl);
       console.log(`${type} 이미지 업로드 완료:`, uploadResult.url);
       return uploadResult.url;
     } catch (err) {
@@ -493,18 +498,34 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
     try {
       let coverUrl = user.coverPic || user.cover_pic;
       let profileUrl = user.profilePic || user.profile_pic;
+      const oldCoverUrl = coverUrl;
+      const oldProfileUrl = profileUrl;
 
-      // 커버 사진 업로드 (Supabase Storage)
-      if (cover) {
+      // 커버 사진 삭제 처리
+      if (deleteCoverPic && oldCoverUrl) {
+        console.log('커버 사진 삭제 중...');
+        await storageService.deleteAvatarImage(oldCoverUrl);
+        coverUrl = null;
+        console.log('커버 사진 삭제 완료');
+      }
+      // 커버 사진 업로드 (Supabase Storage) - 기존 이미지 삭제 포함
+      else if (cover) {
         console.log('커버 사진 업로드 중...');
-        coverUrl = await uploadAvatar(cover, 'cover');
+        coverUrl = await uploadAvatar(cover, 'cover', oldCoverUrl);
         console.log('커버 사진 업로드 완료:', coverUrl);
       }
 
-      // 프로필 사진 업로드 (Supabase Storage)
-      if (profile) {
+      // 프로필 사진 삭제 처리
+      if (deleteProfilePic && oldProfileUrl) {
+        console.log('프로필 사진 삭제 중...');
+        await storageService.deleteAvatarImage(oldProfileUrl);
+        profileUrl = null;
+        console.log('프로필 사진 삭제 완료');
+      }
+      // 프로필 사진 업로드 (Supabase Storage) - 기존 이미지 삭제 포함
+      else if (profile) {
         console.log('프로필 사진 업로드 중...');
-        profileUrl = await uploadAvatar(profile, 'profile');
+        profileUrl = await uploadAvatar(profile, 'profile', oldProfileUrl);
         console.log('프로필 사진 업로드 완료:', profileUrl);
       }
 
@@ -738,24 +759,66 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 프로필 사진
               </label>
               <div className="flex items-start space-x-4">
-                {profilePreview && (
+                {/* 현재 프로필 이미지 또는 새로 선택한 이미지 미리보기 */}
+                {(profilePreview || (!deleteProfilePic && (user.profilePic || user.profile_pic))) && (
                   <div className="relative">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-300">
-                      <img 
-                        src={profilePreview} 
-                        alt="프로필 미리보기" 
+                      <img
+                        src={profilePreview || user.profilePic || user.profile_pic}
+                        alt="프로필 미리보기"
                         className="w-full h-full object-cover"
                       />
                     </div>
+                    {/* 크롭 버튼 - 새 이미지 선택 시만 표시 */}
+                    {originalProfileImage && (
+                      <button
+                        type="button"
+                        onClick={() => setShowProfileCropper(true)}
+                        className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md border border-gray-200 hover:bg-gray-50"
+                        title="이미지 자르기"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                    )}
+                    {/* 삭제 버튼 */}
                     <button
                       type="button"
-                      onClick={() => setShowProfileCropper(true)}
-                      className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md border border-gray-200 hover:bg-gray-50"
-                      disabled={!originalProfileImage}
-                      title="이미지 자르기"
+                      onClick={() => {
+                        if (profilePreview) {
+                          // 새로 선택한 이미지 취소
+                          setProfile(null);
+                          setProfilePreview(null);
+                          setOriginalProfileImage(null);
+                        } else {
+                          // 기존 이미지 삭제 예약
+                          setDeleteProfilePic(true);
+                        }
+                      }}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+                      title="이미지 삭제"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {/* 삭제 예약된 상태 표시 */}
+                {deleteProfilePic && !profilePreview && (
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 bg-gray-100 flex items-center justify-center">
+                      <span className="text-xs text-gray-400 text-center px-2">삭제 예정</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteProfilePic(false)}
+                      className="absolute top-0 right-0 bg-blue-500 text-white rounded-full p-1 shadow-md hover:bg-blue-600"
+                      title="삭제 취소"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
                     </button>
                   </div>
@@ -770,10 +833,13 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                       className="hidden"
                       type="file"
                       accept="image/*,.heic,.heif"
-                      onChange={handleProfileChange}
+                      onChange={(e) => {
+                        setDeleteProfilePic(false);
+                        handleProfileChange(e);
+                      }}
                     />
                   </label>
-                  {!profilePreview && (
+                  {!profilePreview && !deleteProfilePic && !(user.profilePic || user.profile_pic) && (
                     <p className="text-xs text-gray-400 mt-2">프로필 사진을 선택해주세요</p>
                   )}
                 </div>
@@ -789,24 +855,66 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 배경 사진
               </label>
               <div className="space-y-3">
-                {coverPreview && (
+                {/* 현재 커버 이미지 또는 새로 선택한 이미지 미리보기 */}
+                {(coverPreview || (!deleteCoverPic && (user.coverPic || user.cover_pic))) && (
                   <div className="relative">
                     <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-300">
-                      <img 
-                        src={coverPreview} 
-                        alt="배경 미리보기" 
+                      <img
+                        src={coverPreview || user.coverPic || user.cover_pic}
+                        alt="배경 미리보기"
                         className="w-full h-full object-cover"
                       />
                     </div>
+                    {/* 크롭 버튼 - 새 이미지 선택 시만 표시 */}
+                    {originalCoverImage && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCoverCropper(true)}
+                        className="absolute top-2 right-10 bg-white rounded-lg p-1.5 shadow-md border border-gray-200 hover:bg-gray-50"
+                        title="이미지 자르기"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                    )}
+                    {/* 삭제 버튼 */}
                     <button
                       type="button"
-                      onClick={() => setShowCoverCropper(true)}
-                      className="absolute top-2 right-2 bg-white rounded-lg p-1.5 shadow-md border border-gray-200 hover:bg-gray-50"
-                      disabled={!originalCoverImage}
-                      title="이미지 자르기"
+                      onClick={() => {
+                        if (coverPreview) {
+                          // 새로 선택한 이미지 취소
+                          setCover(null);
+                          setCoverPreview(null);
+                          setOriginalCoverImage(null);
+                        } else {
+                          // 기존 이미지 삭제 예약
+                          setDeleteCoverPic(true);
+                        }
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-lg p-1.5 shadow-md hover:bg-red-600"
+                      title="이미지 삭제"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+                {/* 삭제 예약된 상태 표시 */}
+                {deleteCoverPic && !coverPreview && (
+                  <div className="relative">
+                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 bg-gray-100 flex items-center justify-center">
+                      <span className="text-sm text-gray-400">삭제 예정</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteCoverPic(false)}
+                      className="absolute top-2 right-2 bg-blue-500 text-white rounded-lg p-1.5 shadow-md hover:bg-blue-600"
+                      title="삭제 취소"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
                     </button>
                   </div>
@@ -820,10 +928,13 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     className="hidden"
                     type="file"
                     accept="image/*,.heic,.heif"
-                    onChange={handleCoverChange}
+                    onChange={(e) => {
+                      setDeleteCoverPic(false);
+                      handleCoverChange(e);
+                    }}
                   />
                 </label>
-                {!coverPreview && (
+                {!coverPreview && !deleteCoverPic && !(user.coverPic || user.cover_pic) && (
                   <p className="text-xs text-gray-400">배경 사진을 선택해주세요</p>
                 )}
               </div>

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { API_BASE_URL } from '../config/api.js';
 import { uploadToR2, uploadMultipleToR2, deleteFromR2, isR2Url } from './r2Service.js';
 import { uploadVideo } from './videoUploadService.js';
-import { uploadImageToCloudflare, uploadMultipleImages, isCloudflareImagesUrl, getImageUrl, IMAGE_VARIANTS } from './cfImagesService.js';
+import { uploadImageToCloudflare, uploadMultipleImages, isCloudflareImagesUrl, getImageUrl, IMAGE_VARIANTS, deleteImageByUrl } from './cfImagesService.js';
 
 /**
  * Storage 서비스
@@ -261,13 +261,20 @@ export const storageService = {
    * 프로필 사진 업로드
    * @param {File} file - 파일 객체
    * @param {string} type - 'profile' 또는 'cover'
+   * @param {string} oldImageUrl - 기존 이미지 URL (삭제용)
    * @returns {Promise<Object>} 업로드 결과
    */
-  async uploadAvatar(file, type = 'profile') {
+  async uploadAvatar(file, type = 'profile', oldImageUrl = null) {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
+
+      // 기존 이미지가 Cloudflare Images URL이면 삭제
+      if (oldImageUrl && isCloudflareImagesUrl(oldImageUrl)) {
+        console.log(`🗑️ 기존 ${type} 이미지 삭제 시도:`, oldImageUrl);
+        await deleteImageByUrl(oldImageUrl);
+      }
 
       const ext = file.name.split('.').pop();
       const filename = `${type}.${ext}`;
@@ -279,6 +286,42 @@ export const storageService = {
     } catch (error) {
       console.error('프로필 사진 업로드 오류:', error);
       throw error;
+    }
+  },
+
+  /**
+   * 프로필/커버 이미지 삭제 (이미지만 삭제, DB 업데이트 X)
+   * @param {string} imageUrl - 삭제할 이미지 URL
+   * @returns {Promise<boolean>} 성공 여부
+   */
+  async deleteAvatarImage(imageUrl) {
+    try {
+      if (!imageUrl) {
+        console.warn('삭제할 이미지 URL이 없습니다.');
+        return false;
+      }
+
+      // Cloudflare Images URL인 경우
+      if (isCloudflareImagesUrl(imageUrl)) {
+        console.log('🗑️ Cloudflare Images에서 삭제:', imageUrl);
+        return await deleteImageByUrl(imageUrl);
+      }
+
+      // R2 URL인 경우
+      if (isR2Url(imageUrl)) {
+        console.log('🗑️ R2에서 삭제:', imageUrl);
+        // R2 키 추출 및 삭제
+        const urlParts = imageUrl.split('/');
+        const key = urlParts.slice(-2).join('/'); // userId/filename
+        await deleteFromR2(key);
+        return true;
+      }
+
+      console.warn('알 수 없는 이미지 URL 형식:', imageUrl);
+      return false;
+    } catch (error) {
+      console.error('프로필 이미지 삭제 오류:', error);
+      return false;
     }
   },
 

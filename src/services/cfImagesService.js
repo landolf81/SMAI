@@ -238,13 +238,53 @@ export const changeVariant = (url, variant) => {
 };
 
 /**
- * 이미지 삭제 (관리자용)
- * 참고: Cloudflare Images 삭제는 API 토큰이 필요하므로 Edge Function 필요
+ * Cloudflare Images에서 이미지 삭제
+ * @param {string} imageId - 삭제할 이미지 ID
+ * @returns {Promise<boolean>} 성공 여부
  */
 export const deleteImage = async (imageId) => {
-  // TODO: delete-image Edge Function 구현 필요
-  console.warn('이미지 삭제 기능은 아직 구현되지 않았습니다.');
-  return false;
+  if (!imageId) {
+    console.warn('삭제할 이미지 ID가 없습니다.');
+    return false;
+  }
+
+  try {
+    console.log('🗑️ Cloudflare Images 삭제 요청:', imageId);
+
+    const { data, error } = await supabase.functions.invoke('delete-image', {
+      body: { imageId }
+    });
+
+    if (error) {
+      console.error('이미지 삭제 Edge Function 오류:', error);
+      return false;
+    }
+
+    if (data?.success) {
+      console.log('✅ Cloudflare Images 삭제 완료:', imageId);
+      return true;
+    } else {
+      console.warn('⚠️ 이미지 삭제 실패:', data?.error || '알 수 없는 오류');
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ 이미지 삭제 중 오류:', error);
+    return false;
+  }
+};
+
+/**
+ * URL에서 이미지 ID를 추출하여 삭제
+ * @param {string} url - Cloudflare Images URL
+ * @returns {Promise<boolean>} 성공 여부
+ */
+export const deleteImageByUrl = async (url) => {
+  const imageId = extractImageId(url);
+  if (!imageId) {
+    console.warn('URL에서 이미지 ID를 추출할 수 없습니다:', url);
+    return false;
+  }
+  return deleteImage(imageId);
 };
 
 // 서비스 객체
@@ -256,6 +296,7 @@ export const cfImagesService = {
   extractImageId,
   changeVariant,
   delete: deleteImage,
+  deleteByUrl: deleteImageByUrl,
   VARIANTS: IMAGE_VARIANTS,
 };
 

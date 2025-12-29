@@ -150,7 +150,7 @@ const Profile = () => {
           {/* 커버 이미지 및 프로필 사진 */}
           <div className="relative mb-6">
             <div
-              className="h-48 rounded-xl bg-gradient-to-r from-market-100 to-produce-100 flex items-center justify-center"
+              className={`h-48 rounded-xl flex items-center justify-center ${!data.coverPic ? 'bg-gradient-to-br from-[#3b82f6] to-[#22c55e]' : ''}`}
               style={{
                 backgroundImage: data.coverPic
                   ? `url(${data.coverPic.startsWith('http') ? data.coverPic : `/uploads/profiles/${data.coverPic}`})`
@@ -161,8 +161,9 @@ const Profile = () => {
             >
               {!data.coverPic && (
                 <div className="text-center">
-                  <img src="/logo.svg" alt="로고" className="w-20 h-20 mx-auto mb-2" />
-                  <p className="text-market-700 font-medium">참외 이야기</p>
+                  <img src="/logo_white.svg" alt="로고" className="w-20 h-20 mx-auto mb-2" />
+                  <p className="text-white font-medium text-sm">참외가 자라는 이야기</p>
+                  <p className="text-white font-medium text-sm">농부의 이야기 밭의 이야기</p>
                 </div>
               )}
             </div>
@@ -243,7 +244,7 @@ const Profile = () => {
                   <button
                     onClick={handleUpdate}
                     disabled={isUpdating}
-                    className={`flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-2xl hover:from-blue-600 hover:to-green-600 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                    className={`flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-[#1D4ED8] to-[#16A34A] text-white rounded-2xl hover:from-[#1e40af] hover:to-[#15803d] transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                       isUpdating ? 'animate-pulse' : ''
                     }`}
                   >
