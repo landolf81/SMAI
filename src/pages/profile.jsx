@@ -243,7 +243,7 @@ const Profile = () => {
                   <button
                     onClick={handleUpdate}
                     disabled={isUpdating}
-                    className={`flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl hover:from-green-600 hover:to-green-700 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
+                    className={`flex items-center justify-center gap-2 px-8 py-3 bg-gradient-to-r from-blue-500 to-green-500 text-white rounded-2xl hover:from-blue-600 hover:to-green-600 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${
                       isUpdating ? 'animate-pulse' : ''
                     }`}
                   >
