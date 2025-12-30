@@ -114,7 +114,7 @@ const QnAForm = () => {
       queryClient.invalidateQueries({ queryKey: ['qna-trending'] });
       // 작성한 질문 상세 페이지로 이동
       if (response?.id) {
-        navigate(`/qna/${response.id}`);
+        navigate(`/qna/questions/${response.id}`);
       } else {
         navigate('/qna');
       }

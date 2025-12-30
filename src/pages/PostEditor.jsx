@@ -36,6 +36,9 @@ const PostEditor = () => {
   const [gpsData, setGpsData] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(null);
   const [uploadedVideos, setUploadedVideos] = useState([]); // Cloudflare Stream 동영상 정보
+  const [previewMode, setPreviewMode] = useState('feed'); // 'feed' (4:5) or 'fullscreen' (9:16)
+  const [currentPreviewIndex, setCurrentPreviewIndex] = useState(0); // 현재 미리보기 이미지 인덱스
+  const [showErrorModal, setShowErrorModal] = useState(false); // 에러 모달 표시 상태
 
   // 음성 인식 상태
   const [isListening, setIsListening] = useState(false);
@@ -102,6 +105,19 @@ const PostEditor = () => {
     }
   };
 
+  // 에러 발생 시 모달 자동 표시
+  useEffect(() => {
+    if (error) {
+      setShowErrorModal(true);
+    }
+  }, [error]);
+
+  // 에러 모달 닫기 핸들러
+  const closeErrorModal = () => {
+    setShowErrorModal(false);
+    setError('');
+  };
+
   // 링크 미리보기 상태
   const [linkPreview, setLinkPreview] = useState(null);
   const [showLinkPreview, setShowLinkPreview] = useState(true);
@@ -117,9 +133,93 @@ const PostEditor = () => {
   useEffect(() => {
     if (postData && isEditMode) {
       setDesc(postData.Desc || postData.desc || '');
-      const images = postData.images || (postData.img ? [postData.img] : []);
+
+      // 이미지 배열 파싱
+      let images = [];
+      if (postData.images && Array.isArray(postData.images)) {
+        images = postData.images;
+      } else if (postData.img) {
+        // JSON 문자열인 경우 파싱
+        if (typeof postData.img === 'string' && postData.img.startsWith('[')) {
+          try {
+            images = JSON.parse(postData.img);
+          } catch {
+            images = [postData.img];
+          }
+        } else {
+          images = [postData.img];
+        }
+      }
+
       setExistingImages(images);
-      setPreviewImages(images.map(img => img.startsWith('/uploads/posts/') ? img : `/uploads/posts/${img}`));
+
+      // Cloudflare Stream URL에서 video UID 추출하는 함수
+      const extractStreamUid = (url) => {
+        if (typeof url !== 'string') return null;
+        // iframe URL: https://customer-xxx.cloudflarestream.com/{uid}/iframe
+        // watch URL: https://customer-xxx.cloudflarestream.com/{uid}
+        const match = url.match(/cloudflarestream\.com\/([a-zA-Z0-9]+)/);
+        return match ? match[1] : null;
+      };
+
+      // 이미지와 동영상 분리
+      const imageUrls = [];
+      let streamVideoUid = postData.video_uid || null;
+
+      images.forEach(img => {
+        if (typeof img === 'string') {
+          // Cloudflare Stream URL인 경우 UID 추출
+          if (img.includes('cloudflarestream.com')) {
+            if (!streamVideoUid) {
+              streamVideoUid = extractStreamUid(img);
+            }
+          } else {
+            // 일반 이미지
+            imageUrls.push(img);
+          }
+        }
+      });
+
+      // 미리보기 URL 생성 (이미지만)
+      const previews = imageUrls.map(img => {
+        if (typeof img === 'string') {
+          // 이미 완전한 URL인 경우
+          if (img.startsWith('http://') || img.startsWith('https://')) {
+            return { url: img, type: 'image', existing: true };
+          }
+          // 레거시 경로인 경우
+          if (img.startsWith('/uploads/')) {
+            return { url: img, type: 'image', existing: true };
+          }
+          // Supabase Storage 경로인 경우
+          return { url: storageService.getPublicUrl('posts', img), type: 'image', existing: true };
+        }
+        return img;
+      });
+
+      // 동영상 UID가 있으면 미리보기 배열에 추가
+      if (streamVideoUid) {
+        // Cloudflare Stream 썸네일 URL (videodelivery.net 사용 - 더 안정적)
+        const thumbnailUrl = `https://videodelivery.net/${streamVideoUid}/thumbnails/thumbnail.jpg?time=1s`;
+
+        setUploadedVideos([{
+          uid: streamVideoUid,
+          type: 'stream',
+          existing: true,
+          thumbnailUrl
+        }]);
+
+        // 이미지와 동영상을 한 번에 설정
+        previews.push({
+          url: thumbnailUrl,
+          type: 'video/stream',
+          streamUid: streamVideoUid,
+          existing: true
+        });
+      }
+
+      // 모든 미리보기를 한 번에 설정
+      setPreviewImages(previews);
     }
   }, [postData, isEditMode]);
 
@@ -231,6 +331,68 @@ const PostEditor = () => {
     }
   });
 
+  // 게시물 수정 mutation
+  const updateMutation = useMutation({
+    mutationFn: async (updateData) => {
+      console.log('=== 게시물 수정 시작 ===');
+
+      // 새로 추가된 이미지 파일만 업로드
+      const imageFiles = files.filter(file => getMediaType(file).isImage);
+      let newImageUrls = [];
+
+      if (imageFiles.length > 0) {
+        console.log('새 이미지 업로드 시작...');
+        try {
+          const uploadResults = await storageService.uploadPostImages(id, imageFiles);
+          newImageUrls = uploadResults.map(result => result.url);
+        } catch (uploadError) {
+          console.error('이미지 업로드 실패:', uploadError);
+          throw uploadError;
+        }
+      }
+
+      // 기존 이미지 (삭제되지 않은 것들) + 새 이미지
+      // previewImages에서 existing이 true인 것들만 남기고, 해당 URL을 추출
+      const remainingExistingImages = previewImages
+        .filter(p => p?.existing && p?.type === 'image')
+        .map(p => p.url);
+
+      // 동영상 URL 추가
+      const videoUrls = uploadedVideos.filter(v => !v.existing).map(v => v.type === 'r2' ? v.url : v.iframeUrl);
+      const allMediaUrls = [...remainingExistingImages, ...newImageUrls, ...videoUrls];
+
+      const postDataObj = {
+        content: updateData.desc,
+        img: allMediaUrls.length > 0 ? JSON.stringify(allMediaUrls) : null,
+        images: allMediaUrls,
+        link_url: linkPreview?.url || null,
+        link_type: linkPreview?.type || null,
+        video_uid: uploadedVideos.length > 0 ? uploadedVideos[0].uid : null,
+      };
+
+      if (linkPreview?.type === 'youtube' && linkPreview.videoId) {
+        postDataObj.link_video_id = linkPreview.videoId;
+        postDataObj.link_thumbnail = linkPreview.thumbnailUrl;
+      }
+
+      const updatedPost = await postService.updatePost(id, postDataObj);
+      return updatedPost;
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['enhanced-instagram-posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-posts'] });
+      await queryClient.invalidateQueries({ queryKey: ['post', id] });
+
+      const redirectPath = postType === 'secondhand' ? '/secondhand' : '/community';
+      setTimeout(() => navigate(redirectPath), 100);
+    },
+    onError: (error) => {
+      console.error('게시물 수정 실패:', error);
+      setError(error.message || '게시물 수정에 실패했습니다.');
+    }
+  });
+
   // 파일 선택 처리
   const handleFileChange = async (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -261,6 +423,22 @@ const PostEditor = () => {
 
     // Cloudflare Images가 자동 최적화하므로 원본 그대로 사용
     const processedImages = [...imageFiles];
+
+    // 이미지와 동영상 혼합 업로드 금지
+    // 기존에 이미지가 있는데 동영상 추가 시도
+    const hasExistingImages = previewImages.some(p => p?.type !== 'video/stream');
+    // 기존에 동영상이 있는데 이미지 추가 시도
+    const hasExistingVideos = uploadedVideos.length > 0 || previewImages.some(p => p?.type === 'video/stream');
+
+    if (videoFiles.length > 0 && (hasExistingImages || imageFiles.length > 0)) {
+      setError('이미지와 동영상은 함께 업로드할 수 없습니다. 이미지 또는 동영상 중 하나만 선택해주세요.');
+      return;
+    }
+
+    if (imageFiles.length > 0 && hasExistingVideos) {
+      setError('이미지와 동영상은 함께 업로드할 수 없습니다. 기존 동영상을 삭제 후 이미지를 업로드해주세요.');
+      return;
+    }
 
     // 동영상 업로드 (1개만 허용)
     // 이미 동영상이 있으면 새 동영상 추가 불가
@@ -331,13 +509,17 @@ const PostEditor = () => {
     // Cloudflare Stream 동영상인 경우
     if (preview?.streamUid) {
       setUploadedVideos(prev => prev.filter(v => v.uid !== preview.streamUid));
-    } else if (index >= existingImages.length) {
-      // 새로 추가한 이미지 파일
-      const newFileIndex = index - existingImages.length;
-      setFiles(prev => prev.filter((_, i) => i !== newFileIndex));
-    } else {
-      // 기존 이미지
+    } else if (preview?.existing) {
+      // 기존 이미지 (수정 모드에서 로드된 이미지)
       setExistingImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // 새로 추가한 이미지 파일
+      // existingImages 수에서 제외하고 files 인덱스 계산
+      const existingCount = previewImages.filter(p => p?.existing).length;
+      const newFileIndex = index - existingCount;
+      if (newFileIndex >= 0) {
+        setFiles(prev => prev.filter((_, i) => i !== newFileIndex));
+      }
     }
 
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
@@ -359,7 +541,11 @@ const PostEditor = () => {
 
     setLoading(true);
     try {
-      await createMutation.mutateAsync({ desc: desc.trim() });
+      if (isEditMode) {
+        await updateMutation.mutateAsync({ desc: desc.trim() });
+      } else {
+        await createMutation.mutateAsync({ desc: desc.trim() });
+      }
     } catch (err) {
       console.error('Mutation 에러:', err);
     } finally {
@@ -369,6 +555,33 @@ const PostEditor = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 에러 모달 */}
+      {showErrorModal && error && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex flex-col items-center text-center">
+              {/* 에러 아이콘 */}
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              {/* 에러 메시지 */}
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">알림</h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              {/* 확인 버튼 */}
+              <button
+                type="button"
+                onClick={closeErrorModal}
+                className="w-full py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 메인 컨텐츠 */}
       <div className="max-w-2xl mx-auto px-4 pt-20 pb-24">
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
@@ -445,48 +658,126 @@ const PostEditor = () => {
 
             {/* 미리보기 */}
             {previewImages.length > 0 && (
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                {previewImages.map((preview, index) => {
+              <div className="mt-4 space-y-3">
+                {/* 미리보기 모드 토글 */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">미리보기</span>
+                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('feed')}
+                      className={`px-3 py-1 text-xs rounded-md transition-all ${
+                        previewMode === 'feed'
+                          ? 'bg-orange-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      피드 (4:5)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode('fullscreen')}
+                      className={`px-3 py-1 text-xs rounded-md transition-all ${
+                        previewMode === 'fullscreen'
+                          ? 'bg-orange-500 text-white shadow-sm'
+                          : 'text-gray-600 hover:text-gray-800'
+                      }`}
+                    >
+                      전체보기 (9:16)
+                    </button>
+                  </div>
+                </div>
+
+                {/* 메인 미리보기 */}
+                {(() => {
+                  const safeIndex = Math.min(currentPreviewIndex, previewImages.length - 1);
+                  const preview = previewImages[safeIndex];
                   const isStream = preview?.type === 'video/stream';
-                  const previewUrl = typeof preview === 'string' ? preview : preview.url;
+                  const previewUrl = typeof preview === 'string' ? preview : preview?.url;
+                  const aspectClass = previewMode === 'feed' ? 'aspect-[4/5] bg-gray-100' : 'aspect-[9/16] bg-black';
 
                   return (
-                    <div key={index} className="relative">
+                    <div className={`relative w-full ${aspectClass} rounded-xl overflow-hidden`}>
                       {isStream ? (
-                        <div className="w-full aspect-video bg-gray-900 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="relative w-full h-full bg-gray-900">
                           <img
                             src={previewUrl}
                             alt="동영상 썸네일"
-                            className="w-full h-full object-cover rounded-lg"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                            }}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.target.style.display = 'none'; }}
                           />
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-800">
-                            <div className="bg-purple-600 rounded-full p-3 mb-2">
-                              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40">
+                            <div className="bg-purple-600 rounded-full p-4 mb-2">
+                              <svg className="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                               </svg>
                             </div>
-                            <span className="text-white text-xs text-center px-2">인코딩 중...</span>
-                          </div>
-                          <div className="absolute bottom-2 left-2 bg-purple-600 bg-opacity-80 text-white px-2 py-1 rounded text-xs">
-                            동영상
+                            <span className="text-white text-sm">동영상</span>
                           </div>
                         </div>
                       ) : (
-                        <img src={previewUrl} alt={`미리보기 ${index + 1}`} className="w-full h-auto rounded-lg" />
+                        <img
+                          src={previewUrl}
+                          alt="미리보기"
+                          className="w-full h-full object-cover"
+                        />
                       )}
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 w-7 h-7 bg-black bg-opacity-60 text-white rounded-full flex items-center justify-center hover:bg-opacity-80"
-                      >
-                        <FontAwesomeIcon icon={faTimes} className="w-3 h-3" />
-                      </button>
+                      {/* 이미지 카운터 */}
+                      {previewImages.length > 1 && (
+                        <div className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full">
+                          {safeIndex + 1} / {previewImages.length}
+                        </div>
+                      )}
                     </div>
                   );
-                })}
+                })()}
+
+                {/* 삭제 가능한 썸네일 목록 (하단) - 클릭으로 전환 */}
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {previewImages.map((preview, index) => {
+                    const isStream = preview?.type === 'video/stream';
+                    const previewUrl = typeof preview === 'string' ? preview : preview?.url;
+                    const isSelected = index === Math.min(currentPreviewIndex, previewImages.length - 1);
+
+                    return (
+                      <div
+                        key={index}
+                        className={`relative flex-shrink-0 w-16 h-20 group cursor-pointer transition-all ${
+                          isSelected ? 'ring-2 ring-orange-500 ring-offset-1' : 'opacity-70 hover:opacity-100'
+                        }`}
+                        onClick={() => setCurrentPreviewIndex(index)}
+                      >
+                        {isStream ? (
+                          <div className="w-full h-full bg-gray-800 rounded-lg flex items-center justify-center">
+                            <svg className="w-6 h-6 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                            </svg>
+                          </div>
+                        ) : (
+                          <img
+                            src={previewUrl}
+                            alt={`썸네일 ${index + 1}`}
+                            className="w-full h-full object-cover rounded-lg"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeImage(index);
+                            // 삭제 후 인덱스 조정
+                            if (currentPreviewIndex >= previewImages.length - 1) {
+                              setCurrentPreviewIndex(Math.max(0, previewImages.length - 2));
+                            }
+                          }}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-80 hover:opacity-100 shadow-md"
+                        >
+                          <FontAwesomeIcon icon={faTimes} className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
@@ -539,14 +830,6 @@ const PostEditor = () => {
               </div>
             </div>
 
-            {gpsData && (
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-center text-sm text-blue-700">
-                  <span className="mr-2">📍</span>
-                  <span>위치 정보 포함: {gpsData.latitude.toFixed(6)}, {gpsData.longitude.toFixed(6)}</span>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* YouTube 링크 미리보기 */}
@@ -556,13 +839,6 @@ const PostEditor = () => {
                 <FontAwesomeIcon icon={faLink} className="mr-2 text-blue-500" />링크 미리보기
               </label>
               <YouTubePreviewCard url={linkPreview.url} onRemove={removeLinkPreview} className="max-w-md" />
-            </div>
-          )}
-
-          {/* 에러 */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
 

@@ -149,8 +149,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 미디어 타입 감지 로그 제거됨
 
-  // 삭제 권한 확인 (로그인 안 된 상태에서는 false)
-  const canDelete = currentUser && (post.userId === currentUser.id || featurePermissions.canDeleteAnyPost);
+  // 삭제 권한 확인 - 작성자 본인만 삭제 가능
+  const canDelete = currentUser && post.userId === currentUser.id;
 
   // 거래 완료 관리 권한 확인 (작성자 또는 관리자, 로그인 필요)
   const canManageTrade = currentUser && (post.userId === currentUser.id || featurePermissions.canDeleteAnyPost);
@@ -613,6 +613,29 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     pinMutation.mutate();
   };
 
+  // 숨김 mutation
+  const hideMutation = useMutation({
+    mutationFn: () => postService.hidePost(post.id, !post.is_hidden),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['enhanced-instagram-posts'] });
+      queryClient.invalidateQueries({ queryKey: ['posts'] });
+    },
+    onError: (error) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('숨김 상태 변경 실패:', error);
+      }
+      alert(error.response?.data || '숨김 처리에 실패했습니다.');
+    }
+  });
+
+  const handleHide = () => {
+    if (hideMutation.isPending) return;
+    const action = post.is_hidden ? '숨김 해제' : '숨김 처리';
+    if (window.confirm(`이 게시물을 ${action}하시겠습니까?`)) {
+      hideMutation.mutate();
+    }
+  };
+
   const handleReport = () => {
     // console.log('🚨 신고 버튼 클릭됨 (Instagram)'); // 디버깅용 로그 비활성화
     alert('신고 기능은 개발 중입니다.');
@@ -959,42 +982,99 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           >
             <FontAwesomeIcon icon={faEllipsisH} className="w-4 h-4 text-gray-600" />
           </button>
-          <ul className="dropdown-content z-50 menu p-2 shadow-lg bg-white rounded-xl w-48 text-sm border border-gray-200">
+          <ul className="dropdown-content z-50 py-2 shadow-xl bg-white/70 backdrop-blur-xl rounded-2xl w-28 text-sm border border-white/50">
             {/* 수정 - 작성자만 */}
             {post.userId === currentUser.id && (
               <li>
-                <button 
+                <button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     handleEdit();
                   }}
-                  className="flex items-center w-full text-left p-3 hover:bg-gray-50 rounded-lg"
+                  className="w-full text-center py-3 hover:bg-gray-100 rounded-xl text-gray-800 font-semibold transition-colors"
                 >
-                  ✏️ 수정
+                  수정
                 </button>
               </li>
             )}
-            
+
             {/* 숨김 - 작성자와 관리자 */}
             {(post.userId === currentUser.id || featurePermissions.canPinPosts) && (
               <li>
-                <button 
+                <button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    alert('숨김 기능은 개발 중입니다.');
+                    handleHide();
                   }}
-                  className="flex items-center w-full text-left p-3 hover:bg-gray-50 rounded-lg"
+                  disabled={hideMutation.isPending}
+                  className={`w-full text-center py-3 rounded-xl font-semibold transition-colors ${
+                    hideMutation.isPending
+                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                      : 'text-gray-800 hover:bg-gray-100'
+                  }`}
                 >
-                  👁️‍🗨️ 숨김
+                  {hideMutation.isPending ? '처리 중...' : post.is_hidden ? '숨김 해제' : '숨기기'}
                 </button>
               </li>
             )}
-            
-            {/* 삭제 - 작성자 또는 관리자 */}
+
+            {/* 고정 - 관리자만 */}
+            {featurePermissions.canPinPosts && (
+              <li>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handlePin();
+                  }}
+                  disabled={pinMutation.isPending}
+                  className={`w-full text-center py-3 rounded-xl font-semibold transition-colors ${
+                    pinMutation.isPending
+                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                      : 'text-gray-800 hover:bg-gray-100'
+                  }`}
+                >
+                  {pinMutation.isPending ? '처리 중...' : post.is_pinned ? '고정 해제' : '고정'}
+                </button>
+              </li>
+            )}
+
+            {/* 구분선 - 위에 메뉴가 있고 아래에 신고/삭제가 있을 때 */}
+            {((post.userId === currentUser.id || featurePermissions.canPinPosts) &&
+              (canDelete || (post.userId !== currentUser.id && !isBanned))) && (
+              <li className="my-1">
+                <div className="border-t border-gray-200"></div>
+              </li>
+            )}
+
+            {/* 신고 - 본인 게시글이 아니고, 차단되지 않은 경우에만 */}
+            {post.userId !== currentUser.id && !isBanned && (
+              <li>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowReportModal(true);
+                  }}
+                  onTouchEnd={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowReportModal(true);
+                  }}
+                  className="w-full text-center py-3 hover:bg-orange-50 rounded-xl text-orange-600 font-semibold transition-colors"
+                >
+                  신고
+                </button>
+              </li>
+            )}
+
+            {/* 삭제 - 작성자 본인만 */}
             {canDelete && (
               <li>
                 <button
@@ -1010,75 +1090,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     handleDelete();
                   }}
                   disabled={deleteMutation.isPending}
-                  className={`flex items-center w-full text-left p-3 rounded-lg ${
+                  className={`w-full text-center py-3 rounded-xl font-semibold transition-colors ${
                     deleteMutation.isPending
                       ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                      : 'text-red-500 hover:bg-red-50 active:bg-red-100'
+                      : 'text-red-500 hover:bg-red-50'
                   }`}
                 >
-                  {deleteMutation.isPending ? (
-                    <>
-                      <span className="loading loading-spinner loading-xs mr-2"></span>
-                      삭제 중...
-                    </>
-                  ) : (
-                    '🗑️ 삭제하기'
-                  )}
-                </button>
-              </li>
-            )}
-            
-            {/* 신고 - 본인 게시글이 아니고, 차단되지 않은 경우에만 */}
-            {post.userId !== currentUser.id && !isBanned && (
-              <li>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowReportModal(true);
-                  }}
-                  onTouchStart={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                  onTouchEnd={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowReportModal(true);
-                  }}
-                  className="flex items-center w-full text-left p-3 hover:bg-red-50 rounded-lg text-red-500 active:bg-red-100"
-                >
-                  🚨 신고하기
-                </button>
-              </li>
-            )}
-            
-            {/* 고정 - 관리자만 */}
-            {featurePermissions.canPinPosts && (
-              <li>
-                <button 
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handlePin();
-                  }}
-                  disabled={pinMutation.isPending}
-                  className={`flex items-center w-full text-left p-3 rounded-lg ${
-                    pinMutation.isPending 
-                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed' 
-                      : 'hover:bg-gray-50'
-                  }`}
-                >
-                  {pinMutation.isPending ? (
-                    <>
-                      <span className="loading loading-spinner loading-xs mr-2"></span>
-                      처리 중...
-                    </>
-                  ) : (
-                    post.is_pinned ? '📌 고정 해제' : '📌 고정'
-                  )}
+                  {deleteMutation.isPending ? '삭제 중...' : '삭제'}
                 </button>
               </li>
             )}

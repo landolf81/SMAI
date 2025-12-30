@@ -911,7 +911,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 value={answerContent}
                 onChange={(e) => setAnswerContent(e.target.value)}
                 placeholder="도움이 되는 답변을 작성해주세요..."
-                rows="4"
+                rows="12"
                 className="w-full p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
                 disabled={isSubmitting}
               />

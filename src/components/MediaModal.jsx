@@ -94,6 +94,24 @@ const MediaModal = ({
     }
   }, [isOpen, currentIndex, initialTime, initialIndex]);
 
+  // 다중 이미지 자동 전환 (3초) - 이미지일 때만, 동영상은 제외
+  useEffect(() => {
+    if (!isOpen) return;
+    if (mediaFiles.length <= 1) return;
+
+    const currentUrl = mediaFiles[currentIndex];
+    // 동영상이면 자동 전환 안함
+    if (isVideoFile(currentUrl) || isCloudflareStreamUrl(currentUrl)) return;
+
+    const autoTransitionTimer = setInterval(() => {
+      setCurrentIndex((prevIndex) =>
+        prevIndex === mediaFiles.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 3000);
+
+    return () => clearInterval(autoTransitionTimer);
+  }, [isOpen, currentIndex, mediaFiles]);
+
   // ESC 키로 모달 닫기 & 배경 스크롤 방지 & 뒤로가기 처리
   useEffect(() => {
     if (!isOpen) {
