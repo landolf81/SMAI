@@ -178,6 +178,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
                 const currentHumidity = currentForecast?.humidity ?? weather.current?.humidity;
                 const currentWindSpeed = currentForecast?.windSpeed ?? weather.current?.windSpeed;
                 const currentPrecipitation = weather.current?.precipitation || '0';
+                const currentPop = currentForecast?.pop ?? 0;
 
                 return (
                 <div className="space-y-4">
@@ -195,11 +196,16 @@ const WeatherModal = ({ isOpen, onClose }) => {
                   </div>
 
                   {/* 상세 정보 */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-4 gap-2">
                     <div className="bg-gray-50 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">💧</div>
                       <div className="text-xs text-gray-500">습도</div>
                       <div className="font-bold text-gray-700">{currentHumidity || '--'}%</div>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-3 text-center">
+                      <div className="text-2xl mb-1">🌧️</div>
+                      <div className="text-xs text-gray-500">강수확률</div>
+                      <div className="font-bold text-gray-700">{currentPop}%</div>
                     </div>
                     <div className="bg-gray-50 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">🌬️</div>
@@ -208,7 +214,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
                     </div>
                     <div className="bg-gray-50 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">☔</div>
-                      <div className="text-xs text-gray-500">강수</div>
+                      <div className="text-xs text-gray-500">강수량</div>
                       <div className="font-bold text-gray-700">{currentPrecipitation}mm</div>
                     </div>
                   </div>
@@ -250,30 +256,30 @@ const WeatherModal = ({ isOpen, onClose }) => {
                     .map((hour, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                      className="flex items-center p-3 bg-gray-50 rounded-xl"
                     >
-                      <div className="flex items-center gap-3">
+                      {/* 시간 */}
+                      <div className="w-16">
+                        <div className="font-medium text-gray-800">
+                          {formatTime(hour.time)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {formatDate(hour.date)}
+                        </div>
+                      </div>
+                      {/* 하늘 상태 */}
+                      <div className="w-12 text-center">
                         <span className="text-2xl">
                           {getWeatherIcon(hour.sky, hour.pty)?.icon || '☀️'}
                         </span>
-                        <div>
-                          <div className="font-medium text-gray-800">
-                            {formatTime(hour.time)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {formatDate(hour.date)}
-                          </div>
-                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-lg text-gray-800">
-                          {hour.temp}°
-                        </div>
-                        {hour.pop > 0 && (
-                          <div className="text-xs text-blue-500">
-                            ☔ {hour.pop}%
-                          </div>
-                        )}
+                      {/* 강수확률 */}
+                      <div className={`w-14 text-center text-sm ${hour.pop > 0 ? 'text-blue-500' : 'text-gray-400'}`}>
+                        🌧️ {hour.pop}%
+                      </div>
+                      {/* 온도 */}
+                      <div className="flex-1 text-right font-bold text-lg text-gray-800">
+                        {hour.temp}°
                       </div>
                     </div>
                   ))}
@@ -305,11 +311,9 @@ const WeatherModal = ({ isOpen, onClose }) => {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {day.pop > 0 && (
-                          <div className="text-xs text-blue-500">
-                            ☔{day.pop}%
-                          </div>
-                        )}
+                        <div className={`text-xs min-w-[40px] ${day.pop > 0 ? 'text-blue-500' : 'text-gray-400'}`}>
+                          🌧️{day.pop ?? 0}%
+                        </div>
                         <div className="flex items-center gap-2 min-w-[70px] justify-end">
                           <span className="text-blue-600">{day.minTemp ?? '--'}°</span>
                           <span className="text-red-500">{day.maxTemp ?? '--'}°</span>
