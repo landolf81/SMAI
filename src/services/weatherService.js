@@ -594,7 +594,7 @@ const getSavedLocation = () => {
   return null;
 };
 
-// 캐시에서 날씨 데이터 가져오기
+// 캐시에서 날씨 데이터 가져오기 (만료 여부와 함께 반환)
 const getCachedWeather = async (locationKey) => {
   try {
     const { data, error } = await supabase
@@ -603,19 +603,17 @@ const getCachedWeather = async (locationKey) => {
       .eq('location_key', locationKey)
       .single();
 
-    if (error || !data) return null;
+    if (error || !data) return { data: null, isExpired: true };
 
     // 캐시 유효성 검사 (1시간 이내)
     const updatedAt = new Date(data.updated_at);
     const now = new Date();
-    if (now - updatedAt > CACHE_DURATION_MS) {
-      return null; // 캐시 만료
-    }
+    const isExpired = (now - updatedAt) > CACHE_DURATION_MS;
 
-    return data.data;
+    return { data: data.data, isExpired };
   } catch (e) {
     console.warn('캐시 조회 실패:', e);
-    return null;
+    return { data: null, isExpired: true };
   }
 };
 
@@ -692,22 +690,35 @@ const fetchWeatherFromApi = async (location) => {
   };
 };
 
-// 통합 날씨 데이터 가져오기 (캐시 우선)
+// 통합 날씨 데이터 가져오기 (캐시 우선, 만료되어도 즉시 반환)
 const getWeatherData = async () => {
   const locationKey = 'default';
 
   // 1. 캐시에서 먼저 조회
-  const cachedData = await getCachedWeather(locationKey);
+  const { data: cachedData, isExpired } = await getCachedWeather(locationKey);
+
+  // 2. 캐시가 있으면 즉시 반환 (만료 여부 무관)
   if (cachedData) {
-    console.log('캐시된 날씨 데이터 사용');
+    console.log('캐시된 날씨 데이터 사용', isExpired ? '(만료됨, 백그라운드 갱신)' : '(유효)');
+
+    // 만료된 경우 백그라운드에서 갱신 (사용자는 기다리지 않음)
+    if (isExpired) {
+      fetchWeatherFromApi(DEFAULT_LOCATION)
+        .then(freshData => {
+          setCachedWeather(locationKey, freshData);
+          console.log('백그라운드 날씨 캐시 갱신 완료');
+        })
+        .catch(err => console.warn('백그라운드 날씨 갱신 실패:', err));
+    }
+
     return cachedData;
   }
 
-  // 2. 캐시가 없거나 만료된 경우 API 호출
+  // 3. 캐시가 전혀 없는 경우에만 API 호출 후 대기
   console.log('기상청 API에서 날씨 데이터 가져오는 중...');
   const weatherData = await fetchWeatherFromApi(DEFAULT_LOCATION);
 
-  // 3. 결과를 캐시에 저장 (백그라운드)
+  // 4. 결과를 캐시에 저장
   setCachedWeather(locationKey, weatherData);
 
   return weatherData;
