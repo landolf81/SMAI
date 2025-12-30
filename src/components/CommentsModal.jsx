@@ -399,19 +399,19 @@ const CommentsModal = ({ isOpen, onClose, postId, postTag }) => {
                               comment.desc
                             )}
                           </p>
-                          <div className="flex items-center space-x-4 mt-1">
-                            <span className="text-xs text-gray-500">
-                              {moment(comment.created_at).fromNow()}
-                            </span>
+                          <div className="flex items-baseline gap-3">
                             {currentUser && (
                               <button
                                 onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                                className="text-xs text-gray-500 hover:text-orange-500 flex items-center space-x-1"
+                                className="text-xs text-gray-500 hover:text-orange-500 inline-flex items-center gap-0.5"
                               >
-                                <FontAwesomeIcon icon={faReply} className="w-3 h-3" />
-                                <span>답글</span>
+                                <FontAwesomeIcon icon={faReply} className="w-2.5 h-2.5" />
+                                <span className="leading-none">답글</span>
                               </button>
                             )}
+                            <span className="text-xs text-gray-500 leading-none ml-auto">
+                              {moment(comment.created_at).fromNow()}
+                            </span>
                           </div>
                         </div>
                         {currentUser && (
@@ -571,7 +571,7 @@ const CommentsModal = ({ isOpen, onClose, postId, postTag }) => {
                   {comment.replies && comment.replies.length > 0 && (
                     <div className="ml-11 space-y-3">
                       {(expandedReplies[comment.id] ? comment.replies : comment.replies.slice(0, 2)).map((reply) => (
-                        <div key={reply.id} className="flex items-start space-x-2">
+                        <div key={reply.id} className="flex items-start space-x-3">
                           <img
                             src={getProfilePic(reply)}
                             alt={getDisplayName(reply)}
@@ -581,7 +581,7 @@ const CommentsModal = ({ isOpen, onClose, postId, postTag }) => {
                                 setShowProfileModal(true);
                               }
                             }}
-                            className={`w-6 h-6 rounded-full object-cover flex-shrink-0 transition-opacity ${isProfileClickable(reply) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(reply)}`}
+                            className={`w-8 h-8 rounded-full object-cover flex-shrink-0 transition-opacity ${isProfileClickable(reply) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(reply)}`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between">
@@ -593,23 +593,23 @@ const CommentsModal = ({ isOpen, onClose, postId, postTag }) => {
                                       setShowProfileModal(true);
                                     }
                                   }}
-                                  className={`font-semibold text-xs ${isProfileClickable(reply) ? 'text-gray-800 cursor-pointer hover:underline' : 'text-gray-500 cursor-default'}`}
+                                  className={`font-semibold text-sm ${isProfileClickable(reply) ? 'text-gray-800 cursor-pointer hover:underline' : 'text-gray-500 cursor-default'}`}
                                 >
                                   {getDisplayName(reply)}
                                 </span>
                                 {reply.is_secret && (
-                                  <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+                                  <span className="ml-1 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
                                     🔒
                                   </span>
                                 )}
-                                <p className="text-xs text-gray-700 mt-0.5 break-words">
+                                <p className="text-sm text-gray-700 mt-0.5 break-words">
                                   {reply.canView === false ? (
                                     <span className="text-gray-500 italic">🔒 비밀 댓글입니다.</span>
                                   ) : (
                                     reply.desc
                                   )}
                                 </p>
-                                <span className="text-xs text-gray-500">
+                                <span className="text-xs text-gray-500 leading-none block text-right">
                                   {moment(reply.created_at).fromNow()}
                                 </span>
                               </div>
