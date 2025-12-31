@@ -1,0 +1,17 @@
+# 참외이야기 robots.txt
+# https://seonnam.com
+
+User-agent: *
+Allow: /
+
+# 검색 엔진에 노출하지 않을 경로
+Disallow: /admin
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+# 사이트맵 위치
+Sitemap: https://seonnam.com/sitemap.xml
+
+# 크롤링 속도 제한 (초 단위)
+Crawl-delay: 1
