@@ -14,13 +14,6 @@
     <priority>0.9</priority>
   </url>
 
-  <!-- 사고팔고 (중고거래) -->
-  <url>
-    <loc>https://seonnam.com/secondhand</loc>
-    <changefreq>hourly</changefreq>
-    <priority>0.8</priority>
-  </url>
-
   <!-- Q&A -->
   <url>
     <loc>https://seonnam.com/qna</loc>
