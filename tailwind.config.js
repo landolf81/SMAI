@@ -9,6 +9,8 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Cloud Dancer - 따뜻한 화이트
+        'cloud-dancer': '#f0eee9',
         // 경락가 웹앱 브랜드 색상
         'market': {
           50: '#f0fdf4',

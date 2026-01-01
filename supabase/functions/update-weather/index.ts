@@ -96,7 +96,14 @@ const getUltraSrtNcst = async () => {
   const response = await fetch(url)
   if (!response.ok) return null
 
-  const data = await response.json()
+  const text = await response.text()
+  // HTML 응답 체크 (API 키 오류 등)
+  if (text.startsWith('<')) {
+    console.error('초단기실황 API 오류 - HTML 응답:', text.substring(0, 200))
+    return null
+  }
+
+  const data = JSON.parse(text)
   if (data.response?.header?.resultCode !== '00') return null
 
   const items = data.response.body.items.item
@@ -172,7 +179,13 @@ const getVilageFcst = async () => {
   const response = await fetch(url)
   if (!response.ok) return null
 
-  const data = await response.json()
+  const text = await response.text()
+  if (text.startsWith('<')) {
+    console.error('단기예보 API 오류 - HTML 응답:', text.substring(0, 200))
+    return null
+  }
+
+  const data = JSON.parse(text)
   if (data.response?.header?.resultCode !== '00') return null
 
   // 02시 발표 기준 TMN/TMX 가져오기
