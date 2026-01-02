@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { marketService } from '../services';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { marketService, briefingService } from '../services';
+import { useAdminPermissions } from '../hooks/usePermissions';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 // 뱃지 색상 - 파랑으로 통일
@@ -15,6 +17,9 @@ const Prices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [gradeSettings, setGradeSettings] = useState(null); // DB에서 가져온 등급 설정
+  const [briefing, setBriefing] = useState(null); // AI 브리핑
+  const [briefingGenerating, setBriefingGenerating] = useState(false); // 브리핑 생성 중
+  const adminPermissions = useAdminPermissions();
 
   // URL 파라미터에서 시장명과 날짜 가져오기
   const marketName = searchParams.get('market');
@@ -99,6 +104,21 @@ const Prices = () => {
 
     if (marketName) {
       fetchMarketData(marketName, selectedDate);
+
+      // 선남농협일 때만 브리핑 조회
+      if (marketName === '선남농협') {
+        briefingService.getBriefing(marketName, selectedDate)
+          .then(result => {
+            if (result?.briefing) {
+              setBriefing(result);
+            } else {
+              setBriefing(null);
+            }
+          })
+          .catch(() => setBriefing(null));
+      } else {
+        setBriefing(null);
+      }
     } else {
       setLoading(false);
       setError('시장을 선택해주세요.');
@@ -122,6 +142,26 @@ const Prices = () => {
     }
   };
 
+  // 관리자 전용: 브리핑 생성
+  const handleGenerateBriefing = async () => {
+    if (!marketName || briefingGenerating) return;
+
+    setBriefingGenerating(true);
+    try {
+      const result = await briefingService.generateBriefing(marketName, selectedDate);
+      if (result.success) {
+        setBriefing({ briefing: result.briefing, trend: result.trend });
+        alert(`브리핑 생성 완료!\n\n"${result.briefing}"`);
+      } else {
+        alert(`브리핑 생성 실패: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`브리핑 생성 오류: ${error.message}`);
+    } finally {
+      setBriefingGenerating(false);
+    }
+  };
+
   const formatPrice = (price) => {
     return price ? price.toLocaleString('ko-KR') : '0';
   };
@@ -138,7 +178,7 @@ const Prices = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mx-auto" />
           <p className="mt-4 text-gray-600">경락가격 정보를 불러오는 중...</p>
@@ -152,7 +192,7 @@ const Prices = () => {
 
   if (error || !marketName) {
     return (
-      <div className="min-h-screen bg-gray-50 pt-16 pb-24">
+      <div className="min-h-screen bg-cloud-dancer pt-16 pb-24">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="text-center py-12">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
@@ -192,7 +232,7 @@ const Prices = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-16 pb-24">
+    <div className="min-h-screen bg-cloud-dancer pt-16 pb-24">
       {/* 헤더 */}
       <div className="bg-white shadow-sm border-b sticky top-14 z-10">
         <div className="w-full max-w-screen-xl mx-auto p-4">
@@ -221,6 +261,18 @@ const Prices = () => {
           </div>
         </div>
       </div>
+
+      {/* AI 브리핑 배너 - 선남농협만 */}
+      {marketName === '선남농협' && briefing?.briefing && (
+        <div className="w-full max-w-screen-xl mx-auto px-4 pt-4">
+          <div className="bg-[#004225] text-white rounded-xl px-4 py-3 shadow-md">
+            <div className="flex items-start gap-2">
+              <span className="text-lg">💬</span>
+              <p className="text-sm leading-relaxed flex-1">{briefing.briefing}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 메인 콘텐츠 */}
       <div className="w-full max-w-screen-xl mx-auto p-4">
@@ -431,6 +483,26 @@ const Prices = () => {
           </>
         )}
       </div>
+
+      {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 */}
+      {adminPermissions.isAdmin && marketName === '선남농협' && (
+        <button
+          onClick={handleGenerateBriefing}
+          disabled={briefingGenerating}
+          className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+            briefingGenerating
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
+          }`}
+          title="AI 브리핑 생성"
+        >
+          {briefingGenerating ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <AutoAwesomeIcon className="text-white" />
+          )}
+        </button>
+      )}
     </div>
   );
 };

@@ -18,3 +18,4 @@ export { r2Service } from './r2Service.js';
 export { verificationService } from './verificationService.js';
 export { geminiService } from './geminiService.js';
 export { translationService } from './translationService.js';
+export { briefingService } from './briefingService.js';

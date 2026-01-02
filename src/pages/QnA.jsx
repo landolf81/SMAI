@@ -38,7 +38,7 @@ const QnA = () => {
   };
 
   return (
-    <div className="qna-page min-h-screen bg-gray-50 pt-14">
+    <div className="qna-page min-h-screen bg-cloud-dancer pt-14">
       {/* 상단 고정 검색창 (검색 모드) */}
       {isSearchMode && (
         <div className="sticky top-14 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm animate-slide-down">

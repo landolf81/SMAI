@@ -114,7 +114,7 @@ const Profile = () => {
 
   if (isPending) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-gray-50">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-cloud-dancer">
         <LoadingSpinner size="lg" />
         <p className="mt-4 text-gray-600 text-lg">프로필을 불러오는 중...</p>
       </div>
@@ -133,7 +133,7 @@ const Profile = () => {
   const isOwnProfile = data.id === currentUser.id;
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-14">
+    <div className="bg-cloud-dancer min-h-screen pt-14">
       {/* 업데이트 알림 */}
       {updateNotification && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">

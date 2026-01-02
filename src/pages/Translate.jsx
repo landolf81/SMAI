@@ -544,7 +544,7 @@ const Translate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50 pt-16 px-4 pb-4">
+    <div className="min-h-screen bg-cloud-dancer pt-16 px-4 pb-4">
       <div className="max-w-3xl mx-auto">
         {/* 헤더 */}
         <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl shadow-lg px-4 py-3 mb-4 text-white">
