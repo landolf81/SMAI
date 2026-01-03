@@ -402,7 +402,7 @@ export const qnaService = {
   /**
    * 질문 수정
    * @param {string} questionId - 질문 ID
-   * @param {Object} updates - 수정할 데이터
+   * @param {Object} updates - 수정할 데이터 { desc, images, img } 또는 { title, content, tagId }
    */
   async updateQuestion(questionId, updates) {
     try {
@@ -410,14 +410,41 @@ export const qnaService = {
       const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
+      // 업데이트 데이터 구성
+      const updateData = {
+        updated_at: new Date().toISOString()
+      };
+
+      // desc가 있으면 description으로 매핑 (QnADetail에서 사용)
+      if (updates.desc !== undefined) {
+        updateData.description = updates.desc;
+      }
+      // content가 있으면 description으로 매핑 (호환성)
+      if (updates.content !== undefined) {
+        updateData.description = updates.content;
+      }
+      // title이 있으면 그대로 사용
+      if (updates.title !== undefined) {
+        updateData.title = updates.title;
+      }
+      // images 배열이 있으면 photo로 저장 (JSON 문자열)
+      if (updates.images !== undefined) {
+        updateData.photo = updates.images.length > 0 ? JSON.stringify(updates.images) : null;
+      }
+      // img (첫 번째 이미지)가 있으면 img로 저장
+      if (updates.img !== undefined) {
+        updateData.img = updates.img;
+      }
+      // tagId가 있으면 tag_id로 매핑
+      if (updates.tagId !== undefined) {
+        updateData.tag_id = updates.tagId;
+      }
+
+      console.log('질문 수정 - DB 업데이트 데이터:', updateData);
+
       const { data, error } = await supabase
         .from('posts')
-        .update({
-          title: updates.title,
-          content: updates.content,
-          tag_id: updates.tagId,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', questionId)
         .eq('user_id', user.id)
         .eq('post_type', 'qna')
@@ -426,6 +453,7 @@ export const qnaService = {
 
       if (error) throw error;
 
+      console.log('질문 수정 완료:', data);
       return data;
     } catch (error) {
       console.error('질문 수정 오류:', error);
