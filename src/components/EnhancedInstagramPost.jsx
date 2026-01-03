@@ -918,7 +918,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             className={`relative flex-shrink-0 ${!canClickProfile ? 'cursor-default' : ''}`}
             disabled={!canClickProfile}
           >
-            <div className={`w-10 h-10 rounded-full overflow-hidden ring-2 ring-orange-400 ring-offset-1 ${canClickProfile ? 'hover:ring-pink-500' : ''} transition-all duration-200 ${avatarClassName}`}>
+            <div className={`w-10 h-10 rounded-full overflow-hidden ring-2 ring-white ring-offset-1 ${canClickProfile ? 'hover:ring-gray-200' : ''} transition-all duration-200 ${avatarClassName}`}>
               <img
                 src={authorProfilePic}
                 alt={`${authorName} 프로필`}
