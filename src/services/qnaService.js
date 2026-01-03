@@ -402,7 +402,7 @@ export const qnaService = {
   /**
    * 질문 수정
    * @param {string} questionId - 질문 ID
-   * @param {Object} updates - 수정할 데이터 { desc, images, img } 또는 { title, content, tagId }
+   * @param {Object} updates - 수정할 데이터 { desc, images } 또는 { title, content, tagId }
    */
   async updateQuestion(questionId, updates) {
     try {
@@ -430,10 +430,6 @@ export const qnaService = {
       // images 배열이 있으면 photo로 저장 (JSON 문자열)
       if (updates.images !== undefined) {
         updateData.photo = updates.images.length > 0 ? JSON.stringify(updates.images) : null;
-      }
-      // img (첫 번째 이미지)가 있으면 img로 저장
-      if (updates.img !== undefined) {
-        updateData.img = updates.img;
       }
       // tagId가 있으면 tag_id로 매핑
       if (updates.tagId !== undefined) {
