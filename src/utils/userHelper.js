@@ -58,7 +58,14 @@ export const getProfilePic = (user) => {
   const profilePic = user.profile_pic || user.profilePic;
 
   // 프로필 사진이 있으면 사용
-  if (profilePic) return profilePic;
+  if (profilePic) {
+    // 이미 전체 URL이거나 /uploads/로 시작하면 그대로 반환
+    if (profilePic.startsWith('http') || profilePic.startsWith('/uploads/')) {
+      return profilePic;
+    }
+    // 상대 경로면 /uploads/profiles/ 접두사 추가
+    return `/uploads/profiles/${profilePic}`;
+  }
 
   // 프로필 사진이 없으면 DiceBear 아바타 생성
   const seed = user.id || user.username || user.name || 'default';
