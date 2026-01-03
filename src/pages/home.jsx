@@ -548,15 +548,15 @@ const Home = () => {
         style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
       >
         {/* 왼쪽 여백 (날씨 위젯과 균형) */}
-        <div className="w-16"></div>
+        <div className="w-12 shrink-0"></div>
 
         {/* 중앙: 날짜 선택기 */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 whitespace-nowrap">
           <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">
             <ChevronLeftIcon style={{ fontSize: '20px' }} />
           </button>
           <button onClick={() => setIsDatePickerOpen(true)} className="flex items-center haptic-feedback">
-            <span className="font-bold text-lg">{selectedDate}</span>
+            <span className="font-bold text-lg whitespace-nowrap">{selectedDate}</span>
             <KeyboardArrowDownIcon style={{ fontSize: '22px' }} />
           </button>
           <button
@@ -569,7 +569,7 @@ const Home = () => {
         </div>
 
         {/* 오른쪽: 날씨 위젯 */}
-        <div className="w-16 flex justify-end">
+        <div className="w-16 shrink-0 flex justify-end pr-2">
           <WeatherWidget onClick={() => setIsWeatherModalOpen(true)} />
         </div>
       </div>
