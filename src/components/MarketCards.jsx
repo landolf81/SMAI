@@ -258,8 +258,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
               data-card-id={cardId}
               className="w-full mx-auto relative pt-4 transition-all duration-300 ease-out"
               style={{
-                animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
-                animationDelay: navigationType !== 'POP' ? `${index * 50}ms` : '0ms',
+                animation: navigationType !== 'POP' ? `fadeInUp 0.3s ease-out ${index * 50}ms forwards` : 'none',
                 transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`
               }}
             >
