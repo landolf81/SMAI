@@ -6,8 +6,6 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
 import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
@@ -15,6 +13,7 @@ import DatePickerModal from '../components/DatePickerModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 import WeatherWidget from '../components/WeatherWidget';
 import WeatherModal from '../components/WeatherModal';
+import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
@@ -632,72 +631,12 @@ const Home = () => {
               </div>
             </div>
 
-            {/* 인기 게시물 카드 */}
-            <div
-              className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
-              onClick={() => navigate('/community')}
-            >
-              {/* 썸네일 이미지 */}
-              {hottestPost.photo && hottestPost.photo.length > 0 && (
-                <div className="relative aspect-[16/9] bg-gray-100">
-                  <img
-                    src={
-                      hottestPost.photo[0].startsWith('http')
-                        ? hottestPost.photo[0]
-                        : `/uploads/${hottestPost.photo[0]}`
-                    }
-                    alt="인기 게시물"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                  {/* 이미지 개수 표시 */}
-                  {hottestPost.photo.length > 1 && (
-                    <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                      +{hottestPost.photo.length - 1}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* 게시물 정보 */}
-              <div className="p-4">
-                {/* 작성자 정보 */}
-                <div className="flex items-center gap-2 mb-2">
-                  <img
-                    src={
-                      hottestPost.profilePic && hottestPost.profilePic !== 'defaultAvatar.png'
-                        ? `/uploads/profiles/${hottestPost.profilePic}`
-                        : '/default/default_profile.png'
-                    }
-                    alt={hottestPost.username}
-                    className="w-6 h-6 rounded-full object-cover"
-                    onError={(e) => {
-                      e.target.src = '/default/default_profile.png';
-                    }}
-                  />
-                  <span className="text-sm font-medium text-gray-800">{hottestPost.username}</span>
-                </div>
-
-                {/* 게시물 내용 */}
-                <p className="text-gray-700 text-sm line-clamp-2 mb-3">
-                  {hottestPost.description}
-                </p>
-
-                {/* 통계 */}
-                <div className="flex items-center gap-4 text-gray-500 text-xs">
-                  <div className="flex items-center gap-1">
-                    <FavoriteIcon style={{ fontSize: 14 }} className="text-red-400" />
-                    <span>{hottestPost.like_count || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ChatBubbleIcon style={{ fontSize: 14 }} />
-                    <span>{hottestPost.comment_count || 0}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* 인기 게시물 카드 - 커뮤니티 피드와 동일한 형태 */}
+            <EnhancedInstagramPost
+              post={hottestPost}
+              isVisible={true}
+              disableAutoplay={true}
+            />
           </div>
         )}
       </div>
