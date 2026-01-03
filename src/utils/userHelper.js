@@ -68,8 +68,15 @@ export const getProfilePic = (user) => {
   }
 
   // 프로필 사진이 없으면 DiceBear 아바타 생성
-  // userId는 댓글/게시물에서 사용, user.id는 user 객체에서 사용
-  const seed = user.id || user.userId || user.user_id || user.username || user.name || 'default';
+  // userId/user_id는 댓글/게시물에서 사용하는 실제 사용자 ID
+  // user.id는 사용자 객체의 ID (하지만 댓글의 경우 comment.id가 될 수 있음)
+  // UUID 형식(36자)인지 확인하여 올바른 사용자 ID를 seed로 사용
+  const isUUID = (str) => typeof str === 'string' && str.length === 36 && str.includes('-');
+
+  // 우선순위: userId/user_id (항상 사용자 ID) > UUID 형식의 id > username > name
+  const seed = user.userId || user.user_id ||
+               (isUUID(user.id) ? user.id : null) ||
+               user.username || user.name || 'default';
   return generateDiceBearAvatar(seed);
 };
 
