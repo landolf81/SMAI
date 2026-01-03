@@ -18,8 +18,6 @@ export const fetchLinkPreview = async (url) => {
       throw new Error('URL is required');
     }
 
-    console.log('🔗 링크 미리보기 요청:', url);
-
     // Supabase Edge Function 호출
     const { data, error } = await supabase.functions.invoke(LINK_PREVIEW_FUNCTION, {
       body: { url }
@@ -30,7 +28,6 @@ export const fetchLinkPreview = async (url) => {
       return null;
     }
 
-    console.log('✅ 링크 미리보기 성공:', data);
     return data;
 
   } catch (error) {

@@ -77,7 +77,7 @@ export const youtubeService = {
       let query = supabase
         .from('youtube_videos')
         .select('*')
-        .order('collected_at', { ascending: false });
+        .order('published_at', { ascending: false });
 
       if (status !== 'all') {
         query = query.eq('status', status);

@@ -12,6 +12,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { userService } from '../../services';
+import { generateDiceBearAvatar } from '../../utils/userHelper';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -385,7 +386,10 @@ const UserListContent = ({
                         <img
                           src={(() => {
                             const pic = user.profilePic || user.profile_pic;
-                            if (!pic) return user.avatar || "/default/default_profile.png";
+                            if (!pic) {
+                              const seed = user.id || user.username || user.name || 'default';
+                              return generateDiceBearAvatar(seed);
+                            }
                             if (pic.startsWith('http')) return pic;
                             if (pic.startsWith('/uploads/')) return pic;
                             return `/uploads/profiles/${pic}`;
@@ -394,7 +398,8 @@ const UserListContent = ({
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = '/default/default_profile.png';
+                            const seed = user.id || user.username || user.name || 'default';
+                            e.target.src = generateDiceBearAvatar(seed);
                           }}
                         />
                       </div>
