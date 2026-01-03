@@ -11,6 +11,7 @@ import Update from "../components/update";
 import LoadingSpinner from "../components/LoadingSpinner";
 import DMList from "../components/DMList";
 import { useScrollRestore } from '../hooks/useScrollRestore';
+import { generateDiceBearAvatar } from '../utils/userHelper';
 
 // Icons
 import EditIcon from "@mui/icons-material/Edit";
@@ -175,10 +176,13 @@ const Profile = () => {
                   src={
                     data.profilePic
                       ? (data.profilePic.startsWith('http') ? data.profilePic : `/uploads/profiles/${data.profilePic}`)
-                      : "/default/default_profile.png"
+                      : generateDiceBearAvatar(userId || data.username || data.name || 'default')
                   }
                   alt="프로필 사진"
-                  className="w-24 h-24 rounded-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105 object-cover"
+                  className="w-24 h-24 rounded-full border-4 border-white shadow-lg transition-all duration-300 hover:scale-105 object-cover bg-white"
+                  onError={(e) => {
+                    e.target.src = generateDiceBearAvatar(userId || data.username || data.name || 'default');
+                  }}
                 />
                 {data.verified && (
                   <VerifiedIcon className="absolute -bottom-1 -right-1 text-blue-500 bg-white rounded-full" />

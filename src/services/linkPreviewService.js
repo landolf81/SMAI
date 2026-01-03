@@ -56,7 +56,6 @@ export const fetchLinkPreviewWithCache = async (url, cacheTime = 3600000) => {
 
     // 캐시가 유효하면 반환
     if (now - timestamp < cacheTime) {
-      console.log('📦 캐시된 링크 미리보기 사용:', url);
       return data;
     }
   }

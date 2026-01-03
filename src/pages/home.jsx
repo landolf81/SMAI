@@ -538,13 +538,13 @@ const Home = () => {
 
   // 모바일 사용자를 위한 기존 화면
   return (
-    <div className="min-h-screen bg-gray-50 pb-28 safe-area-bottom">
+    <div className="min-h-screen bg-cloud-dancer pb-28 safe-area-bottom">
       {/* 상단 헤더 공간 확보 */}
       <div className="h-14"></div>
 
       {/* 날짜 선택기 헤더 - 카드 상단 고정 */}
       <div
-        className="flex items-center justify-between px-3 py-2 shadow-sm border-b sticky top-14 z-30 bg-white/90 backdrop-blur-sm"
+        className="flex items-center justify-between px-3 py-2 shadow-sm border-b sticky top-14 z-30 bg-cloud-dancer"
         style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
       >
         {/* 왼쪽 여백 (날씨 위젯과 균형) */}

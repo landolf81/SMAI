@@ -74,7 +74,8 @@ const AuthCallback = () => {
           const kakaoUser = user.user_metadata || {};
           // 이메일이 없을 수 있음 (카카오 동의 항목에서 선택 또는 미동의)
           const kakaoEmail = user.email || kakaoUser.email || null;
-          const kakaoProfileImage = kakaoUser.avatar_url || kakaoUser.picture || '';
+          // 프로필 이미지는 기본적으로 가져오지 않음 (사용자가 직접 설정)
+          const kakaoProfileImage = '';
 
           // 고유한 username과 name 생성
           // username: 랜덤 6자리 + 사용자 ID 뒤 4자리 = 더 높은 유니크성

@@ -8,6 +8,7 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import BadgeDisplay from './BadgeDisplay';
 import { badgeService, userService } from '../services';
 import { AuthContext } from '../context/AuthContext';
+import { generateDiceBearAvatar } from '../utils/userHelper';
 
 const ProfileModal = ({ isOpen, onClose, user }) => {
   const navigate = useNavigate();
@@ -60,7 +61,12 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
   // 프로필 이미지 URL 처리
   const getProfileImageUrl = () => {
     const pic = displayUser.profilePic || displayUser.profile_pic;
-    if (!pic) return null;
+
+    // 프로필 사진이 없으면 DiceBear 아바타 생성
+    if (!pic) {
+      const seed = userId || displayUser.username || displayUser.name || 'default';
+      return generateDiceBearAvatar(seed);
+    }
 
     // 이미 전체 경로인 경우 (http:// 또는 https://로 시작)
     if (pic.startsWith('http://') || pic.startsWith('https://')) {
@@ -101,7 +107,8 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-sm w-full relative overflow-hidden"
+        className="rounded-2xl max-w-sm w-full relative overflow-hidden"
+        style={{ backgroundColor: '#f0eee9' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
@@ -114,18 +121,15 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
 
         {/* 커버 이미지 */}
         <div
-          className="h-32 bg-gradient-to-r from-orange-100 to-orange-200 flex items-center justify-center"
+          className="h-32 flex items-center justify-center"
           style={{
-            backgroundImage: getCoverImageUrl() ? `url(${getCoverImageUrl()})` : undefined,
+            backgroundImage: getCoverImageUrl()
+              ? `url(${getCoverImageUrl()})`
+              : 'linear-gradient(135deg, #1D4ED8 0%, #16A34A 100%)',
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
         >
-          {!getCoverImageUrl() && (
-            <div className="text-center opacity-50">
-              <PersonIcon className="text-6xl text-orange-400" />
-            </div>
-          )}
         </div>
 
         {/* 프로필 정보 */}
@@ -142,23 +146,16 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
             <>
               {/* 프로필 사진 - 커버 이미지와 겹치도록 음수 마진 */}
               <div className="-mt-12 mb-4">
-                {getProfileImageUrl() ? (
-                  <img
-                    src={getProfileImageUrl()}
-                    alt={displayUser.name || displayUser.username}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div
-                  className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center border-4 border-white shadow-lg"
-                  style={{ display: getProfileImageUrl() ? 'none' : 'flex' }}
-                >
-                  <PersonIcon className="text-gray-500" sx={{ fontSize: 48 }} />
-                </div>
+                <img
+                  src={getProfileImageUrl()}
+                  alt={displayUser.name || displayUser.username}
+                  className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg bg-white"
+                  onError={(e) => {
+                    // 로드 실패 시 DiceBear 아바타로 대체
+                    const seed = userId || displayUser.username || displayUser.name || 'default';
+                    e.target.src = generateDiceBearAvatar(seed);
+                  }}
+                />
               </div>
 
               <div className="flex items-center justify-center gap-2 mb-1">
@@ -205,7 +202,7 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
               {/* 프로필 보기 버튼 */}
               <button
                 onClick={handleViewProfile}
-                className="w-full py-3 bg-gradient-to-r from-[#004225] to-[#00B140] text-white rounded-lg font-medium hover:from-[#003318] hover:to-[#009930] transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#1D4ED8] to-[#16A34A] text-white rounded-lg font-medium hover:from-[#1e40af] hover:to-[#15803d] transition-all"
               >
                 프로필 보기
               </button>

@@ -178,7 +178,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
 
   if (loading) {
     return (
-      <div className="flex items-start justify-center min-h-[calc(100vh-120px)] pt-32 bg-gray-50">
+      <div className="flex items-start justify-center min-h-[calc(100vh-120px)] pt-32 bg-cloud-dancer">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mx-auto" />
           <p className="mt-4 text-gray-600">경락가 정보를 불러오는 중...</p>

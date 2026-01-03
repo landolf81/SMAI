@@ -230,7 +230,7 @@ const Prices = () => {
   return (
     <div className="min-h-screen bg-cloud-dancer pt-16 pb-24">
       {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b sticky top-14 z-10">
+      <div className="bg-cloud-dancer shadow-sm border-b sticky top-14 z-10">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="flex items-center justify-center relative">
             {/* 뒤로가기 버튼 */}

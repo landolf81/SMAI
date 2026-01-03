@@ -358,8 +358,19 @@ const PostEditor = () => {
         .map(p => p.url);
 
       // 동영상 URL 추가
-      const videoUrls = uploadedVideos.filter(v => !v.existing).map(v => v.type === 'r2' ? v.url : v.iframeUrl);
-      const allMediaUrls = [...remainingExistingImages, ...newImageUrls, ...videoUrls];
+      // 1. 새로 업로드한 동영상
+      const newVideoUrls = uploadedVideos.filter(v => !v.existing).map(v => v.type === 'r2' ? v.url : v.iframeUrl);
+      // 2. 기존 Stream 동영상 (삭제되지 않은 것들)
+      const existingStreamVideos = previewImages
+        .filter(p => p?.existing && p?.type === 'video/stream' && p?.streamUid)
+        .map(p => `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${p.streamUid}/iframe`);
+
+      const allMediaUrls = [...remainingExistingImages, ...newImageUrls, ...newVideoUrls, ...existingStreamVideos];
+
+      // video_uid: 새로 업로드한 동영상 > 기존 동영상 > null
+      const existingVideoUid = previewImages.find(p => p?.existing && p?.type === 'video/stream')?.streamUid;
+      const newVideoUid = uploadedVideos.find(v => !v.existing)?.uid;
+      const finalVideoUid = newVideoUid || existingVideoUid || null;
 
       const postDataObj = {
         content: updateData.desc,
@@ -367,7 +378,7 @@ const PostEditor = () => {
         images: allMediaUrls,
         link_url: linkPreview?.url || null,
         link_type: linkPreview?.type || null,
-        video_uid: uploadedVideos.length > 0 ? uploadedVideos[0].uid : null,
+        video_uid: finalVideoUid,
       };
 
       if (linkPreview?.type === 'youtube' && linkPreview.videoId) {

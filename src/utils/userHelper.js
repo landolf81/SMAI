@@ -2,8 +2,22 @@
  * 탈퇴/삭제된 사용자 처리를 위한 헬퍼 함수
  */
 
-// 기본 프로필 이미지 경로
+// 기본 프로필 이미지 경로 (탈퇴한 사용자용)
 const DEFAULT_PROFILE_PIC = '/default/default_profile.png';
+
+/**
+ * DiceBear API를 사용하여 사용자별 고유 아바타 URL 생성
+ * @param {string} seed - 아바타 생성에 사용할 시드 (보통 user.id)
+ * @returns {string} DiceBear 아바타 URL
+ */
+export const generateDiceBearAvatar = (seed) => {
+  // thumbs 스타일 사용 (귀여운 캐릭터 스타일)
+  // 다른 스타일 옵션: avataaars, bottts, fun-emoji, lorelei, micah, notionists, personas, pixel-art
+  const style = 'thumbs';
+  const backgroundColor = 'b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf'; // 파스텔 배경색들
+
+  return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${backgroundColor}`;
+};
 
 /**
  * 사용자가 탈퇴했는지 확인
@@ -34,12 +48,21 @@ export const getDisplayName = (user, fallback = '알 수 없는 사용자') => {
  * 사용자 프로필 사진 URL 반환
  * - 사용자가 없거나 탈퇴했으면: 기본 프로필 이미지
  * - 정상 사용자면: profile_pic 또는 profilePic
+ * - 프로필 사진이 없으면: DiceBear로 생성된 아바타
  * @param {Object} user - 사용자 객체
  * @returns {string}
  */
 export const getProfilePic = (user) => {
   if (!user || user.deleted_at) return DEFAULT_PROFILE_PIC;
-  return user.profile_pic || user.profilePic || DEFAULT_PROFILE_PIC;
+
+  const profilePic = user.profile_pic || user.profilePic;
+
+  // 프로필 사진이 있으면 사용
+  if (profilePic) return profilePic;
+
+  // 프로필 사진이 없으면 DiceBear 아바타 생성
+  const seed = user.id || user.username || user.name || 'default';
+  return generateDiceBearAvatar(seed);
 };
 
 /**
@@ -93,4 +116,5 @@ export default {
   isProfileClickable,
   getSafeUserInfo,
   getAvatarClassName,
+  generateDiceBearAvatar,
 };
