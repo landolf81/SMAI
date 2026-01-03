@@ -100,10 +100,10 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
         className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
         style={{ maxHeight: '90vh' }}
       >
-        {/* 헤더 */}
+        {/* 헤더 - 청색-녹색 그라데이션 */}
         <div
           className="px-4 py-4 flex items-center justify-between"
-          style={{ backgroundColor: COLORS.mainGreen }}
+          style={{ background: 'linear-gradient(135deg, #1D4ED8 0%, #16A34A 100%)' }}
         >
           <h2 className="text-lg font-bold text-white">날짜 선택</h2>
           <button

@@ -137,8 +137,8 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
 
         {/* AI 브리핑 */}
         {briefing && (
-          <div className="bg-[#f0eee9] text-gray-800 px-4 py-2.5 text-sm border-b border-gray-200">
-            <span className="text-gray-500 mr-2">참외 날씨</span>
+          <div className="bg-[#f0eee9] text-gray-800 px-4 py-3 text-base border-b border-gray-200">
+            <span className="text-[#154734] font-medium mr-2">참외 날씨</span>
             <span>{briefing}</span>
           </div>
         )}

@@ -4,7 +4,6 @@ import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import WhatshotIcon from '@mui/icons-material/Whatshot';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
@@ -621,10 +620,7 @@ const Home = () => {
               className="flex items-center justify-between mb-3 cursor-pointer"
               onClick={() => navigate('/community')}
             >
-              <div className="flex items-center gap-2">
-                <WhatshotIcon className="text-orange-500" style={{ fontSize: 22 }} />
-                <span className="font-bold text-gray-800">인기 게시물</span>
-              </div>
+              <span className="font-bold text-gray-800">인기 게시물</span>
               <div className="flex items-center text-gray-500 text-sm">
                 <span>커뮤니티</span>
                 <ChevronRightRoundedIcon style={{ fontSize: 20 }} />

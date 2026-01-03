@@ -105,20 +105,16 @@ const Prices = () => {
     if (marketName) {
       fetchMarketData(marketName, selectedDate);
 
-      // 선남농협일 때만 브리핑 조회
-      if (marketName === '선남농협') {
-        briefingService.getBriefing(marketName, selectedDate)
-          .then(result => {
-            if (result?.briefing) {
-              setBriefing(result);
-            } else {
-              setBriefing(null);
-            }
-          })
-          .catch(() => setBriefing(null));
-      } else {
-        setBriefing(null);
-      }
+      // 모든 공판장에서 브리핑 조회
+      briefingService.getBriefing(marketName, selectedDate)
+        .then(result => {
+          if (result?.briefing) {
+            setBriefing(result);
+          } else {
+            setBriefing(null);
+          }
+        })
+        .catch(() => setBriefing(null));
     } else {
       setLoading(false);
       setError('시장을 선택해주세요.');
@@ -262,14 +258,11 @@ const Prices = () => {
         </div>
       </div>
 
-      {/* AI 브리핑 배너 - 선남농협만 */}
-      {marketName === '선남농협' && briefing?.briefing && (
+      {/* AI 브리핑 배너 - 모든 공판장 */}
+      {briefing?.briefing && (
         <div className="w-full max-w-screen-xl mx-auto px-4 pt-4">
-          <div className="bg-[#004225] text-white rounded-xl px-4 py-3 shadow-md">
-            <div className="flex items-start gap-2">
-              <span className="text-lg">💬</span>
-              <p className="text-sm leading-relaxed flex-1">{briefing.briefing}</p>
-            </div>
+          <div className="bg-[#F6EBC8] text-gray-700 rounded-xl px-4 py-3 border border-gray-200">
+            <p className="text-base leading-relaxed font-medium">{briefing.briefing}</p>
           </div>
         </div>
       )}
@@ -484,8 +477,8 @@ const Prices = () => {
         )}
       </div>
 
-      {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 */}
-      {adminPermissions.isAdmin && marketName === '선남농협' && (
+      {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 (모든 공판장) */}
+      {adminPermissions.isAdmin && (
         <button
           onClick={handleGenerateBriefing}
           disabled={briefingGenerating}
