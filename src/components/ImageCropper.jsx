@@ -87,8 +87,8 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, imageSize.width, imageSize.height);
 
-    // 크롭 영역 외부를 어둡게 표시
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    // 크롭 영역 외부를 살짝 어둡게 표시 (투명도 낮춤)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // 크롭 영역을 원래 밝기로 표시
