@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { weatherService } from '../services/weatherService';
 import LoadingSpinner from './LoadingSpinner';
 
-const WeatherModal = ({ isOpen, onClose }) => {
+const WeatherModal = ({ isOpen, onClose, briefing }) => {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -107,11 +107,11 @@ const WeatherModal = ({ isOpen, onClose }) => {
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-[10000] pt-16">
       <div
-        className="bg-white w-full max-w-lg rounded-3xl max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden animate-slide-down mx-4"
+        className="bg-[#f0eee9] w-full max-w-lg rounded-3xl max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden animate-slide-down mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-t-3xl">
+        <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-500 to-emerald-500 text-white rounded-t-3xl">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🌤️</span>
             <div>
@@ -134,6 +134,14 @@ const WeatherModal = ({ isOpen, onClose }) => {
             </svg>
           </button>
         </div>
+
+        {/* AI 브리핑 */}
+        {briefing && (
+          <div className="bg-[#f0eee9] text-gray-800 px-4 py-2.5 text-sm border-b border-gray-200">
+            <span className="text-gray-500 mr-2">참외 날씨</span>
+            <span>{briefing}</span>
+          </div>
+        )}
 
         {/* 탭 */}
         <div className="flex border-b">
@@ -183,7 +191,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
                 return (
                 <div className="space-y-4">
                   {/* 현재 날씨 카드 */}
-                  <div className="bg-gradient-to-br from-sky-100 to-blue-100 rounded-2xl p-6 text-center">
+                  <div className="bg-[#d3e4f1] rounded-2xl p-6 text-center">
                     <div className="text-6xl mb-2">
                       {getWeatherIcon(currentSky, currentPty)?.icon || '☀️'}
                     </div>
@@ -221,7 +229,7 @@ const WeatherModal = ({ isOpen, onClose }) => {
 
                   {/* 오늘 예보 요약 */}
                   {weather.daily?.[0] && (
-                    <div className="bg-blue-50 rounded-xl p-4">
+                    <div className="bg-[#d3e4f1] rounded-xl p-4">
                       <div className="text-sm text-gray-600 mb-2">오늘 예보</div>
                       <div className="flex justify-between items-center">
                         <span className="text-blue-600">

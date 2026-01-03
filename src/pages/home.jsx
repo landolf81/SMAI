@@ -4,7 +4,8 @@ import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { marketService } from '../services';
+import { marketService, weatherBriefingService } from '../services';
+import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -39,6 +40,9 @@ const Home = () => {
 
   // 날씨 모달 상태
   const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
+
+  // 날씨 브리핑 상태
+  const [weatherBriefing, setWeatherBriefing] = useState(null);
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -124,6 +128,22 @@ const Home = () => {
     marketService.getMarketSettings().then(settings => {
       setMarketSettings(settings);
     });
+  }, []);
+
+  // 날씨 브리핑 로드
+  useEffect(() => {
+    const loadWeatherBriefing = async () => {
+      try {
+        const weather = await weatherService.getWeatherData();
+        if (weather) {
+          const briefing = await weatherBriefingService.getBriefing(weather);
+          setWeatherBriefing(briefing);
+        }
+      } catch (error) {
+        console.error('날씨 브리핑 로드 실패:', error);
+      }
+    };
+    loadWeatherBriefing();
   }, []);
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
@@ -553,6 +573,7 @@ const Home = () => {
       <WeatherModal
         isOpen={isWeatherModalOpen}
         onClose={() => setIsWeatherModalOpen(false)}
+        briefing={weatherBriefing}
       />
 
       {/* 메인 콘텐츠 - 스와이프 영역 */}
