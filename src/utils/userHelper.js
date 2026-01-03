@@ -68,7 +68,8 @@ export const getProfilePic = (user) => {
   }
 
   // 프로필 사진이 없으면 DiceBear 아바타 생성
-  const seed = user.id || user.username || user.name || 'default';
+  // userId는 댓글/게시물에서 사용, user.id는 user 객체에서 사용
+  const seed = user.id || user.userId || user.user_id || user.username || user.name || 'default';
   return generateDiceBearAvatar(seed);
 };
 
