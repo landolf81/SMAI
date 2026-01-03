@@ -568,7 +568,14 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   };
 
   const handleEdit = () => {
-    navigate(`/post/edit/${post.id}`);
+    // 드롭다운 닫기
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    // 약간의 딜레이 후 네비게이션 (드롭다운 애니메이션 완료 대기)
+    setTimeout(() => {
+      navigate(`/post/edit/${post.id}`);
+    }, 50);
   };
 
 
