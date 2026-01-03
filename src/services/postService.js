@@ -1682,6 +1682,51 @@ export const postService = {
       console.error('저장된 게시물 조회 오류:', error);
       return [];
     }
+  },
+
+  /**
+   * hot_score 최고점 게시물 조회 (홈 화면용)
+   * @returns {Object|null} 가장 인기있는 게시물
+   */
+  async getHottestPost() {
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(`
+          *,
+          users:user_id (
+            id,
+            username,
+            name,
+            profile_pic
+          )
+        `)
+        .eq('post_type', 'general')
+        .or('is_hidden.is.null,is_hidden.eq.false')
+        .order('hot_score', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+
+      if (!data) return null;
+
+      return {
+        ...data,
+        desc: data.description,
+        content: data.description,
+        img: data.photo,
+        userId: data.user_id,
+        createdAt: data.created_at,
+        username: data.users?.username || '',
+        name: data.users?.name || '',
+        profilePic: data.users?.profile_pic || 'defaultAvatar.png',
+        user: data.users || null
+      };
+    } catch (error) {
+      console.error('인기 게시물 조회 오류:', error);
+      return null;
+    }
   }
 };
 

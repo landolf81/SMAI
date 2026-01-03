@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { marketService, weatherBriefingService } from '../services';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import ChatBubbleIcon from '@mui/icons-material/ChatBubble';
+import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
@@ -29,11 +33,13 @@ const Home = () => {
     return <Navigate to="/landing" replace />;
   }
 
+  const navigate = useNavigate();
   const [marketData, setMarketData] = useState([]);
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [marketSettings, setMarketSettings] = useState(null); // DB에서 가져온 시장 설정
+  const [hottestPost, setHottestPost] = useState(null); // 인기 게시물
 
   // 날짜 선택기 모달 상태
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -144,6 +150,19 @@ const Home = () => {
       }
     };
     loadWeatherBriefing();
+  }, []);
+
+  // 인기 게시물 로드
+  useEffect(() => {
+    const loadHottestPost = async () => {
+      try {
+        const post = await postService.getHottestPost();
+        setHottestPost(post);
+      } catch (error) {
+        console.error('인기 게시물 로드 실패:', error);
+      }
+    };
+    loadHottestPost();
   }, []);
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
@@ -594,6 +613,93 @@ const Home = () => {
           formatDateForDisplay={formatDateForDisplay}
           handleRefresh={handleRefresh}
         />
+
+        {/* 인기 게시물 섹션 */}
+        {hottestPost && (
+          <div className="mt-6">
+            {/* 섹션 헤더 */}
+            <div
+              className="flex items-center justify-between mb-3 cursor-pointer"
+              onClick={() => navigate('/community')}
+            >
+              <div className="flex items-center gap-2">
+                <WhatshotIcon className="text-orange-500" style={{ fontSize: 22 }} />
+                <span className="font-bold text-gray-800">인기 게시물</span>
+              </div>
+              <div className="flex items-center text-gray-500 text-sm">
+                <span>커뮤니티</span>
+                <ChevronRightRoundedIcon style={{ fontSize: 20 }} />
+              </div>
+            </div>
+
+            {/* 인기 게시물 카드 */}
+            <div
+              className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer active:scale-[0.98] transition-transform"
+              onClick={() => navigate('/community')}
+            >
+              {/* 썸네일 이미지 */}
+              {hottestPost.photo && hottestPost.photo.length > 0 && (
+                <div className="relative aspect-[16/9] bg-gray-100">
+                  <img
+                    src={
+                      hottestPost.photo[0].startsWith('http')
+                        ? hottestPost.photo[0]
+                        : `/uploads/${hottestPost.photo[0]}`
+                    }
+                    alt="인기 게시물"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  {/* 이미지 개수 표시 */}
+                  {hottestPost.photo.length > 1 && (
+                    <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                      +{hottestPost.photo.length - 1}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 게시물 정보 */}
+              <div className="p-4">
+                {/* 작성자 정보 */}
+                <div className="flex items-center gap-2 mb-2">
+                  <img
+                    src={
+                      hottestPost.profilePic && hottestPost.profilePic !== 'defaultAvatar.png'
+                        ? `/uploads/profiles/${hottestPost.profilePic}`
+                        : '/default/default_profile.png'
+                    }
+                    alt={hottestPost.username}
+                    className="w-6 h-6 rounded-full object-cover"
+                    onError={(e) => {
+                      e.target.src = '/default/default_profile.png';
+                    }}
+                  />
+                  <span className="text-sm font-medium text-gray-800">{hottestPost.username}</span>
+                </div>
+
+                {/* 게시물 내용 */}
+                <p className="text-gray-700 text-sm line-clamp-2 mb-3">
+                  {hottestPost.description}
+                </p>
+
+                {/* 통계 */}
+                <div className="flex items-center gap-4 text-gray-500 text-xs">
+                  <div className="flex items-center gap-1">
+                    <FavoriteIcon style={{ fontSize: 14 }} className="text-red-400" />
+                    <span>{hottestPost.like_count || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ChatBubbleIcon style={{ fontSize: 14 }} />
+                    <span>{hottestPost.comment_count || 0}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
