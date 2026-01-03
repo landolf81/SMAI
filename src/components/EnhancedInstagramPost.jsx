@@ -906,7 +906,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
       {/* 헤더 */}
       <header className="flex items-center justify-between py-1.5 px-3 border-b border-gray-100">
-        <div className="flex items-center space-x-2 flex-1">
+        <div className="flex items-center space-x-1.5 flex-1">
           {/* 프로필 사진 - 클릭 시 모달 열기 (탈퇴 사용자는 클릭 불가) */}
           <button
             onClick={(e) => {
