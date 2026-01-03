@@ -14,6 +14,9 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const [canvasSize, setCanvasSize] = useState({ width: 400, height: 400 });
 
+  // 원형 크롭인지 확인 (1:1 비율 = 프로필 사진)
+  const isCircleCrop = aspectRatio === 1;
+
   // 이미지 로드 처리
   const handleImageLoad = useCallback(() => {
     const img = imageRef.current;
@@ -68,38 +71,77 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
     if (imageLoaded) {
       drawCanvas();
     }
-  }, [imageLoaded, cropArea]);
+  }, [imageLoaded, cropArea, isCircleCrop]);
 
   const drawCanvas = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     const img = imageRef.current;
-    
+
     if (!canvas || !ctx || !img) return;
-    
+
     canvas.width = canvasSize.width;
     canvas.height = canvasSize.height;
-    
+
     // 배경 그리기
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(img, 0, 0, imageSize.width, imageSize.height);
-    
+
     // 크롭 영역 외부를 어둡게 표시
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // 크롭 영역을 원래 밝기로 표시
     ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
-    
+
+    if (isCircleCrop) {
+      // 원형 크롭 영역
+      const centerX = cropArea.x + cropArea.width / 2;
+      const centerY = cropArea.y + cropArea.height / 2;
+      const radius = Math.min(cropArea.width, cropArea.height) / 2;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // 사각형 크롭 영역
+      ctx.fillRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+    }
+
     // 크롭 영역 테두리
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
-    
+    ctx.lineWidth = 3;
+
+    if (isCircleCrop) {
+      // 원형 테두리
+      const centerX = cropArea.x + cropArea.width / 2;
+      const centerY = cropArea.y + cropArea.height / 2;
+      const radius = Math.min(cropArea.width, cropArea.height) / 2;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 가이드 십자선 (선택적)
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(centerX - radius, centerY);
+      ctx.lineTo(centerX + radius, centerY);
+      ctx.moveTo(centerX, centerY - radius);
+      ctx.lineTo(centerX, centerY + radius);
+      ctx.stroke();
+    } else {
+      // 사각형 테두리
+      ctx.strokeRect(cropArea.x, cropArea.y, cropArea.width, cropArea.height);
+    }
+
     // 모서리 핸들 (더 크게)
-    const handleSize = 14;
+    const handleSize = 16;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+
     const handlePositions = [
       { x: cropArea.x, y: cropArea.y }, // 좌상단
       { x: cropArea.x + cropArea.width, y: cropArea.y }, // 우상단
@@ -123,7 +165,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
   };
 
   // 포인터 위치 가져오기 (마우스 또는 터치)
-  const getPointerPos = (e) => {
+  const getPointerPos = useCallback((e) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
@@ -144,11 +186,11 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
     };
-  };
+  }, []);
 
   // 핸들 위치 확인
-  const getHandleAtPosition = (pos) => {
-    const handleSize = 20; // 터치 영역 확대
+  const getHandleAtPosition = useCallback((pos) => {
+    const handleSize = 24; // 터치 영역 확대
     const handles = [
       { name: 'nw', x: cropArea.x, y: cropArea.y },
       { name: 'ne', x: cropArea.x + cropArea.width, y: cropArea.y },
@@ -162,10 +204,11 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
       }
     }
     return null;
-  };
+  }, [cropArea]);
 
-  const handlePointerDown = (e) => {
+  const handlePointerDown = useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
     const pos = getPointerPos(e);
 
     // 먼저 핸들 체크 (리사이즈)
@@ -178,16 +221,33 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
     }
 
     // 크롭 영역 내부 클릭 확인 (드래그)
-    if (pos.x >= cropArea.x && pos.x <= cropArea.x + cropArea.width &&
-        pos.y >= cropArea.y && pos.y <= cropArea.y + cropArea.height) {
-      setIsDragging(true);
-      setDragStart({ x: pos.x - cropArea.x, y: pos.y - cropArea.y });
-    }
-  };
+    if (isCircleCrop) {
+      // 원형 영역 내부인지 확인
+      const centerX = cropArea.x + cropArea.width / 2;
+      const centerY = cropArea.y + cropArea.height / 2;
+      const radius = Math.min(cropArea.width, cropArea.height) / 2;
+      const distance = Math.sqrt(Math.pow(pos.x - centerX, 2) + Math.pow(pos.y - centerY, 2));
 
-  const handlePointerMove = (e) => {
+      if (distance <= radius) {
+        setIsDragging(true);
+        setDragStart({ x: pos.x - cropArea.x, y: pos.y - cropArea.y });
+      }
+    } else {
+      if (pos.x >= cropArea.x && pos.x <= cropArea.x + cropArea.width &&
+          pos.y >= cropArea.y && pos.y <= cropArea.y + cropArea.height) {
+        setIsDragging(true);
+        setDragStart({ x: pos.x - cropArea.x, y: pos.y - cropArea.y });
+      }
+    }
+  }, [getPointerPos, getHandleAtPosition, cropArea, isCircleCrop]);
+
+  const handlePointerMove = useCallback((e) => {
     if (!isDragging && !isResizing) return;
-    e.preventDefault();
+
+    // preventDefault는 touchmove에서만 필요
+    if (e.cancelable) {
+      e.preventDefault();
+    }
 
     const pos = getPointerPos(e);
 
@@ -198,7 +258,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
       let newWidth = cropArea.width;
       let newHeight = cropArea.height;
 
-      const minSize = 50;
+      const minSize = 60;
 
       switch (resizeHandle) {
         case 'se': // 우하단
@@ -243,28 +303,29 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
       const newY = Math.max(0, Math.min(pos.y - dragStart.y, imageSize.height - cropArea.height));
       setCropArea(prev => ({ ...prev, x: newX, y: newY }));
     }
-  };
+  }, [isDragging, isResizing, resizeHandle, cropArea, imageSize, aspectRatio, dragStart, getPointerPos]);
 
-  const handlePointerUp = () => {
+  const handlePointerUp = useCallback(() => {
     setIsDragging(false);
     setIsResizing(false);
     setResizeHandle(null);
-  };
+  }, []);
 
   const cropImage = () => {
     const img = imageRef.current;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
+
     // 원본 이미지 크기 비율 계산
     const scaleX = img.naturalWidth / imageSize.width;
     const scaleY = img.naturalHeight / imageSize.height;
-    
+
     // 크롭 크기 설정 (정사각형으로 강제)
     const cropSize = Math.min(cropArea.width, cropArea.height);
-    canvas.width = cropSize;
-    canvas.height = cropSize;
-    
+    const outputSize = Math.min(512, cropSize * Math.max(scaleX, scaleY)); // 최대 512px
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+
     // 크롭된 이미지 그리기
     ctx.drawImage(
       img,
@@ -274,44 +335,47 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
       cropSize * scaleY,
       0,
       0,
-      cropSize,
-      cropSize
+      outputSize,
+      outputSize
     );
-    
+
     // Blob으로 변환
     canvas.toBlob((blob) => {
       if (blob) {
         onCropComplete(blob);
       }
-    }, 'image/jpeg', 0.8);
+    }, 'image/jpeg', 0.9);
   };
 
   // 전역 이벤트 리스너 (드래그 중 캔버스 밖으로 나가도 작동)
   useEffect(() => {
+    if (!isDragging && !isResizing) return;
+
     const handleGlobalMove = (e) => {
-      if (isDragging || isResizing) {
-        handlePointerMove(e);
-      }
+      handlePointerMove(e);
     };
 
     const handleGlobalUp = () => {
       handlePointerUp();
     };
 
-    if (isDragging || isResizing) {
-      document.addEventListener('mousemove', handleGlobalMove);
-      document.addEventListener('mouseup', handleGlobalUp);
-      document.addEventListener('touchmove', handleGlobalMove, { passive: false });
-      document.addEventListener('touchend', handleGlobalUp);
-    }
+    // 마우스 이벤트
+    document.addEventListener('mousemove', handleGlobalMove);
+    document.addEventListener('mouseup', handleGlobalUp);
+
+    // 터치 이벤트 - passive: false로 설정하여 preventDefault 허용
+    document.addEventListener('touchmove', handleGlobalMove, { passive: false });
+    document.addEventListener('touchend', handleGlobalUp);
+    document.addEventListener('touchcancel', handleGlobalUp);
 
     return () => {
       document.removeEventListener('mousemove', handleGlobalMove);
       document.removeEventListener('mouseup', handleGlobalUp);
       document.removeEventListener('touchmove', handleGlobalMove);
       document.removeEventListener('touchend', handleGlobalUp);
+      document.removeEventListener('touchcancel', handleGlobalUp);
     };
-  }, [isDragging, isResizing, cropArea, dragStart, resizeHandle]);
+  }, [isDragging, isResizing, handlePointerMove, handlePointerUp]);
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-70 p-4">
@@ -320,7 +384,7 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
         <div className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white p-4">
           <h3 className="text-lg font-bold">이미지 자르기</h3>
           <p className="text-emerald-100 text-sm">
-            {aspectRatio === 1 ? '정사각형 (1:1)' : `가로형 (${aspectRatio}:1)`}
+            {isCircleCrop ? '프로필 사진 (원형)' : `가로형 (${aspectRatio}:1)`}
           </p>
         </div>
 
@@ -356,7 +420,10 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
         {/* 안내 */}
         <div className="px-4 py-2 bg-gray-50 border-t">
           <p className="text-sm text-gray-600 text-center">
-            영역을 드래그하여 이동, 모서리를 드래그하여 크기 조절
+            {isCircleCrop
+              ? '원 안을 드래그하여 이동, 모서리를 드래그하여 크기 조절'
+              : '영역을 드래그하여 이동, 모서리를 드래그하여 크기 조절'
+            }
           </p>
         </div>
 

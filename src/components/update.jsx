@@ -212,7 +212,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       }
 
       processedFile = await convertImageToPng(file, {
-        maxWidth: 1024,
+        maxWidth: 400, // 프로필 사진은 작은 크기로 충분
         onProgress: (progress, status) => {
           console.log(`  └ ${status} (${progress}%)`);
         }
@@ -284,7 +284,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       }
 
       processedFile = await convertImageToPng(file, {
-        maxWidth: 1024,
+        maxWidth: 800, // 커버 사진은 중간 크기로
         onProgress: (progress, status) => {
           console.log(`  └ ${status} (${progress}%)`);
         }
