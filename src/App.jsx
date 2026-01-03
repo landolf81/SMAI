@@ -60,6 +60,7 @@ const AdminBadgesNew = lazy(() => import('./pages/admin/AdminBadgesNew'));
 const AdminReports = lazy(() => import('./pages/AdminReports'));
 const AdminMarketSettings = lazy(() => import('./pages/admin/AdminMarketSettings'));
 const AdminVerification = lazy(() => import('./pages/admin/AdminVerification'));
+const AdminYouTube = lazy(() => import('./pages/admin/AdminYouTube'));
 
 // Other Pages - Lazy Loading
 const Prices = lazy(() => import('./pages/Prices'));
@@ -548,6 +549,10 @@ useEffect(() => {
         {
           path: '/admin/verification',
           element: <ProtectedRoute><AdminVerification /></ProtectedRoute>,
+        },
+        {
+          path: '/admin/youtube',
+          element: <ProtectedRoute><AdminYouTube /></ProtectedRoute>,
         },
       ],
     },

@@ -286,7 +286,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
 
       {/* 인기 질문 (최상단) - 검색 모드가 아닐 때만 표시 */}
       {!isSearchMode && trending && trending.length > 0 && (
-        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 mb-6 border border-yellow-200">
+        <div className="bg-gradient-to-r from-[#fefce8] to-[#f6ebc8] rounded-lg p-4 mb-6 border border-yellow-200">
           <p className="flex items-center gap-2 text-base font-bold text-gray-900 mb-2">
             <span>🔥</span> 인기 질문 <span className="text-xs text-gray-500 font-normal">(최근 7일)</span>
           </p>
@@ -349,7 +349,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                 return (
                   <div
                     key={item.key}
-                    className={`rounded-lg p-6 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                    className={`rounded-xl p-6 border cursor-pointer transition-all duration-200 ${
                       question.question_status === 'closed' ? 'bg-green-50/30' :
                       question.question_status === 'answered' ? 'bg-yellow-50/30' :
                       'bg-blue-50/30'
@@ -357,7 +357,16 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                     style={{
                       animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
                       animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
-                      opacity: navigationType !== 'POP' ? 0 : 1
+                      opacity: navigationType !== 'POP' ? 0 : 1,
+                      boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.15), 0 2px 8px -2px rgba(147, 51, 234, 0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 8px 25px -3px rgba(59, 130, 246, 0.25), 0 4px 12px -2px rgba(147, 51, 234, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 4px 15px -3px rgba(59, 130, 246, 0.15), 0 2px 8px -2px rgba(147, 51, 234, 0.1)';
+                      e.currentTarget.style.transform = 'translateY(0)';
                     }}
                     onClick={() => setSelectedQuestionId(question.id)}
                   >

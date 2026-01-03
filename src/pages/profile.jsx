@@ -259,7 +259,7 @@ const Profile = () => {
                     <span className="font-semibold text-base">로그아웃</span>
                   </button>
                   <a
-                    href="http://pf.kakao.com/_kxiADG/chat"
+                    href="http://pf.kakao.com/_pwlxeG/chat"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 px-8 py-3 bg-[#FEE500] text-[#191919] rounded-2xl hover:bg-[#FDD835] transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg"

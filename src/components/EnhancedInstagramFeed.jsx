@@ -1,11 +1,12 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
-import { postService, adService } from '../services';
+import { postService, adService, youtubeService } from '../services';
 import { fetchNews } from '../services/newsService';
 import EnhancedInstagramPost from './EnhancedInstagramPost';
 import MobileAdDisplay from './MobileAdDisplay';
 import NewsCard from './NewsCard';
+import YouTubeVideoCard from './YouTubeVideoCard';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { hasEncodingVideo } from '../utils/mediaUtils';
@@ -110,6 +111,18 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     enabled: !userId, // 프로필 페이지에서는 비활성화
   });
 
+  // YouTube 영상 데이터 가져오기 (커뮤니티 피드에서만)
+  const { data: youtubeData } = useQuery({
+    queryKey: ['youtube', 'approved', 'feed'],
+    queryFn: async () => {
+      const result = await youtubeService.getApprovedVideos(10, 0);
+      return result.videos || [];
+    },
+    staleTime: 30 * 60 * 1000, // 30분 캐시
+    gcTime: 60 * 60 * 1000, // 1시간 가비지 컬렉션
+    enabled: !userId, // 프로필 페이지에서는 비활성화
+  });
+
   // 광고 우선순위 알고리즘
   // 1. 마감 임박 광고 우선 (3일 이내)
   // 2. priority + priority_boost 반영
@@ -184,21 +197,24 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     return posts.filter(post => !hasEncodingVideo(post));
   }, [data, userId]);
 
-  // 게시물, 광고, 뉴스를 합친 목록 생성
+  // 게시물, 광고, 뉴스, YouTube 영상을 합친 목록 생성
   // - 광고: 3개마다 삽입
   // - 뉴스: 7개마다 삽입 (광고보다 낮은 빈도)
+  // - YouTube: 5개마다 삽입 (첫 번째 영상은 4번째 위치에)
   const postsWithAds = useMemo(() => {
     const result = [];
     const ads = shuffledAds || [];
     const news = newsData || [];
+    const youtubeVideos = youtubeData || [];
 
-    if (ads.length === 0 && news.length === 0) {
-      // 광고와 뉴스가 없으면 게시물만 반환
+    if (ads.length === 0 && news.length === 0 && youtubeVideos.length === 0) {
+      // 광고, 뉴스, YouTube가 없으면 게시물만 반환
       return allPosts.map((post, index) => ({ type: 'post', data: post, key: `post-${post.id}-${index}` }));
     }
 
     let adIndex = 0; // 현재 광고 인덱스
     let newsIndex = 0; // 현재 뉴스 인덱스
+    let youtubeIndex = 0; // 현재 YouTube 인덱스
 
     allPosts.forEach((post, index) => {
       // 게시물 추가
@@ -214,6 +230,19 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
             key: `ad-${ad.id}-pos${index}`
           });
           adIndex++;
+        }
+      }
+
+      // 5개마다 YouTube 영상 삽입 (인덱스가 4, 9, 14, ... 일 때)
+      if ((index + 1) % 5 === 4 && youtubeVideos.length > 0 && youtubeIndex < youtubeVideos.length) {
+        const video = youtubeVideos[youtubeIndex];
+        if (video && video.video_id) {
+          result.push({
+            type: 'youtube',
+            data: video,
+            key: `youtube-${video.id}-pos${index}`
+          });
+          youtubeIndex++;
         }
       }
 
@@ -244,6 +273,18 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       }
     }
 
+    // 게시물이 4개 미만이고 YouTube가 있으면 마지막에 YouTube 1개 추가
+    if (allPosts.length >= 2 && allPosts.length < 4 && youtubeVideos.length > 0 && youtubeIndex === 0) {
+      const video = youtubeVideos[0];
+      if (video && video.video_id) {
+        result.push({
+          type: 'youtube',
+          data: video,
+          key: `youtube-${video.id}-last`
+        });
+      }
+    }
+
     // 게시물이 7개 미만이고 뉴스가 있으면 마지막에 뉴스 1개 추가
     if (allPosts.length >= 3 && allPosts.length < 7 && news.length > 0 && newsIndex === 0) {
       const newsItem = news[0];
@@ -257,7 +298,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     }
 
     return result;
-  }, [allPosts, shuffledAds, newsData]);
+  }, [allPosts, shuffledAds, newsData, youtubeData]);
 
   // 광고 노출 추적 함수
   const trackAdView = useCallback((adId) => {
@@ -728,11 +769,14 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
           {postsWithAds.map((item) => {
             const isAd = item.type === 'ad';
             const isNews = item.type === 'news';
+            const isYouTube = item.type === 'youtube';
             const itemId = isAd
               ? `ad-${item.data.id}`
               : isNews
                 ? `news-${item.key}`
-                : item.data.id.toString();
+                : isYouTube
+                  ? `youtube-${item.data.id}`
+                  : item.data.id.toString();
 
             return (
             <div
@@ -751,6 +795,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                 />
               ) : item.type === 'ad' ? (
                 <MobileAdDisplay ad={item.data} />
+              ) : item.type === 'youtube' ? (
+                <YouTubeVideoCard video={item.data} isVisible={visiblePosts.has(itemId)} />
               ) : (
                 <NewsCard news={item.data} />
               )}

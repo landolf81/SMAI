@@ -20,3 +20,4 @@ export { geminiService } from './geminiService.js';
 export { translationService } from './translationService.js';
 export { briefingService } from './briefingService.js';
 export { weatherBriefingService } from './weatherBriefingService.js';
+export { youtubeService } from './youtubeService.js';

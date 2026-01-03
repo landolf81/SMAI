@@ -10,6 +10,7 @@ import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import ReportIcon from "@mui/icons-material/Report";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import YouTubeIcon from "@mui/icons-material/YouTube";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import StorageIcon from "@mui/icons-material/Storage";
@@ -104,6 +105,12 @@ const AdminLeftbar = () => {
           path: "/admin/posts",
           icon: ArticleIcon,
           label: "게시물 관리",
+          badge: null
+        },
+        {
+          path: "/admin/youtube",
+          icon: YouTubeIcon,
+          label: "YouTube 관리",
           badge: null
         },
         {
