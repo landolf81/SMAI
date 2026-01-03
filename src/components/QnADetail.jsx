@@ -280,14 +280,11 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       // 2. 최종 이미지 배열 생성 (기존 + 새 이미지)
       const allImages = [...existingImages, ...newImageUrls];
 
-      // 3. QnA 형식으로 desc 구성
-      const fullDesc = `[Q&A] ${title}\n\n${content}`;
-
-      // 4. 질문 업데이트 데이터
+      // 3. 질문 업데이트 데이터 - title과 description 분리
       const updateData = {
-        desc: fullDesc,
+        title: title,
+        desc: content,  // 본문만 저장 (제목 제외)
         images: allImages,
-        img: allImages.length > 0 ? allImages[0] : null
       };
 
       console.log('질문 업데이트 데이터:', updateData);
@@ -638,7 +635,19 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
         {/* 질문 내용 */}
         <div className="prose max-w-none mb-6">
           <p className="text-gray-700 whitespace-pre-wrap">
-            {(question.description || question.desc || '').split('\n').slice(question.title ? 0 : 1).join('\n').trim()}
+            {(() => {
+              const desc = question.description || question.desc || '';
+              // title이 있으면 description 그대로 표시
+              if (question.title) {
+                // 기존 데이터 호환: description이 [Q&A]로 시작하면 첫 줄 제거
+                if (desc.startsWith('[Q&A]')) {
+                  return desc.split('\n').slice(1).join('\n').trim();
+                }
+                return desc.trim();
+              }
+              // title이 없으면 첫 줄(제목)을 제거
+              return desc.split('\n').slice(1).join('\n').trim();
+            })()}
           </p>
         </div>
 
