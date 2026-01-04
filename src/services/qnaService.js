@@ -304,6 +304,56 @@ export const qnaService = {
    */
   async getQuestion(questionId) {
     try {
+      // 조회수 증가 로직 (postService와 동일한 방식)
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      const postIdInt = parseInt(questionId, 10);
+      if (!isNaN(postIdInt)) {
+        // 비로그인 사용자용 고유 세션 ID (localStorage에 영구 저장)
+        const getOrCreateSessionId = () => {
+          let sessionId = localStorage.getItem('anonymous_session_id');
+          if (!sessionId) {
+            sessionId = 'anon_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+            localStorage.setItem('anonymous_session_id', sessionId);
+          }
+          return sessionId;
+        };
+
+        const sessionId = user ? null : getOrCreateSessionId();
+
+        // 기존 조회 기록 확인
+        let existingViewQuery = supabase
+          .from('post_views')
+          .select('id')
+          .eq('post_id', postIdInt);
+
+        if (user) {
+          existingViewQuery = existingViewQuery.eq('user_id', user.id);
+        } else {
+          existingViewQuery = existingViewQuery.eq('session_id', sessionId);
+        }
+
+        const { data: existingView } = await existingViewQuery.maybeSingle();
+
+        // 이미 조회한 경우 조회수 증가하지 않음
+        if (!existingView) {
+          const { error: viewError } = await supabase
+            .from('post_views')
+            .insert({
+              post_id: postIdInt,
+              user_id: user?.id || null,
+              session_id: sessionId,
+              ip_address: 'unknown',
+              viewed_at: new Date().toISOString()
+            });
+
+          if (viewError && viewError.code !== '23505') {
+            console.warn('QnA 조회 기록 추가 실패:', viewError.code, viewError.message);
+          }
+        }
+      }
+
       // 질문과 답변을 병렬로 조회 (성능 최적화)
       const [questionResult, answers] = await Promise.all([
         supabase
