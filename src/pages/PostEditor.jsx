@@ -6,10 +6,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage, faPaperPlane, faTimes, faLink, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
 import { getFirstLinkInfo } from '../utils/linkDetector';
 import { YouTubePreviewCard } from '../components/YouTubeEmbed';
+import LinkPreviewCard from '../components/LinkPreviewCard';
 import { postService, storageService } from '../services';
 import { getMediaType, getAcceptedFileTypes } from '../utils/mediaUtils';
 import { uploadVideo, validateVideo } from '../services/videoUploadService';
 import { v4 as uuidv4 } from 'uuid';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const PostEditor = () => {
   const { currentUser } = useContext(AuthContext);
@@ -598,7 +600,7 @@ const PostEditor = () => {
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
           {/* 사용자 정보 */}
           <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-orange-400 p-0.5">
+            <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white p-0.5">
               <img
                 src={(() => {
                   const pic = currentUser.profilePic || currentUser.profile_pic;
@@ -843,13 +845,17 @@ const PostEditor = () => {
 
           </div>
 
-          {/* YouTube 링크 미리보기 */}
-          {linkPreview?.type === 'youtube' && (
+          {/* 링크 미리보기 */}
+          {linkPreview && (
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
                 <FontAwesomeIcon icon={faLink} className="mr-2 text-blue-500" />링크 미리보기
               </label>
-              <YouTubePreviewCard url={linkPreview.url} onRemove={removeLinkPreview} className="max-w-md" />
+              {linkPreview.type === 'youtube' ? (
+                <YouTubePreviewCard url={linkPreview.url} onRemove={removeLinkPreview} className="max-w-md" />
+              ) : (
+                <LinkPreviewCard url={linkPreview.url} onRemove={removeLinkPreview} className="max-w-md" />
+              )}
             </div>
           )}
 
@@ -865,11 +871,17 @@ const PostEditor = () => {
             <button
               type="submit"
               disabled={loading || videoUploadProgress || !desc.trim()}
-              className={`flex-1 py-3 bg-orange-500 text-white rounded-xl font-medium transition-all ${
-                loading || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-orange-600'
+              className={`flex-1 py-3 bg-gradient-to-r from-[#f97316] to-[#ec4899] text-white rounded-xl font-medium transition-all ${
+                loading || videoUploadProgress || !desc.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'
               }`}
             >
-              {loading ? <span className="loading loading-spinner w-2 h-2 mr-2"></span> : <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />}
+              {loading ? (
+                <span className="inline-flex items-center">
+                  <LoadingSpinner size={16} className="mr-2" />
+                </span>
+              ) : (
+                <FontAwesomeIcon icon={faPaperPlane} className="mr-2 text-sm" />
+              )}
               {isEditMode ? '수정 완료' : '게시하기'}
             </button>
           </div>

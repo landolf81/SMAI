@@ -133,11 +133,31 @@ serve(async (req) => {
     }
 
     // 일반 웹페이지 HTML 가져오기
+    // 네이버 등 일부 사이트는 Googlebot을 차단하므로 일반 브라우저 User-Agent 사용
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
       }
     })
+
+    // 429 (Rate Limited) 또는 403 (Forbidden) 에러 시 기본 정보만 반환
+    if (response.status === 429 || response.status === 403) {
+      console.log(`Site blocked access (${response.status}), returning basic info`)
+      return new Response(
+        JSON.stringify({
+          url: url,
+          title: targetUrl.hostname.replace('www.', ''),
+          description: null,
+          image: null,
+          siteName: targetUrl.hostname.replace('www.', ''),
+          favicon: `${targetUrl.protocol}//${targetUrl.host}/favicon.ico`,
+          blocked: true  // 클라이언트에서 차단 여부 확인용
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)

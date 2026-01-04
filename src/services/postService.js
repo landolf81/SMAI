@@ -845,28 +845,7 @@ export const postService = {
         return { success: false };
       }
 
-      // posts.views_count 증가
-      const { data: currentPost, error: fetchError } = await supabase
-        .from('posts')
-        .select('views_count')
-        .eq('id', postIdInt)
-        .single();
-
-      if (fetchError) {
-        console.warn('게시물 조회 실패:', fetchError);
-        return { success: false };
-      }
-
-      const { error: updateError } = await supabase
-        .from('posts')
-        .update({ views_count: (currentPost.views_count || 0) + 1 })
-        .eq('id', postIdInt);
-
-      if (updateError) {
-        console.warn('조회수 업데이트 실패:', updateError);
-        return { success: false };
-      }
-
+      // posts.views_count는 DB 트리거(trigger_sync_views_count)가 자동으로 증가시킴
       return { success: true };
     } catch (error) {
       console.error('조회수 증가 예외:', error);

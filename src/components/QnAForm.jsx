@@ -112,11 +112,11 @@ const QnAForm = () => {
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['qna-questions'] });
       queryClient.invalidateQueries({ queryKey: ['qna-trending'] });
-      // 작성한 질문 상세 페이지로 이동
+      // 작성한 질문 상세 페이지로 이동 (replace로 작성 페이지를 대체)
       if (response?.id) {
-        navigate(`/qna/questions/${response.id}`);
+        navigate(`/qna/questions/${response.id}`, { replace: true });
       } else {
-        navigate('/qna');
+        navigate('/qna', { replace: true });
       }
     },
     onError: (error) => {

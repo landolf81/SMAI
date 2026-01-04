@@ -2,6 +2,8 @@
  * 링크 감지 및 처리 유틸리티
  */
 
+import { fetchLinkPreviewWithCache } from '../services/linkPreviewService';
+
 // URL 정규식 - 다양한 URL 형태를 포괄적으로 감지
 const URL_REGEX = /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=\/]*))/g;
 
@@ -155,6 +157,43 @@ export const getDomainName = (url) => {
   }
 };
 
+/**
+ * 일반 링크의 OG 태그 미리보기 정보 가져오기
+ * @param {string} url - 미리보기할 URL
+ * @returns {Promise<Object|null>} OG 정보 { title, description, image, siteName, url }
+ */
+export const fetchLinkPreview = async (url) => {
+  if (!url || !isValidUrl(url)) return null;
+
+  // YouTube는 별도 처리
+  const linkType = getLinkType(url);
+  if (linkType === 'youtube') {
+    const videoId = getYouTubeVideoId(url);
+    if (videoId) {
+      return {
+        title: null, // YouTube는 제목을 가져오기 어려움
+        description: null,
+        image: getYouTubeThumbnail(videoId),
+        siteName: 'YouTube',
+        url: url,
+        type: 'youtube',
+        videoId: videoId,
+      };
+    }
+  }
+
+  // 일반 링크는 Supabase Edge Function으로 OG 태그 파싱
+  const ogData = await fetchLinkPreviewWithCache(url);
+  if (ogData) {
+    return {
+      ...ogData,
+      type: 'generic',
+    };
+  }
+
+  return null;
+};
+
 export default {
   detectLinks,
   getLinkType,
@@ -163,5 +202,6 @@ export default {
   getYouTubeEmbedUrl,
   getFirstLinkInfo,
   isValidUrl,
-  getDomainName
+  getDomainName,
+  fetchLinkPreview
 };

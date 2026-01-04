@@ -39,6 +39,9 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
   // 뒤로가기 핸들러 - 커뮤니티 허브에서 온 경우 탭 정보와 함께 복귀
   const handleBack = () => {
+    // QnA 목록 새로고침을 위해 캐시 무효화
+    queryClient.invalidateQueries({ queryKey: ['qna-questions'] });
+
     if (isModal && onClose) {
       onClose();
       return;
@@ -54,8 +57,8 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
         state: { fromDetail: true, activeTab: fromTab }
       });
     } else {
-      // 일반 뒤로가기
-      navigate(-1);
+      // QnA 목록으로 직접 이동 (히스토리 문제 방지)
+      navigate('/qna');
     }
   };
 
