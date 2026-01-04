@@ -433,7 +433,20 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
     setEditTitle(question.title || titleText || '');
     setEditContent(contentText || descriptionText);
-    setEditImages(question.images || []);
+
+    // 기존 이미지/동영상 파싱 (photo 필드는 JSON 문자열)
+    let existingImages = [];
+    if (question.photo) {
+      try {
+        existingImages = typeof question.photo === 'string'
+          ? JSON.parse(question.photo)
+          : question.photo;
+      } catch (e) {
+        console.warn('이미지 파싱 실패:', e);
+        existingImages = [];
+      }
+    }
+    setEditImages(existingImages);
     setNewImages([]);
     setIsEditModalOpen(true);
   };
