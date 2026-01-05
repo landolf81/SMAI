@@ -200,7 +200,7 @@ serve(async (req) => {
 
     // 3. YouTube API 키워드 검색 (선택적)
     if (YOUTUBE_API_KEY) {
-      const searchQueries = ['참외 재배', '참외 농사', '성주 참외']
+      const searchQueries = ['참외 재배', '참외 농사', '성주 참외', '성주군', '참외']
 
       for (const query of searchQueries) {
         console.log(`키워드 검색 중: ${query}`)
