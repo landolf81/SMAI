@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { getCachedSession } from '../utils/sessionCache.js';
 
 /**
  * 댓글 서비스
@@ -17,7 +18,7 @@ export const commentService = {
   async getComments(postId, { limit, offset, includeHidden = false, postOwnerId = null } = {}) {
     try {
       // 현재 로그인한 사용자 정보 조회 (읽기 전용 - 캐시된 세션 사용)
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       const currentUserId = session?.user?.id;
 
       // 관리자 권한 체크는 댓글 조회 시 불필요 (삭제/수정 버튼은 프론트엔드에서 처리)

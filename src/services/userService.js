@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { storageService } from './storageService.js';
+import { getCachedSession } from '../utils/sessionCache.js';
 
 /**
  * 사용자 서비스

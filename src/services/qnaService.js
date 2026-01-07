@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { commentService } from './commentService.js';
+import { getCachedSession } from '../utils/sessionCache.js';
 
 /**
  * QnA 서비스
@@ -305,7 +306,7 @@ export const qnaService = {
   async getQuestion(questionId) {
     try {
       // 조회수 증가 로직 (postService와 동일한 방식)
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       const user = session?.user;
 
       const postIdInt = parseInt(questionId, 10);

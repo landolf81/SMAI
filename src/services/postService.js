@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { deleteFromR2, isR2Url } from './r2Service.js';
+import { getCachedSession } from '../utils/sessionCache.js';
 
 /**
  * 게시물 서비스
@@ -22,7 +23,7 @@ export const postService = {
   async getPosts({ tagId, userId, postType, search, limit = 20, offset = 0, sortBy = 'algorithm' } = {}) {
     try {
       // 현재 로그인 사용자 확인 (읽기 전용 - 캐시된 세션 사용)
-      const { data: { session } } = await supabase.auth.getSession();
+      const session = await getCachedSession();
       const currentUser = session?.user;
 
       let posts = [];
