@@ -552,10 +552,10 @@ const Home = () => {
 
         {/* 중앙: 날짜 선택기 */}
         <div className="flex items-center gap-1 whitespace-nowrap">
-          <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback">
+          <button onClick={goToPreviousDay} className="p-0.5 haptic-feedback" aria-label="이전 날짜">
             <ChevronLeftIcon style={{ fontSize: '20px' }} />
           </button>
-          <button onClick={() => setIsDatePickerOpen(true)} className="flex items-center haptic-feedback">
+          <button onClick={() => setIsDatePickerOpen(true)} className="flex items-center haptic-feedback" aria-label="날짜 선택">
             <span className="font-bold text-lg whitespace-nowrap">{selectedDate}</span>
             <KeyboardArrowDownIcon style={{ fontSize: '22px' }} />
           </button>
@@ -563,6 +563,7 @@ const Home = () => {
             onClick={goToNextDay}
             disabled={isToday}
             className={`p-0.5 haptic-feedback ${isToday ? 'opacity-30' : ''}`}
+            aria-label="다음 날짜"
           >
             <ChevronRightIcon style={{ fontSize: '20px' }} />
           </button>

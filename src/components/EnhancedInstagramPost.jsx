@@ -1280,6 +1280,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 handleLike(false);
               }}
               className={`flex items-center justify-center transition-all duration-200 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${localIsLiked ? 'scale-105' : 'hover:scale-105'}`}
+              aria-label={localIsLiked ? '좋아요 취소' : '좋아요'}
             >
               <FontAwesomeIcon
                 icon={faHeart}
@@ -1298,6 +1299,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               className={`flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${
                 (post.commentsCount || 0) > 0 ? 'text-blue-600' : 'text-gray-700 hover:text-blue-500'
               }`}
+              aria-label="댓글"
             >
               <FontAwesomeIcon icon={faComment} className="w-5 h-5" />
               {(post.commentsCount || 0) > 0 && (
@@ -1311,6 +1313,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 handleShare();
               }}
               className="text-gray-700 hover:text-green-500 transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0"
+              aria-label="공유"
             >
               <FontAwesomeIcon icon={faShare} className="w-5 h-5" />
             </button>
@@ -1363,6 +1366,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               }
             }}
             className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'}`}
+            aria-label={isSaved ? '저장 취소' : '저장'}
           >
             <FontAwesomeIcon icon={faBookmark} className="w-5 h-5" />
           </button>

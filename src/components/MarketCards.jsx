@@ -119,10 +119,10 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
 
     return (
       <div className="flex items-center justify-center space-x-1 text-xs">
-        <span className={isPositive ? 'text-red-500' : 'text-blue-500'}>
+        <span className={isPositive ? 'text-red-600' : 'text-blue-600'}>
           {isPositive ? '▲' : '▼'}
         </span>
-        <span className={isPositive ? 'text-red-500' : 'text-blue-500'}>
+        <span className={isPositive ? 'text-red-600' : 'text-blue-600'}>
           {Math.abs(change).toLocaleString()}{unit}
         </span>
       </div>
@@ -330,7 +330,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                     {/* 최고가 */}
                     <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
                       <div className="text-xs text-gray-500 mb-0.5">최고가</div>
-                      <div className="text-base font-bold text-red-500">
+                      <div className="text-base font-bold text-red-600">
                         {formatPrice(market.maxPrice)}원
                       </div>
                       <div className="mt-0.5 min-h-[18px]">
@@ -345,7 +345,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                     {/* 최저가 */}
                     <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
                       <div className="text-xs text-gray-500 mb-0.5">최저가</div>
-                      <div className="text-base font-bold text-blue-500">
+                      <div className="text-base font-bold text-blue-600">
                         {formatPrice(market.minPrice)}원
                       </div>
                       <div className="mt-0.5 min-h-[18px]">

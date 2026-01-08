@@ -381,7 +381,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
       ) : (
         <div className="p-4 border-b border-gray-200 text-center">
           <p className="text-gray-500 text-sm mb-2">댓글을 작성하려면 로그인이 필요합니다.</p>
-          <a href="/login" className="text-orange-500 hover:text-orange-600 text-sm font-medium">
+          <a href="/login" className="text-orange-600 hover:text-orange-700 text-sm font-medium">
             로그인하기 →
           </a>
         </div>

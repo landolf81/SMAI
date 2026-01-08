@@ -581,7 +581,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
         <div className="px-4 py-2 border-t border-gray-200">
           <div className="text-center text-gray-500 text-sm">
             <span>댓글을 작성하려면 </span>
-            <Link to="/login" className="text-orange-500 hover:text-orange-600 font-medium">
+            <Link to="/login" className="text-orange-600 hover:text-orange-700 font-medium">
               로그인
             </Link>
             <span>이 필요합니다</span>

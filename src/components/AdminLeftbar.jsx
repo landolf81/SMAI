@@ -217,7 +217,7 @@ const AdminLeftbar = () => {
             aria-label="close sidebar"
             className="drawer-overlay"
           ></label>
-          <ul className="menu p-4 w-80 min-h-full bg-white border-r border-gray-200 overflow-y-auto">
+          <ul className="menu p-4 w-80 min-h-full bg-cloud-dancer border-r border-gray-200 overflow-y-auto">
 
             {/* 관리자 프로필 */}
             <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
