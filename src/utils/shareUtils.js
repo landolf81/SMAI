@@ -63,11 +63,12 @@ export const generatePriceDetailShareText = (market, date, briefing) => {
  * Web Share API 또는 클립보드 복사
  * @returns {Promise<{success: boolean, method: 'share'|'clipboard'|'cancelled', error?: Error}>}
  */
-export const shareContent = async (title, text, url) => {
+export const shareContent = async (title, text) => {
   // Web Share API 지원 여부 확인
   if (navigator.share) {
     try {
-      await navigator.share({ title, text, url });
+      // text에 이미 URL이 포함되어 있으므로 url 파라미터는 제외 (중복 방지)
+      await navigator.share({ title, text });
       return { success: true, method: 'share' };
     } catch (error) {
       if (error.name === 'AbortError') {

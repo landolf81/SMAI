@@ -104,11 +104,7 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
   const handleShareMarket = async (market, e) => {
     e.stopPropagation();
     const text = generateMarketShareText(market, selectedDate);
-    const result = await shareContent(
-      `${market.name} 시세`,
-      text,
-      `${window.location.origin}/?date=${selectedDate}`
-    );
+    const result = await shareContent(`${market.name} 시세`, text);
 
     if (result.success && result.method === 'clipboard') {
       toast.success('시세 정보가 복사되었습니다');

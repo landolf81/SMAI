@@ -183,11 +183,7 @@ const Prices = () => {
       briefing?.briefing
     );
 
-    const result = await shareContent(
-      `${marketName} 시세`,
-      text,
-      window.location.href
-    );
+    const result = await shareContent(`${marketName} 시세`, text);
 
     if (result.success && result.method === 'clipboard') {
       toast.success('시세 정보가 복사되었습니다');
