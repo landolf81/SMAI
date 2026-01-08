@@ -165,16 +165,16 @@ const MobileBottomNav = ({ scrollDirection }) => {
               <button
                 key={button.id}
                 onClick={() => handleButtonClick(button)}
-                className={`flex flex-col items-center justify-center transition-all duration-200 ${
+                className={`flex flex-col items-center justify-center transition-colors duration-200 ${
                   button.showLabel ? 'px-3 py-2 flex-1' : 'px-4 py-2'
                 } ${
                   isActive
-                    ? `${button.activeColor} transform -translate-y-1`
+                    ? `${button.activeColor} -translate-y-1`
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
                 aria-label={button.label}
               >
-                <div className={`relative p-2 rounded-full transition-all duration-200 ${
+                <div className={`relative p-2 rounded-full transition-colors duration-200 ${
                   isActive ? 'bg-white/60 backdrop-blur-sm shadow-lg ring-1 ring-white/50' : ''
                 }`}>
                   {button.id === 'home' ? (
