@@ -307,21 +307,17 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
               ) : (
                 <>
                   {/* 총 출하량 정보 */}
-                  <div className="flex items-center justify-between text-base text-gray-600 mb-2">
-                    <div>
-                      총 출하량 <span className="font-bold text-gray-800 text-lg">{formatPrice(market.totalQuantity)}</span><span className="text-sm text-gray-500">{market.unit}</span>
-                    </div>
-                    <div>
-                      {market.previousTotalQuantity ? (
-                        renderPriceChange(market.totalQuantity, market.previousTotalQuantity)
-                      ) : (
-                        <span className="text-xs text-gray-400">-</span>
-                      )}
-                    </div>
+                  <div className="flex items-center text-base text-gray-600 mb-2">
+                    <span>총 출하량</span>
+                    <span className="font-bold text-gray-800 text-lg ml-1">{formatPrice(market.totalQuantity)}</span>
+                    <span className="text-sm text-gray-500 ml-1">{market.unit}</span>
+                    {market.previousTotalQuantity ? (
+                      <span className="ml-2">{renderPriceChange(market.totalQuantity, market.previousTotalQuantity)}</span>
+                    ) : null}
                   </div>
                   {/* 총 출하금액 정보 (DB에서 제공하는 실제 거래금액) */}
                   <div className="text-base text-gray-600 mb-4">
-                    총 출하금액 <span className="font-bold text-gray-800">{formatPrice(market.totalAmount)}원</span>
+                    총 출하금액 <span className="font-bold text-gray-800">{formatPrice(market.totalAmount)}</span> <span className="text-gray-600">원</span>
                   </div>
 
                   {/* 가격 정보 그리드 - 3열 (평균가, 최고가, 최저가) + 각각 전일대비 */}

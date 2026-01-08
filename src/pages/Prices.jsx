@@ -292,7 +292,7 @@ const Prices = () => {
           className="w-full max-w-screen-xl mx-auto px-4 pt-4"
           onClick={handleShareBriefing}
         >
-          <div className="bg-[#F6EBC8] text-gray-700 rounded-xl px-4 py-3 border border-gray-200 cursor-pointer active:scale-[0.98] transition-transform">
+          <div className="bg-white text-gray-700 rounded-xl px-4 py-3 border border-gray-200 shadow-sm cursor-pointer active:scale-[0.98] transition-transform">
             <p className="text-base leading-relaxed font-medium">{briefing.briefing}</p>
             <p className="text-xs text-gray-500 mt-1">터치하여 공유하기</p>
           </div>
