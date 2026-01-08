@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import toast from 'react-hot-toast';
 import { adService } from '../services';
 import MobileAdDisplay from './MobileAdDisplay';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
+import { generateMarketShareText, shareContent } from '../utils/shareUtils';
 
 // 스크롤 시 요소가 화면 중앙에 가까워지면 선명해지는 커스텀 훅
 const useScrollFadeIn = () => {
@@ -98,6 +100,21 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     navigate(`/prices?market=${encodeURIComponent(marketName)}&date=${selectedDate}`);
   };
 
+  // 공판장 뱃지 터치 시 공유 핸들러
+  const handleShareMarket = async (market, e) => {
+    e.stopPropagation();
+    const text = generateMarketShareText(market, selectedDate);
+    const result = await shareContent(
+      `${market.name} 시세`,
+      text,
+      `${window.location.origin}/?date=${selectedDate}`
+    );
+
+    if (result.success && result.method === 'clipboard') {
+      toast.success('시세 정보가 복사되었습니다');
+    }
+  };
+
   // 공판장 카드 통일 테마 (파랑 뱃지 + 흰색 배경 + 파랑-녹색 그라데이션 버튼)
   const getMarketTheme = () => {
     return {
@@ -108,22 +125,22 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     };
   };
 
-  // 등락 계산 및 표시 함수 (금액차만 표시, 중앙 정렬)
-  const renderPriceChange = (currentPrice, previousPrice, unit = '원') => {
+  // 등락 계산 및 표시 함수 (금액차만 표시, 중앙 정렬, 단위 없음)
+  const renderPriceChange = (currentPrice, previousPrice) => {
     if (!previousPrice || previousPrice === 0) return null;
 
     const change = currentPrice - previousPrice;
     const isPositive = change > 0;
 
-    if (change === 0) return <span className="text-gray-500 text-xs">보합</span>;
+    if (change === 0) return <span className="text-gray-500 text-sm">보합</span>;
 
     return (
-      <div className="flex items-center justify-center space-x-1 text-xs">
+      <div className="flex items-center justify-center space-x-1 text-sm">
         <span className={isPositive ? 'text-red-600' : 'text-blue-600'}>
           {isPositive ? '▲' : '▼'}
         </span>
-        <span className={isPositive ? 'text-red-600' : 'text-blue-600'}>
-          {Math.abs(change).toLocaleString()}{unit}
+        <span className={`font-bold ${isPositive ? 'text-red-600' : 'text-blue-600'}`}>
+          {Math.abs(change).toLocaleString()}
         </span>
       </div>
     );
@@ -262,11 +279,12 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`
               }}
             >
-              {/* 공판장명 뱃지 - 파랑 */}
+              {/* 공판장명 뱃지 - 파랑 (터치 시 공유) */}
               <div className="absolute -top-0 left-4 z-10">
                 <span
-                  className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md cursor-pointer active:scale-95 transition-transform"
                   style={{ backgroundColor: theme.badgeColor }}
+                  onClick={(e) => handleShareMarket(market, e)}
                 >
                   <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
                   {market.name}
@@ -295,11 +313,11 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                   {/* 총 출하량 정보 */}
                   <div className="flex items-center justify-between text-base text-gray-600 mb-2">
                     <div>
-                      총 출하량 <span className="font-bold text-gray-800">{formatPrice(market.totalQuantity)}{market.unit}</span>
+                      총 출하량 <span className="font-bold text-gray-800 text-lg">{formatPrice(market.totalQuantity)}</span><span className="text-sm text-gray-500">{market.unit}</span>
                     </div>
                     <div>
                       {market.previousTotalQuantity ? (
-                        renderPriceChange(market.totalQuantity, market.previousTotalQuantity, '상자')
+                        renderPriceChange(market.totalQuantity, market.previousTotalQuantity)
                       ) : (
                         <span className="text-xs text-gray-400">-</span>
                       )}
@@ -315,10 +333,10 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                     {/* 평균가 */}
                     <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
                       <div className="text-xs text-gray-500 mb-0.5">평균가</div>
-                      <div className="text-base font-bold text-gray-900">
-                        {formatPrice(market.averagePrice)}원
+                      <div className="text-xl font-bold text-gray-900">
+                        {formatPrice(market.averagePrice)}
                       </div>
-                      <div className="mt-0.5 min-h-[18px]">
+                      <div className="mt-0.5 min-h-[20px]">
                         {market.previousAveragePrice ? (
                           renderPriceChange(market.averagePrice, market.previousAveragePrice)
                         ) : (
@@ -330,10 +348,10 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                     {/* 최고가 */}
                     <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
                       <div className="text-xs text-gray-500 mb-0.5">최고가</div>
-                      <div className="text-base font-bold text-red-600">
-                        {formatPrice(market.maxPrice)}원
+                      <div className="text-xl font-bold text-red-600">
+                        {formatPrice(market.maxPrice)}
                       </div>
-                      <div className="mt-0.5 min-h-[18px]">
+                      <div className="mt-0.5 min-h-[20px]">
                         {market.previousMaxPrice ? (
                           renderPriceChange(market.maxPrice, market.previousMaxPrice)
                         ) : (
@@ -345,10 +363,10 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                     {/* 최저가 */}
                     <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
                       <div className="text-xs text-gray-500 mb-0.5">최저가</div>
-                      <div className="text-base font-bold text-blue-600">
-                        {formatPrice(market.minPrice)}원
+                      <div className="text-xl font-bold text-blue-600">
+                        {formatPrice(market.minPrice)}
                       </div>
-                      <div className="mt-0.5 min-h-[18px]">
+                      <div className="mt-0.5 min-h-[20px]">
                         {market.previousMinPrice ? (
                           renderPriceChange(market.minPrice, market.previousMinPrice)
                         ) : (

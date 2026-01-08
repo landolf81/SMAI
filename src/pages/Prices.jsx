@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import toast from 'react-hot-toast';
 import { marketService, briefingService } from '../services';
 import { useAdminPermissions } from '../hooks/usePermissions';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 
 // 뱃지 색상 - 파랑으로 통일
 const getMarketBadgeColor = () => {
@@ -162,6 +164,36 @@ const Prices = () => {
     return price ? price.toLocaleString('ko-KR') : '0';
   };
 
+  // 브리핑 터치 시 공유 핸들러
+  const handleShareBriefing = async () => {
+    if (!marketData?.summary) return;
+
+    const shareData = {
+      name: marketName,
+      averagePrice: marketData.summary.overall_avg_price,
+      maxPrice: marketData.details?.[0]?.max_price || 0,
+      minPrice: marketData.details?.[marketData.details.length - 1]?.min_price || 0,
+      totalQuantity: marketData.summary.total_boxes,
+      unit: '상자'
+    };
+
+    const text = generatePriceDetailShareText(
+      shareData,
+      selectedDate,
+      briefing?.briefing
+    );
+
+    const result = await shareContent(
+      `${marketName} 시세`,
+      text,
+      window.location.href
+    );
+
+    if (result.success && result.method === 'clipboard') {
+      toast.success('시세 정보가 복사되었습니다');
+    }
+  };
+
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('ko-KR', {
@@ -258,11 +290,15 @@ const Prices = () => {
         </div>
       </div>
 
-      {/* AI 브리핑 배너 - 모든 공판장 */}
+      {/* AI 브리핑 배너 - 모든 공판장 (터치 시 공유) */}
       {briefing?.briefing && (
-        <div className="w-full max-w-screen-xl mx-auto px-4 pt-4">
-          <div className="bg-[#F6EBC8] text-gray-700 rounded-xl px-4 py-3 border border-gray-200">
+        <div
+          className="w-full max-w-screen-xl mx-auto px-4 pt-4"
+          onClick={handleShareBriefing}
+        >
+          <div className="bg-[#F6EBC8] text-gray-700 rounded-xl px-4 py-3 border border-gray-200 cursor-pointer active:scale-[0.98] transition-transform">
             <p className="text-base leading-relaxed font-medium">{briefing.briefing}</p>
+            <p className="text-xs text-gray-500 mt-1">터치하여 공유하기</p>
           </div>
         </div>
       )}
