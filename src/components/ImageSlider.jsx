@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlay, faPause, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { isVideoFile, getMediaIcon, normalizeMediaUrl } from '../utils/mediaUtils';
 
-const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "auto", onMediaClick, videoRef: externalVideoRef, disableAutoplay = false }) => {
+const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "auto", onMediaClick, videoRef: externalVideoRef, disableAutoplay = false, priority = false }) => {
     // 이미지 URL 정규화 (완전한 URL이면 그대로, 아니면 baseUrl 추가)
     const normalizedImages = useMemo(() => {
         return images.map(img => {
@@ -161,7 +161,8 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         src={normalizedImages[0]}
                         alt="게시물 이미지"
                         className={`${mediaClass} cursor-pointer`}
-                        loading="lazy"
+                        loading={priority ? 'eager' : 'lazy'}
+                        fetchpriority={priority ? 'high' : undefined}
                         onClick={() => onMediaClick && onMediaClick(0)}
                     />
                 </div>
@@ -317,7 +318,8 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         src={normalizedImages[currentIndex]}
                         alt={`게시물 이미지 ${currentIndex + 1}`}
                         className={`${mediaClass} cursor-pointer transition-opacity duration-300`}
-                        loading="lazy"
+                        loading={priority && currentIndex === 0 ? 'eager' : 'lazy'}
+                        fetchpriority={priority && currentIndex === 0 ? 'high' : undefined}
                         onClick={() => onMediaClick && onMediaClick(currentIndex)}
                         onError={(e) => {
                             console.error('이미지 로드 실패:', e.target.src);

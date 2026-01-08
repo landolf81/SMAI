@@ -39,7 +39,7 @@ import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
-const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause, disableAutoplay = false, hideComments = false, filterCommentsByUserId = null }) => {
+const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause, disableAutoplay = false, hideComments = false, filterCommentsByUserId = null, priority = false }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
   const navigate = useNavigate();
   const featurePermissions = useFeaturePermissions();
@@ -1165,6 +1165,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   paused={showMediaModal} // 모달 열리면 피드 동영상 일시정지
                   aspectRatio="4-5"
                   className="w-full h-full"
+                  priority={priority} // LCP 최적화: 첫 번째 게시물 썸네일 우선 로드
                   onClick={() => {
                     setMediaModalIndex(0);
                     setShowMediaModal(true);
@@ -1234,7 +1235,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     src={normalizedMediaFiles[0]}
                     alt="게시물 이미지"
                     className="w-full h-full object-cover cursor-pointer"
-                    loading="lazy"
+                    loading={priority ? 'eager' : 'lazy'}
+                    fetchpriority={priority ? 'high' : undefined}
                     onClick={() => {
                       setMediaModalIndex(0);
                       setShowMediaModal(true);
@@ -1250,6 +1252,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 baseUrl=""
                 aspectRatio="4-5"
                 disableAutoplay={disableAutoplay}
+                priority={priority}
                 onMediaClick={(index, currentTime = 0) => {
                   setMediaModalTime(currentTime);
                   setMediaModalIndex(index);

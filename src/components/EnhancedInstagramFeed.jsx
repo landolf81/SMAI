@@ -766,7 +766,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
       <div className="relative">
         <div ref={postsContainerRef} className="space-y-4 pt-4 px-4 pb-24">
-          {postsWithAds.map((item) => {
+          {postsWithAds.map((item, index) => {
             const isAd = item.type === 'ad';
             const isNews = item.type === 'news';
             const isYouTube = item.type === 'youtube';
@@ -792,6 +792,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                   onVideoPause={handleVideoPause}
                   isVisible={visiblePosts.has(itemId)}
                   disableAutoplay={!!userId} // 프로필 화면에서는 자동재생 비활성화
+                  priority={index === 0} // 첫 번째 게시물은 LCP 우선순위 높임
                 />
               ) : item.type === 'ad' ? (
                 <MobileAdDisplay ad={item.data} />

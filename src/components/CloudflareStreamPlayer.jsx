@@ -26,6 +26,7 @@ const CloudflareStreamPlayer = ({
   onMuteToggle, // 외부에서 음소거 상태 제어
   className = '',
   aspectRatio = 'square', // 'square', 'video', 'auto'
+  priority = false, // LCP 최적화: true면 썸네일에 fetchpriority="high" 적용
   onClick,
   onReady,
   onError,
@@ -348,6 +349,7 @@ const CloudflareStreamPlayer = ({
           src={getThumbnailUrl()}
           alt="동영상 썸네일"
           className="w-full h-full object-cover"
+          fetchpriority={priority ? 'high' : undefined}
           onError={(e) => { e.target.style.display = 'none'; }}
         />
         {/* 인코딩 중 오버레이 */}
@@ -371,6 +373,7 @@ const CloudflareStreamPlayer = ({
           src={getThumbnailUrl()}
           alt="동영상 썸네일"
           className="w-full h-full object-cover"
+          fetchpriority={priority ? 'high' : undefined}
           onError={(e) => {
             e.target.style.display = 'none';
           }}
@@ -395,6 +398,7 @@ const CloudflareStreamPlayer = ({
             src={getThumbnailUrl()}
             alt="동영상 썸네일"
             className="w-full h-full object-cover"
+            fetchpriority={priority ? 'high' : undefined}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">
