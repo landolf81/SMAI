@@ -833,7 +833,6 @@ export const postService = {
           post_id: postIdInt,
           user_id: user?.id || null,
           viewed_at: new Date().toISOString(),
-          ip_address: 'unknown',
           session_id: sessionId
         });
 
