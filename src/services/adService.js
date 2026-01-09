@@ -319,33 +319,59 @@ export const adService = {
   },
 
   /**
-   * 광고 노출 추적
+   * 광고 노출 추적 (일 기준 중복 체크)
    */
   async trackAdImpression(adId) {
     try {
-      // 1. RPC 함수로 노출 카운터 증가
+      // 세션 ID 가져오기 (비로그인 사용자 식별용)
+      const sessionId = this._getSessionId();
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+
+      // 오늘 날짜 (KST 기준)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString();
+
+      // 1. 오늘 이미 이 광고를 본 적 있는지 확인 (user_id 또는 session_id 기준)
+      let query = supabase
+        .from('ad_views')
+        .select('id')
+        .eq('ad_id', adId)
+        .gte('viewed_at', todayStr);
+
+      if (user?.id) {
+        query = query.eq('user_id', user.id);
+      } else {
+        query = query.eq('session_id', sessionId);
+      }
+
+      const { data: existingView } = await query.limit(1);
+
+      // 오늘 이미 본 광고면 기록하지 않음
+      if (existingView && existingView.length > 0) {
+        return { success: true, skipped: true };
+      }
+
+      // 2. RPC 함수로 노출 카운터 증가
       const { error: rpcError } = await supabase
         .rpc('increment_ad_impressions', { ad_id_param: adId });
 
       if (rpcError) {
         console.warn('광고 노출 카운터 증가 실패 (RPC 함수 미설치):', rpcError.message);
-        // RPC 함수가 없어도 계속 진행 (에러 무시)
       }
 
-      // 2. ad_views 테이블에 상세 노출 기록 추가
-      const { data: { session } } = await supabase.auth.getSession();
-      const user = session?.user;
-
+      // 3. ad_views 테이블에 상세 노출 기록 추가
       const { error: insertError } = await supabase
         .from('ad_views')
         .insert([{
           ad_id: adId,
           user_id: user?.id || null,
+          session_id: sessionId,
           viewed_at: new Date().toISOString(),
           user_agent: navigator.userAgent
         }]);
 
-      // ad_views 삽입 실패는 무시 (테이블이 없어도 계속)
       if (insertError) {
         console.warn('광고 노출 상세 기록 실패 (테이블 미생성):', insertError.message);
       }
@@ -353,9 +379,20 @@ export const adService = {
       return { success: true };
     } catch (error) {
       console.warn('광고 노출 추적 오류 (무시됨):', error);
-      // 에러 발생해도 throw 하지 않음 (광고 표시는 계속)
       return { success: false };
     }
+  },
+
+  /**
+   * 세션 ID 가져오기 (비로그인 사용자 식별)
+   */
+  _getSessionId() {
+    let sessionId = localStorage.getItem('ad_session_id');
+    if (!sessionId) {
+      sessionId = 'ad_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('ad_session_id', sessionId);
+    }
+    return sessionId;
   },
 
   /**

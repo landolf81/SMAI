@@ -66,8 +66,16 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
-    <!-- Cloudflare Web Analytics -->
-    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "997a9c44b2d54575adf80f1285412849"}'></script>
+    <!-- Cloudflare Web Analytics (프로덕션에서만 로드) -->
+    <script>
+      if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        var s = document.createElement('script');
+        s.defer = true;
+        s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+        s.setAttribute('data-cf-beacon', '{"token": "997a9c44b2d54575adf80f1285412849"}');
+        document.body.appendChild(s);
+      }
+    </script>
     <!-- End Cloudflare Web Analytics -->
   </body>
 </html>
