@@ -823,7 +823,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 ) : (
                   <>
                     {/* 답변 헤더 - TTS 버튼 + 메뉴 버튼 (우측 정렬) */}
-                    <div className="flex items-center justify-end gap-1 mb-2">
+                    <div className="flex items-center justify-end gap-1 -mt-2 -mr-2 mb-1">
                       {/* TTS 버튼 */}
                       {ttsSupported && (
                         <button
@@ -837,12 +837,12 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                         >
                           {speakingAnswerId === answer.id ? (
                             <>
-                              <StopIcon style={{ fontSize: 14 }} />
+                              <StopIcon fontSize="small" />
                               <span>중지</span>
                             </>
                           ) : (
                             <>
-                              <VolumeUpIcon style={{ fontSize: 14 }} />
+                              <VolumeUpIcon fontSize="small" />
                               <span>읽기</span>
                             </>
                           )}
@@ -854,9 +854,9 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                         <div className="relative">
                           <button
                             onClick={(e) => handleAnswerMenuToggle(e, answer.id)}
-                            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                            className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                           >
-                            <FontAwesomeIcon icon={faEllipsisH} className="text-sm" />
+                            <FontAwesomeIcon icon={faEllipsisH} />
                           </button>
 
                           {/* 드롭다운 메뉴 */}
