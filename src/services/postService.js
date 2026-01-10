@@ -1714,7 +1714,7 @@ export const postService = {
       if (!data) return null;
 
       // 캐시 갱신 (백그라운드, 실패해도 무시)
-      supabase.rpc('refresh_cached_hottest_post').catch(() => {});
+      supabase.rpc('refresh_cached_hottest_post').then(() => {}).catch(() => {});
 
       return this._formatHottestPost(data);
     } catch (error) {
