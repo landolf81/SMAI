@@ -25,6 +25,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import StopIcon from '@mui/icons-material/Stop';
 
 moment.locale('ko');
 
@@ -84,6 +86,10 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const recognitionRef = useRef(null);
+
+  // TTS 상태
+  const [speakingAnswerId, setSpeakingAnswerId] = useState(null);
+  const [ttsSupported, setTtsSupported] = useState(false);
 
   // 수정 관련 상태
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -191,6 +197,55 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       recognitionRef.current.start();
       setIsListening(true);
     }
+  };
+
+  // TTS 초기화
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      setTtsSupported(true);
+    }
+
+    // 컴포넌트 언마운트 시 TTS 정지
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // TTS 재생/정지 토글
+  const toggleTTS = (answerId, text) => {
+    if (!ttsSupported) {
+      alert('이 브라우저에서는 음성 읽기를 지원하지 않습니다.');
+      return;
+    }
+
+    // 현재 재생 중인 답변이면 정지
+    if (speakingAnswerId === answerId) {
+      window.speechSynthesis.cancel();
+      setSpeakingAnswerId(null);
+      return;
+    }
+
+    // 다른 답변 재생 중이면 먼저 정지
+    window.speechSynthesis.cancel();
+
+    // 새로 재생
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => {
+      setSpeakingAnswerId(null);
+    };
+
+    utterance.onerror = () => {
+      setSpeakingAnswerId(null);
+    };
+
+    setSpeakingAnswerId(answerId);
+    window.speechSynthesis.speak(utterance);
   };
 
   // 답변 작성 뮤테이션
@@ -767,40 +822,68 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                   </div>
                 ) : (
                   <>
-                    {/* ... 메뉴 버튼 (본인 답변일 때만) */}
-                    {currentUser && currentUser.id === answer.user_id && (
-                      <div className="absolute top-4 right-4">
+                    {/* 답변 헤더 - TTS 버튼 + 메뉴 버튼 (우측 정렬) */}
+                    <div className="flex items-center justify-end gap-1 mb-2">
+                      {/* TTS 버튼 */}
+                      {ttsSupported && (
                         <button
-                          onClick={(e) => handleAnswerMenuToggle(e, answer.id)}
-                          className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+                          onClick={() => toggleTTS(answer.id, answer.content)}
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors ${
+                            speakingAnswerId === answer.id
+                              ? 'text-green-600 bg-green-100 hover:bg-green-200'
+                              : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
+                          }`}
+                          title={speakingAnswerId === answer.id ? '읽기 중지' : '답변 읽어주기'}
                         >
-                          <FontAwesomeIcon icon={faEllipsisH} />
+                          {speakingAnswerId === answer.id ? (
+                            <>
+                              <StopIcon style={{ fontSize: 14 }} />
+                              <span>중지</span>
+                            </>
+                          ) : (
+                            <>
+                              <VolumeUpIcon style={{ fontSize: 14 }} />
+                              <span>읽기</span>
+                            </>
+                          )}
                         </button>
+                      )}
 
-                        {/* 드롭다운 메뉴 */}
-                        {answerMenuOpen === answer.id && (
-                          <div className="absolute right-0 top-10 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
-                            <button
-                              onClick={() => handleStartEditAnswer(answer)}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                            >
-                              <EditIcon fontSize="small" />
-                              수정
-                            </button>
-                            <button
-                              onClick={() => handleDeleteAnswer(answer.id)}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-                            >
-                              <DeleteIcon fontSize="small" />
-                              삭제
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                      {/* ... 메뉴 버튼 (본인 답변일 때만) */}
+                      {currentUser && currentUser.id === answer.user_id && (
+                        <div className="relative">
+                          <button
+                            onClick={(e) => handleAnswerMenuToggle(e, answer.id)}
+                            className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                          >
+                            <FontAwesomeIcon icon={faEllipsisH} className="text-sm" />
+                          </button>
+
+                          {/* 드롭다운 메뉴 */}
+                          {answerMenuOpen === answer.id && (
+                            <div className="absolute right-0 top-7 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
+                              <button
+                                onClick={() => handleStartEditAnswer(answer)}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              >
+                                <EditIcon fontSize="small" />
+                                수정
+                              </button>
+                              <button
+                                onClick={() => handleDeleteAnswer(answer.id)}
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              >
+                                <DeleteIcon fontSize="small" />
+                                삭제
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     {/* 답변 내용 */}
-                    <div className="prose max-w-none mb-4 pr-10">
+                    <div className="prose max-w-none mb-4">
                       <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
                     </div>
 
