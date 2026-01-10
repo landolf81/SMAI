@@ -21,7 +21,7 @@ import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
 import { useAdminPermissions } from "../hooks/usePermissions";
-import { reportService } from "../services";
+import { reportService, storageService } from "../services";
 
 const AdminLeftbar = () => {
   const { currentUser } = useContext(AuthContext);
@@ -223,14 +223,10 @@ const AdminLeftbar = () => {
             <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="avatar">
-                  <div className="w-12 rounded-full border-2 border-[#004225]">
+                  <div className="w-12 rounded-full border-2 border-white">
                     <img
                       alt="관리자"
-                      src={
-                        currentUser.profilePic
-                          ? `/uploads/profiles/${currentUser.profilePic}`
-                          : "/default/default_profile.png"
-                      }
+                      src={storageService.getProfileImageUrl(currentUser.profilePic || currentUser.profile_pic, currentUser.id)}
                     />
                   </div>
                 </div>
