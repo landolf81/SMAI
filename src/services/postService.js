@@ -1664,11 +1664,35 @@ export const postService = {
   },
 
   /**
-   * hot_score 최고점 게시물 조회 (홈 화면용)
+   * hot_score 최고점 게시물 조회 (홈 화면용) - 캐시 테이블 사용
    * @returns {Object|null} 가장 인기있는 게시물
    */
   async getHottestPost() {
     try {
+      // 1. 캐시 테이블에서 조회 시도
+      const { data: cached } = await supabase
+        .from('cached_hottest_post')
+        .select(`
+          post_id,
+          expires_at,
+          posts:post_id (
+            *,
+            users:user_id (
+              id,
+              username,
+              name,
+              profile_pic
+            )
+          )
+        `)
+        .single();
+
+      // 캐시가 있고 유효하면 반환
+      if (cached?.posts && new Date(cached.expires_at) > new Date()) {
+        return this._formatHottestPost(cached.posts);
+      }
+
+      // 2. 캐시 없거나 만료 → 직접 조회
       const { data, error } = await supabase
         .from('posts')
         .select(`
@@ -1687,25 +1711,34 @@ export const postService = {
         .single();
 
       if (error) throw error;
-
       if (!data) return null;
 
-      return {
-        ...data,
-        desc: data.description,
-        content: data.description,
-        img: data.photo,
-        userId: data.user_id,
-        createdAt: data.created_at,
-        username: data.users?.username || '',
-        name: data.users?.name || '',
-        profilePic: data.users?.profile_pic || 'defaultAvatar.png',
-        user: data.users || null
-      };
+      // 캐시 갱신 (백그라운드, 실패해도 무시)
+      supabase.rpc('refresh_cached_hottest_post').catch(() => {});
+
+      return this._formatHottestPost(data);
     } catch (error) {
       console.error('인기 게시물 조회 오류:', error);
       return null;
     }
+  },
+
+  /**
+   * 인기 게시물 포맷 헬퍼
+   */
+  _formatHottestPost(data) {
+    return {
+      ...data,
+      desc: data.description,
+      content: data.description,
+      img: data.photo,
+      userId: data.user_id,
+      createdAt: data.created_at,
+      username: data.users?.username || '',
+      name: data.users?.name || '',
+      profilePic: data.users?.profile_pic || 'defaultAvatar.png',
+      user: data.users || null
+    };
   }
 };
 

@@ -127,40 +127,31 @@ const Home = () => {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  // 시장 설정 로드 (공판장 정렬 순서)
+  // 초기 데이터 병렬 로드 (시장 설정, 날씨, 인기 게시물)
   useEffect(() => {
-    marketService.getMarketSettings().then(settings => {
-      setMarketSettings(settings);
-    });
-  }, []);
-
-  // 날씨 브리핑 로드
-  useEffect(() => {
-    const loadWeatherBriefing = async () => {
+    const loadInitialData = async () => {
       try {
-        const weather = await weatherService.getWeatherData();
+        // 병렬 실행: 시장 설정, 날씨, 인기 게시물
+        const [settings, weather, hotPost] = await Promise.all([
+          marketService.getMarketSettings(),
+          weatherService.getWeatherData(),
+          postService.getHottestPost()
+        ]);
+
+        setMarketSettings(settings);
+        setHottestPost(hotPost);
+
+        // 날씨 브리핑은 날씨 데이터 필요 (순차 실행)
         if (weather) {
           const briefing = await weatherBriefingService.getBriefing(weather);
           setWeatherBriefing(briefing);
         }
       } catch (error) {
-        console.error('날씨 브리핑 로드 실패:', error);
+        console.error('초기 데이터 로드 실패:', error);
       }
     };
-    loadWeatherBriefing();
-  }, []);
 
-  // 인기 게시물 로드
-  useEffect(() => {
-    const loadHottestPost = async () => {
-      try {
-        const post = await postService.getHottestPost();
-        setHottestPost(post);
-      } catch (error) {
-        console.error('인기 게시물 로드 실패:', error);
-      }
-    };
-    loadHottestPost();
+    loadInitialData();
   }, []);
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
