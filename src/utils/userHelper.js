@@ -14,7 +14,8 @@ export const generateDiceBearAvatar = (seed) => {
   // thumbs 스타일 사용 (귀여운 캐릭터 스타일)
   // 다른 스타일 옵션: avataaars, bottts, fun-emoji, lorelei, micah, notionists, personas, pixel-art
   const style = 'thumbs';
-  const backgroundColor = 'b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf'; // 파스텔 배경색들
+  // 파스텔톤 배경색 10가지 (storageService와 동일)
+  const backgroundColor = 'b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf,a3e4d7,f9e79f,fadbd8,d5dbdb,aed6f1';
 
   return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${backgroundColor}`;
 };
