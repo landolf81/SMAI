@@ -623,7 +623,8 @@ const Home = () => {
             <EnhancedInstagramPost
               post={hottestPost}
               isVisible={true}
-              disableAutoplay={true}
+              disableAutoplay={false}
+              priority={true}
             />
           </div>
         )}

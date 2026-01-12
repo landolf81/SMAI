@@ -311,18 +311,28 @@ export const commentService = {
       const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
+      // 댓글 존재 여부 확인
+      const { data: existingComment, error: checkError } = await supabase
+        .from('comments')
+        .select('id')
+        .eq('id', commentId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      if (!existingComment) throw new Error('댓글을 찾을 수 없습니다.');
+
       const { data, error } = await supabase
         .from('comments')
         .update({
           is_hidden: isHidden
         })
         .eq('id', commentId)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('댓글 숨김 처리에 실패했습니다. 권한을 확인해주세요.');
 
-      return data;
+      return data[0];
     } catch (error) {
       console.error('댓글 숨김 처리 오류:', error);
       throw error;

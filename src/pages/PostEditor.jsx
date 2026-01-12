@@ -602,11 +602,7 @@ const PostEditor = () => {
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white p-0.5">
               <img
-                src={(() => {
-                  const pic = currentUser.profilePic || currentUser.profile_pic;
-                  if (!pic) return "/default/default_profile.png";
-                  return pic.startsWith('http') ? pic : `/uploads/profiles/${pic}`;
-                })()}
+                src={storageService.getProfileImageUrl(currentUser.profilePic || currentUser.profile_pic, currentUser.id)}
                 alt="프로필"
                 className="w-full h-full object-cover rounded-full"
               />

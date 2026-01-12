@@ -4,6 +4,10 @@ import { fetchLinkPreviewWithCache } from '../services/linkPreviewService';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import LinkIcon from '@mui/icons-material/Link';
 
+// 고정 높이로 CLS 방지 (이미지 있는 경우 기준)
+const PREVIEW_HEIGHT = 200; // 이미지(2:1) + 텍스트 영역
+const SIMPLE_HEIGHT = 88; // 이미지 없는 간단한 카드
+
 /**
  * 일반 링크 프리뷰 컴포넌트
  * YouTube가 아닌 일반 웹사이트 링크를 카드 형태로 표시
@@ -46,17 +50,25 @@ const LinkPreview = ({ url, className = '' }) => {
 
   if (!url) return null;
 
-  // 로딩 중
+  // 로딩 중 - 고정 높이 스켈레톤으로 CLS 방지
   if (loading) {
     return (
-      <div className={`bg-gray-50 border border-gray-200 rounded-lg p-4 animate-pulse ${className}`}>
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-16 h-16 bg-gray-200 rounded-lg"></div>
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded w-full"></div>
-            <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+      <div
+        className={`bg-white border border-gray-200 rounded-lg overflow-hidden ${className}`}
+        style={{ minHeight: PREVIEW_HEIGHT }}
+      >
+        {/* 이미지 스켈레톤 (2:1 비율) */}
+        <div className="w-full bg-gray-200 animate-pulse" style={{ aspectRatio: '2/1' }}></div>
+
+        {/* 텍스트 스켈레톤 */}
+        <div className="p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
           </div>
+          <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded w-full animate-pulse"></div>
+          <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
         </div>
       </div>
     );

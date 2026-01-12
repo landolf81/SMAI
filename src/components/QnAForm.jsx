@@ -260,16 +260,9 @@ const QnAForm = () => {
           <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
               <img
-                src={(() => {
-                  const pic = currentUser.profilePic || currentUser.profile_pic;
-                  if (!pic) return "/default/default_profile.png";
-                  return pic.startsWith('http') ? pic : `/uploads/profiles/${pic}`;
-                })()}
+                src={storageService.getProfileImageUrl(currentUser.profilePic || currentUser.profile_pic, currentUser.id)}
                 alt="프로필"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = '/default/default_profile.png';
-                }}
               />
             </div>
             <h1 className="text-lg font-semibold text-gray-900">새 질문 작성</h1>

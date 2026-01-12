@@ -1233,18 +1233,28 @@ export const postService = {
       const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
 
+      // 먼저 게시물이 존재하는지 확인
+      const { data: existingPost, error: checkError } = await supabase
+        .from('posts')
+        .select('id')
+        .eq('id', postId)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+      if (!existingPost) throw new Error('게시물을 찾을 수 없습니다.');
+
       const { data, error } = await supabase
         .from('posts')
         .update({
           is_hidden: isHidden
         })
         .eq('id', postId)
-        .select()
-        .single();
+        .select();
 
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error('게시물 숨김 처리에 실패했습니다.');
 
-      return data;
+      return data[0];
     } catch (error) {
       console.error('게시물 숨김 처리 오류:', error);
       throw error;
