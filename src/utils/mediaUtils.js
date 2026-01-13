@@ -2,6 +2,7 @@
  * 미디어 파일 타입 감지 및 처리 유틸리티
  */
 import { API_BASE_URL } from '../config/api.js';
+import { isCloudflareImagesUrl, changeVariant, IMAGE_VARIANTS } from '../services/cfImagesService';
 
 // 지원되는 동영상 확장자
 const VIDEO_EXTENSIONS = [
@@ -230,21 +231,27 @@ export const getMediaType = (file) => {
  * URL 정규화 함수
  * @param {string} url - 정규화할 URL 또는 파일명
  * @param {string} baseUrl - 기본 URL (기본값: localhost)
+ * @param {Object} options - 옵션
+ * @param {boolean} options.useFeedVariant - 피드용 최적화 variant 사용 (Cloudflare Images)
  * @returns {string} 정규화된 전체 URL
  */
-export const normalizeMediaUrl = (url, baseUrl = '/uploads/posts/') => {
+export const normalizeMediaUrl = (url, baseUrl = '/uploads/posts/', options = {}) => {
   if (!url) return '';
-  
+
   // 이미 완전한 URL인 경우
   if (url.startsWith('http://') || url.startsWith('https://')) {
+    // Cloudflare Images URL이고 피드 최적화 옵션이 있으면 large variant 사용
+    if (options.useFeedVariant && isCloudflareImagesUrl(url)) {
+      return changeVariant(url, IMAGE_VARIANTS.LARGE);
+    }
     return url;
   }
-  
+
   // /uploads로 시작하는 경우
   if (url.startsWith('/uploads')) {
     return `${API_BASE_URL}${url}`;
   }
-  
+
   // 파일명만 있는 경우 (공백이 포함된 파일명 처리)
   // 공백을 %20으로 인코딩
   const encodedUrl = url.split(' ').join('%20');

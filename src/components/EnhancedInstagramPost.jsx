@@ -138,8 +138,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const mediaFiles = getMediaFiles();
   const hasMedia = mediaFiles.length > 0;
 
-  // 정규화된 미디어 파일 배열 생성
-  const normalizedMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file));
+  // 정규화된 미디어 파일 배열 생성 (피드에서는 large variant 사용으로 LCP 최적화)
+  const normalizedMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file, '/uploads/posts/', { useFeedVariant: true }));
+  // 전체화면 모달용 원본 URL (public variant)
+  const originalMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file));
 
   // 첫 번째 미디어의 타입 정보 (하위 호환성)
   const firstMediaType = hasMedia ? getMediaType(mediaFiles[0]) : { isVideo: false, isImage: false };
@@ -1264,11 +1266,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         </div>
       )}
 
-      {/* 미디어 전체화면 모달 */}
+      {/* 미디어 전체화면 모달 (원본 해상도 사용) */}
       <MediaModal
         isOpen={showMediaModal}
         onClose={() => setShowMediaModal(false)}
-        mediaFiles={normalizedMediaFiles}
+        mediaFiles={originalMediaFiles}
         initialIndex={mediaModalIndex}
         initialTime={mediaModalTime}
       />
