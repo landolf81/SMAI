@@ -150,13 +150,18 @@ const Home = () => {
             if (isCloudflareStreamUrl(firstMedia)) {
               const uid = getCloudflareStreamUid(firstMedia);
               if (uid) {
-                const thumbnailUrl = `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640&fit=crop`;
-                const link = document.createElement('link');
-                link.rel = 'preload';
-                link.as = 'image';
-                link.href = thumbnailUrl;
-                link.fetchPriority = 'high';
-                document.head.appendChild(link);
+                // 이미 preload가 있는지 확인 (중복 방지)
+                const existingPreload = document.querySelector(`link[data-stream-preload="${uid}"]`);
+                if (!existingPreload) {
+                  const thumbnailUrl = `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640&fit=crop`;
+                  const link = document.createElement('link');
+                  link.rel = 'preload';
+                  link.as = 'image';
+                  link.href = thumbnailUrl;
+                  link.fetchPriority = 'high';
+                  link.dataset.streamPreload = uid; // 중복 체크 및 cleanup용
+                  document.head.appendChild(link);
+                }
               }
             }
           } catch {
