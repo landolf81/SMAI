@@ -152,22 +152,61 @@ export const briefingService = {
         .limit(1)
         .single();
 
-      const formatData = (row) => row ? {
+      // 오늘과 전 경매일 등급별 데이터 조회
+      const todayDate = recentData?.[0]?.market_date;
+      const d1Date = recentData?.[1]?.market_date;
+
+      let todayGradeData = [];
+      let d1GradeData = [];
+
+      if (todayDate) {
+        const { data: gradeData } = await supabase
+          .from('market_data')
+          .select('grade, boxes, avg_price')
+          .eq('market_name', marketName)
+          .eq('market_date', todayDate)
+          .order('boxes', { ascending: false });
+        todayGradeData = gradeData || [];
+      }
+
+      if (d1Date) {
+        const { data: gradeData } = await supabase
+          .from('market_data')
+          .select('grade, boxes, avg_price')
+          .eq('market_name', marketName)
+          .eq('market_date', d1Date)
+          .order('boxes', { ascending: false });
+        d1GradeData = gradeData || [];
+      }
+
+      // 등급별 데이터 포맷팅 (상위 3개 등급만)
+      const formatGradeData = (gradeRows) => {
+        if (!gradeRows || gradeRows.length === 0) return null;
+        const top3 = gradeRows.slice(0, 3);
+        return top3.map(row => ({
+          grade: row.grade,
+          boxes: parseInt(row.boxes) || 0,
+          avgPrice: parseInt(row.avg_price) || 0
+        }));
+      };
+
+      const formatData = (row, gradeData) => row ? {
         date: row.market_date,
         boxes: parseInt(row.total_boxes) || 0,
         avgPrice: parseInt(row.avg_price) || 0,
         minPrice: parseInt(row.min_price) || 0,
         maxPrice: parseInt(row.max_price) || 0,
-        amount: parseInt(row.total_amount) || 0
+        amount: parseInt(row.total_amount) || 0,
+        gradeDetails: gradeData || null
       } : null;
 
       return {
-        today: formatData(recentData?.[0]),
-        d1: formatData(recentData?.[1]),
-        d2: formatData(recentData?.[2]),
-        d3: formatData(recentData?.[3]),
-        d7: formatData(d7Data),
-        lastYear: formatData(lastYearData)
+        today: formatData(recentData?.[0], formatGradeData(todayGradeData)),
+        d1: formatData(recentData?.[1], formatGradeData(d1GradeData)),
+        d2: formatData(recentData?.[2], null),
+        d3: formatData(recentData?.[3], null),
+        d7: formatData(d7Data, null),
+        lastYear: formatData(lastYearData, null)
       };
     } catch (error) {
       console.error('브리핑 데이터 수집 오류:', error);
@@ -248,6 +287,20 @@ export const briefingService = {
   },
 
   /**
+   * 전 경매일이 어제인지 확인
+   * @param {string} todayDate - 오늘 날짜 (YYYY-MM-DD)
+   * @param {string} d1Date - 전 경매일 날짜 (YYYY-MM-DD)
+   * @returns {boolean} 어제이면 true
+   */
+  isYesterday(todayDate, d1Date) {
+    if (!todayDate || !d1Date) return false;
+    const today = new Date(todayDate);
+    const d1 = new Date(d1Date);
+    const diffDays = Math.round((today - d1) / (1000 * 60 * 60 * 24));
+    return diffDays === 1;
+  },
+
+  /**
    * Gemini로 브리핑 텍스트 생성
    */
   async generateBriefingText(marketName, data, trend) {
@@ -259,19 +312,55 @@ export const briefingService = {
     // 시장명 축약
     const shortName = marketName.replace('공판장', '').replace('원예농협', '').replace('성주참외', '선남');
 
+    // 전 경매일 용어 결정 (어제면 "어제", 아니면 "전 경매일")
+    const isD1Yesterday = this.isYesterday(data.today?.date, data.d1?.date);
+    const comparisonTerm = isD1Yesterday ? '어제' : '전 경매일';
+
+    // 등급별 데이터 문자열 생성
+    const formatGradeInfo = (gradeDetails) => {
+      if (!gradeDetails || gradeDetails.length === 0) return '없음';
+      return gradeDetails.map(g =>
+        `${g.grade} ${g.boxes.toLocaleString()}박스(평균 ${g.avgPrice.toLocaleString()}원)`
+      ).join(', ');
+    };
+
+    // 등급별 물량 변화 계산
+    const getGradeComparison = () => {
+      if (!data.today?.gradeDetails || !data.d1?.gradeDetails) return '';
+
+      const todayGrades = new Map(data.today.gradeDetails.map(g => [g.grade, g]));
+      const d1Grades = new Map(data.d1.gradeDetails.map(g => [g.grade, g]));
+
+      const comparisons = [];
+      todayGrades.forEach((todayG, grade) => {
+        const d1G = d1Grades.get(grade);
+        if (d1G) {
+          const boxDiff = todayG.boxes - d1G.boxes;
+          const priceDiff = todayG.avgPrice - d1G.avgPrice;
+          if (Math.abs(boxDiff) >= 100 || Math.abs(priceDiff) >= 500) {
+            comparisons.push(`${grade}: 물량 ${boxDiff > 0 ? '+' : ''}${boxDiff.toLocaleString()}박스, 가격 ${priceDiff > 0 ? '+' : ''}${priceDiff.toLocaleString()}원`);
+          }
+        }
+      });
+      return comparisons.length > 0 ? comparisons.join(' / ') : '큰 변동 없음';
+    };
+
     const prompt = `당신은 성주 참외 농가를 위한 시세 브리핑 전문가입니다.
 
 [${shortName} ${data.today.date} 데이터]
-- 오늘: 물량 ${data.today.boxes.toLocaleString()}박스, 평균 ${data.today.avgPrice.toLocaleString()}원
-- 전일: ${data.d1 ? `물량 ${data.d1.boxes.toLocaleString()}박스, 평균 ${data.d1.avgPrice.toLocaleString()}원` : '없음'}
+- 오늘 전체: 물량 ${data.today.boxes.toLocaleString()}박스, 평균 ${data.today.avgPrice.toLocaleString()}원
+- 오늘 등급별: ${formatGradeInfo(data.today.gradeDetails)}
+- ${comparisonTerm}(${data.d1?.date || '없음'}): ${data.d1 ? `물량 ${data.d1.boxes.toLocaleString()}박스, 평균 ${data.d1.avgPrice.toLocaleString()}원` : '없음'}
+- ${comparisonTerm} 등급별: ${formatGradeInfo(data.d1?.gradeDetails)}
+- 등급별 ${comparisonTerm} 대비: ${getGradeComparison()}
 - 2일전: ${data.d2 ? `평균 ${data.d2.avgPrice.toLocaleString()}원` : '없음'}
 - 3일전: ${data.d3 ? `평균 ${data.d3.avgPrice.toLocaleString()}원` : '없음'}
 - 7일전: ${data.d7 ? `평균 ${data.d7.avgPrice.toLocaleString()}원` : '없음'}
 - 작년 동주차: ${data.lastYear ? `평균 ${data.lastYear.avgPrice.toLocaleString()}원` : '없음'}
 
 추세: 가격 ${trend.priceTrend}, 물량 ${trend.volumeTrend}
-가격 전일대비: ${trend.dailyChange !== null ? `${trend.dailyChange > 0 ? '+' : ''}${trend.dailyChange}%` : '없음'}
-물량 전일대비: ${trend.volumeDiff !== null ? `${trend.volumeDiff > 0 ? '+' : ''}${trend.volumeDiff.toLocaleString()}상자 (${trend.volumeChange > 0 ? '+' : ''}${trend.volumeChange}%)` : '없음'}
+가격 ${comparisonTerm}대비: ${trend.dailyChange !== null ? `${trend.dailyChange > 0 ? '+' : ''}${trend.dailyChange}%` : '없음'}
+물량 ${comparisonTerm}대비: ${trend.volumeDiff !== null ? `${trend.volumeDiff > 0 ? '+' : ''}${trend.volumeDiff.toLocaleString()}상자 (${trend.volumeChange > 0 ? '+' : ''}${trend.volumeChange}%)` : '없음'}
 주간대비: ${trend.weeklyChange !== null ? `${trend.weeklyChange > 0 ? '+' : ''}${trend.weeklyChange}%` : '없음'}
 작년대비: ${trend.yearlyChange !== null ? `${trend.yearlyChange > 0 ? '+' : ''}${trend.yearlyChange}%` : '없음'}
 
@@ -283,18 +372,21 @@ export const briefingService = {
 3. 절대 금지 단어: 폭등, 폭락, 급등, 급락, 대박, 위기, 최악, 최고, 폭발, 붕괴
 4. 이모지 사용 금지 (텍스트만 사용)
 5. 구체적인 숫자보다는 흐름/분위기 중심으로 표현
-6. 브리핑은 반드시 시장명으로 시작 (예: "${shortName} 지난 경매보다...")
+6. 브리핑은 반드시 시장명으로 시작 (예: "${shortName} ${comparisonTerm}보다...")
    - "참외 농가", "농가 여러분" 같은 일반 호칭 절대 금지
    - 첫 단어는 무조건 시장명 (${shortName})
 7. 물량/가격 변동 언급 시 비교 대상 명시 필수:
-   - "지난 경매보다", "어제보다", "전 경매 대비" 등 비교 기준을 반드시 포함
-   - 예: "지난 경매보다 물량 늘고 가격 올랐어요"
+   - ${isD1Yesterday ? '"어제보다"' : '"전 경매일보다", "지난 경매보다"'} 등 비교 기준을 반드시 포함
+   - 예: "${comparisonTerm}보다 물량 늘고 가격 올랐어요"
 8. 물량 변동 표현 기준 (절대량 우선):
    - ±1,000상자 미만: "물량은 비슷해요"
    - 1,000~3,000상자 증감: "물량이 늘었어요/줄었어요"
    - 3,000상자 이상 증감: "물량이 크게 늘었어요/줄었어요"
    - 단, 비율이 30% 이상이면 "많이" 수식어 추가 (예: "물량이 많이 늘었어요")
-9. JSON 형식으로만 반환: {"briefing": "브리핑 내용"}`;
+9. 등급별 데이터 참고:
+   - 특정 등급의 물량 변화가 눈에 띄면 언급 (예: "특품 물량이 늘었어요")
+   - 전체 추세와 특정 등급이 다르면 언급 (예: "전체는 보합인데 상품은 올랐어요")
+10. JSON 형식으로만 반환: {"briefing": "브리핑 내용"}`;
 
     try {
       const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
@@ -345,13 +437,17 @@ export const briefingService = {
   generateFallbackBriefing(marketName, data, trend) {
     const shortName = marketName.replace('공판장', '').replace('원예농협', '').replace('성주참외', '선남');
 
+    // 전 경매일 용어 결정
+    const isD1Yesterday = this.isYesterday(data.today?.date, data.d1?.date);
+    const comparisonTerm = isD1Yesterday ? '어제' : '전 경매일';
+
     const trendMessages = {
       '연속상승': '며칠째 좋은 흐름이에요',
       '연속하락': '조금씩 내려가는 분위기예요',
-      '반등': '지난 경매 대비 반등 기미예요',
-      '꺾임': '지난 경매 대비 오름세 주춤해요',
-      '상승': '지난 경매보다 올랐어요',
-      '하락': '지난 경매보다 내렸어요',
+      '반등': `${comparisonTerm}보다 반등 기미예요`,
+      '꺾임': `${comparisonTerm}보다 오름세 주춤해요`,
+      '상승': `${comparisonTerm}보다 올랐어요`,
+      '하락': `${comparisonTerm}보다 내렸어요`,
       '보합': '큰 변동 없이 유지 중이에요'
     };
 
