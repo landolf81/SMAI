@@ -59,8 +59,15 @@ const CloudflareStreamPlayer = ({
   const getThumbnailUrl = useCallback(() => {
     if (!uid) return '';
     const fitParam = aspectRatio === 'square' ? '&fit=crop' : '';
-    return `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
-  }, [uid, aspectRatio]);
+    const thumbnailUrl = `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
+
+    // LCP 측정: 썸네일 URL 생성 시점 로그 (priority가 true인 경우만)
+    if (priority) {
+      console.log(`[LCP 측정] CloudflareStreamPlayer 썸네일 URL 생성: ${performance.now().toFixed(0)}ms`);
+    }
+
+    return thumbnailUrl;
+  }, [uid, aspectRatio, priority]);
 
   // autoplay prop 변경 시 showPlayer 설정
   useEffect(() => {
