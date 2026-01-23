@@ -369,19 +369,8 @@ const Home = () => {
         }
       }
 
-      // 저장된 날짜가 없거나 만료된 경우, DB에서 마지막 경락일 조회
-      try {
-        const latestDate = await marketService.getLatestMarketDate();
-        if (latestDate) {
-          setSelectedDate(latestDate);
-          fetchMarketData(latestDate);
-        } else {
-          fetchMarketData(selectedDate);
-        }
-      } catch (error) {
-        console.error('마지막 경락일 조회 실패:', error);
-        fetchMarketData(selectedDate);
-      }
+      // 저장된 날짜가 없거나 만료된 경우, 오늘 날짜로 조회
+      fetchMarketData(selectedDate);
     };
     loadMarketData();
   }, []); // 최초 로드 시에만 실행
