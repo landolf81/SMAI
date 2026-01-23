@@ -108,16 +108,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     enabled: shouldShowAds(),
   });
 
-  // 뉴스 데이터 가져오기 (커뮤니티 피드에서만)
+  // 뉴스 데이터 가져오기 (커뮤니티 피드에서만, 게시물 로딩 후 지연 로드)
   const { data: newsData } = useQuery({
     queryKey: ['news', 'feed'],
     queryFn: fetchNews,
     staleTime: 60 * 60 * 1000, // 1시간 캐시
     gcTime: 2 * 60 * 60 * 1000, // 2시간 가비지 컬렉션
-    enabled: !userId, // 프로필 페이지에서는 비활성화
+    enabled: !userId && !isLoading, // 프로필 페이지에서는 비활성화, 게시물 로딩 완료 후에만 활성화
   });
 
-  // YouTube 영상 데이터 가져오기 (커뮤니티 피드에서만)
+  // YouTube 영상 데이터 가져오기 (커뮤니티 피드에서만, 게시물 로딩 후 지연 로드)
   const { data: youtubeData } = useQuery({
     queryKey: ['youtube', 'approved', 'feed'],
     queryFn: async () => {
@@ -126,7 +126,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     },
     staleTime: 30 * 60 * 1000, // 30분 캐시
     gcTime: 60 * 60 * 1000, // 1시간 가비지 컬렉션
-    enabled: !userId, // 프로필 페이지에서는 비활성화
+    enabled: !userId && !isLoading, // 프로필 페이지에서는 비활성화, 게시물 로딩 완료 후에만 활성화
   });
 
   // 광고 우선순위 알고리즘
