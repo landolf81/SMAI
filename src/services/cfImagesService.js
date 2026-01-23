@@ -190,7 +190,6 @@ export const uploadMultipleImages = async (files, options = {}) => {
 export const getImageUrl = (imageId, variant = IMAGE_VARIANTS.PUBLIC) => {
   if (!imageId) return '';
   if (!CF_IMAGES_ACCOUNT_HASH) {
-    console.warn('⚠️ VITE_CF_IMAGES_ACCOUNT_HASH가 설정되지 않았습니다.');
     return '';
   }
   return `https://imagedelivery.net/${CF_IMAGES_ACCOUNT_HASH}/${imageId}/${variant}`;

@@ -180,6 +180,12 @@ const Home = () => {
     };
 
     loadInitialData();
+
+    // 컴포넌트 unmount 시 preload 링크 제거
+    return () => {
+      const preloadLinks = document.querySelectorAll('link[data-stream-preload]');
+      preloadLinks.forEach(link => link.remove());
+    };
   }, []);
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
