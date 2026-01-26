@@ -47,16 +47,53 @@ const MarketLanding = () => {
         setLoading(true);
         setError(null);
 
-        // 시장 설정 로드 (선남농협 순서 확인)
+        // 시장 설정 로드
         const settings = await marketService.getMarketSettings();
 
-        // 경락 데이터 로드 (선남농협만)
-        const data = await marketService.getMarketDataByDate(selectedDate);
+        // 해당 날짜에 데이터가 있는 시장 목록 가져오기
+        const markets = await marketService.getAvailableMarkets(selectedDate);
 
-        if (data && data.length > 0) {
+        if (!markets || markets.length === 0) {
+          setMarketData([]);
+          setLoading(false);
+          return;
+        }
+
+        // 경락 데이터 로드
+        const response = await marketService.getMultipleMarkets(markets, selectedDate);
+
+        if (response && response.markets) {
+          const transformedData = response.markets.map((market, index) => {
+            if (market.success && market.data && market.data.details) {
+              const details = market.data.details;
+              const totalQuantity = details.reduce((sum, item) => sum + (item.boxes || 0), 0);
+              const avgPrice = market.data.summary?.overall_avg_price || 0;
+              const minPrice = Math.min(...details.map(item => item.min_price || 0));
+              const maxPrice = Math.max(...details.map(item => item.max_price || 0));
+
+              return {
+                id: `${market.market_name}-${index}`,
+                name: market.market_name,
+                totalQuantity: totalQuantity,
+                totalAmount: market.data.summary?.total_amount || 0,
+                averagePrice: avgPrice,
+                minPrice: minPrice,
+                maxPrice: maxPrice,
+                unit: '상자',
+                error: false
+              };
+            } else {
+              return {
+                id: `${market.market_name}-${index}`,
+                name: market.market_name,
+                error: true
+              };
+            }
+          });
+
           // 시장 순서대로 정렬
           const orderArray = settings?.market_order || [];
-          const sortedData = [...data].sort((a, b) => {
+          const sortedData = [...transformedData].sort((a, b) => {
             const indexA = orderArray.indexOf(a.name);
             const indexB = orderArray.indexOf(b.name);
             if (indexA !== -1 && indexB !== -1) return indexA - indexB;
