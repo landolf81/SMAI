@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ReferenceLine,
 } from 'recharts';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -46,13 +47,18 @@ const MarketTrend = () => {
 
   const today = getKoreanToday();
 
-  // 날짜 계산 함수
+  // 날짜 계산 함수 (오늘을 중심으로 좌우로 표시)
   const getDateRange = (days) => {
-    const end = new Date(today);
-    const start = new Date(today);
-    start.setDate(start.getDate() - days + 1);
-
     const formatDate = (d) => d.toISOString().split('T')[0];
+
+    // 오늘을 중심으로 좌우로 날짜 계산
+    const halfDays = Math.floor(days / 2);
+    const start = new Date(today);
+    const end = new Date(today);
+
+    start.setDate(start.getDate() - halfDays);
+    end.setDate(end.getDate() + halfDays);
+
     return { startDate: formatDate(start), endDate: formatDate(end) };
   };
 
@@ -113,6 +119,7 @@ const MarketTrend = () => {
     return trendData.map((item, index) => {
       const date = new Date(item.market_date);
       const dayMonth = `${date.getMonth() + 1}/${date.getDate()}`;
+      const isToday = item.market_date === today;
 
       // 작년 동일 인덱스 데이터 찾기
       const lastYearItem = lastYearData[index] || {};
@@ -120,6 +127,7 @@ const MarketTrend = () => {
       return {
         date: dayMonth,
         fullDate: item.market_date,
+        isToday,
         // 올해 데이터
         maxPrice: parseInt(item.max_price) || 0,
         avgPrice: parseInt(item.avg_price) || 0,
@@ -130,7 +138,13 @@ const MarketTrend = () => {
         lastYearMin: parseInt(lastYearItem.min_price) || null,
       };
     });
-  }, [trendData, lastYearData]);
+  }, [trendData, lastYearData, today]);
+
+  // 오늘 날짜의 X축 값 찾기
+  const todayXValue = useMemo(() => {
+    const todayItem = chartData.find((item) => item.isToday);
+    return todayItem?.date || null;
+  }, [chartData]);
 
   // 기간 버튼 클릭
   const handlePeriodChange = (days) => {
@@ -275,6 +289,15 @@ const MarketTrend = () => {
           </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            {/* 차트 제목 - 공판장명 */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800">
+                📈 {marketName}
+              </h2>
+              <span className="text-sm text-gray-500">
+                {chartData.length > 0 && `${chartData[0]?.fullDate} ~ ${chartData[chartData.length - 1]?.fullDate}`}
+              </span>
+            </div>
             <ResponsiveContainer width="100%" height={350}>
               <LineChart
                 data={chartData}
@@ -300,6 +323,23 @@ const MarketTrend = () => {
                     <span className="text-xs">{value}</span>
                   )}
                 />
+
+                {/* 오늘 날짜 수직선 */}
+                {todayXValue && (
+                  <ReferenceLine
+                    x={todayXValue}
+                    stroke="#16a34a"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    label={{
+                      value: '오늘',
+                      position: 'top',
+                      fill: '#16a34a',
+                      fontSize: 11,
+                      fontWeight: 'bold',
+                    }}
+                  />
+                )}
 
                 {/* 올해 데이터 - 실선 */}
                 <Line
