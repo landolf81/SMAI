@@ -88,14 +88,15 @@ const MarketTrend = () => {
         endDate = range.endDate;
       }
 
-      // 올해 데이터
+      // 올해 데이터: 시작일 ~ 오늘 (미래 데이터 없음)
+      const currentEndDate = endDate > today ? today : endDate;
       const currentData = await marketService.getMarketTrendData(
         marketName,
         startDate,
-        endDate
+        currentEndDate
       );
 
-      // 작년 동기 데이터
+      // 작년 동기 데이터: 작년 전체 기간 (미래 포함)
       const lastYearRange = getLastYearRange(startDate, endDate);
       const lastYear = await marketService.getMarketTrendData(
         marketName,
@@ -109,33 +110,48 @@ const MarketTrend = () => {
     };
 
     loadData();
-  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate]);
+  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today]);
 
-  // 차트 데이터 병합 (올해 + 작년)
+  // 차트 데이터 병합 (작년 기준 X축 + 올해 데이터 매핑)
   const chartData = useMemo(() => {
-    if (!trendData || trendData.length === 0) return [];
+    // 작년 데이터가 없으면 올해 데이터만 사용
+    if ((!lastYearData || lastYearData.length === 0) && (!trendData || trendData.length === 0)) {
+      return [];
+    }
 
-    // 올해 데이터를 기준으로 작년 데이터 매핑
-    return trendData.map((item, index) => {
+    // 작년 데이터를 기준으로 X축 구성 (작년은 미래 데이터도 있음)
+    const baseData = lastYearData.length > 0 ? lastYearData : trendData;
+
+    // 올해 데이터를 날짜(월/일) 기준으로 맵 생성
+    const currentYearMap = new Map();
+    trendData.forEach((item) => {
+      const date = new Date(item.market_date);
+      const key = `${date.getMonth() + 1}/${date.getDate()}`;
+      currentYearMap.set(key, item);
+    });
+
+    return baseData.map((item) => {
       const date = new Date(item.market_date);
       const dayMonth = `${date.getMonth() + 1}/${date.getDate()}`;
-      const isToday = item.market_date === today;
 
-      // 작년 동일 인덱스 데이터 찾기
-      const lastYearItem = lastYearData[index] || {};
+      // 올해 동일 날짜(월/일) 데이터 찾기
+      const currentYearItem = currentYearMap.get(dayMonth);
+      const isTodayDate = currentYearItem?.market_date === today;
 
       return {
         date: dayMonth,
-        fullDate: item.market_date,
-        isToday,
-        // 올해 데이터
-        maxPrice: parseInt(item.max_price) || 0,
-        avgPrice: parseInt(item.avg_price) || 0,
-        minPrice: parseInt(item.min_price) || 0,
+        fullDate: currentYearItem?.market_date || `(작년 ${item.market_date})`,
+        lastYearFullDate: item.market_date,
+        isToday: isTodayDate,
+        isFuture: !currentYearItem, // 올해 데이터 없음 = 미래
+        // 올해 데이터 (없으면 null)
+        maxPrice: currentYearItem ? (parseInt(currentYearItem.max_price) || 0) : null,
+        avgPrice: currentYearItem ? (parseInt(currentYearItem.avg_price) || 0) : null,
+        minPrice: currentYearItem ? (parseInt(currentYearItem.min_price) || 0) : null,
         // 작년 데이터
-        lastYearMax: parseInt(lastYearItem.max_price) || null,
-        lastYearAvg: parseInt(lastYearItem.avg_price) || null,
-        lastYearMin: parseInt(lastYearItem.min_price) || null,
+        lastYearMax: parseInt(item.max_price) || null,
+        lastYearAvg: parseInt(item.avg_price) || null,
+        lastYearMin: parseInt(item.min_price) || null,
       };
     });
   }, [trendData, lastYearData, today]);
