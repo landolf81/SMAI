@@ -705,6 +705,32 @@ export const marketService = {
       console.error('시장 설정 저장 오류:', error);
       throw error;
     }
+  },
+
+  /**
+   * 기간별 경락가 추세 데이터 조회
+   * @param {string} marketName - 시장명
+   * @param {string} startDate - 시작 날짜 (YYYY-MM-DD)
+   * @param {string} endDate - 종료 날짜 (YYYY-MM-DD)
+   * @returns {Array} 날짜별 경락가 데이터
+   */
+  async getMarketTrendData(marketName, startDate, endDate) {
+    try {
+      const { data, error } = await supabase
+        .from('market_summary')
+        .select('market_date, avg_price, min_price, max_price, total_boxes, total_amount')
+        .eq('market_name', marketName)
+        .gte('market_date', startDate)
+        .lte('market_date', endDate)
+        .order('market_date', { ascending: true });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('경락가 추세 데이터 조회 오류:', error);
+      return [];
+    }
   }
 };
 

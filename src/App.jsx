@@ -47,6 +47,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const PostEditor = lazy(() => import('./pages/PostEditor'));
 const Translate = lazy(() => import('./pages/Translate'));
 const MarketLanding = lazy(() => import('./pages/MarketLanding'));
+const MarketTrend = lazy(() => import('./pages/MarketTrend'));
 
 // Admin Pages - Lazy Loading
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
@@ -417,6 +418,10 @@ useEffect(() => {
         {
           path: '/market-landing',
           element: <MarketLanding />,
+        },
+        {
+          path: '/market-trend',
+          element: <MarketTrend />,
         },
         {
           path: '/translate',

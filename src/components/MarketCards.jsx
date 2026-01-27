@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { adService } from '../services';
 import MobileAdDisplay from './MobileAdDisplay';
 import LoadingSpinner from './LoadingSpinner';
@@ -275,8 +276,8 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                 transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`
               }}
             >
-              {/* 공판장명 뱃지 - 파랑 (터치 시 공유) */}
-              <div className="absolute -top-0 left-4 z-10">
+              {/* 공판장명 뱃지 - 파랑 (터치 시 공유) + 추세 차트 아이콘 */}
+              <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
                 <span
                   className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md cursor-pointer active:scale-95 transition-transform"
                   style={{ backgroundColor: theme.badgeColor }}
@@ -285,6 +286,17 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
                   <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
                   {market.name}
                 </span>
+                {/* 추세 차트 아이콘 */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/market-trend?market=${encodeURIComponent(market.name)}`);
+                  }}
+                  className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 active:scale-95 transition-all"
+                  title="경락가 추세 보기"
+                >
+                  <ShowChartIcon style={{ fontSize: 20, color: theme.badgeColor }} />
+                </button>
               </div>
 
               {/* 카드 본체 - 흰색 배경 */}
