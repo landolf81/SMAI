@@ -7,7 +7,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
@@ -247,9 +246,9 @@ const MarketTrend = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 헤더 */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 pt-14">
+      {/* 서브 헤더 (뒤로가기 + 제목) */}
+      <div className="bg-white border-b border-gray-200 sticky top-14 z-10">
         <div className="flex items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
@@ -333,7 +332,7 @@ const MarketTrend = () => {
             <ResponsiveContainer width="100%" height={350}>
               <LineChart
                 data={chartData}
-                margin={{ top: 10, right: 10, left: -10, bottom: 10 }}
+                margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
@@ -349,12 +348,6 @@ const MarketTrend = () => {
                   tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                 />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend
-                  wrapperStyle={{ paddingTop: 20 }}
-                  formatter={(value) => (
-                    <span className="text-xs">{value}</span>
-                  )}
-                />
 
                 {/* 오늘 날짜 수직선 */}
                 {todayXValue && (
@@ -373,86 +366,104 @@ const MarketTrend = () => {
                   />
                 )}
 
-                {/* 올해 데이터 - 실선 */}
+                {/* 올해 데이터 - 굵은 실선 */}
                 <Line
                   type="monotone"
                   dataKey="maxPrice"
-                  name="최고가"
+                  name="올해 최고"
                   stroke="#dc2626"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 5 }}
+                  connectNulls={true}
                 />
                 <Line
                   type="monotone"
                   dataKey="avgPrice"
-                  name="평균가"
-                  stroke="#374151"
-                  strokeWidth={2}
+                  name="올해 평균"
+                  stroke="#1f2937"
+                  strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 5 }}
+                  connectNulls={true}
                 />
                 <Line
                   type="monotone"
                   dataKey="minPrice"
-                  name="최저가"
+                  name="올해 최저"
                   stroke="#2563eb"
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 5 }}
+                  connectNulls={true}
                 />
 
-                {/* 작년 데이터 - 점선 */}
+                {/* 작년 데이터 - 점선 (연한 색상) */}
                 <Line
                   type="monotone"
                   dataKey="lastYearMax"
                   name="작년 최고"
-                  stroke="#dc2626"
-                  strokeWidth={1}
-                  strokeDasharray="5 5"
+                  stroke="#fca5a5"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
                   dot={false}
-                  opacity={0.5}
+                  connectNulls={true}
                 />
                 <Line
                   type="monotone"
                   dataKey="lastYearAvg"
                   name="작년 평균"
-                  stroke="#374151"
-                  strokeWidth={1}
-                  strokeDasharray="5 5"
+                  stroke="#9ca3af"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
                   dot={false}
-                  opacity={0.5}
+                  connectNulls={true}
                 />
                 <Line
                   type="monotone"
                   dataKey="lastYearMin"
                   name="작년 최저"
-                  stroke="#2563eb"
-                  strokeWidth={1}
-                  strokeDasharray="5 5"
+                  stroke="#93c5fd"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
                   dot={false}
-                  opacity={0.5}
+                  connectNulls={true}
                 />
               </LineChart>
             </ResponsiveContainer>
 
             {/* 범례 설명 */}
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <div className="flex flex-wrap gap-4 text-xs text-gray-600">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-0.5 bg-red-600"></div>
-                  <span>올해</span>
+            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600 space-y-2">
+              {/* 올해 */}
+              <div className="flex items-center justify-center gap-4">
+                <span className="font-medium">올해</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-1 bg-red-600 rounded"></div>
+                  <span>최고</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-6 h-0.5 bg-red-600"
-                    style={{
-                      backgroundImage:
-                        'linear-gradient(90deg, #dc2626 50%, transparent 50%)',
-                      backgroundSize: '6px 1px',
-                    }}
-                  ></div>
-                  <span>작년 동기</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-1 bg-gray-800 rounded"></div>
+                  <span>평균</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-1 bg-blue-600 rounded"></div>
+                  <span>최저</span>
+                </div>
+              </div>
+              {/* 작년 */}
+              <div className="flex items-center justify-center gap-4">
+                <span className="font-medium">작년</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-0.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #fca5a5 0, #fca5a5 3px, transparent 3px, transparent 6px)' }}></div>
+                  <span>최고</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-0.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #9ca3af 0, #9ca3af 3px, transparent 3px, transparent 6px)' }}></div>
+                  <span>평균</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-6 h-0.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #93c5fd 0, #93c5fd 3px, transparent 3px, transparent 6px)' }}></div>
+                  <span>최저</span>
                 </div>
               </div>
             </div>
@@ -460,41 +471,89 @@ const MarketTrend = () => {
         )}
 
         {/* 데이터 요약 카드 */}
-        {!loading && chartData.length > 0 && (
-          <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-            <h3 className="font-bold text-gray-800 mb-3">기간 요약</h3>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="bg-red-50 rounded-xl p-3">
-                <p className="text-xs text-red-600 mb-1">최고가</p>
-                <p className="text-lg font-bold text-red-600">
-                  {formatPrice(Math.max(...chartData.map((d) => d.maxPrice)))}
-                </p>
-                <p className="text-xs text-gray-500">원</p>
+        {!loading && chartData.length > 0 && (() => {
+          // 올해 데이터 (데이터가 있는 날짜만)
+          const validData = chartData.filter((d) => d.maxPrice !== null && d.maxPrice > 0);
+          if (validData.length === 0) return null;
+
+          const maxPrice = Math.max(...validData.map((d) => d.maxPrice));
+          const avgPrices = validData.filter((d) => d.avgPrice && d.avgPrice > 0);
+          const avgPrice = avgPrices.length > 0
+            ? Math.round(avgPrices.reduce((sum, d) => sum + d.avgPrice, 0) / avgPrices.length)
+            : 0;
+          const minPrices = validData.filter((d) => d.minPrice && d.minPrice > 0);
+          const minPrice = minPrices.length > 0
+            ? Math.min(...minPrices.map((d) => d.minPrice))
+            : 0;
+
+          // 작년 데이터
+          const lastYearValid = chartData.filter((d) => d.lastYearMax !== null && d.lastYearMax > 0);
+          const lastYearMaxPrice = lastYearValid.length > 0
+            ? Math.max(...lastYearValid.map((d) => d.lastYearMax))
+            : 0;
+          const lastYearAvgPrices = chartData.filter((d) => d.lastYearAvg && d.lastYearAvg > 0);
+          const lastYearAvgPrice = lastYearAvgPrices.length > 0
+            ? Math.round(lastYearAvgPrices.reduce((sum, d) => sum + d.lastYearAvg, 0) / lastYearAvgPrices.length)
+            : 0;
+          const lastYearMinPrices = chartData.filter((d) => d.lastYearMin && d.lastYearMin > 0);
+          const lastYearMinPrice = lastYearMinPrices.length > 0
+            ? Math.min(...lastYearMinPrices.map((d) => d.lastYearMin))
+            : 0;
+
+          return (
+            <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+              {/* 올해 요약 */}
+              <h3 className="font-bold text-gray-800 mb-3">기간 요약 (올해)</h3>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-red-50 rounded-xl p-3">
+                  <p className="text-xs text-red-600 mb-1">최고가</p>
+                  <p className="text-lg font-bold text-red-600">
+                    {formatPrice(maxPrice)}
+                  </p>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-600 mb-1">평균가</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {formatPrice(avgPrice)}
+                  </p>
+                </div>
+                <div className="bg-blue-50 rounded-xl p-3">
+                  <p className="text-xs text-blue-600 mb-1">최저가</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {formatPrice(minPrice)}
+                  </p>
+                </div>
               </div>
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-600 mb-1">평균가</p>
-                <p className="text-lg font-bold text-gray-800">
-                  {formatPrice(
-                    Math.round(
-                      chartData.reduce((sum, d) => sum + d.avgPrice, 0) /
-                        chartData.length
-                    )
-                  )}
-                </p>
-                <p className="text-xs text-gray-500">원</p>
-              </div>
-              <div className="bg-blue-50 rounded-xl p-3">
-                <p className="text-xs text-blue-600 mb-1">최저가</p>
-                <p className="text-lg font-bold text-blue-600">
-                  {formatPrice(
-                    Math.min(...chartData.filter((d) => d.minPrice > 0).map((d) => d.minPrice))
-                  )}
-                </p>
-                <p className="text-xs text-gray-500">원</p>
-              </div>
+
+              {/* 작년 동기 요약 */}
+              {lastYearMaxPrice > 0 && (
+                <>
+                  <h3 className="font-bold text-gray-600 mb-3 mt-4 pt-4 border-t border-gray-100">작년 동기</h3>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="bg-orange-50 rounded-xl p-3">
+                      <p className="text-xs text-orange-600 mb-1">최고가</p>
+                      <p className="text-lg font-bold text-orange-600">
+                        {formatPrice(lastYearMaxPrice)}
+                      </p>
+                    </div>
+                    <div className="bg-gray-100 rounded-xl p-3">
+                      <p className="text-xs text-gray-600 mb-1">평균가</p>
+                      <p className="text-lg font-bold text-gray-600">
+                        {formatPrice(lastYearAvgPrice)}
+                      </p>
+                    </div>
+                    <div className="bg-cyan-50 rounded-xl p-3">
+                      <p className="text-xs text-cyan-600 mb-1">최저가</p>
+                      <p className="text-lg font-bold text-cyan-600">
+                        {formatPrice(lastYearMinPrice)}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       {/* 날짜 선택 모달 */}
