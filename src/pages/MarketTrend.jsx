@@ -146,6 +146,7 @@ const MarketTrend = () => {
       const dayMonth = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
       const fullDateStr = currentDate.toISOString().split('T')[0];
       const isTodayDate = fullDateStr === today;
+      const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
 
       const currentItem = currentYearMap.get(dayMonth);
       const lastYearItem = lastYearMap.get(dayMonth);
@@ -155,6 +156,7 @@ const MarketTrend = () => {
         fullDate: fullDateStr,
         isToday: isTodayDate,
         isFuture: fullDateStr > today,
+        dayOfWeek, // 요일 정보 추가
         // 올해 가격 데이터
         maxPrice: currentItem ? (parseInt(currentItem.max_price) || 0) : null,
         avgPrice: currentItem ? (parseInt(currentItem.avg_price) || 0) : null,
@@ -182,6 +184,22 @@ const MarketTrend = () => {
     const todayItem = chartData.find((item) => item.isToday);
     return todayItem?.date || null;
   }, [chartData]);
+
+  // 커스텀 X축 tick (요일별 색상)
+  const CustomXAxisTick = ({ x, y, payload }) => {
+    const item = chartData.find((d) => d.date === payload.value);
+    const dayOfWeek = item?.dayOfWeek;
+
+    let fill = '#374151'; // 기본 회색
+    if (dayOfWeek === 0) fill = '#dc2626'; // 일요일: 빨간색
+    else if (dayOfWeek === 6) fill = '#2563eb'; // 토요일: 파란색
+
+    return (
+      <text x={x} y={y + 12} textAnchor="middle" fontSize={11} fill={fill}>
+        {payload.value}
+      </text>
+    );
+  };
 
   // 기간 버튼 클릭
   const handlePeriodChange = (days) => {
@@ -343,7 +361,7 @@ const MarketTrend = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
+                  tick={<CustomXAxisTick />}
                   tickLine={false}
                   axisLine={{ stroke: '#e0e0e0' }}
                 />
@@ -492,7 +510,7 @@ const MarketTrend = () => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
+                  tick={<CustomXAxisTick />}
                   tickLine={false}
                   axisLine={{ stroke: '#e0e0e0' }}
                 />
