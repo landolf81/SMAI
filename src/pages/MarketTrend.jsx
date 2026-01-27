@@ -155,14 +155,20 @@ const MarketTrend = () => {
         fullDate: fullDateStr,
         isToday: isTodayDate,
         isFuture: fullDateStr > today,
-        // 올해 데이터
+        // 올해 가격 데이터
         maxPrice: currentItem ? (parseInt(currentItem.max_price) || 0) : null,
         avgPrice: currentItem ? (parseInt(currentItem.avg_price) || 0) : null,
         minPrice: currentItem ? (parseInt(currentItem.min_price) || 0) : null,
-        // 작년 데이터
+        // 올해 물량 데이터
+        totalBoxes: currentItem ? (parseInt(currentItem.total_boxes) || 0) : null,
+        totalAmount: currentItem ? (parseInt(currentItem.total_amount) || 0) : null,
+        // 작년 가격 데이터
         lastYearMax: lastYearItem ? (parseInt(lastYearItem.max_price) || null) : null,
         lastYearAvg: lastYearItem ? (parseInt(lastYearItem.avg_price) || null) : null,
         lastYearMin: lastYearItem ? (parseInt(lastYearItem.min_price) || null) : null,
+        // 작년 물량 데이터
+        lastYearBoxes: lastYearItem ? (parseInt(lastYearItem.total_boxes) || null) : null,
+        lastYearAmount: lastYearItem ? (parseInt(lastYearItem.total_amount) || null) : null,
       });
 
       currentDate.setDate(currentDate.getDate() + 1);
@@ -464,6 +470,113 @@ const MarketTrend = () => {
                 <div className="flex items-center gap-1">
                   <div className="w-6 h-0.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #93c5fd 0, #93c5fd 3px, transparent 3px, transparent 6px)' }}></div>
                   <span>최저</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 물량 차트 */}
+        {!loading && chartData.length > 0 && (
+          <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800">
+                📦 물량 추이
+              </h2>
+            </div>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart
+                data={chartData}
+                margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#e0e0e0' }}
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#e0e0e0' }}
+                  tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
+                />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload || !payload.length) return null;
+                    const data = payload[0]?.payload;
+                    return (
+                      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+                        <p className="font-bold text-gray-800 mb-2">{data?.fullDate}</p>
+                        <div className="space-y-1 text-sm">
+                          <p className="text-emerald-600">
+                            올해 물량: {data?.totalBoxes?.toLocaleString() || '-'}박스
+                          </p>
+                          {data?.lastYearBoxes && (
+                            <p className="text-gray-500">
+                              작년 물량: {data?.lastYearBoxes?.toLocaleString()}박스
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+
+                {/* 오늘 날짜 수직선 */}
+                {todayXValue && (
+                  <ReferenceLine
+                    x={todayXValue}
+                    stroke="#16a34a"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    label={{
+                      value: '오늘',
+                      position: 'top',
+                      fill: '#16a34a',
+                      fontSize: 11,
+                      fontWeight: 'bold',
+                    }}
+                  />
+                )}
+
+                {/* 올해 물량 */}
+                <Line
+                  type="monotone"
+                  dataKey="totalBoxes"
+                  name="올해 물량"
+                  stroke="#10b981"
+                  strokeWidth={2.5}
+                  dot={false}
+                  activeDot={{ r: 5 }}
+                  connectNulls={true}
+                />
+
+                {/* 작년 물량 */}
+                <Line
+                  type="monotone"
+                  dataKey="lastYearBoxes"
+                  name="작년 물량"
+                  stroke="#6ee7b7"
+                  strokeWidth={1.5}
+                  strokeDasharray="4 4"
+                  dot={false}
+                  connectNulls={true}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+
+            {/* 범례 */}
+            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">
+              <div className="flex items-center justify-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-1 bg-emerald-500 rounded"></div>
+                  <span>올해</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-0.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, #6ee7b7 0, #6ee7b7 3px, transparent 3px, transparent 6px)' }}></div>
+                  <span>작년</span>
                 </div>
               </div>
             </div>
