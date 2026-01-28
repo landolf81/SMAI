@@ -16,6 +16,39 @@ import { marketService } from '../services';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DatePickerModal from '../components/DatePickerModal';
 
+// 고정 공휴일 (MM-DD 형식)
+const FIXED_HOLIDAYS = [
+  '01-01', // 신정
+  '03-01', // 삼일절
+  '05-05', // 어린이날
+  '06-06', // 현충일
+  '08-15', // 광복절
+  '10-03', // 개천절
+  '10-09', // 한글날
+  '12-25', // 성탄절
+];
+
+// 변동 공휴일 (음력 기반, 연도별 - 설날, 부처님오신날, 추석)
+const LUNAR_HOLIDAYS = {
+  2025: ['01-28', '01-29', '01-30', '05-05', '10-05', '10-06', '10-07'],
+  2026: ['02-16', '02-17', '02-18', '05-24', '09-24', '09-25', '09-26'],
+};
+
+// 공휴일 체크 함수
+const isHoliday = (dateStr) => {
+  if (!dateStr) return false;
+  const mmdd = dateStr.slice(5); // MM-DD
+  const year = parseInt(dateStr.slice(0, 4));
+
+  // 고정 공휴일 체크
+  if (FIXED_HOLIDAYS.includes(mmdd)) return true;
+
+  // 변동 공휴일 체크
+  if (LUNAR_HOLIDAYS[year]?.includes(mmdd)) return true;
+
+  return false;
+};
+
 /**
  * 경락가 추세 차트 페이지
  *
@@ -185,13 +218,14 @@ const MarketTrend = () => {
     return todayItem?.date || null;
   }, [chartData]);
 
-  // 커스텀 X축 tick (요일별 색상)
+  // 커스텀 X축 tick (요일/공휴일별 색상)
   const CustomXAxisTick = ({ x, y, payload }) => {
     const item = chartData.find((d) => d.date === payload.value);
     const dayOfWeek = item?.dayOfWeek;
+    const fullDate = item?.fullDate;
 
     let fill = '#374151'; // 기본 회색
-    if (dayOfWeek === 0) fill = '#dc2626'; // 일요일: 빨간색
+    if (dayOfWeek === 0 || isHoliday(fullDate)) fill = '#dc2626'; // 일요일/공휴일: 빨간색
     else if (dayOfWeek === 6) fill = '#2563eb'; // 토요일: 파란색
 
     return (
