@@ -34,6 +34,12 @@ const LUNAR_HOLIDAYS = {
   2026: ['02-16', '02-17', '02-18', '05-24', '09-24', '09-25', '09-26'],
 };
 
+// 대체공휴일 (연도별)
+const SUBSTITUTE_HOLIDAYS = {
+  2025: ['03-03', '05-06', '10-08'], // 삼일절(토), 어린이날/부처님오신날 중복, 추석(일)
+  2026: ['03-02', '08-17', '09-28', '10-05'], // 삼일절(일), 광복절(토), 추석(토), 개천절(토)
+};
+
 // 공휴일 체크 함수
 const isHoliday = (dateStr) => {
   if (!dateStr) return false;
@@ -45,6 +51,9 @@ const isHoliday = (dateStr) => {
 
   // 변동 공휴일 체크
   if (LUNAR_HOLIDAYS[year]?.includes(mmdd)) return true;
+
+  // 대체공휴일 체크
+  if (SUBSTITUTE_HOLIDAYS[year]?.includes(mmdd)) return true;
 
   return false;
 };
