@@ -12,7 +12,8 @@
       "Bash(npm run dev:*)",
       "Bash(cat:*)",
       "Bash(xargs ls:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

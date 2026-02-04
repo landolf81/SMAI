@@ -34,11 +34,15 @@ const Home = () => {
 
   const navigate = useNavigate();
   const [marketData, setMarketData] = useState([]);
+  const [seongjuTotal, setSeongjuTotal] = useState(null); // 성주군 합계
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [marketSettings, setMarketSettings] = useState(null); // DB에서 가져온 시장 설정
   const [hottestPost, setHottestPost] = useState(null); // 인기 게시물
+
+  // 성주군 공판장 목록 (선남, 성주원협, 성주조공, 용암, 초전)
+  const SEONGJU_MARKETS = ['선남농협', '성주원예농협', '성주조공', '용암농협', '초전농협'];
 
   // 날짜 선택기 모달 상태
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -338,6 +342,53 @@ const Home = () => {
         });
 
         setMarketData(sortedData);
+
+        // 성주군 합계 계산 (선남, 성주원협, 성주조공, 용암, 초전)
+        const seongjuMarkets = sortedData.filter(m =>
+          SEONGJU_MARKETS.some(name => m.name.includes(name.replace('농협', '').replace('원예', '')))
+        );
+
+        if (seongjuMarkets.length > 0) {
+          const totalQuantity = seongjuMarkets.reduce((sum, m) => sum + (m.totalQuantity || 0), 0);
+          const totalAmount = seongjuMarkets.reduce((sum, m) => sum + (m.totalAmount || 0), 0);
+
+          // 가중평균 계산 (총금액 / 총수량)
+          const avgPrice = totalQuantity > 0 ? Math.round(totalAmount / totalQuantity) : 0;
+
+          // 최고가/최저가 (0이 아닌 값 중에서)
+          const validMaxPrices = seongjuMarkets.map(m => m.maxPrice).filter(p => p > 0);
+          const validMinPrices = seongjuMarkets.map(m => m.minPrice).filter(p => p > 0);
+          const maxPrice = validMaxPrices.length > 0 ? Math.max(...validMaxPrices) : 0;
+          const minPrice = validMinPrices.length > 0 ? Math.min(...validMinPrices) : 0;
+
+          // 전일 데이터 합계
+          const prevQuantity = seongjuMarkets.reduce((sum, m) => sum + (m.previousTotalQuantity || 0), 0);
+          const prevAvgPrices = seongjuMarkets.filter(m => m.previousAveragePrice).map(m => m.previousAveragePrice);
+          const prevAvgPrice = prevAvgPrices.length > 0
+            ? Math.round(prevAvgPrices.reduce((sum, p) => sum + p, 0) / prevAvgPrices.length)
+            : null;
+          const prevMaxPrices = seongjuMarkets.map(m => m.previousMaxPrice).filter(p => p > 0);
+          const prevMinPrices = seongjuMarkets.map(m => m.previousMinPrice).filter(p => p > 0);
+
+          setSeongjuTotal({
+            id: 'seongju-total',
+            name: '성주군 합계',
+            totalQuantity,
+            totalAmount,
+            averagePrice: avgPrice,
+            maxPrice,
+            minPrice,
+            unit: '상자',
+            priceUnit: '원',
+            previousTotalQuantity: prevQuantity > 0 ? prevQuantity : null,
+            previousAveragePrice: prevAvgPrice,
+            previousMaxPrice: prevMaxPrices.length > 0 ? Math.max(...prevMaxPrices) : null,
+            previousMinPrice: prevMinPrices.length > 0 ? Math.min(...prevMinPrices) : null,
+            isTotal: true // 합계 카드 구분용
+          });
+        } else {
+          setSeongjuTotal(null);
+        }
       } else {
         throw new Error('API 응답 형식이 올바르지 않습니다.');
       }
@@ -620,6 +671,7 @@ const Home = () => {
       >
         <MarketCards
           marketData={marketData}
+          seongjuTotal={seongjuTotal}
           loading={loading}
           selectedDate={selectedDate}
           formatPrice={formatPrice}

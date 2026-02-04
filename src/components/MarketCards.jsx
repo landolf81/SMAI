@@ -55,7 +55,7 @@ const useScrollFadeIn = () => {
   return { visibleItems, observe, unobserve };
 };
 
-const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
+const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
 
@@ -113,7 +113,16 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
   };
 
   // 공판장 카드 통일 테마 (파랑 뱃지 + 흰색 배경 + 파랑-녹색 그라데이션 버튼)
-  const getMarketTheme = () => {
+  const getMarketTheme = (isTotal = false) => {
+    if (isTotal) {
+      // 성주군 합계 카드는 청록 그라데이션 뱃지
+      return {
+        badgeGradient: 'linear-gradient(to right, #1D4ED8, #16A34A)', // 청색 → 녹색 그라데이션
+        text: 'text-[#1D4ED8]', // 파랑 텍스트
+        buttonGradient: 'from-[#1D4ED8] to-[#16A34A]', // 파랑 → 녹색 그라데이션
+        cardBackground: '#F7F7F7' // cloud-dancer 배경
+      };
+    }
     return {
       badgeColor: '#1D4ED8', // 파랑 (Blue-700)
       text: 'text-[#1D4ED8]', // 파랑 텍스트
@@ -254,12 +263,116 @@ const MarketCards = ({ marketData, loading, selectedDate, formatPrice, formatDat
     return 0.96 + (ratio * 0.04);
   };
 
+  // 성주군 합계 카드 렌더링 함수
+  const renderSeongjuTotalCard = () => {
+    if (!seongjuTotal) return null;
+
+    const theme = getMarketTheme(true);
+    const cardId = 'card-seongju-total';
+
+    return (
+      <div
+        ref={(el) => setCardRef(el, cardId)}
+        data-card-id={cardId}
+        className="w-full mx-auto relative pt-4 transition-all duration-300 ease-out"
+        style={{
+          animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none'
+        }}
+      >
+        {/* 성주군 합계 뱃지 - 청록 그라데이션 */}
+        <div className="absolute -top-0 left-4 right-4 z-10 flex items-center">
+          <span
+            className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md"
+            style={{ background: theme.badgeGradient }}
+          >
+            <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
+            {seongjuTotal.name}
+          </span>
+        </div>
+
+        {/* 카드 본체 - 흰색 배경 (개별 공판장과 동일) */}
+        <div
+          className="rounded-2xl overflow-hidden shadow-md border border-gray-100 transition-all duration-300"
+          style={{ backgroundColor: '#FFFFFF' }}
+        >
+          {/* 가격 정보 영역 - 개별 공판장과 동일한 패딩 */}
+          <div className="px-4 py-4 pt-8">
+            {/* 총 출하량 정보 */}
+            <div className="flex items-center text-base text-gray-600 mb-2">
+              <span>총 출하량</span>
+              <span className="font-bold text-gray-800 text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
+              <span className="text-sm text-gray-500 ml-1">{seongjuTotal.unit}</span>
+              {seongjuTotal.previousTotalQuantity ? (
+                <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>
+              ) : null}
+            </div>
+            {/* 총 출하금액 정보 */}
+            <div className="text-base text-gray-600 mb-4">
+              총 출하금액 <span className="font-bold text-gray-800">{formatPrice(seongjuTotal.totalAmount)}</span> <span className="text-gray-600">원</span>
+            </div>
+
+            {/* 가격 정보 그리드 - 3열 */}
+            <div className="grid grid-cols-3 gap-1 text-center">
+              {/* 평균가 */}
+              <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
+                <div className="text-xs text-gray-500 mb-0.5">평균가</div>
+                <div className="text-xl font-bold text-gray-900">
+                  {formatPrice(seongjuTotal.averagePrice)}
+                </div>
+                <div className="mt-0.5 min-h-[20px]">
+                  {seongjuTotal.previousAveragePrice ? (
+                    renderPriceChange(seongjuTotal.averagePrice, seongjuTotal.previousAveragePrice)
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 최고가 */}
+              <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
+                <div className="text-xs text-gray-500 mb-0.5">최고가</div>
+                <div className="text-xl font-bold text-red-600">
+                  {formatPrice(seongjuTotal.maxPrice)}
+                </div>
+                <div className="mt-0.5 min-h-[20px]">
+                  {seongjuTotal.previousMaxPrice ? (
+                    renderPriceChange(seongjuTotal.maxPrice, seongjuTotal.previousMaxPrice)
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </div>
+              </div>
+
+              {/* 최저가 */}
+              <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
+                <div className="text-xs text-gray-500 mb-0.5">최저가</div>
+                <div className="text-xl font-bold text-blue-600">
+                  {formatPrice(seongjuTotal.minPrice)}
+                </div>
+                <div className="mt-0.5 min-h-[20px]">
+                  {seongjuTotal.previousMinPrice ? (
+                    renderPriceChange(seongjuTotal.minPrice, seongjuTotal.previousMinPrice)
+                  ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* 모바일 전용 레이아웃 - 세로 스택 */}
       <div className="space-y-4 flex flex-col items-center w-full">
+        {/* 성주군 합계 카드 - 최상단 */}
+        {renderSeongjuTotalCard()}
+
         {marketData.slice(0, renderedCount).map((market, index) => {
-          const theme = getMarketTheme();
+          const theme = getMarketTheme(market.isTotal);
           const cardId = `card-${market.id}`;
           const cardTranslateY = getCardTranslateY(cardId, index);
           const cardScale = getCardScale(cardId, index);
