@@ -731,6 +731,40 @@ export const marketService = {
       console.error('경락가 추세 데이터 조회 오류:', error);
       return [];
     }
+  },
+
+  /**
+   * 성주군 합계 추세 데이터 조회 (그래프용)
+   * market_aggregate_summary 테이블에서 조회
+   * @param {string} startDate - 시작 날짜 (YYYY-MM-DD)
+   * @param {string} endDate - 종료 날짜 (YYYY-MM-DD)
+   * @returns {Array} 추세 데이터 배열
+   */
+  async getSeongjuAggregateTrend(startDate, endDate) {
+    try {
+      const { data, error } = await supabase
+        .from('market_aggregate_summary')
+        .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
+        .eq('region_name', '성주군')
+        .gte('market_date', startDate)
+        .lte('market_date', endDate)
+        .order('market_date', { ascending: true });
+
+      if (error) throw error;
+
+      // MarketTrend 차트 형식으로 변환
+      return (data || []).map(row => ({
+        market_date: row.market_date,
+        avg_price: row.avg_price,
+        min_price: row.min_price,
+        max_price: row.max_price,
+        total_boxes: row.total_boxes,
+        total_amount: row.total_amount
+      }));
+    } catch (error) {
+      console.error('성주군 합계 추세 데이터 조회 오류:', error);
+      return [];
+    }
   }
 };
 

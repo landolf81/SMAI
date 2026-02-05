@@ -279,8 +279,8 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
           animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none'
         }}
       >
-        {/* 성주군 합계 뱃지 - 청록 그라데이션 */}
-        <div className="absolute -top-0 left-4 right-4 z-10 flex items-center">
+        {/* 성주군 합계 뱃지 - 청록 그라데이션 + 추세 차트 아이콘 */}
+        <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
           <span
             className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md"
             style={{ background: theme.badgeGradient }}
@@ -288,6 +288,17 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
             <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
             {seongjuTotal.name}
           </span>
+          {/* 추세 차트 아이콘 */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/market-trend?market=${encodeURIComponent('성주군 합계')}`);
+            }}
+            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 active:scale-95 transition-all"
+            title="성주군 합계 추세 보기"
+          >
+            <ShowChartIcon style={{ fontSize: 20, color: '#1D4ED8' }} />
+          </button>
         </div>
 
         {/* 카드 본체 - 흰색 배경 (개별 공판장과 동일) */}

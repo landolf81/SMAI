@@ -114,6 +114,9 @@ const MarketTrend = () => {
     return { startDate: formatDate(start), endDate: formatDate(end) };
   };
 
+  // 성주군 합계 여부 확인
+  const isSeongjuTotal = marketName === '성주군 합계';
+
   // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
@@ -131,19 +134,23 @@ const MarketTrend = () => {
 
       // 올해 데이터: 시작일 ~ 오늘 (미래 데이터 없음)
       const currentEndDate = endDate > today ? today : endDate;
-      const currentData = await marketService.getMarketTrendData(
-        marketName,
-        startDate,
-        currentEndDate
-      );
+
+      // 성주군 합계인 경우 별도 테이블에서 조회
+      let currentData;
+      if (isSeongjuTotal) {
+        currentData = await marketService.getSeongjuAggregateTrend(startDate, currentEndDate);
+      } else {
+        currentData = await marketService.getMarketTrendData(marketName, startDate, currentEndDate);
+      }
 
       // 작년 동기 데이터: 작년 전체 기간 (미래 포함)
       const lastYearRange = getLastYearRange(startDate, endDate);
-      const lastYear = await marketService.getMarketTrendData(
-        marketName,
-        lastYearRange.startDate,
-        lastYearRange.endDate
-      );
+      let lastYear;
+      if (isSeongjuTotal) {
+        lastYear = await marketService.getSeongjuAggregateTrend(lastYearRange.startDate, lastYearRange.endDate);
+      } else {
+        lastYear = await marketService.getMarketTrendData(marketName, lastYearRange.startDate, lastYearRange.endDate);
+      }
 
       setTrendData(currentData);
       setLastYearData(lastYear);
@@ -151,7 +158,7 @@ const MarketTrend = () => {
     };
 
     loadData();
-  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today]);
+  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today, isSeongjuTotal]);
 
   // 기간 범위 계산 (chartData용)
   const dateRange = useMemo(() => {
