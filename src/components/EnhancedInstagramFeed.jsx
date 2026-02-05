@@ -56,9 +56,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   } = useInfiniteQuery({
     queryKey: ['enhanced-instagram-posts', tag, search, userId],
     queryFn: async ({ pageParam = 0 }) => {
-      const startTime = performance.now();
-      console.log('[LCP 측정] 게시물 API 호출 시작');
-
       const posts = await postService.getPosts({
         tagId: tag,
         search: search,
@@ -68,9 +65,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         offset: pageParam * PAGE_SIZE,
         sortBy: userId ? 'latest' : 'algorithm' // 프로필: 최신순, 커뮤니티: 알고리즘
       });
-
-      const endTime = performance.now();
-      console.log(`[LCP 측정] 게시물 API 응답 완료: ${(endTime - startTime).toFixed(0)}ms`);
 
       return posts;
     },

@@ -403,12 +403,39 @@ const Home = () => {
     }
   };
 
-  // 초기 로드 시 데이터 가져오기
+  // 초기 로드 시 데이터 가져오기 (캐시 사용으로 빠른 복귀)
   useEffect(() => {
     const loadMarketData = async () => {
+      // sessionStorage에서 캐시된 데이터 확인 (뒤로가기, Link 이동 모두 지원)
+      try {
+        const cachedData = sessionStorage.getItem('home_market_data');
+        const cachedSeongjuTotal = sessionStorage.getItem('home_seongju_total');
+        const cachedDate = sessionStorage.getItem('home_selected_date');
+        const cacheTime = sessionStorage.getItem('home_cache_time');
+
+        // 캐시가 있고 5분 이내인 경우 캐시 사용
+        if (cachedData && cacheTime) {
+          const cacheAge = Date.now() - parseInt(cacheTime);
+          const fiveMinutes = 5 * 60 * 1000;
+
+          if (cacheAge < fiveMinutes) {
+            setMarketData(JSON.parse(cachedData));
+            if (cachedSeongjuTotal) {
+              setSeongjuTotal(JSON.parse(cachedSeongjuTotal));
+            }
+            if (cachedDate) {
+              setSelectedDate(cachedDate);
+            }
+            setLoading(false);
+            return; // 캐시 사용, API 호출 안함
+          }
+        }
+      } catch (error) {
+        console.warn('캐시 로드 실패:', error);
+      }
+
       // 저장된 날짜가 있고 유효한 경우 (1시간 이내) 해당 날짜로 조회
       const savedDate = getSavedDate();
-      const today = getKoreanToday();
 
       // localStorage에 저장된 날짜가 있으면 해당 날짜 사용
       const hasSavedDate = localStorage.getItem('market_selected_date') &&
@@ -441,6 +468,22 @@ const Home = () => {
       console.warn('날짜 저장 실패:', error);
     }
   }, [selectedDate]);
+
+  // 시장 데이터가 변경되면 sessionStorage에 캐싱 (뒤로가기 시 사용)
+  useEffect(() => {
+    if (marketData.length > 0 && !loading) {
+      try {
+        sessionStorage.setItem('home_market_data', JSON.stringify(marketData));
+        sessionStorage.setItem('home_selected_date', selectedDate);
+        sessionStorage.setItem('home_cache_time', Date.now().toString());
+        if (seongjuTotal) {
+          sessionStorage.setItem('home_seongju_total', JSON.stringify(seongjuTotal));
+        }
+      } catch (error) {
+        console.warn('캐시 저장 실패:', error);
+      }
+    }
+  }, [marketData, seongjuTotal, selectedDate, loading]);
 
   const formatPrice = (price) => {
     return price.toLocaleString('ko-KR');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import toast from 'react-hot-toast';
@@ -15,6 +15,7 @@ const getMarketBadgeColor = () => {
 
 const Prices = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [marketData, setMarketData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -262,13 +263,13 @@ const Prices = () => {
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="flex items-center justify-center relative">
             {/* 뒤로가기 버튼 */}
-            <Link
-              to="/"
+            <button
+              onClick={() => navigate(-1)}
               className="absolute left-0 text-[#004225] text-2xl font-bold hover:opacity-70 transition-opacity"
-              title="홈으로"
+              title="뒤로가기"
             >
               &lt;
-            </Link>
+            </button>
 
             {/* 날짜 중앙 정렬 */}
             <div className="flex items-center gap-2">
