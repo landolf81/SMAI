@@ -15,7 +15,7 @@ import WeatherModal from '../components/WeatherModal';
 import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
-import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
+
 
 // 색상 정의
 const COLORS = {
@@ -146,33 +146,6 @@ const Home = () => {
         setMarketSettings(settings);
         setHottestPost(hotPost);
 
-        // 인기 게시물이 Cloudflare Stream 동영상이면 썸네일 preload (LCP 최적화)
-        if (hotPost?.img) {
-          try {
-            const mediaFiles = JSON.parse(hotPost.img);
-            const firstMedia = Array.isArray(mediaFiles) ? mediaFiles[0] : hotPost.img;
-            if (isCloudflareStreamUrl(firstMedia)) {
-              const uid = getCloudflareStreamUid(firstMedia);
-              if (uid) {
-                // 이미 preload가 있는지 확인 (중복 방지)
-                const existingPreload = document.querySelector(`link[data-stream-preload="${uid}"]`);
-                if (!existingPreload) {
-                  const thumbnailUrl = `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640&fit=crop`;
-                  const link = document.createElement('link');
-                  link.rel = 'preload';
-                  link.as = 'image';
-                  link.href = thumbnailUrl;
-                  link.fetchPriority = 'high';
-                  link.dataset.streamPreload = uid; // 중복 체크 및 cleanup용
-                  document.head.appendChild(link);
-                }
-              }
-            }
-          } catch {
-            // JSON 파싱 실패 시 무시
-          }
-        }
-
         // 날씨 브리핑은 날씨 데이터 필요 (순차 실행)
         if (weather) {
           const briefing = await weatherBriefingService.getBriefing(weather);
@@ -185,11 +158,6 @@ const Home = () => {
 
     loadInitialData();
 
-    // 컴포넌트 unmount 시 preload 링크 제거
-    return () => {
-      const preloadLinks = document.querySelectorAll('link[data-stream-preload]');
-      preloadLinks.forEach(link => link.remove());
-    };
   }, []);
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
