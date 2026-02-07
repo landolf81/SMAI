@@ -413,18 +413,17 @@ const Home = () => {
         const cachedDate = sessionStorage.getItem('home_selected_date');
         const cacheTime = sessionStorage.getItem('home_cache_time');
 
-        // 캐시가 있고 5분 이내인 경우 캐시 사용
-        if (cachedData && cacheTime) {
+        // 캐시가 있고 5분 이내 + 같은 날짜인 경우 캐시 사용
+        if (cachedData && cacheTime && cachedDate) {
           const cacheAge = Date.now() - parseInt(cacheTime);
           const fiveMinutes = 5 * 60 * 1000;
 
-          if (cacheAge < fiveMinutes) {
+          if (cacheAge < fiveMinutes && cachedDate === selectedDate) {
             setMarketData(JSON.parse(cachedData));
             if (cachedSeongjuTotal) {
               setSeongjuTotal(JSON.parse(cachedSeongjuTotal));
-            }
-            if (cachedDate) {
-              setSelectedDate(cachedDate);
+            } else {
+              setSeongjuTotal(null);
             }
             setLoading(false);
             return; // 캐시 사용, API 호출 안함
@@ -478,6 +477,8 @@ const Home = () => {
         sessionStorage.setItem('home_cache_time', Date.now().toString());
         if (seongjuTotal) {
           sessionStorage.setItem('home_seongju_total', JSON.stringify(seongjuTotal));
+        } else {
+          sessionStorage.removeItem('home_seongju_total');
         }
       } catch (error) {
         console.warn('캐시 저장 실패:', error);
