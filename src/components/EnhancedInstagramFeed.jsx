@@ -9,7 +9,7 @@ import NewsCard from './NewsCard';
 import YouTubeVideoCard from './YouTubeVideoCard';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
-import { hasEncodingVideo, isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
+import { hasEncodingVideo } from '../utils/mediaUtils';
 
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
   const queryClient = useQueryClient();
@@ -196,50 +196,6 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     // 커뮤니티 피드에서는 인코딩 중인 동영상 게시물 필터링
     return posts.filter(post => !hasEncodingVideo(post));
   }, [data, userId]);
-
-  // 첫 번째 게시물이 Cloudflare Stream 동영상이면 썸네일 preload (LCP 최적화)
-  // 프로필 페이지(userId 있음)에서는 비활성화
-  useEffect(() => {
-    if (allPosts.length === 0 || userId) return;
-
-    const firstPost = allPosts[0];
-    const imgData = firstPost?.img || firstPost?.photo;
-    if (!imgData) return;
-
-    let preloadLink = null;
-
-    try {
-      const parsed = typeof imgData === 'string' ? JSON.parse(imgData) : imgData;
-      const firstMedia = Array.isArray(parsed) ? parsed[0] : imgData;
-
-      if (isCloudflareStreamUrl(firstMedia)) {
-        const uid = getCloudflareStreamUid(firstMedia);
-        if (uid) {
-          // 이미 preload가 있는지 확인
-          const existingPreload = document.querySelector(`link[rel="preload"][href*="${uid}"]`);
-          if (!existingPreload) {
-            const thumbnailUrl = `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640&fit=crop`;
-            preloadLink = document.createElement('link');
-            preloadLink.rel = 'preload';
-            preloadLink.as = 'image';
-            preloadLink.href = thumbnailUrl;
-            preloadLink.fetchPriority = 'high';
-            preloadLink.dataset.streamPreload = uid; // cleanup용 식별자
-            document.head.appendChild(preloadLink);
-          }
-        }
-      }
-    } catch {
-      // JSON 파싱 실패 시 무시
-    }
-
-    // cleanup: 컴포넌트 언마운트 시 preload 제거
-    return () => {
-      if (preloadLink && preloadLink.parentNode) {
-        preloadLink.parentNode.removeChild(preloadLink);
-      }
-    };
-  }, [allPosts, userId]);
 
   // 게시물, 광고, 뉴스, YouTube 영상을 합친 목록 생성
   // - 광고: 3개마다 삽입
