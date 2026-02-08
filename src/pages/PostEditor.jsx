@@ -820,12 +820,12 @@ const PostEditor = () => {
                 }`}
                 value={desc}
                 onChange={(e) => {
-                  // 200자 제한 (한글 기준)
-                  if (e.target.value.length <= 200) {
+                  // 400자 제한 (한글 기준)
+                  if (e.target.value.length <= 400) {
                     setDesc(e.target.value);
                   }
                 }}
-                maxLength={200}
+                maxLength={400}
               />
               {isListening && (
                 <div className="absolute bottom-4 left-4 flex items-center gap-2 text-red-500 text-sm">
@@ -835,7 +835,7 @@ const PostEditor = () => {
               )}
               {/* 글자 수 표시 */}
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                {desc.length}/200
+                {desc.length}/400
               </div>
             </div>
 
