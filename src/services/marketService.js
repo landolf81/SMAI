@@ -765,6 +765,34 @@ export const marketService = {
       console.error('성주군 합계 추세 데이터 조회 오류:', error);
       return [];
     }
+  },
+
+  /**
+   * 성주군 합계 당일+전일 데이터 조회 (홈 카드용)
+   * market_aggregate_summary 테이블에서 최근 2일 데이터 조회
+   * @param {string} date - 조회 날짜 (YYYY-MM-DD)
+   * @returns {Object} { today, previous } 당일/전일 데이터
+   */
+  async getSeongjuAggregateForCard(date) {
+    try {
+      const { data, error } = await supabase
+        .from('market_aggregate_summary')
+        .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
+        .eq('region_name', '성주군')
+        .lte('market_date', date)
+        .order('market_date', { ascending: false })
+        .limit(2);
+
+      if (error) throw error;
+
+      const today = data?.find(d => d.market_date === date) || null;
+      const previous = data?.find(d => d.market_date !== date) || null;
+
+      return { today, previous };
+    } catch (error) {
+      console.error('성주군 합계 카드 데이터 조회 오류:', error);
+      return { today: null, previous: null };
+    }
   }
 };
 

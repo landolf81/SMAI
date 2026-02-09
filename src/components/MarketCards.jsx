@@ -313,9 +313,12 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               <span>총 출하량</span>
               <span className="font-bold text-gray-800 text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
               <span className="text-sm text-gray-500 ml-1">{seongjuTotal.unit}</span>
-              {seongjuTotal.previousTotalQuantity ? (
+              {/* 수량 변동폭은 17시 이후에만 표시, 그 전에는 '집계중' */}
+              {new Date().getHours() >= 17 && seongjuTotal.previousTotalQuantity ? (
                 <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>
-              ) : null}
+              ) : (
+                <span className="ml-2 text-xs text-gray-400">집계중</span>
+              )}
             </div>
             {/* 총 출하금액 정보 */}
             <div className="text-base text-gray-600 mb-4">
