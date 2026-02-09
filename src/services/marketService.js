@@ -793,6 +793,68 @@ export const marketService = {
       console.error('성주군 합계 카드 데이터 조회 오류:', error);
       return { today: null, previous: null };
     }
+  },
+
+  /**
+   * 연간 누적 출하량/금액 조회 (1월1일~오늘, 작년 동기)
+   * @param {string} marketName - 공판장명 또는 '성주군 합계'
+   * @param {string} todayDate - 오늘 날짜 (YYYY-MM-DD)
+   * @returns {Object} { thisYear: {boxes, amount}, lastYear: {boxes, amount} }
+   */
+  async getYearlyCumulative(marketName, todayDate) {
+    try {
+      const year = parseInt(todayDate.slice(0, 4));
+      const thisYearStart = `${year}-01-01`;
+      const lastYearStart = `${year - 1}-01-01`;
+      const lastYearEnd = `${year - 1}${todayDate.slice(4)}`; // 작년 동일 월일
+
+      const isSeongjuTotal = marketName === '성주군 합계';
+
+      let thisYearQuery, lastYearQuery;
+
+      if (isSeongjuTotal) {
+        thisYearQuery = supabase
+          .from('market_aggregate_summary')
+          .select('total_boxes, total_amount')
+          .eq('region_name', '성주군')
+          .gte('market_date', thisYearStart)
+          .lte('market_date', todayDate);
+        lastYearQuery = supabase
+          .from('market_aggregate_summary')
+          .select('total_boxes, total_amount')
+          .eq('region_name', '성주군')
+          .gte('market_date', lastYearStart)
+          .lte('market_date', lastYearEnd);
+      } else {
+        thisYearQuery = supabase
+          .from('market_summary')
+          .select('total_boxes, total_amount')
+          .eq('market_name', marketName)
+          .gte('market_date', thisYearStart)
+          .lte('market_date', todayDate);
+        lastYearQuery = supabase
+          .from('market_summary')
+          .select('total_boxes, total_amount')
+          .eq('market_name', marketName)
+          .gte('market_date', lastYearStart)
+          .lte('market_date', lastYearEnd);
+      }
+
+      const [thisYearRes, lastYearRes] = await Promise.all([thisYearQuery, lastYearQuery]);
+
+      const sum = (rows) => ({
+        boxes: (rows || []).reduce((s, r) => s + (parseInt(r.total_boxes) || 0), 0),
+        amount: (rows || []).reduce((s, r) => s + (parseInt(r.total_amount) || 0), 0),
+      });
+
+      return {
+        thisYear: sum(thisYearRes.data),
+        lastYear: sum(lastYearRes.data),
+      };
+    } catch (error) {
+      console.error('연간 누적 조회 오류:', error);
+      return { thisYear: { boxes: 0, amount: 0 }, lastYear: { boxes: 0, amount: 0 } };
+    }
   }
 };
 

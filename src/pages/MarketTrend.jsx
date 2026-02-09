@@ -78,6 +78,7 @@ const MarketTrend = () => {
   const [customStartDate, setCustomStartDate] = useState(null);
   const [customEndDate, setCustomEndDate] = useState(null);
   const [isCustomPeriod, setIsCustomPeriod] = useState(false);
+  const [yearlyCumulative, setYearlyCumulative] = useState(null);
 
   // 오늘 날짜 (한국 시간)
   const getKoreanToday = () => {
@@ -152,8 +153,12 @@ const MarketTrend = () => {
         lastYear = await marketService.getMarketTrendData(marketName, lastYearRange.startDate, lastYearRange.endDate);
       }
 
+      // 연간 누적 (1월1일~오늘, 작년 동기)
+      const cumulative = await marketService.getYearlyCumulative(marketName, today);
+
       setTrendData(currentData);
       setLastYearData(lastYear);
+      setYearlyCumulative(cumulative);
       setLoading(false);
     };
 
@@ -733,6 +738,86 @@ const MarketTrend = () => {
                 </>
               )}
             </div>
+          );
+        })()}
+
+        {/* 연간 누적 출하량/금액 비교 (1월1일~오늘 vs 작년 동기) */}
+        {!loading && yearlyCumulative && (() => {
+          const { thisYear, lastYear } = yearlyCumulative;
+          if (thisYear.boxes === 0 && lastYear.boxes === 0) return null;
+
+          const boxDiff = thisYear.boxes - lastYear.boxes;
+          const boxDiffPct = lastYear.boxes > 0 ? ((boxDiff / lastYear.boxes) * 100).toFixed(1) : null;
+
+          const amtDiff = thisYear.amount - lastYear.amount;
+          const amtDiffPct = lastYear.amount > 0 ? ((amtDiff / lastYear.amount) * 100).toFixed(1) : null;
+
+          const formatMillion = (v) => {
+            const abs = Math.abs(v);
+            if (abs >= 100000000) return `${(v / 100000000).toFixed(1)}억`;
+            return `${Math.round(v / 1000000).toLocaleString()}백만`;
+          };
+
+          const year = parseInt(today.slice(0, 4));
+
+          return (
+            <>
+              {/* 누적 출하량 */}
+              <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                <h3 className="font-bold text-gray-800 mb-3">연간 누적 출하량</h3>
+                <p className="text-xs text-gray-400 -mt-2 mb-3">{year}.01.01 ~ 오늘</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-gray-600">{year}년</span>
+                    <span className="text-base font-bold text-gray-900">{thisYear.boxes.toLocaleString()}상자</span>
+                  </div>
+                  <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                    <span className="text-sm text-gray-500">{year - 1}년 동기</span>
+                    <span className="text-base font-bold text-gray-500">{lastYear.boxes.toLocaleString()}상자</span>
+                  </div>
+                  {lastYear.boxes > 0 && (
+                    <div className="flex items-center justify-between py-2 border-t border-gray-200">
+                      <span className="text-sm text-gray-600">전년 대비</span>
+                      <span className={`text-base font-bold ${
+                        boxDiff > 0 ? 'text-red-600' : boxDiff < 0 ? 'text-blue-600' : 'text-gray-600'
+                      }`}>
+                        {boxDiff > 0 ? '+' : ''}{boxDiff.toLocaleString()}상자
+                        {boxDiffPct && ` (${boxDiff > 0 ? '+' : ''}${boxDiffPct}%)`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 누적 출하금액 */}
+              {(thisYear.amount > 0 || lastYear.amount > 0) && (
+                <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+                  <h3 className="font-bold text-gray-800 mb-3">연간 누적 출하금액</h3>
+                  <p className="text-xs text-gray-400 -mt-2 mb-3">{year}.01.01 ~ 오늘</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-sm text-gray-600">{year}년</span>
+                      <span className="text-base font-bold text-gray-900">{formatMillion(thisYear.amount)}원</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                      <span className="text-sm text-gray-500">{year - 1}년 동기</span>
+                      <span className="text-base font-bold text-gray-500">{formatMillion(lastYear.amount)}원</span>
+                    </div>
+                    {lastYear.amount > 0 && (
+                      <div className="flex items-center justify-between py-2 border-t border-gray-200">
+                        <span className="text-sm text-gray-600">전년 대비</span>
+                        <span className={`text-base font-bold ${
+                          amtDiff > 0 ? 'text-red-600' : amtDiff < 0 ? 'text-blue-600' : 'text-gray-600'
+                        }`}>
+                          {amtDiff > 0 ? '+' : ''}{formatMillion(amtDiff)}원
+                          {amtDiffPct && ` (${amtDiff > 0 ? '+' : ''}${amtDiffPct}%)`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           );
         })()}
       </div>

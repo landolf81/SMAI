@@ -201,14 +201,47 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
 
   if (loading) {
     return (
-      <div className="flex items-start justify-center min-h-[calc(100vh-120px)] pt-32 bg-cloud-dancer">
-        <div className="text-center">
-          <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="mt-4 text-gray-600">경락가 정보를 불러오는 중...</p>
-          <div className="mt-2 text-sm text-gray-500">
-            {formatDateForDisplay(selectedDate)} 데이터 조회 중
+      <div className="space-y-4 flex flex-col items-center w-full">
+        {/* 스켈레톤 카드 3개 (실제 카드와 동일한 레이아웃) */}
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="w-full mx-auto relative pt-4 animate-pulse">
+            {/* 뱃지 스켈레톤 */}
+            <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
+              <div className="h-9 w-28 bg-gray-300 rounded-full"></div>
+              <div className="w-9 h-9 bg-gray-200 rounded-full"></div>
+            </div>
+            {/* 카드 본체 스켈레톤 */}
+            <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-[#F7F7F7]">
+              <div className="px-4 py-4 pt-8">
+                {/* 출하량 */}
+                <div className="flex items-center mb-2">
+                  <div className="h-5 w-16 bg-gray-200 rounded"></div>
+                  <div className="h-6 w-20 bg-gray-300 rounded ml-2"></div>
+                  <div className="h-4 w-8 bg-gray-200 rounded ml-1"></div>
+                </div>
+                {/* 출하금액 */}
+                <div className="flex items-center mb-4">
+                  <div className="h-5 w-20 bg-gray-200 rounded"></div>
+                  <div className="h-5 w-32 bg-gray-300 rounded ml-2"></div>
+                </div>
+                {/* 가격 3열 그리드 */}
+                <div className="grid grid-cols-3 gap-1 text-center">
+                  {[0, 1, 2].map((j) => (
+                    <div key={j} className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
+                      <div className="h-3 w-10 bg-gray-200 rounded mx-auto mb-1"></div>
+                      <div className="h-7 w-16 bg-gray-300 rounded mx-auto"></div>
+                      <div className="h-4 w-12 bg-gray-200 rounded mx-auto mt-1"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* 상세 버튼 스켈레톤 */}
+              <div className="px-4 pb-4 pt-2">
+                <div className="h-11 w-full bg-gray-300 rounded-xl"></div>
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     );
   }
