@@ -346,12 +346,19 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               <span>총 출하량</span>
               <span className="font-bold text-gray-800 text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
               <span className="text-sm text-gray-500 ml-1">{seongjuTotal.unit}</span>
-              {/* 수량 변동폭은 17시 이후에만 표시, 그 전에는 '집계중' */}
-              {new Date().getHours() >= 17 && seongjuTotal.previousTotalQuantity ? (
-                <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>
-              ) : (
-                <span className="ml-2 text-xs text-gray-400">집계중</span>
-              )}
+              {/* 수량 변동폭: 당일+17시 전이면 '집계중', 과거 날짜는 항상 표시 */}
+              {(() => {
+                const koreanToday = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+                const isToday = selectedDate === koreanToday;
+                const isBefore5pm = new Date().getHours() < 17;
+                if (isToday && isBefore5pm) {
+                  return <span className="ml-2 text-xs text-gray-400">집계중</span>;
+                }
+                if (seongjuTotal.previousTotalQuantity) {
+                  return <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>;
+                }
+                return null;
+              })()}
             </div>
             {/* 총 출하금액 정보 */}
             <div className="text-base text-gray-600 mb-4">

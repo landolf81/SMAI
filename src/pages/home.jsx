@@ -315,9 +315,11 @@ const Home = () => {
           const today = seongjuAggregate.today;
           const prev = seongjuAggregate.previous;
 
-          // 17시 이후에만 전일 대비 변동폭 표시 (그 전에는 계속 변동됨)
-          const now = new Date();
-          const isAfter5pm = now.getHours() >= 17;
+          // 당일+17시 전이면 변동폭 숨김 (집계 중), 과거 날짜는 항상 표시
+          const koreanToday = getKoreanToday();
+          const isViewingToday = date === koreanToday;
+          const isBefore5pm = new Date().getHours() < 17;
+          const hidePrevious = isViewingToday && isBefore5pm;
 
           setSeongjuTotal({
             id: 'seongju-total',
@@ -329,10 +331,10 @@ const Home = () => {
             minPrice: today.min_price || 0,
             unit: '상자',
             priceUnit: '원',
-            previousTotalQuantity: (isAfter5pm && prev) ? prev.total_boxes : null,
-            previousAveragePrice: (isAfter5pm && prev) ? prev.avg_price : null,
-            previousMaxPrice: (isAfter5pm && prev) ? prev.max_price : null,
-            previousMinPrice: (isAfter5pm && prev) ? prev.min_price : null,
+            previousTotalQuantity: (!hidePrevious && prev) ? prev.total_boxes : null,
+            previousAveragePrice: (!hidePrevious && prev) ? prev.avg_price : null,
+            previousMaxPrice: (!hidePrevious && prev) ? prev.max_price : null,
+            previousMinPrice: (!hidePrevious && prev) ? prev.min_price : null,
             isTotal: true // 합계 카드 구분용
           });
         } else {
