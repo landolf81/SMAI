@@ -91,9 +91,14 @@ const WeatherWidget = ({ onClick }) => {
 
   const currentTemp = getCurrentTemp();
 
-  // 로딩 중이거나 온도 데이터 없으면 아무것도 표시하지 않음
+  // CLS 방지: 로딩 중에도 동일 크기 placeholder 유지
   if (loading || currentTemp === null) {
-    return null;
+    return (
+      <div className="flex items-center gap-1" style={{ visibility: 'hidden' }}>
+        <span className="text-xl">☀️</span>
+        <span className="text-gray-700 text-base font-bold">--°</span>
+      </div>
+    );
   }
 
   return (

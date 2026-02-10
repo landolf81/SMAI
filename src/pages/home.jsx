@@ -4,7 +4,6 @@ import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
@@ -56,6 +55,7 @@ const Home = () => {
   const touchEndX = useRef(0);
   const touchStartTime = useRef(0);
   const swipeContainerRef = useRef(null);
+  const fetchingDateRef = useRef(null); // fetch 진행 중인 날짜 (stale 캐시 저장 방지)
 
   // 홈페이지 스크롤 위치 복원
   const { resetScrollPosition, scrollToTop } = useScrollRestore('home', null, null, null, true);
@@ -196,8 +196,12 @@ const Home = () => {
 
   // 경락가 데이터 가져오기 (실제 API 호출)
   const fetchMarketData = async (date) => {
+    fetchingDateRef.current = date; // fetch 시작 표시 (stale 캐시 저장 방지)
     try {
-      setLoading(true);
+      // 기존 데이터가 없을 때만 스켈레톤 표시 (날짜 변경 시에는 기존 카드 유지 → CLS 방지)
+      if (marketData.length === 0 && !seongjuTotal) {
+        setLoading(true);
+      }
 
       // 먼저 해당 날짜에 데이터가 있는 시장 목록을 가져옴
       const markets = await fetchAvailableMarkets(date);
@@ -205,6 +209,12 @@ const Home = () => {
       // 데이터가 없으면 빈 배열로 설정 (자동 이동 없음)
       if (markets.length === 0) {
         setMarketData([]);
+        setSeongjuTotal(null); // 이전 날짜 합계 데이터도 초기화
+        // stale 캐시 제거 (이전 날짜 데이터가 현재 날짜로 잘못 저장된 경우 방지)
+        sessionStorage.removeItem('home_market_data');
+        sessionStorage.removeItem('home_selected_date');
+        sessionStorage.removeItem('home_cache_time');
+        sessionStorage.removeItem('home_seongju_total');
         return;
       }
 
@@ -350,6 +360,7 @@ const Home = () => {
       // API 실패시 빈 배열로 설정하여 에러 메시지 표시
       setMarketData([]);
     } finally {
+      fetchingDateRef.current = null; // fetch 완료
       setLoading(false);
     }
   };
@@ -421,6 +432,9 @@ const Home = () => {
 
   // 시장 데이터가 변경되면 sessionStorage에 캐싱 (뒤로가기 시 사용)
   useEffect(() => {
+    // fetch 진행 중이면 stale 데이터가 새 날짜로 저장되는 것 방지
+    if (fetchingDateRef.current) return;
+
     if (marketData.length > 0 && !loading) {
       try {
         sessionStorage.setItem('home_market_data', JSON.stringify(marketData));
@@ -674,22 +688,10 @@ const Home = () => {
           handleRefresh={handleRefresh}
         />
 
-        {/* 인기 게시물 섹션 */}
-        {hottestPost && (
+        {/* 인기 게시물 섹션 - 경락가 카드 렌더링 완료 후 표시 (CLS 방지) */}
+        {!loading && hottestPost && (
           <div className="mt-6">
-            {/* 섹션 헤더 */}
-            <div
-              className="flex items-center justify-between mb-3 cursor-pointer"
-              onClick={() => navigate('/community')}
-            >
-              <span className="font-bold text-gray-800">인기 게시물</span>
-              <div className="flex items-center text-gray-500 text-sm">
-                <span>커뮤니티</span>
-                <ChevronRightRoundedIcon style={{ fontSize: 20 }} />
-              </div>
-            </div>
-
-            {/* 인기 게시물 카드 - 커뮤니티 피드와 동일한 형태 */}
+            <span className="font-bold text-gray-800 mb-3 block">인기 게시물</span>
             <EnhancedInstagramPost
               post={hottestPost}
               isVisible={true}

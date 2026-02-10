@@ -393,7 +393,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                               '/default/default_profile.png'
                             }
                             alt={question.user_name || question.username}
-                            className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                            className="w-8 h-8 rounded-full object-cover"
                             onError={(e) => {
                               e.target.src = '/default/default_profile.png';
                             }}
