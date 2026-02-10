@@ -349,11 +349,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                 return (
                   <div
                     key={item.key}
-                    className={`rounded-xl p-6 border cursor-pointer transition-all duration-200 ${
-                      question.question_status === 'closed' ? 'bg-green-50/30' :
-                      question.question_status === 'answered' ? 'bg-yellow-50/30' :
-                      'bg-blue-50/30'
-                    }`}
+                    className={`rounded-xl p-6 border cursor-pointer transition-all duration-200 bg-white`}
                     style={{
                       animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
                       animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',

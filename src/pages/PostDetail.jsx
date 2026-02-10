@@ -362,7 +362,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
   const imageUrls = getImageUrls();
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${isModal ? 'pb-0' : 'pb-20'}`}>
+    <div className={`min-h-screen bg-cloud-dancer ${isModal ? 'pb-0' : 'pb-20'}`}>
       <div className="max-w-4xl mx-auto">
         {/* 게시물 내용 */}
         <div className="bg-white border-b border-gray-200">

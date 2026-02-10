@@ -157,7 +157,7 @@ const DMChatPage = () => {
   }, [navigate, queryClient]);
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-gray-50" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
+    <div className="fixed inset-0 flex flex-col bg-cloud-dancer" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
       {/* 헤더 - 고정 */}
       <header className="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm z-10">
         <button

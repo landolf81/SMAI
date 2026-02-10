@@ -6,7 +6,7 @@ const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-14">
+    <div className="min-h-screen bg-cloud-dancer pt-14">
       {/* 내용 */}
       <div className="max-w-3xl mx-auto p-4 pb-20">
         {/* 헤더 */}

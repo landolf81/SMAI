@@ -567,7 +567,7 @@ const PostEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cloud-dancer">
       {/* 에러 모달 */}
       {showErrorModal && error && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">

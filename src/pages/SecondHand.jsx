@@ -223,7 +223,7 @@ const SecondHand = () => {
 
   if (!currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
         <div className="text-center">
           <ShoppingBagIcon className="mx-auto text-6xl text-gray-400 mb-4" />
           <h2 className="text-xl font-semibold text-gray-700 mb-2">사고팔고</h2>
@@ -234,7 +234,7 @@ const SecondHand = () => {
   }
 
   return (
-    <div className="secondhand-page min-h-screen bg-gray-50 pt-14">
+    <div className="secondhand-page min-h-screen bg-cloud-dancer pt-14">
       {/* 상단 고정 검색창 (검색 모드) */}
       {isSearchMode && (
         <div className="sticky top-14 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm animate-slide-down">

@@ -152,7 +152,7 @@ const AdminUsers = () => {
   if (loading && users.length === 0) {
     return (
       <AdminOnly>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
           <div className="text-center">
             <div className="loading loading-spinner loading-lg text-[#004225]"></div>
             <p className="mt-4 text-gray-600">사용자 목록을 불러오는 중...</p>

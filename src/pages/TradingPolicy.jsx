@@ -8,7 +8,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 
 const TradingPolicy = () => {
   return (
-    <div className="min-h-screen bg-gray-50 pt-14 pb-20">
+    <div className="min-h-screen bg-cloud-dancer pt-14 pb-20">
       {/* 헤더 */}
       <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white py-8 px-4">
         <div className="max-w-3xl mx-auto text-center">

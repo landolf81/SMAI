@@ -473,7 +473,7 @@ const SecondHandEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cloud-dancer">
       {/* 메인 컨텐츠 */}
       <div className="max-w-2xl mx-auto px-4 pt-20 pb-24">
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">

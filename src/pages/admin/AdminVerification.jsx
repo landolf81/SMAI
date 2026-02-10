@@ -153,7 +153,7 @@ const AdminVerification = () => {
   if (isLoading && requests.length === 0) {
     return (
       <AdminOnly>
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
           <div className="text-center">
             <div className="loading loading-spinner loading-lg text-[#004225]"></div>
             <p className="mt-4 text-gray-600">인증 요청 목록을 불러오는 중...</p>

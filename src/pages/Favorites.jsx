@@ -121,7 +121,7 @@ const Favorites = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg text-primary"></div>
           <p className="mt-4 text-gray-600">관심 목록을 불러오는 중...</p>
@@ -132,7 +132,7 @@ const Favorites = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 pb-20">
+      <div className="min-h-screen bg-cloud-dancer pb-20">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="text-center py-12">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
@@ -159,7 +159,7 @@ const Favorites = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-cloud-dancer pb-20">
       <div className="w-full max-w-screen-xl mx-auto p-4">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
