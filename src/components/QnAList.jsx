@@ -9,6 +9,7 @@ import moment from 'moment';
 import 'moment/locale/ko';
 import MobileAdDisplay from './MobileAdDisplay';
 import { isMobileDevice } from '../utils/deviceDetector';
+import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -122,13 +123,19 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
     staleTime: 5 * 60 * 1000 // 5분
   });
 
+  // 광고 우선순위 정렬 (마감임박, CTR, 로컬 노출빈도 반영)
+  const sortedAds = useMemo(() => {
+    if (!adsData || adsData.length === 0) return [];
+    return sortAdsByPriority(adsData, getAdViewCounts());
+  }, [adsData]);
+
   // 질문 목록에 광고 삽입 (useMemo는 early return 전에 와야 함)
   const questions = data?.questions || [];
   const pagination = data?.pagination || {};
 
   const questionsWithAds = useMemo(() => {
     const result = [];
-    const ads = adsData || [];
+    const ads = sortedAds;
 
     if (ads.length === 0) {
       return questions.map((question, index) => ({ type: 'question', data: question, key: `question-${question.id}-${index}` }));
@@ -166,7 +173,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
     }
 
     return result;
-  }, [questions, adsData]);
+  }, [questions, sortedAds]);
 
   // 순차적 렌더링: 데이터 로드 후 아이템을 위에서부터 순서대로 표시
   useEffect(() => {

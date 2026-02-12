@@ -10,6 +10,7 @@ import YouTubeVideoCard from './YouTubeVideoCard';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { hasEncodingVideo } from '../utils/mediaUtils';
+import { sortAdsByPriority } from '../utils/adPriority';
 
 const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSnapScroll = false }) => {
   const queryClient = useQueryClient();
@@ -123,11 +124,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     enabled: !userId && !isLoading, // 프로필 페이지에서는 비활성화, 게시물 로딩 완료 후에만 활성화
   });
 
-  // 광고 우선순위 알고리즘
-  // 1. 마감 임박 광고 우선 (3일 이내)
-  // 2. priority + priority_boost 반영
-  // 3. CTR(클릭률) 낮은 광고 우선 (노출 대비 클릭 적은 광고에 기회)
-  // 4. 로컬 노출 빈도 반영 + 랜덤 요소
+  // 광고 우선순위 정렬 (공통 유틸리티 사용)
   const shuffledAds = useMemo(() => {
     if (!adsData || adsData.length === 0) return [];
 
@@ -136,53 +133,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     if (initialAdViewCountsRef.current === null) {
       initialAdViewCountsRef.current = { ...adViewCounts };
     }
-    const viewCountsSnapshot = initialAdViewCountsRef.current;
 
-    const now = new Date();
-    const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-
-    const adsWithScore = adsData.map(ad => {
-      let score = 0;
-
-      // 1. 기본 우선순위 (priority + priority_boost)
-      const basePriority = (ad.priority || 0) + (ad.priority_boost || 0);
-      score += basePriority * 10; // 가중치 10
-
-      // 2. 마감 임박 보너스 (3일 이내 마감 광고)
-      if (ad.end_date) {
-        const endDate = new Date(ad.end_date);
-        if (endDate <= threeDaysLater && endDate >= now) {
-          // 마감일이 가까울수록 높은 점수 (최대 500점)
-          const daysLeft = (endDate - now) / (24 * 60 * 60 * 1000);
-          const urgencyBonus = Math.max(0, 500 - (daysLeft * 150));
-          score += urgencyBonus;
-        }
-      }
-
-      // 3. CTR 기반 점수 (낮은 CTR = 더 많은 노출 기회)
-      const impressions = ad.impressions || 0;
-      const clicks = ad.clicks || 0;
-      const ctr = impressions > 0 ? clicks / impressions : 0;
-      // CTR이 낮을수록 높은 점수 (최대 100점)
-      const ctrBonus = Math.max(0, 100 - (ctr * 1000));
-      score += ctrBonus;
-
-      // 4. 로컬 세션 노출 빈도 (적게 본 광고 우선) - 초기 스냅샷 사용
-      const localViewCount = viewCountsSnapshot[`ad_${ad.id}`] || 0;
-      const localViewPenalty = localViewCount * 50; // 볼수록 점수 감소
-      score -= localViewPenalty;
-
-      // 5. 랜덤 요소 (0~50점, 같은 점수일 때 변동성)
-      const randomBonus = Math.random() * 50;
-      score += randomBonus;
-
-      return { ...ad, _score: score };
-    });
-
-    // 점수 높은 순 정렬
-    return adsWithScore
-      .sort((a, b) => b._score - a._score)
-      .map(({ _score, ...ad }) => ad);
+    return sortAdsByPriority(adsData, initialAdViewCountsRef.current);
   }, [adsData]); // adViewCounts 의존성 제거 - 초기 스냅샷만 사용
 
   // 모든 페이지의 게시물을 하나의 배열로 합치기

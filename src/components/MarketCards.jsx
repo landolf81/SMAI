@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -8,6 +8,7 @@ import MobileAdDisplay from './MobileAdDisplay';
 import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { generateMarketShareText, shareContent } from '../utils/shareUtils';
+import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 
 // 스크롤 시 요소가 화면 중앙에 가까워지면 선명해지는 커스텀 훅
 const useScrollFadeIn = () => {
@@ -96,6 +97,12 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
       console.error('❌ 광고 API 에러:', error);
     }
   });
+
+  // 광고 우선순위 정렬 (마감임박, CTR, 로컬 노출빈도 반영)
+  const sortedAds = useMemo(() => {
+    if (!adsData || adsData.length === 0) return [];
+    return sortAdsByPriority(adsData, getAdViewCounts());
+  }, [adsData]);
 
   const handleCardClick = (marketName) => {
     navigate(`/prices?market=${encodeURIComponent(marketName)}&date=${selectedDate}`);
@@ -264,10 +271,10 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
         </div>
 
         {/* 경락가 정보가 없을 때 광고 표시 */}
-        {shouldShowAds() && adsData && adsData.length > 0 && (
+        {shouldShowAds() && sortedAds.length > 0 && (
           <div className="mt-4">
             <MobileAdDisplay
-              ad={adsData[0]}
+              ad={sortedAds[0]}
             />
           </div>
         )}
@@ -565,9 +572,9 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
             </div>
             </div>
             {/* 2개마다 광고 삽입 (2, 4, 6번째 카드 뒤) */}
-            {shouldShowAds() && ((index + 1) % 2 === 0) && adsData && adsData.length > 0 && (
+            {shouldShowAds() && ((index + 1) % 2 === 0) && sortedAds.length > 0 && (
               <MobileAdDisplay
-                ad={adsData[Math.floor(index / 2) % adsData.length]}
+                ad={sortedAds[Math.floor(index / 2) % sortedAds.length]}
               />
             )}
           </React.Fragment>
@@ -575,9 +582,9 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
         })}
 
         {/* 최하단 광고 (경락 정보가 1개 이하일 때만 표시) */}
-        {shouldShowAds() && adsData && adsData.length > 0 && marketData.length > 0 && marketData.length <= 1 && (
+        {shouldShowAds() && sortedAds.length > 0 && marketData.length > 0 && marketData.length <= 1 && (
           <MobileAdDisplay
-            ad={adsData[0]}
+            ad={sortedAds[0]}
           />
         )}
       </div>

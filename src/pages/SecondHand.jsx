@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import PostDetail from './PostDetail';
 import { AuthContext } from '../context/AuthContext';
 import { isMobileDevice } from '../utils/deviceDetector';
+import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
@@ -102,12 +103,18 @@ const SecondHand = () => {
     staleTime: 5 * 60 * 1000 // 5분
   });
 
+  // 광고 우선순위 정렬 (마감임박, CTR, 로컬 노출빈도 반영)
+  const sortedAds = useMemo(() => {
+    if (!adsData || adsData.length === 0) return [];
+    return sortAdsByPriority(adsData, getAdViewCounts());
+  }, [adsData]);
+
   // 게시물에 광고 삽입
   const postsWithAds = useMemo(() => {
     if (!posts || posts.length === 0) return [];
 
     const result = [];
-    const ads = adsData || [];
+    const ads = sortedAds;
 
     if (ads.length === 0) {
       return posts.map((post, index) => ({
@@ -149,7 +156,7 @@ const SecondHand = () => {
     }
 
     return result;
-  }, [posts, adsData]);
+  }, [posts, sortedAds]);
 
   // 순차적 렌더링: 데이터 로드 후 아이템을 위에서부터 순서대로 표시
   // startTransition을 사용하여 렌더링 업데이트를 백그라운드로 처리
