@@ -268,60 +268,46 @@ const Home = () => {
         return;
       }
 
-      // 실제 데이터가 있는 시장들의 경락가 정보 조회
-      const response = await marketService.getMultipleMarkets(markets, date);
+      // 경락가 + 성주군 합계를 병렬 조회 (LCP 개선: 워터폴 제거)
+      const [response, seongjuAggregate] = await Promise.all([
+        marketService.getMultipleMarkets(markets, date),
+        marketService.getSeongjuAggregateForCard(date)
+      ]);
 
       if (response && response.markets) {
         const transformedData = response.markets.map((market, index) => {
           if (market.success && market.data && market.data.details) {
-            // 시장 데이터에서 평균값 계산
             const details = market.data.details;
             const totalQuantity = details.reduce((sum, item) => sum + (item.boxes || 0), 0);
-            
-            // DB에서 제공하는 올바른 가중 평균 사용
             const avgPrice = market.data.summary?.overall_avg_price || 0;
-            
             const minPrice = Math.min(...details.map(item => item.min_price || 0));
             const maxPrice = Math.max(...details.map(item => item.max_price || 0));
-            
-            // 전일 비교 데이터 추출 (MarketAPIService 형식)
             const overallComparison = market.data.overall_comparison;
             const volumeComparison = market.data.volume_comparison;
-            const comparison = market.data.comparison; // LocalMarketService용 (사용되지 않음)
-            
-            // 현재 데이터의 실제 최저가/최고가 계산
-            const currentMinPrice = details.length > 0 ? Math.min(...details.map(item => item.min_price || 0)) : 0;
-            const currentMaxPrice = details.length > 0 ? Math.max(...details.map(item => item.max_price || 0)) : 0;
-            
-            // 전일 비교 데이터 - API에서 제공하는 previous_min_price, previous_max_price 사용
             const previousData = overallComparison?.comparison_available ? {
               totalQuantity: volumeComparison?.previousVolume,
               averagePrice: overallComparison.previousPrice,
               minPrice: market.data.previous_min_price || 0,
               maxPrice: market.data.previous_max_price || 0,
             } : null;
-
-            // DB에서 제공하는 실제 총 거래금액 사용
             const totalAmount = market.data.summary?.total_amount || 0;
 
             return {
               id: index + 1,
               name: market.market_name,
               totalQuantity,
-              totalAmount, // 실제 DB 거래금액
+              totalAmount,
               averagePrice: avgPrice,
               minPrice,
               maxPrice,
               unit: '상자',
               priceUnit: '원',
-              // 실제 전일 데이터
               previousTotalQuantity: previousData?.totalQuantity,
               previousAveragePrice: previousData?.averagePrice,
               previousMinPrice: previousData?.minPrice,
               previousMaxPrice: previousData?.maxPrice
             };
           } else {
-            // API 실패시 기본값 반환
             return {
               id: index + 1,
               name: market.market_name,
@@ -335,47 +321,34 @@ const Home = () => {
             };
           }
         });
-        
+
         // 시장 순서 정렬: DB 설정에서 가져온 market_order 사용
         const sortedData = [...transformedData].sort((a, b) => {
-          // DB에 저장된 순서가 있으면 사용
           if (marketSettings?.market_order?.length > 0) {
             const orderArray = marketSettings.market_order;
             const indexA = orderArray.indexOf(a.name);
             const indexB = orderArray.indexOf(b.name);
-
-            // 둘 다 목록에 있으면 순서대로
             if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-            // 목록에 없는 건 뒤로
             if (indexA === -1) return 1;
             if (indexB === -1) return -1;
           }
-
-          // 설정이 없으면 기본 정렬 (가락, 대전은 마지막)
           const isASpecial = a.name.includes('가락') || a.name.includes('대전');
           const isBSpecial = b.name.includes('가락') || b.name.includes('대전');
-
           if (isASpecial && !isBSpecial) return 1;
           if (!isASpecial && isBSpecial) return -1;
-
           if (isASpecial && isBSpecial) {
             if (a.name.includes('가락') && b.name.includes('대전')) return -1;
             if (a.name.includes('대전') && b.name.includes('가락')) return 1;
           }
-
           return a.name.localeCompare(b.name);
         });
 
         setMarketData(sortedData);
 
-        // 성주군 합계: market_aggregate_summary 테이블에서 조회
-        const seongjuAggregate = await marketService.getSeongjuAggregateForCard(date);
-
-        if (seongjuAggregate.today) {
-          const today = seongjuAggregate.today;
+        // 성주군 합계 처리 (이미 병렬로 가져옴)
+        if (seongjuAggregate?.today) {
+          const todayData = seongjuAggregate.today;
           const prev = seongjuAggregate.previous;
-
-          // 당일+17시 전이면 변동폭 숨김 (집계 중), 과거 날짜는 항상 표시
           const koreanToday = getKoreanToday();
           const isViewingToday = date === koreanToday;
           const isBefore5pm = new Date().getHours() < 17;
@@ -384,18 +357,18 @@ const Home = () => {
           setSeongjuTotal({
             id: 'seongju-total',
             name: '성주군 합계',
-            totalQuantity: today.total_boxes || 0,
-            totalAmount: today.total_amount || 0,
-            averagePrice: today.avg_price || 0,
-            maxPrice: today.max_price || 0,
-            minPrice: today.min_price || 0,
+            totalQuantity: todayData.total_boxes || 0,
+            totalAmount: todayData.total_amount || 0,
+            averagePrice: todayData.avg_price || 0,
+            maxPrice: todayData.max_price || 0,
+            minPrice: todayData.min_price || 0,
             unit: '상자',
             priceUnit: '원',
             previousTotalQuantity: (!hidePrevious && prev) ? prev.total_boxes : null,
             previousAveragePrice: (!hidePrevious && prev) ? prev.avg_price : null,
             previousMaxPrice: (!hidePrevious && prev) ? prev.max_price : null,
             previousMinPrice: (!hidePrevious && prev) ? prev.min_price : null,
-            isTotal: true // 합계 카드 구분용
+            isTotal: true
           });
         } else {
           setSeongjuTotal(null);
