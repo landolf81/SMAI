@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { adService } from '../services';
 import MobileAdDisplay from './MobileAdDisplay';
-import LoadingSpinner from './LoadingSpinner';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { generateMarketShareText, shareContent } from '../utils/shareUtils';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
@@ -64,9 +63,6 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
   const { visibleItems, observe, unobserve } = useScrollFadeIn();
   const cardRefs = useRef({});
 
-  // 순차적 렌더링을 위한 상태
-  const [renderedCount, setRenderedCount] = useState(0);
-  const renderIntervalRef = useRef(null);
 
   // 카드 ref 설정 및 관찰
   const setCardRef = useCallback((element, id) => {
@@ -159,96 +155,48 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
     );
   };
 
-  // 순차적 렌더링: 데이터 로드 후 카드를 위에서부터 순서대로 표시
-  useEffect(() => {
-    // 로딩 중이거나 데이터가 없으면 스킵
-    if (loading || !marketData || marketData.length === 0) {
-      setRenderedCount(0);
-      return;
-    }
-
-    // 뒤로가기(POP)일 때는 즉시 모두 표시
-    if (navigationType === 'POP') {
-      setRenderedCount(marketData.length);
-      return;
-    }
-
-    // 이미 모두 렌더링 완료된 경우
-    if (renderedCount >= marketData.length) {
-      return;
-    }
-
-    // 기존 인터벌 정리
-    if (renderIntervalRef.current) {
-      clearInterval(renderIntervalRef.current);
-    }
-
-    // 첫 번째 아이템 즉시 표시
-    if (renderedCount === 0) {
-      setRenderedCount(1);
-    }
-
-    // 나머지 아이템 순차적 표시 (80ms 간격 - 카드가 크므로 좀 더 여유있게)
-    renderIntervalRef.current = setInterval(() => {
-      setRenderedCount(prev => {
-        if (prev >= marketData.length) {
-          clearInterval(renderIntervalRef.current);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 80);
-
-    return () => {
-      if (renderIntervalRef.current) {
-        clearInterval(renderIntervalRef.current);
-      }
-    };
-  }, [loading, marketData?.length, navigationType]);
 
   if (loading) {
     return (
       <div className="space-y-4 flex flex-col items-center w-full">
-        {/* 스켈레톤 카드 3개 (실제 카드와 동일한 레이아웃) */}
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="w-full mx-auto relative pt-4 animate-pulse">
-            {/* 뱃지 스켈레톤 */}
-            <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
-              <div className="h-9 w-28 bg-gray-300 rounded-full"></div>
-              <div className="w-9 h-9 bg-gray-200 rounded-full"></div>
+        {/* 스켈레톤 카드 1개 (CLS 방지: 최소 높이만 확보) */}
+        <div className="w-full mx-auto relative pt-4 animate-pulse">
+          {/* 뱃지 스켈레톤 */}
+          <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
+            <div className="h-9 w-28 bg-gray-300 rounded-full"></div>
+            <div className="w-9 h-9 bg-gray-200 rounded-full"></div>
+          </div>
+          {/* 카드 본체 스켈레톤 */}
+          <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-[#F7F7F7]">
+            <div className="px-4 py-4 pt-8">
+              {/* 출하량 */}
+              <div className="flex items-center mb-2">
+                <div className="h-5 w-16 bg-gray-200 rounded"></div>
+                <div className="h-6 w-20 bg-gray-300 rounded ml-2"></div>
+                <div className="h-4 w-8 bg-gray-200 rounded ml-1"></div>
+              </div>
+              {/* 출하금액 */}
+              <div className="flex items-center mb-4">
+                <div className="h-5 w-20 bg-gray-200 rounded"></div>
+                <div className="h-5 w-32 bg-gray-300 rounded ml-2"></div>
+              </div>
+              {/* 가격 3열 그리드 */}
+              <div className="grid grid-cols-3 gap-1 text-center">
+                {[0, 1, 2].map((j) => (
+                  <div key={j} className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
+                    <div className="h-3 w-10 bg-gray-200 rounded mx-auto mb-1"></div>
+                    <div className="h-7 w-16 bg-gray-300 rounded mx-auto"></div>
+                    <div className="h-4 w-12 bg-gray-200 rounded mx-auto mt-1"></div>
+                  </div>
+                ))}
+              </div>
             </div>
-            {/* 카드 본체 스켈레톤 */}
-            <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-[#F7F7F7]">
-              <div className="px-4 py-4 pt-8">
-                {/* 출하량 */}
-                <div className="flex items-center mb-2">
-                  <div className="h-5 w-16 bg-gray-200 rounded"></div>
-                  <div className="h-6 w-20 bg-gray-300 rounded ml-2"></div>
-                  <div className="h-4 w-8 bg-gray-200 rounded ml-1"></div>
-                </div>
-                {/* 출하금액 */}
-                <div className="flex items-center mb-4">
-                  <div className="h-5 w-20 bg-gray-200 rounded"></div>
-                  <div className="h-5 w-32 bg-gray-300 rounded ml-2"></div>
-                </div>
-                {/* 가격 3열 그리드 */}
-                <div className="grid grid-cols-3 gap-1 text-center">
-                  {[0, 1, 2].map((j) => (
-                    <div key={j} className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="h-3 w-10 bg-gray-200 rounded mx-auto mb-1"></div>
-                      <div className="h-7 w-16 bg-gray-300 rounded mx-auto"></div>
-                      <div className="h-4 w-12 bg-gray-200 rounded mx-auto mt-1"></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* 상세 버튼 스켈레톤 */}
-              <div className="px-4 pb-4 pt-2">
-                <div className="h-11 w-full bg-gray-300 rounded-xl"></div>
-              </div>
+            {/* 상세 버튼 스켈레톤 */}
+            <div className="px-4 pb-4 pt-2">
+              <div className="h-11 w-full bg-gray-300 rounded-xl"></div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
     );
   }
@@ -432,7 +380,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
         {/* 성주군 합계 카드 - 최상단 */}
         {renderSeongjuTotalCard()}
 
-        {marketData.slice(0, renderedCount).map((market, index) => {
+        {marketData.map((market, index) => {
           const theme = getMarketTheme(market.isTotal);
           const cardId = `card-${market.id}`;
           const cardTranslateY = getCardTranslateY(cardId, index);
