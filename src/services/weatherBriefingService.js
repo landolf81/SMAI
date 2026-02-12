@@ -69,12 +69,14 @@ export const weatherBriefingService = {
               today: {
                 minTemp: weather.daily?.[0]?.minTemp,
                 maxTemp: weather.daily?.[0]?.maxTemp,
-                pop: weather.daily?.[0]?.pop
+                pop: weather.daily?.[0]?.pop,
+                maxPcp: weather.daily?.[0]?.maxPcp
               },
               tomorrow: {
                 minTemp: weather.daily?.[1]?.minTemp,
                 maxTemp: weather.daily?.[1]?.maxTemp,
-                pop: weather.daily?.[1]?.pop
+                pop: weather.daily?.[1]?.pop,
+                maxPcp: weather.daily?.[1]?.maxPcp
               }
             },
             created_at: new Date().toISOString()
@@ -124,12 +126,14 @@ export const weatherBriefingService = {
               today: {
                 minTemp: weather.daily?.[0]?.minTemp,
                 maxTemp: weather.daily?.[0]?.maxTemp,
-                pop: weather.daily?.[0]?.pop
+                pop: weather.daily?.[0]?.pop,
+                maxPcp: weather.daily?.[0]?.maxPcp
               },
               tomorrow: {
                 minTemp: weather.daily?.[1]?.minTemp,
                 maxTemp: weather.daily?.[1]?.maxTemp,
-                pop: weather.daily?.[1]?.pop
+                pop: weather.daily?.[1]?.pop,
+                maxPcp: weather.daily?.[1]?.maxPcp
               }
             },
             created_at: new Date().toISOString()
@@ -172,12 +176,14 @@ export const weatherBriefingService = {
 - 오늘 최저/최고: ${today?.minTemp ?? '?'}°C / ${today?.maxTemp ?? '?'}°C
 - 현재 습도: ${current?.humidity ?? '정보없음'}%
 - 강수확률: ${today?.pop ?? 0}%
+- 예상 강수량: ${today?.maxPcp ?? '강수없음'}
 - 풍속: ${current?.windSpeed ?? '정보없음'} m/s
 - 하늘 상태: ${getSkyText(current?.sky)}
 
 [내일 날씨]
 - 내일 최저/최고: ${tomorrow?.minTemp ?? '?'}°C / ${tomorrow?.maxTemp ?? '?'}°C
 - 강수확률: ${tomorrow?.pop ?? 0}%
+- 예상 강수량: ${tomorrow?.maxPcp ?? '강수없음'}
 - 하늘 상태: ${tomorrow?.weather ?? '정보없음'}
 
 [성주군 월별 평균 기온 참고]
@@ -199,7 +205,11 @@ export const weatherBriefingService = {
 - 외기온 30°C 이상 또는 맑은 날: 하우스 내 고온 주의, 환기창 개방
 - 습도 85% 이상: 병해 발생 위험 (역병, 탄저병), 환기로 습도 조절
 - 강풍(5m/s 이상): 환기창 관리, 비닐 파손 주의
-- 비 예보: 측창 관리, 배수로 점검
+- 비 예보 시 강수량에 비례하여 조언 (중요!):
+  · 강수없음/1.0mm 미만: 비 걱정 불필요, 가볍게 언급만
+  · 1.0~29.9mm: 측창 점검 정도
+  · 30.0mm 이상: 배수로 점검, 침수 주의 등 강한 조언
+  · 소량 비에 배수로/침수 언급은 과도하므로 금지
 - 흐린 날 지속: 일조량 부족, 생육 지연 가능
 
 위 데이터로 비닐하우스 농가에게 보낼 날씨 브리핑을 작성해주세요.

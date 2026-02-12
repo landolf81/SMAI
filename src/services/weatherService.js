@@ -265,6 +265,7 @@ const parseVilageFcst = (items, minMaxData = null) => {
         skys: [],
         ptys: [],
         pops: [],
+        pcps: [], // 시간별 강수량 문자열 수집
         tmn: minMax?.tmn ?? null,
         tmx: minMax?.tmx ?? null
       };
@@ -281,6 +282,9 @@ const parseVilageFcst = (items, minMaxData = null) => {
     }
     if (item.category === 'POP') {
       dailyMap[date].pops.push(parseInt(item.fcstValue));
+    }
+    if (item.category === 'PCP') {
+      dailyMap[date].pcps.push(item.fcstValue); // "강수없음", "1.0mm 미만" 등
     }
     // TMN/TMX: 현재 발표에 값이 있으면 최신 값으로 업데이트
     if (item.category === 'TMN') {
@@ -300,6 +304,7 @@ const parseVilageFcst = (items, minMaxData = null) => {
       sky: parseInt(h.SKY) || 1,
       pty: parseInt(h.PTY) || 0,
       pop: h.POP ? parseInt(h.POP) : 0, // 강수확률
+      pcp: h.PCP || '강수없음', // 1시간 강수량
       humidity: h.REH ? parseInt(h.REH) : null,
       windSpeed: h.WSD ? parseFloat(h.WSD) : null
     }))
@@ -317,11 +322,25 @@ const parseVilageFcst = (items, minMaxData = null) => {
       // 강수가 있으면 강수형태 우선
       pty: d.ptys.some(p => p > 0) ? d.ptys.find(p => p > 0) : 0,
       // 하루 중 최대 강수확률
-      pop: d.pops.length > 0 ? Math.max(...d.pops) : 0
+      pop: d.pops.length > 0 ? Math.max(...d.pops) : 0,
+      // 하루 중 최대 예상 강수량 (문자열)
+      maxPcp: d.pcps.length > 0
+        ? d.pcps.reduce((max, pcp) => parsePcpToNumber(pcp) > parsePcpToNumber(max) ? pcp : max, '강수없음')
+        : '강수없음'
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return { hourly, daily };
+};
+
+// PCP 문자열을 비교 가능한 수치로 변환 (기상청 단기예보 PCP 카테고리)
+const parsePcpToNumber = (pcp) => {
+  if (!pcp || pcp === '강수없음') return 0;
+  if (pcp.includes('미만')) return 0.5; // "1.0mm 미만"
+  if (pcp.includes('50')) return 50;    // "50.0mm 이상"
+  if (pcp.includes('30')) return 30;    // "30.0~49.9mm"
+  const match = pcp.match(/(\d+\.?\d*)/);
+  return match ? parseFloat(match[1]) : 0;
 };
 
 // 가장 빈도 높은 값 찾기
