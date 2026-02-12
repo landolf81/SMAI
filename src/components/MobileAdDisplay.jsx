@@ -301,9 +301,7 @@ const MobileAdDisplay = ({ ad }) => {
     if (!ad) return;
 
     // 클릭 추적
-    adService.trackAdClick(ad.id).catch(err => {
-      console.warn('광고 클릭 추적 실패:', err);
-    });
+    adService.trackAdClick(ad.id).catch(() => {});
 
     // 스크롤 위치 저장 및 배경 스크롤 잠금
     scrollYRef.current = window.scrollY;
@@ -400,14 +398,9 @@ const MobileAdDisplay = ({ ad }) => {
                     playsInline
                     loop
                     preload="auto"
-                    onError={(e) => {
-                      console.error('비디오 로드 오류:', e);
-                    }}
+                    onError={() => {}}
                     onLoadedData={(e) => {
-                      // 비디오가 로드되면 자동 재생 시도
-                      e.target.play().catch(error => {
-                        console.log('자동 재생 실패 (브라우저 정책):', error);
-                      });
+                      e.target.play().catch(() => {});
                     }}
                     onPlay={() => setIsVideoPlaying(true)}
                     onPause={() => setIsVideoPlaying(false)}

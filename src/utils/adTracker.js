@@ -110,8 +110,7 @@ class AdTracker {
                 sessionId: this.sessionId,
                 events: batch
             });
-        } catch (error) {
-            console.error('배치 추적 전송 실패:', error);
+        } catch {
             // 실패한 데이터를 다시 큐에 추가 (최대 재시도 3회)
             batch.forEach(item => {
                 if (!item.retryCount) item.retryCount = 0;
@@ -127,8 +126,8 @@ class AdTracker {
     async sendViewTracking(adId) {
         try {
             await adService.trackAdImpression(adId);
-        } catch (error) {
-            console.error('노출 추적 실패:', error);
+        } catch {
+            // 무시
         }
     }
 
@@ -136,8 +135,8 @@ class AdTracker {
     async sendClickTracking(adId) {
         try {
             await adService.trackAdClick(adId);
-        } catch (error) {
-            console.error('클릭 추적 실패:', error);
+        } catch {
+            // 무시
         }
     }
 
@@ -253,11 +252,5 @@ class AdTracker {
 
 // 전역 인스턴스 생성
 const adTracker = new AdTracker();
-
-// 디버그 정보 (개발용)
-if (process.env.NODE_ENV === 'development') {
-    window.adTracker = adTracker;
-    console.log('🎯 광고 추적 시스템 초기화됨:', adTracker.sessionId);
-}
 
 export default adTracker;

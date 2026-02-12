@@ -3,7 +3,21 @@ import { deleteFromR2, isR2Url } from './r2Service.js';
 
 /**
  * 광고 서비스
+ * - 메모리 캐시로 세션 내 중복 노출 추적 방지
  */
+
+// 세션 내 노출 추적 메모리 캐시 (adId_YYYY-MM-DD 키)
+const _trackedImpressions = new Set();
+// 진행 중인 trackAdImpression Promise (레이스 컨디션 방지)
+const _pendingImpressions = new Map();
+
+/** KST 기준 오늘 날짜 문자열 (YYYY-MM-DD) */
+const _getKstToday = () => {
+  const now = new Date();
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().split('T')[0];
+};
+
 export const adService = {
   /**
    * 활성 광고 목록 조회
@@ -20,18 +34,6 @@ export const adService = {
         .order('priority', { ascending: false });
 
       if (error) throw error;
-
-      console.log('🎯 활성 광고 조회 결과:', {
-        total: data?.length || 0,
-        ads: data?.map(ad => ({
-          id: ad.id,
-          title: ad.title,
-          priority: ad.priority,
-          is_active: ad.is_active,
-          end_date: ad.end_date
-        }))
-      });
-
       return data;
     } catch (error) {
       console.error('활성 광고 조회 오류:', error);
@@ -132,8 +134,6 @@ export const adService = {
         created_at: new Date().toISOString()
       };
 
-      console.log('광고 생성 Supabase 데이터:', insertData);
-
       const { data, error } = await supabase
         .from('ads')
         .insert([insertData])
@@ -168,8 +168,6 @@ export const adService = {
       if (updates.is_active !== undefined) updateData.is_active = updates.is_active;
       if (updates.priority !== undefined) updateData.priority = updates.priority;
       if (updates.priority_boost !== undefined) updateData.priority = updates.priority_boost;
-
-      console.log('광고 업데이트 Supabase 데이터:', updateData);
 
       const { data, error } = await supabase
         .from('ads')
@@ -210,7 +208,6 @@ export const adService = {
             const key = ad.image_url.split('.r2.dev/')[1] || ad.image_url.split('r2.cloudflarestorage.com/')[1];
             if (key) {
               await deleteFromR2(key);
-              console.log('✅ R2 광고 이미지 삭제:', key);
             }
           } else if (ad.image_url.includes('supabase.co/storage')) {
             // Supabase Storage URL 처리
@@ -220,8 +217,6 @@ export const adService = {
               const { error: storageError } = await supabase.storage.from(bucket).remove([path]);
               if (storageError) {
                 console.warn('Supabase Storage 삭제 실패:', storageError);
-              } else {
-                console.log('✅ Supabase Storage 광고 이미지 삭제:', path);
               }
             }
           }
@@ -283,20 +278,17 @@ export const adService = {
    */
   async trackAdClick(adId) {
     try {
-      // RPC 함수로 클릭 카운터 증가
       const { error: rpcError } = await supabase
         .rpc('increment_ad_clicks', { ad_id_param: adId });
 
       if (rpcError) {
-        console.warn('광고 클릭 카운터 증가 실패 (RPC 함수 미설치):', rpcError.message);
-        // RPC 함수가 없어도 계속 진행
+        console.warn('클릭 카운터 RPC 실패:', rpcError.message);
       }
 
-      // ad_clicks 테이블에 상세 클릭 기록 추가
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
-      const { error: insertError } = await supabase
+      await supabase
         .from('ad_clicks')
         .insert([{
           ad_id: adId,
@@ -305,40 +297,62 @@ export const adService = {
           user_agent: navigator.userAgent
         }]);
 
-      // ad_clicks 삽입 실패는 무시 (테이블이 없어도 계속)
-      if (insertError) {
-        console.warn('광고 클릭 상세 기록 실패 (테이블 미생성):', insertError.message);
-      }
-
       return { success: true };
-    } catch (error) {
-      console.warn('광고 클릭 추적 오류 (무시됨):', error);
-      // 에러 발생해도 throw 하지 않음
+    } catch {
       return { success: false };
     }
   },
 
   /**
-   * 광고 노출 추적 (일 기준 중복 체크)
+   * 광고 노출 추적 (메모리 캐시 + DB 중복 체크)
+   * - 1차: 메모리 캐시 (Set) → 같은 세션 내 즉시 차단 (레이스 컨디션 방지)
+   * - 2차: DB ad_views 테이블 → 페이지 새로고침 후에도 하루 1회 보장
+   * - 3차: Promise 잠금 → 동시 호출 시 하나만 실행
    */
   async trackAdImpression(adId) {
+    const todayKey = `${adId}_${_getKstToday()}`;
+
+    // 1차: 메모리 캐시 (즉시 차단, 레이스 컨디션 방지)
+    if (_trackedImpressions.has(todayKey)) {
+      return { success: true, skipped: true };
+    }
+
+    // 2차: 이미 진행 중인 동일 광고 추적이 있으면 대기 후 스킵
+    if (_pendingImpressions.has(todayKey)) {
+      await _pendingImpressions.get(todayKey).catch(() => {});
+      return { success: true, skipped: true };
+    }
+
+    // 즉시 캐시에 등록 (다른 동시 호출 차단)
+    _trackedImpressions.add(todayKey);
+
+    const trackPromise = this._doTrackImpression(adId, todayKey);
+    _pendingImpressions.set(todayKey, trackPromise);
+
     try {
-      // 세션 ID 가져오기 (비로그인 사용자 식별용)
+      return await trackPromise;
+    } finally {
+      _pendingImpressions.delete(todayKey);
+    }
+  },
+
+  /** 실제 노출 추적 로직 (내부용) */
+  async _doTrackImpression(adId, todayKey) {
+    try {
       const sessionId = this._getSessionId();
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
-      // 오늘 날짜 (KST 기준)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayStr = today.toISOString();
+      // KST 자정을 UTC로 변환 (정확한 날짜 비교)
+      const kstToday = _getKstToday();
+      const kstMidnightUtc = new Date(`${kstToday}T00:00:00+09:00`).toISOString();
 
-      // 1. 오늘 이미 이 광고를 본 적 있는지 확인 (user_id 또는 session_id 기준)
+      // DB 중복 체크 (페이지 새로고침 대응)
       let query = supabase
         .from('ad_views')
         .select('id')
         .eq('ad_id', adId)
-        .gte('viewed_at', todayStr);
+        .gte('viewed_at', kstMidnightUtc);
 
       if (user?.id) {
         query = query.eq('user_id', user.id);
@@ -348,21 +362,14 @@ export const adService = {
 
       const { data: existingView } = await query.limit(1);
 
-      // 오늘 이미 본 광고면 기록하지 않음
       if (existingView && existingView.length > 0) {
         return { success: true, skipped: true };
       }
 
-      // 2. RPC 함수로 노출 카운터 증가
-      const { error: rpcError } = await supabase
-        .rpc('increment_ad_impressions', { ad_id_param: adId });
+      // 카운터 증가 + 기록 삽입
+      await supabase.rpc('increment_ad_impressions', { ad_id_param: adId });
 
-      if (rpcError) {
-        console.warn('광고 노출 카운터 증가 실패 (RPC 함수 미설치):', rpcError.message);
-      }
-
-      // 3. ad_views 테이블에 상세 노출 기록 추가
-      const { error: insertError } = await supabase
+      await supabase
         .from('ad_views')
         .insert([{
           ad_id: adId,
@@ -372,13 +379,10 @@ export const adService = {
           user_agent: navigator.userAgent
         }]);
 
-      if (insertError) {
-        console.warn('광고 노출 상세 기록 실패 (테이블 미생성):', insertError.message);
-      }
-
       return { success: true };
-    } catch (error) {
-      console.warn('광고 노출 추적 오류 (무시됨):', error);
+    } catch {
+      // 실패 시 캐시에서 제거 (다음 기회에 재시도 가능)
+      _trackedImpressions.delete(todayKey);
       return { success: false };
     }
   },
@@ -403,8 +407,6 @@ export const adService = {
    */
   async trackBatch(batchData) {
     try {
-      // TODO: ad_events 테이블이 있다면 여기에 이벤트 기록
-      // 현재는 간단하게 노출/클릭만 업데이트
       const promises = batchData.events.map(event => {
         if (event.type === 'view') {
           return this.trackAdImpression(event.adId);
@@ -416,9 +418,8 @@ export const adService = {
 
       await Promise.all(promises);
       return { success: true };
-    } catch (error) {
-      console.error('배치 추적 오류:', error);
-      throw error;
+    } catch {
+      return { success: false };
     }
   },
 
