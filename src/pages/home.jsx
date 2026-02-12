@@ -4,6 +4,7 @@ import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
@@ -14,6 +15,7 @@ import WeatherModal from '../components/WeatherModal';
 import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
+import { useAdminPermissions } from '../hooks/usePermissions';
 
 
 // 색상 정의
@@ -51,6 +53,8 @@ const Home = () => {
 
   // 날씨 브리핑 상태
   const [weatherBriefing, setWeatherBriefing] = useState(null);
+  const [briefingRegenerating, setBriefingRegenerating] = useState(false);
+  const adminPermissions = useAdminPermissions();
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -157,6 +161,28 @@ const Home = () => {
     loadInitialData();
 
   }, []);
+
+  // 관리자 전용: 날씨 브리핑 재생성
+  const handleRegenerateBriefing = async () => {
+    if (briefingRegenerating) return;
+    setBriefingRegenerating(true);
+    try {
+      const weather = await weatherService.getWeatherData();
+      if (weather) {
+        const newBriefing = await weatherBriefingService.regenerateBriefing(weather);
+        if (newBriefing) {
+          setWeatherBriefing(newBriefing);
+          alert(`브리핑 재생성 완료!\n\n"${newBriefing}"`);
+        } else {
+          alert('브리핑 재생성 실패');
+        }
+      }
+    } catch (error) {
+      alert(`브리핑 재생성 오류: ${error.message}`);
+    } finally {
+      setBriefingRegenerating(false);
+    }
+  };
 
   // 인기 게시물 지연 로딩 (스크롤 시 IntersectionObserver로 감지)
   useEffect(() => {
@@ -745,6 +771,26 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* 관리자 전용 플로팅 버튼 - 날씨 브리핑 재생성 */}
+      {adminPermissions.isAdmin && (
+        <button
+          onClick={handleRegenerateBriefing}
+          disabled={briefingRegenerating}
+          className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+            briefingRegenerating
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
+          }`}
+          title="날씨 브리핑 재생성"
+        >
+          {briefingRegenerating ? (
+            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <AutoAwesomeIcon className="text-white" />
+          )}
+        </button>
+      )}
     </div>
   );
 };

@@ -92,6 +92,60 @@ export const weatherBriefingService = {
   },
 
   /**
+   * 캐시 삭제 후 브리핑 재생성 (관리자용)
+   * @param {Object} weather - weatherService에서 가져온 날씨 데이터
+   * @returns {Promise<string|null>} 새 브리핑 텍스트
+   */
+  async regenerateBriefing(weather) {
+    const today = getTodayDate();
+
+    try {
+      // 1. 기존 캐시 삭제
+      await supabase
+        .from('weather_briefings')
+        .delete()
+        .eq('briefing_date', today);
+
+      // 2. 새로 생성
+      const briefing = await this.generateBriefing(weather);
+
+      // 3. 캐시에 저장
+      if (briefing) {
+        await supabase
+          .from('weather_briefings')
+          .upsert({
+            briefing_date: today,
+            briefing: briefing,
+            weather_data: {
+              temp: weather.current?.temp,
+              humidity: weather.current?.humidity,
+              windSpeed: weather.current?.windSpeed,
+              sky: weather.current?.sky,
+              today: {
+                minTemp: weather.daily?.[0]?.minTemp,
+                maxTemp: weather.daily?.[0]?.maxTemp,
+                pop: weather.daily?.[0]?.pop
+              },
+              tomorrow: {
+                minTemp: weather.daily?.[1]?.minTemp,
+                maxTemp: weather.daily?.[1]?.maxTemp,
+                pop: weather.daily?.[1]?.pop
+              }
+            },
+            created_at: new Date().toISOString()
+          }, {
+            onConflict: 'briefing_date'
+          });
+      }
+
+      return briefing;
+    } catch (error) {
+      console.error('날씨 브리핑 재생성 오류:', error);
+      return null;
+    }
+  },
+
+  /**
    * Gemini로 브리핑 생성
    * @param {Object} weather - 날씨 데이터
    * @returns {Promise<string>} 브리핑 텍스트
@@ -105,8 +159,13 @@ export const weatherBriefingService = {
     const today = daily?.[0];
     const tomorrow = daily?.[1];
 
-    const prompt = `당신은 성주 참외 비닐하우스(온실) 농가를 위한 날씨 브리핑 전문가입니다.
+    // 현재 월 (KST 기준)
+    const currentMonth = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).getMonth() + 1;
+
+    const prompt = `당신은 경북 성주군 참외 비닐하우스(온실) 농가를 위한 날씨 브리핑 전문가입니다.
 참외는 노지가 아닌 비닐하우스에서 재배됩니다.
+
+[현재 시점: ${currentMonth}월]
 
 [오늘 날씨]
 - 현재 기온: ${current?.temp ?? '정보없음'}°C
@@ -121,9 +180,22 @@ export const weatherBriefingService = {
 - 강수확률: ${tomorrow?.pop ?? 0}%
 - 하늘 상태: ${tomorrow?.weather ?? '정보없음'}
 
+[성주군 월별 평균 기온 참고]
+- 1월: -6~3°C, 2월: -4~6°C, 3월: 1~12°C, 4월: 7~19°C
+- 5월: 13~25°C, 6월: 18~29°C, 7월: 22~31°C, 8월: 22~31°C
+- 9월: 16~27°C, 10월: 8~21°C, 11월: 1~13°C, 12월: -5~4°C
+
+[체감 온도 판단 기준 - 중요!]
+- 기온을 해당 월 평균과 비교해서 판단하세요
+- 평균보다 높으면 "포근", "따뜻", "활동하기 좋은" 등으로 표현
+- 평균 수준이면 "평년 수준", "무난한" 등으로 표현
+- 평균보다 낮을 때만 "쌀쌀", "추운" 등으로 표현
+- 절대 기온이 낮더라도 해당 계절 평균 이상이면 절대 "춥다"고 하지 마세요
+- 예: 2월에 최고 11°C면 평균(6°C)보다 훨씬 높으므로 "포근한 날씨"입니다
+
 [비닐하우스 참외 재배 기준]
 - 하우스 내 적정 온도: 낮 25~30°C, 밤 15~18°C
-- 외기온 5°C 이하: 보온덮개, 난방 점검 필요
+- 외기온 영하 또는 5°C 이하: 보온덮개, 난방 점검 필요
 - 외기온 30°C 이상 또는 맑은 날: 하우스 내 고온 주의, 환기창 개방
 - 습도 85% 이상: 병해 발생 위험 (역병, 탄저병), 환기로 습도 조절
 - 강풍(5m/s 이상): 환기창 관리, 비닐 파손 주의
@@ -131,15 +203,14 @@ export const weatherBriefingService = {
 - 흐린 날 지속: 일조량 부족, 생육 지연 가능
 
 위 데이터로 비닐하우스 농가에게 보낼 날씨 브리핑을 작성해주세요.
-오늘 날씨와 내일 날씨를 함께 언급해주세요.
 
 규칙:
 1. 50자 이내로 작성
 2. 친근한 말투 (예: "~네요", "~세요", "~해요")
 3. 이모지 사용 금지 (텍스트만)
-4. 비닐하우스 관리 관점에서 실용적인 조언 (환기, 보온, 습도 조절 등)
-5. 걱정을 주기보다 실용적인 조언 위주로
-6. "오늘은 ~, 내일은 ~" 형식으로 두 날씨를 자연스럽게 연결
+4. 비닐하우스 관리 관점에서 실용적인 조언 포함
+5. 체감 온도는 반드시 해당 월 평균 대비로 판단 (절대 기온으로 판단 금지)
+6. 오늘과 내일 날씨를 자연스럽게 연결
 7. JSON 형식으로만 반환: {"briefing": "브리핑 내용"}`;
 
     try {
