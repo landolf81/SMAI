@@ -39,6 +39,9 @@ const Home = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [marketSettings, setMarketSettings] = useState(null); // DB에서 가져온 시장 설정
   const [hottestPost, setHottestPost] = useState(null); // 인기 게시물
+  const [hottestPostLoading, setHottestPostLoading] = useState(false);
+  const hottestPostFetchedRef = useRef(false); // 중복 fetch 방지
+  const hottestPostSentinelRef = useRef(null); // 스크롤 감지용
 
   // 날짜 선택기 모달 상태
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
@@ -129,19 +132,17 @@ const Home = () => {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  // 초기 데이터 병렬 로드 (시장 설정, 날씨, 인기 게시물)
+  // 초기 데이터 병렬 로드 (시장 설정, 날씨)
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // 병렬 실행: 시장 설정, 날씨, 인기 게시물
-        const [settings, weather, hotPost] = await Promise.all([
+        // 병렬 실행: 시장 설정, 날씨
+        const [settings, weather] = await Promise.all([
           marketService.getMarketSettings(),
           weatherService.getWeatherData(),
-          postService.getHottestPost()
         ]);
 
         setMarketSettings(settings);
-        setHottestPost(hotPost);
 
         // 날씨 브리핑은 날씨 데이터 필요 (순차 실행)
         if (weather) {
@@ -156,6 +157,29 @@ const Home = () => {
     loadInitialData();
 
   }, []);
+
+  // 인기 게시물 지연 로딩 (스크롤 시 IntersectionObserver로 감지)
+  useEffect(() => {
+    const sentinel = hottestPostSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hottestPostFetchedRef.current) {
+          hottestPostFetchedRef.current = true;
+          setHottestPostLoading(true);
+          postService.getHottestPost()
+            .then((post) => setHottestPost(post))
+            .catch((err) => console.error('인기 게시물 로드 실패:', err))
+            .finally(() => setHottestPostLoading(false));
+        }
+      },
+      { rootMargin: '200px' } // 200px 미리 감지 (부드러운 로딩)
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loading]); // loading이 false가 되면 sentinel이 DOM에 존재
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
   useEffect(() => {
@@ -688,16 +712,36 @@ const Home = () => {
           handleRefresh={handleRefresh}
         />
 
-        {/* 인기 게시물 섹션 - 경락가 카드 렌더링 완료 후 표시 (CLS 방지) */}
-        {!loading && hottestPost && (
-          <div className="mt-6">
-            <span className="font-bold text-gray-800 mb-3 block">인기 게시물</span>
-            <EnhancedInstagramPost
-              post={hottestPost}
-              isVisible={true}
-              disableAutoplay={false}
-              priority={true}
-            />
+        {/* 인기 게시물 섹션 - 스크롤 시 지연 로딩 */}
+        {!loading && (
+          <div className="mt-6" ref={hottestPostSentinelRef}>
+            {hottestPostLoading && (
+              <div className="animate-pulse">
+                <div className="h-5 w-24 bg-gray-200 rounded mb-3"></div>
+                <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white">
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                      <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="h-4 w-full bg-gray-200 rounded"></div>
+                    <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
+                    <div className="aspect-[4/5] bg-gray-100 rounded-lg"></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {hottestPost && (
+              <>
+                <span className="font-bold text-gray-800 mb-3 block">인기 게시물</span>
+                <EnhancedInstagramPost
+                  post={hottestPost}
+                  isVisible={true}
+                  disableAutoplay={false}
+                  priority={true}
+                />
+              </>
+            )}
           </div>
         )}
       </div>
