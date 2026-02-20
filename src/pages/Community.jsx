@@ -9,11 +9,6 @@ const Community = () => {
     const { isBanned } = useContext(AuthContext);
     const [showBannedAlert, setShowBannedAlert] = useState(false);
 
-    // 페이지 진입 시 스크롤 최상단으로 이동
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, []);
-
     // 차단된 사용자가 리다이렉트되어 왔을 때 알림 표시
     useEffect(() => {
         if (location.state?.banned || isBanned) {

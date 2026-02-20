@@ -9,16 +9,19 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('today'); // today, hourly, weekly
   const scrollYRef = useRef(0);
+  const wasOpenRef = useRef(false);
 
-  // 스크롤 잠금
+  // 스크롤 잠금 (wasOpenRef로 초기 마운트 시 scrollTo(0,0) 방지)
   useEffect(() => {
     if (isOpen) {
+      wasOpenRef.current = true;
       scrollYRef.current = window.scrollY;
       document.body.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
       document.body.style.top = `-${scrollYRef.current}px`;
-    } else {
+    } else if (wasOpenRef.current) {
+      wasOpenRef.current = false;
       document.body.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
@@ -27,10 +30,12 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
     }
 
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.top = '';
+      if (wasOpenRef.current) {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+      }
     };
   }, [isOpen]);
 

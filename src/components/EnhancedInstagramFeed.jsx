@@ -76,7 +76,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     },
     staleTime: 5 * 60 * 1000,  // 5분 캐시
     gcTime: 10 * 60 * 1000,   // 10분 가비지 컬렉션
-    refetchOnMount: 'always',  // 마운트 시 항상 재조회 (개인화 피드 반영)
+    refetchOnMount: true,      // staleTime 이내면 캐시 사용 (always → true: 스크롤 중 DOM 재생성 방지)
     refetchOnWindowFocus: false,  // 윈도우 포커스 시 재조회 비활성화
   });
 
@@ -140,7 +140,15 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   // 모든 페이지의 게시물을 하나의 배열로 합치기
   // 커뮤니티 피드(userId가 없을 때)에서는 인코딩 중인 동영상 게시물 숨김
   const allPosts = useMemo(() => {
-    const posts = data?.pages?.flatMap(page => page) || [];
+    const raw = data?.pages?.flatMap(page => page) || [];
+
+    // 페이지 경계 중복 제거 (알고리즘 정렬 시 발생 가능)
+    const seen = new Set();
+    const posts = raw.filter(post => {
+      if (seen.has(post.id)) return false;
+      seen.add(post.id);
+      return true;
+    });
 
     // 프로필 피드(userId가 있을 때)에서는 모든 게시물 표시
     if (userId) return posts;
@@ -161,7 +169,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
     if (ads.length === 0 && news.length === 0 && youtubeVideos.length === 0) {
       // 광고, 뉴스, YouTube가 없으면 게시물만 반환
-      return allPosts.map((post, index) => ({ type: 'post', data: post, key: `post-${post.id}-${index}` }));
+      return allPosts.map((post, index) => ({ type: 'post', data: post, key: `post-${post.id}` }));
     }
 
     let adIndex = 0; // 현재 광고 인덱스
@@ -170,7 +178,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
     allPosts.forEach((post, index) => {
       // 게시물 추가
-      result.push({ type: 'post', data: post, key: `post-${post.id}-${index}` });
+      result.push({ type: 'post', data: post, key: `post-${post.id}` });
 
       // 3개마다 광고 삽입 (인덱스가 2, 5, 8, ... 일 때)
       if ((index + 1) % 3 === 0 && ads.length > 0) {

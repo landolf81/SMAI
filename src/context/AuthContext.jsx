@@ -4,6 +4,68 @@ import { generateRandomId, generateRandomNickname } from "../utils/randomGenerat
 
 export const AuthContext = createContext();
 
+/**
+ * 프로필 자동 생성 (AuthCallback 실패 시 안전장치)
+ * auth.users에는 있지만 public.users에 프로필이 없는 경우 자동 복구
+ */
+const autoCreateProfile = async (authUser) => {
+  console.log('🔧 프로필 자동 생성 시작:', authUser.id);
+
+  const userIdSuffix = authUser.id.slice(-4);
+  let username = `${generateRandomId()}${userIdSuffix}`;
+  let name = generateRandomNickname();
+  const email = authUser.email || authUser.user_metadata?.email || null;
+
+  // username 중복 체크 (최대 10회)
+  for (let i = 0; i < 10; i++) {
+    const exists = await supabaseHelpers.checkUsernameExists(username);
+    if (!exists) break;
+    username = `${generateRandomId()}${userIdSuffix}`;
+  }
+
+  // name 중복 체크 (최대 10회)
+  for (let i = 0; i < 10; i++) {
+    const exists = await supabaseHelpers.checkNameExists(name);
+    if (!exists) break;
+    name = generateRandomNickname();
+  }
+
+  // 탈퇴 계정 체크
+  const { data: existing } = await supabase
+    .from('users')
+    .select('id, deleted_at')
+    .eq('id', authUser.id)
+    .maybeSingle();
+
+  if (existing?.deleted_at) {
+    throw new Error('탈퇴한 계정입니다.');
+  }
+
+  // 불완전 프로필 정리 후 재생성
+  if (existing && !existing.deleted_at) {
+    await supabase.from('users').delete().eq('id', authUser.id);
+  }
+
+  const { error } = await supabase
+    .from('users')
+    .insert({
+      id: authUser.id,
+      email,
+      username,
+      name,
+      profile_pic: '',
+      status: 'active',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+
+  if (error && error.code !== '23505') {
+    throw error;
+  }
+
+  console.log('✅ 프로필 자동 생성 완료:', { username, name });
+};
+
 // eslint-disable-next-line react/prop-types
 export const AuthContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -36,9 +98,21 @@ export const AuthContextProvider = ({ children }) => {
         console.log("📝 세션 확인:", session ? "로그인됨" : "로그아웃됨");
 
         if (session?.user) {
-          // 사용자 프로필 정보 조회
-          const userProfile = await supabaseHelpers.getUserProfile(session.user.id);
-          setCurrentUser(userProfile);
+          try {
+            // 사용자 프로필 정보 조회
+            const userProfile = await supabaseHelpers.getUserProfile(session.user.id);
+            setCurrentUser(userProfile);
+          } catch (profileError) {
+            // PGRST116: 프로필이 없는 경우 자동 생성 시도
+            if (profileError.code === 'PGRST116') {
+              console.warn('⚠️ 프로필 없음 - 자동 생성 시도...');
+              await autoCreateProfile(session.user);
+              const userProfile = await supabaseHelpers.getUserProfile(session.user.id);
+              setCurrentUser(userProfile);
+            } else {
+              throw profileError;
+            }
+          }
         } else {
           setCurrentUser(null);
         }
@@ -46,8 +120,8 @@ export const AuthContextProvider = ({ children }) => {
         console.error("❌ 세션 초기화 오류:", error);
         console.error("오류 상세:", error.message, error.details, error.hint);
 
-        // 프로필 조회 실패 시 로그아웃 처리
-        console.warn("⚠️ 프로필 조회 실패로 인해 로그아웃 처리합니다.");
+        // 프로필 조회/생성 실패 시 로그아웃 처리
+        console.warn("⚠️ 프로필 처리 실패로 인해 로그아웃 처리합니다.");
         await supabase.auth.signOut();
         setCurrentUser(null);
       } finally {
