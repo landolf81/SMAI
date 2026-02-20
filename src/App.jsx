@@ -8,6 +8,7 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import './App.css';
 
 // Components (항상 필요한 것들은 즉시 로드)
@@ -618,6 +619,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
+      <Analytics />
     </QueryClientProvider>
   );
 }
