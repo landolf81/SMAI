@@ -5,7 +5,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import { marketService, weatherBriefingService, postService, getAgentCached, sendToAgent } from '../services';
+import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
@@ -148,17 +148,10 @@ const Home = () => {
 
         setMarketSettings(settings);
 
-        // 날씨 브리핑: OpenClaw 캐시만 사용 (Gemini 비활성화)
+        // 날씨 브리핑: Gemini 사용
         if (weather) {
-          const agentBriefing = await getAgentCached('seonnam-weather');
-          if (agentBriefing) {
-            setWeatherBriefing(agentBriefing);
-          }
-          // TODO: Gemini 폴백 비활성화 중
-          // } else {
-          //   const briefing = await weatherBriefingService.getBriefing(weather);
-          //   setWeatherBriefing(briefing);
-          // }
+          const briefing = await weatherBriefingService.getBriefing(weather);
+          if (briefing) setWeatherBriefing(briefing);
         }
       } catch (error) {
         console.error('초기 데이터 로드 실패:', error);
@@ -169,16 +162,13 @@ const Home = () => {
 
   }, []);
 
-  // 관리자 전용: OpenClaw에 브리핑 요청 (fire & forget) + 오늘 최신 항목 표시
+  // 관리자 전용: Gemini로 브리핑 재생성
   const handleRegenerateBriefing = async () => {
     if (briefingRegenerating) return;
     setBriefingRegenerating(true);
     try {
       const weather = await weatherService.getWeatherData();
-      await sendToAgent({ session: 'seonnam-weather', force: true, weatherData: weather });
-
-      // 오늘 날짜 최신 브리핑 즉시 표시 (이미 저장된 것)
-      const briefing = await getAgentCached('seonnam-weather');
+      const briefing = await weatherBriefingService.regenerateBriefing(weather);
       if (briefing) setWeatherBriefing(briefing);
     } catch (error) {
       alert(`요청 오류: ${error.message}`);
