@@ -40,12 +40,12 @@ export const weatherBriefingService = {
     const today = getTodayDate();
 
     try {
-      // 1. 캐시에서 먼저 조회
+      // 1. 캐시에서 먼저 조회 (.maybeSingle: 0건이어도 null 반환, 406 에러 없음)
       const { data: cached } = await supabase
         .from('weather_briefings')
         .select('briefing')
         .eq('briefing_date', today)
-        .single();
+        .maybeSingle();
 
       if (cached?.briefing) {
         return cached.briefing;

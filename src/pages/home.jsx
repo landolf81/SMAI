@@ -665,6 +665,18 @@ const Home = () => {
         </div>
       </div>
 
+      {/* 날씨 브리핑 한 줄 표시 (Gemini AI) */}
+      {weatherBriefing && (
+        <button
+          onClick={() => setIsWeatherModalOpen(true)}
+          className="w-full px-4 py-1.5 text-left border-b"
+          style={{ borderColor: COLORS.border, backgroundColor: '#f0f7f0' }}
+        >
+          <span className="text-xs font-semibold mr-1.5" style={{ color: COLORS.mainGreen }}>참외날씨</span>
+          <span className="text-xs text-gray-700">{weatherBriefing}</span>
+        </button>
+      )}
+
       {/* DatePicker 모달 */}
       <DatePickerModal
         isOpen={isDatePickerOpen}
