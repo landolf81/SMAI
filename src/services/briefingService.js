@@ -55,7 +55,7 @@ export const briefingService = {
         .select('*')
         .eq('market_name', marketName)
         .eq('market_date', targetDate)
-        .single();
+        .maybeSingle();
 
       if (cached) {
         return {
@@ -138,7 +138,7 @@ export const briefingService = {
         .lte('market_date', d7Date)
         .order('market_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // 작년 동일 주차 같은 요일 데이터 조회
       const lastYearDate = getLastYearSameWeekDay(targetDate);
@@ -150,7 +150,7 @@ export const briefingService = {
         .lte('market_date', new Date(new Date(lastYearDate).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .order('market_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // 오늘과 전 경매일 등급별 데이터 조회
       const todayDate = recentData?.[0]?.market_date;

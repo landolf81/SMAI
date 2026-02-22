@@ -620,7 +620,7 @@ const getCachedWeather = async (locationKey) => {
       .from('weather_cache')
       .select('data, updated_at')
       .eq('location_key', locationKey)
-      .single();
+      .maybeSingle();
 
     if (error || !data) return { data: null, isExpired: true };
 

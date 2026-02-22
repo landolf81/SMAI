@@ -16,7 +16,7 @@ export const marketService = {
         .select('market_date')
         .order('market_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('최신 날짜 조회 오류:', error);
@@ -304,7 +304,7 @@ export const marketService = {
           .lt('market_date', date)
           .order('market_date', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         // 전일 비교 계산
         const currentAvgPrice = parseInt(market.avg_price) || 0;
@@ -382,7 +382,7 @@ export const marketService = {
         .select('*')
         .eq('market_name', marketName)
         .eq('market_date', date)
-        .single();
+        .maybeSingle();
 
       if (summaryError && summaryError.code !== 'PGRST116') {
         throw summaryError;
@@ -426,7 +426,7 @@ export const marketService = {
         .lt('market_date', date)
         .order('market_date', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       let previousMarketDate = null;
       let previousSummaryData = null;
@@ -442,7 +442,7 @@ export const marketService = {
           .select('*')
           .eq('market_name', marketName)
           .eq('market_date', previousMarketDate)
-          .single();
+          .maybeSingle();
 
         previousSummaryData = prevSummary;
 
@@ -647,7 +647,7 @@ export const marketService = {
         .from('app_settings')
         .select('value')
         .eq('key', 'market_display_settings')
-        .single();
+        .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -674,7 +674,7 @@ export const marketService = {
         .from('app_settings')
         .select('id')
         .eq('key', 'market_display_settings')
-        .single();
+        .maybeSingle();
 
       if (existing) {
         // 업데이트

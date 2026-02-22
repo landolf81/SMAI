@@ -194,7 +194,7 @@ export const adService = {
         .from('ads')
         .select('image_url')
         .eq('id', adId)
-        .single();
+        .maybeSingle();
 
       if (fetchError) {
         console.warn('광고 조회 실패:', fetchError);
