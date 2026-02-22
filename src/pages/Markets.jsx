@@ -123,6 +123,11 @@ const Markets = () => {
     setLoading(false);
   };
 
+  // 페이지 진입 시 홈 캐시 무효화 플래그 세팅
+  useEffect(() => {
+    sessionStorage.setItem('home_cache_invalidate', 'true');
+  }, []);
+
   useEffect(() => {
     loadMarketData(selectedDate);
   }, [selectedDate]);

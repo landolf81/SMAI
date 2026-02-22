@@ -395,6 +395,23 @@ const Home = () => {
   // 초기 로드 시 데이터 가져오기 (캐시 사용으로 빠른 복귀)
   useEffect(() => {
     const loadMarketData = async () => {
+      // 강제새로고침(reload) 또는 상세보기 방문 후 복귀 시 캐시 무효화
+      // sessionStorage는 F5/Ctrl+F5에서 지워지지 않으므로 직접 처리
+      const isReload = (() => {
+        try {
+          return performance.getEntriesByType('navigation')[0]?.type === 'reload';
+        } catch { return false; }
+      })();
+      const cameFromDetail = sessionStorage.getItem('home_cache_invalidate') === 'true';
+
+      if (isReload || cameFromDetail) {
+        sessionStorage.removeItem('home_market_data');
+        sessionStorage.removeItem('home_selected_date');
+        sessionStorage.removeItem('home_cache_time');
+        sessionStorage.removeItem('home_seongju_total');
+        sessionStorage.removeItem('home_cache_invalidate');
+      }
+
       // sessionStorage에서 캐시된 데이터 확인 (뒤로가기, Link 이동 모두 지원)
       try {
         const cachedData = sessionStorage.getItem('home_market_data');

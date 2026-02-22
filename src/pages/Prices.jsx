@@ -34,6 +34,11 @@ const Prices = () => {
   // 설정 로드 상태
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
+  // 페이지 진입 시 홈 캐시 무효화 플래그 세팅 (뒤로가기 시 홈이 신선한 데이터 로드)
+  useEffect(() => {
+    sessionStorage.setItem('home_cache_invalidate', 'true');
+  }, []);
+
   // 페이지 진입 시 스크롤 최상단으로 이동 및 설정 로드
   useEffect(() => {
     window.scrollTo(0, 0);
