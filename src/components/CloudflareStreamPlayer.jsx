@@ -55,11 +55,11 @@ const CloudflareStreamPlayer = ({
   // HLS playback URL (clientBandwidthHint=10으로 iOS Safari에서도 고화질 시작)
   const playbackUrl = uid ? `https://${customerSubdomain}.cloudflarestream.com/${uid}/manifest/video.m3u8?clientBandwidthHint=10` : '';
 
-  // 썸네일 URL 생성
+  // 썸네일 URL 생성 (모바일 최적화: 400px, 기존 640px에서 축소)
   const getThumbnailUrl = useCallback(() => {
     if (!uid) return '';
     const fitParam = aspectRatio === 'square' ? '&fit=crop' : '';
-    const thumbnailUrl = `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=640&height=640${fitParam}`;
+    const thumbnailUrl = `https://${customerSubdomain}.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?time=1s&width=400&height=400${fitParam}`;
 
     return thumbnailUrl;
   }, [uid, aspectRatio]);

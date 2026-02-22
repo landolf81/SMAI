@@ -136,11 +136,11 @@ const Home = () => {
     return () => window.removeEventListener('resize', checkDevice);
   }, []);
 
-  // 초기 데이터 병렬 로드 (시장 설정, 날씨)
+  // 초기 데이터 병렬 로드 (시장 설정, 날씨, 인기 게시물)
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // 병렬 실행: 시장 설정, 날씨
+        // 병렬 실행: 시장 설정, 날씨, 인기 게시물 (LCP 개선: 인기 게시물 선제 로드)
         const [settings, weather] = await Promise.all([
           marketService.getMarketSettings(),
           weatherService.getWeatherData(),
@@ -157,6 +157,17 @@ const Home = () => {
         console.error('초기 데이터 로드 실패:', error);
       }
     };
+
+    // 인기 게시물 선제 로드 (IntersectionObserver와 별개로 미리 시작)
+    // 썸네일이 LCP로 잡히므로 최대한 빨리 데이터 확보
+    if (!hottestPostFetchedRef.current) {
+      hottestPostFetchedRef.current = true;
+      setHottestPostLoading(true);
+      postService.getHottestPost()
+        .then((post) => setHottestPost(post))
+        .catch((err) => console.error('인기 게시물 로드 실패:', err))
+        .finally(() => setHottestPostLoading(false));
+    }
 
     loadInitialData();
 
