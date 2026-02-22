@@ -672,16 +672,16 @@ const MarketTrend = () => {
             ? Math.min(...minPrices.map((d) => d.minPrice))
             : 0;
 
-          // 작년 데이터
-          const lastYearValid = chartData.filter((d) => d.lastYearMax !== null && d.lastYearMax > 0);
+          // 작년 데이터 (오늘까지 해당하는 날짜만 - 미래 날짜의 작년 데이터 제외)
+          const lastYearValid = chartData.filter((d) => !d.isFuture && d.lastYearMax !== null && d.lastYearMax > 0);
           const lastYearMaxPrice = lastYearValid.length > 0
             ? Math.max(...lastYearValid.map((d) => d.lastYearMax))
             : 0;
-          const lastYearAvgPrices = chartData.filter((d) => d.lastYearAvg && d.lastYearAvg > 0);
+          const lastYearAvgPrices = chartData.filter((d) => !d.isFuture && d.lastYearAvg && d.lastYearAvg > 0);
           const lastYearAvgPrice = lastYearAvgPrices.length > 0
             ? Math.round(lastYearAvgPrices.reduce((sum, d) => sum + d.lastYearAvg, 0) / lastYearAvgPrices.length)
             : 0;
-          const lastYearMinPrices = chartData.filter((d) => d.lastYearMin && d.lastYearMin > 0);
+          const lastYearMinPrices = chartData.filter((d) => !d.isFuture && d.lastYearMin && d.lastYearMin > 0);
           const lastYearMinPrice = lastYearMinPrices.length > 0
             ? Math.min(...lastYearMinPrices.map((d) => d.lastYearMin))
             : 0;
