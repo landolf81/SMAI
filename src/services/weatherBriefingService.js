@@ -21,6 +21,20 @@ function getSkyText(sky) {
 }
 
 /**
+ * 강수형태 텍스트 변환
+ */
+function getPtyText(pty) {
+  const ptyMap = {
+    0: '없음',
+    1: '비',
+    2: '비/눈',
+    3: '눈',
+    4: '소나기'
+  };
+  return ptyMap[pty] || '없음';
+}
+
+/**
  * 오늘 날짜 (YYYY-MM-DD)
  */
 function getTodayDate() {
@@ -163,6 +177,14 @@ export const weatherBriefingService = {
     const today = daily?.[0];
     const tomorrow = daily?.[1];
 
+    console.log('[브리핑 데이터]', {
+      currentPty: current?.pty,
+      todayPty: today?.pty,
+      tomorrowPty: tomorrow?.pty,
+      currentSky: current?.sky,
+      todaySky: today?.sky,
+    });
+
     // 현재 월 (KST 기준)
     const currentMonth = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).getMonth() + 1;
 
@@ -179,12 +201,14 @@ export const weatherBriefingService = {
 - 예상 강수량: ${today?.maxPcp ?? '강수없음'}
 - 풍속: ${current?.windSpeed ?? '정보없음'} m/s
 - 하늘 상태: ${getSkyText(current?.sky)}
+- 강수형태: ${getPtyText(current?.pty)}
 
 [내일 날씨]
 - 내일 최저/최고: ${tomorrow?.minTemp ?? '?'}°C / ${tomorrow?.maxTemp ?? '?'}°C
 - 강수확률: ${tomorrow?.pop ?? 0}%
 - 예상 강수량: ${tomorrow?.maxPcp ?? '강수없음'}
 - 하늘 상태: ${tomorrow?.weather ?? '정보없음'}
+- 강수형태: ${getPtyText(tomorrow?.pty)}
 
 [성주군 월별 평균 기온 참고]
 - 1월: -6~3°C, 2월: -4~6°C, 3월: 1~12°C, 4월: 7~19°C
@@ -205,6 +229,9 @@ export const weatherBriefingService = {
 - 외기온 30°C 이상 또는 맑은 날: 하우스 내 고온 주의, 환기창 개방
 - 습도 85% 이상: 병해 발생 위험 (역병, 탄저병), 환기로 습도 조절
 - 강풍(5m/s 이상): 환기창 관리, 비닐 파손 주의
+- 강수형태가 "눈" 또는 "비/눈"이면 반드시 눈 관련 내용 포함 (하늘이 맑아도 눈이 올 수 있음!)
+  · 눈: 하우스 적설 하중 주의, 눈 쌓이면 제설 필요
+  · 비/눈: 기온에 따라 비→눈 전환 가능성 언급
 - 비 예보 시 강수량에 비례하여 조언 (중요!):
   · 강수없음/1.0mm 미만: 비 걱정 불필요, 가볍게 언급만
   · 1.0~29.9mm: 측창 점검 정도
@@ -281,8 +308,15 @@ export const weatherBriefingService = {
     let todayMsg = '오늘 하우스 관리 무난해요';
     let tomorrowMsg = '내일도 괜찮아요';
 
+    const todayPty = current?.pty || today?.pty || 0;
+    const tomorrowPty = tomorrow?.pty || 0;
+
     // 오늘 날씨 판단 (비닐하우스 관점)
-    if (todayMin !== undefined && todayMin <= 5) {
+    if (todayPty === 3) {
+      todayMsg = '오늘 눈 와요, 적설 하중 주의하세요';
+    } else if (todayPty === 2) {
+      todayMsg = '오늘 비/눈 와요, 하우스 점검하세요';
+    } else if (todayMin !== undefined && todayMin <= 5) {
       todayMsg = '오늘 밤 보온 점검하세요';
     } else if (todayMax !== undefined && todayMax >= 30) {
       todayMsg = '오늘 환기 신경 쓰세요';
@@ -293,7 +327,11 @@ export const weatherBriefingService = {
     }
 
     // 내일 날씨 판단 (비닐하우스 관점)
-    if (tomorrowMin !== undefined && tomorrowMin <= 5) {
+    if (tomorrowPty === 3) {
+      tomorrowMsg = '내일 눈 대비하세요';
+    } else if (tomorrowPty === 2) {
+      tomorrowMsg = '내일 비/눈 대비하세요';
+    } else if (tomorrowMin !== undefined && tomorrowMin <= 5) {
       tomorrowMsg = '내일 추워요, 보온 준비하세요';
     } else if (tomorrowMax !== undefined && tomorrowMax >= 30) {
       tomorrowMsg = '내일 환기 준비하세요';

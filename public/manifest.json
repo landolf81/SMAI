@@ -1,0 +1,22 @@
+{
+  "name": "참외이야기",
+  "short_name": "참외이야기",
+  "description": "성주군 참외 농업인을 위한 커뮤니티",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F7F7F7",
+  "theme_color": "#004225",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
