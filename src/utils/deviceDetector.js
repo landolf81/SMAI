@@ -3,8 +3,8 @@ export const isMobileDevice = () => {
   const userAgent = navigator.userAgent.toLowerCase();
   const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   const isMobileScreen = window.innerWidth <= 768;
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  return isMobileUA || (isMobileScreen && isTouchDevice);
+  // UA가 모바일이거나, 화면 너비가 768px 이하면 모바일로 처리 (프리뷰/에뮬레이터 대응)
+  return isMobileUA || isMobileScreen;
 };
 
 // 태블릿 감지
