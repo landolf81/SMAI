@@ -16,6 +16,7 @@ import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useAdminPermissions } from '../hooks/usePermissions';
+import PushNotificationBanner from '../components/PushNotificationBanner';
 
 
 // 색상 정의
@@ -722,6 +723,9 @@ const Home = () => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* 푸시 알림 구독 배너 */}
+        <PushNotificationBanner />
+
         <MarketCards
           marketData={marketData}
           seongjuTotal={seongjuTotal}

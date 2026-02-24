@@ -3,7 +3,8 @@
 //       → /hooks/agent 로 요청 전송 (OpenClaw이 처리 후 agent_logs에 직접 저장)
 // 배포: supabase functions deploy request-agent
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+import { createClient } from "jsr:@supabase/supabase-js@2"
 
 const SUPABASE_URL             = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!

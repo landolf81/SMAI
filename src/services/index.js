@@ -21,4 +21,5 @@ export { translationService } from './translationService.js';
 export { briefingService } from './briefingService.js';
 export { weatherBriefingService } from './weatherBriefingService.js';
 export { youtubeService } from './youtubeService.js';
+export { pushNotificationService } from './pushNotificationService.js';
 export * from './agentService.js';

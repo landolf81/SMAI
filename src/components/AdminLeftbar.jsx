@@ -17,6 +17,7 @@ import StorageIcon from "@mui/icons-material/Storage";
 import CachedIcon from "@mui/icons-material/Cached";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BackupIcon from "@mui/icons-material/Backup";
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
@@ -151,6 +152,17 @@ const AdminLeftbar = () => {
           path: "/admin/market-settings",
           icon: StoreIcon,
           label: "시장정보 설정",
+          badge: null
+        }
+      ]
+    },
+    {
+      title: "알림",
+      items: [
+        {
+          path: "/admin/push",
+          icon: NotificationsActiveIcon,
+          label: "푸시 알림",
           badge: null
         }
       ]

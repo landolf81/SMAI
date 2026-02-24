@@ -63,6 +63,7 @@ const AdminReports = lazy(() => import('./pages/AdminReports'));
 const AdminMarketSettings = lazy(() => import('./pages/admin/AdminMarketSettings'));
 const AdminVerification = lazy(() => import('./pages/admin/AdminVerification'));
 const AdminYouTube = lazy(() => import('./pages/admin/AdminYouTube'));
+const AdminPushNotifications = lazy(() => import('./pages/admin/AdminPushNotifications'));
 
 // Other Pages - Lazy Loading
 const Prices = lazy(() => import('./pages/Prices'));
@@ -578,6 +579,10 @@ const router = createBrowserRouter(
       {
         path: '/admin/youtube',
         element: <ProtectedRoute><AdminYouTube /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/push',
+        element: <ProtectedRoute><AdminPushNotifications /></ProtectedRoute>,
       },
     ],
   },
