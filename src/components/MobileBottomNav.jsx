@@ -156,7 +156,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       }`}
     >
       <div className="bg-white/90 backdrop-blur-md border-t border-gray-200 safe-area-bottom">
-        <div className="flex items-center justify-around h-16 max-w-screen-xl mx-auto px-2">
+        <div className="flex items-center justify-around h-20 max-w-screen-xl mx-auto px-2">
           {buttons.map((button) => {
             const IconComponent = button.icon;
             const isActive = isActiveButton(button);

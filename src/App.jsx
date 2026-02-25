@@ -238,7 +238,7 @@ const Layout = () => {
               />
 
               {/* 메뉴 아이템들 */}
-              <div className="absolute bottom-16 right-0 flex flex-col items-end gap-3 mb-2">
+              <div className="absolute bottom-20 right-0 flex flex-col items-end gap-3 mb-2">
                 {currentTab === 'qna' ? (
                   <>
                     {/* 질문하기 */}
