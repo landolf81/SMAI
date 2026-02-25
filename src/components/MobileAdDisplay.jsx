@@ -628,15 +628,15 @@ const MobileAdDisplay = ({ ad }) => {
               )}
 
               {/* 외부 링크 섹션 */}
-              {ad.link_url && (
+              {ad.link_url && !isPWAInstallAd && (
                 <div className="mb-4">
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                    <p className="text-sm text-blue-800 mb-2 break-all">{ad.link_url}</p>
+                  <div className="p-3">
+                    <p className="text-sm text-gray-500 mb-2 break-all">{ad.link_url}</p>
                     <button
                       onClick={() => window.open(ad.link_url, '_blank')}
-                      className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-2 px-4 rounded-lg hover:from-blue-600 hover:to-purple-600 transition-all duration-200"
+                      className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200"
                     >
-                      자세히 보기
+                      상세보기
                     </button>
                   </div>
                 </div>
