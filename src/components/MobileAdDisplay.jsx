@@ -5,6 +5,7 @@ import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
 import CloudflareStreamPlayer from './CloudflareStreamPlayer';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 /** Cloudflare Images URL의 variant를 축소 (public → w=600) */
 const toSmallVariant = (url) => {
@@ -26,6 +27,11 @@ const MobileAdDisplay = ({ ad }) => {
   const adCardRef = useRef(null);
   const impressionTimerRef = useRef(null); // 노출 타이머
   const scrollYRef = useRef(0); // 스크롤 위치 저장
+  const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
+
+  // pwa-install 광고인데 이미 설치된 환경이면 렌더링 안 함
+  const isPWAInstallAd = ad?.link_url === 'pwa-install';
+  if (isPWAInstallAd && isInstalled) return null;
 
   // 추가 미디어 불러오기
   useEffect(() => {
@@ -303,11 +309,17 @@ const MobileAdDisplay = ({ ad }) => {
   };
 
   // 광고 클릭 핸들러 (항상 모달로 열기)
-  const handleAdClick = () => {
+  const handleAdClick = async () => {
     if (!ad) return;
 
     // 클릭 추적
     adService.trackAdClick(ad.id).catch(() => {});
+
+    // PWA 설치 광고: Android는 네이티브 설치, iOS는 모달로 안내
+    if (isPWAInstallAd && canInstall) {
+      await promptInstall();
+      return;
+    }
 
     // 스크롤 위치 저장 및 배경 스크롤 잠금
     scrollYRef.current = window.scrollY;
@@ -324,6 +336,7 @@ const MobileAdDisplay = ({ ad }) => {
 
   // 모달 미디어 클릭 핸들러 (링크로 이동)
   const handleModalMediaClick = () => {
+    if (isPWAInstallAd) return; // iOS 안내 모달에서는 링크 이동 불필요
     if (ad?.link_url) {
       window.open(ad.link_url, '_blank');
     }
