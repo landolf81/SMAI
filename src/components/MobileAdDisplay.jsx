@@ -6,6 +6,12 @@ import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
 import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 
+/** Cloudflare Images URL의 variant를 축소 (public → w=600) */
+const toSmallVariant = (url) => {
+  if (!url || !url.includes('imagedelivery.net')) return url;
+  return url.replace(/\/public$/, '/w=600');
+};
+
 const MobileAdDisplay = ({ ad }) => {
   const [adMedia, setAdMedia] = useState([]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
@@ -423,9 +429,11 @@ const MobileAdDisplay = ({ ad }) => {
                 </div>
               ) : (
                 <img
-                  src={getImageUrl(getCurrentMedia().path)}
+                  src={toSmallVariant(getImageUrl(getCurrentMedia().path))}
                   alt={getCurrentMedia().alt || ad.title}
                   className="absolute inset-0 w-full h-full object-contain hover:scale-105 transition-transform duration-300"
+                  loading="eager"
+                  fetchPriority="high"
                   onError={(e) => {
                     e.target.src = DEFAULT_AD_IMAGE;
                   }}
