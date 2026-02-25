@@ -1066,8 +1066,8 @@ const AdminAdsNew = () => {
                         {previewAd.content}
                       </p>
                       {previewAd.link_url && (
-                        <button className="w-full mt-3 bg-amber-500 text-white text-sm py-2.5 rounded-lg font-medium hover:bg-amber-600 transition-colors">
-                          자세히 보기
+                        <button className="w-full mt-3 bg-teal-600 text-white text-sm py-2.5 rounded-lg font-medium hover:bg-teal-700 transition-colors">
+                          상세보기
                         </button>
                       )}
                     </div>

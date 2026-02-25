@@ -609,10 +609,10 @@ const MobileAdDisplay = ({ ad }) => {
                       }}
                     />
                   )}
-                  {/* 링크 있을 때 안내 표시 */}
-                  {ad.link_url && (
+                  {/* 링크 있을 때 안내 표시 (pwa-install 제외) */}
+                  {ad.link_url && !isPWAInstallAd && (
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-3 py-1 rounded-full">
-                      탭하여 자세히 보기
+                      탭하여 상세보기
                     </div>
                   )}
                 </div>
