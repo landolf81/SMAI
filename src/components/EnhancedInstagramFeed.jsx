@@ -180,8 +180,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       // 게시물 추가
       result.push({ type: 'post', data: post, key: `post-${post.id}` });
 
-      // 3개마다 광고 삽입 (인덱스가 2, 5, 8, ... 일 때)
-      if ((index + 1) % 3 === 0 && ads.length > 0) {
+      // 카드 3개당 광고 1개 (인덱스 3, 7, 11, ... 일 때)
+      if ((index + 1) % 4 === 0 && ads.length > 0) {
         const ad = ads[adIndex % ads.length];
         if (ad && ad.id) {
           result.push({
@@ -221,8 +221,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       }
     });
 
-    // 게시물이 3개 미만이고 광고가 아직 표시되지 않았다면, 마지막에 광고 추가
-    if (allPosts.length > 0 && allPosts.length < 3 && ads.length > 0 && adIndex === 0) {
+    // 게시물이 4개 미만이고 광고가 아직 표시되지 않았다면, 마지막에 광고 추가
+    if (allPosts.length > 0 && allPosts.length < 4 && ads.length > 0 && adIndex === 0) {
       const ad = ads[0];
       if (ad && ad.id) {
         result.push({

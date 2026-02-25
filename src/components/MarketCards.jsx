@@ -519,18 +519,18 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               </div>
             </div>
             </div>
-            {/* 2개마다 광고 삽입 (2, 4, 6번째 카드 뒤) */}
-            {shouldShowAds() && ((index + 1) % 2 === 0) && sortedAds.length > 0 && (
+            {/* 3개마다 광고 삽입 (3, 6, 9번째 카드 뒤) */}
+            {shouldShowAds() && ((index + 1) % 3 === 0) && sortedAds.length > 0 && (
               <MobileAdDisplay
-                ad={sortedAds[Math.floor(index / 2) % sortedAds.length]}
+                ad={sortedAds[Math.floor(index / 3) % sortedAds.length]}
               />
             )}
           </React.Fragment>
           );
         })}
 
-        {/* 최하단 광고 (경락 정보가 1개 이하일 때만 표시) */}
-        {shouldShowAds() && sortedAds.length > 0 && marketData.length > 0 && marketData.length <= 1 && (
+        {/* 최하단 광고 (경락 정보가 3개 미만일 때만 표시) */}
+        {shouldShowAds() && sortedAds.length > 0 && marketData.length > 0 && marketData.length < 3 && (
           <MobileAdDisplay
             ad={sortedAds[0]}
           />
