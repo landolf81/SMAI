@@ -9,6 +9,8 @@ import BadgeDisplay from './BadgeDisplay';
 import { badgeService, userService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import { generateDiceBearAvatar } from '../utils/userHelper';
+import AIBadge from './AIBadge';
+import { isAIUser } from '../config/aiUser';
 
 const ProfileModal = ({ isOpen, onClose, user }) => {
   const navigate = useNavigate();
@@ -162,8 +164,9 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
                 <h2 className="text-xl font-bold text-gray-900">
                   {displayUser.name || displayUser.user_name || displayUser.username}
                 </h2>
-                {/* DM 아이콘 - 본인이 아닌 경우에만 표시 */}
-                {currentUser && currentUser.id !== userId && (
+                {isAIUser(displayUser) && <AIBadge />}
+                {/* DM 아이콘 - 본인/AI가 아닌 경우에만 표시 */}
+                {currentUser && currentUser.id !== userId && !isAIUser(displayUser) && (
                   <button
                     onClick={() => {
                       onClose();

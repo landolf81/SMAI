@@ -32,6 +32,8 @@ import LockIcon from '@mui/icons-material/Lock';
 import CloseIcon from '@mui/icons-material/Close';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
+import AIBadge from '../components/AIBadge';
+import { isAIUser } from '../config/aiUser';
 
 moment.locale('ko');
 
@@ -655,6 +657,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                       >
                         {comment.user_name || comment.username}
                       </span>
+                      {isAIUser(comment) && <AIBadge />}
                       {comment.is_secret && (
                         <span className="inline-flex items-center gap-0.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
                           <LockIcon sx={{ fontSize: 12 }} />

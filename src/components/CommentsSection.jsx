@@ -9,6 +9,8 @@ import { faReply, faEllipsisV, faTrash, faEdit, faFlag, faHeart as faHeartSolid,
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import ReportModal from './ReportModal';
 import LoadingSpinner from './LoadingSpinner';
+import AIBadge from './AIBadge';
+import { isAIUser } from '../config/aiUser';
 
 const CommentsSection = ({ postId, postTag, post }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
@@ -403,6 +405,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                   <span className="font-semibold text-sm text-gray-800">
                     {comment.name || comment.username}
                   </span>
+                  {isAIUser(comment) && <AIBadge />}
                   {comment.is_secret && (
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
                       🔒 비밀
@@ -623,6 +626,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                         <span className="font-semibold text-xs text-gray-800">
                           {reply.name || reply.username}
                         </span>
+                        {isAIUser(reply) && <AIBadge />}
                         {reply.is_secret && (
                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
                             🔒 비밀

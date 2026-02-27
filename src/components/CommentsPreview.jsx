@@ -11,6 +11,8 @@ import ReportModal from './ReportModal';
 import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
+import AIBadge from './AIBadge';
+import { isAIUser } from '../config/aiUser';
 
 const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments, onOpenCommentsModal, filterByUserId = null }) => {
   const { currentUser } = useContext(AuthContext);
@@ -318,15 +320,16 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                   src={getProfilePic(comment)}
                   alt={getDisplayName(comment)}
                   onClick={() => {
-                    if (isProfileClickable(comment)) {
+                    if (isProfileClickable(comment) || isAIUser(comment)) {
                       setSelectedUser(comment);
                       setShowProfileModal(true);
                     }
                   }}
-                  className={`w-6 h-6 rounded-full object-cover flex-shrink-0 transition-opacity ${isProfileClickable(comment) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(comment)}`}
+                  className={`w-6 h-6 rounded-full object-cover flex-shrink-0 transition-opacity ${(isProfileClickable(comment) || isAIUser(comment)) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(comment)}`}
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start">
+                    {isAIUser(comment) && <AIBadge />}
                     {comment.is_secret && (
                       <span className="mr-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
                         🔒 비밀글
@@ -503,15 +506,16 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                         src={getProfilePic(reply)}
                         alt={getDisplayName(reply)}
                         onClick={() => {
-                          if (isProfileClickable(reply)) {
+                          if (isProfileClickable(reply) || isAIUser(reply)) {
                             setSelectedUser(reply);
                             setShowProfileModal(true);
                           }
                         }}
-                        className={`w-6 h-6 rounded-full object-cover flex-shrink-0 transition-opacity ${isProfileClickable(reply) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(reply)}`}
+                        className={`w-6 h-6 rounded-full object-cover flex-shrink-0 transition-opacity ${(isProfileClickable(reply) || isAIUser(reply)) ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${getAvatarClassName(reply)}`}
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start">
+                          {isAIUser(reply) && <AIBadge />}
                           {reply.is_secret && (
                             <span className="mr-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
                               🔒 비밀글

@@ -22,6 +22,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import SendIcon from '@mui/icons-material/Send';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import CloseIcon from '@mui/icons-material/Close';
+import AIBadge from './AIBadge';
+import { isAIUser } from '../config/aiUser';
 
 moment.locale('ko');
 
@@ -438,6 +440,7 @@ const PostDetailModal = ({ isOpen, onClose, postId }) => {
                             >
                               {comment.user_name || comment.username}
                             </span>
+                            {isAIUser(comment) && <AIBadge />}
                             <span className="text-xs text-gray-500">{moment(comment.created_at || comment.createdAt).fromNow()}</span>
                           </div>
                           <p className="text-sm text-gray-700 whitespace-pre-wrap mt-0.5">{comment.description || comment.desc}</p>
