@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../config/api.js';
 import { uploadToR2, uploadMultipleToR2, deleteFromR2, isR2Url } from './r2Service.js';
 import { uploadVideo } from './videoUploadService.js';
 import { uploadImageToCloudflare, uploadMultipleImages, isCloudflareImagesUrl, getImageUrl, IMAGE_VARIANTS, deleteImageByUrl } from './cfImagesService.js';
+import { generateDiceBearAvatar } from '../utils/userHelper.js';
 
 /**
  * Storage 서비스
@@ -490,11 +491,7 @@ export const storageService = {
    */
   getProfileImageUrl(profilePic, userId = null) {
     if (!profilePic) {
-      // DiceBear 아바타 생성 (userId 기반으로 고유한 아바타)
-      // 배경색: 파스텔톤 10가지 조합
-      const backgroundColor = 'b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf,a3e4d7,f9e79f,fadbd8,d5dbdb,aed6f1';
-      const seed = userId || 'default';
-      return `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${backgroundColor}`;
+      return generateDiceBearAvatar(userId || 'default');
     }
 
     // 이미 완전한 URL인 경우 (Supabase Storage URL)

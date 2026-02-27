@@ -5,19 +5,66 @@
 // 기본 프로필 이미지 경로 (탈퇴한 사용자용)
 const DEFAULT_PROFILE_PIC = '/default/default_profile.png';
 
+/** 배경색 20가지 (파스텔톤) */
+const BG_COLORS = [
+  'b6e3f4', 'c0aede', 'd1d4f9', 'ffd5dc', 'ffdfbf',
+  'a3e4d7', 'f9e79f', 'fadbd8', 'd5dbdb', 'aed6f1',
+  'f5cba7', 'abebc6', 'd2b4de', 'f9e79f', 'a9cce3',
+  'f0b27a', 'a2d9ce', 'e8daef', 'fdebd0', 'a9dfbf',
+];
+
+/** 형태(몸) 색상 12가지 */
+const SHAPE_COLORS = [
+  '0a5b83', '1c799f', '69d2e7', 'f38181', 'fce38a',
+  '95e1d3', 'aa96da', 'fcbad3', 'a8d8ea', 'ff6f61',
+  '6b5b95', '88b04b',
+];
+
+/** 눈 색상 10가지 */
+const EYE_COLORS = [
+  '000000', '3b3a30', '5b4a3f', '2c3e50', '1a1a2e',
+  '4a4e69', '6d4c41', '37474f', '263238', '3e2723',
+];
+
+/** 입 색상 8가지 */
+const MOUTH_COLORS = [
+  'd35400', 'e74c3c', 'c0392b', 'ff6b6b', 'e17055',
+  'b71c1c', 'ff8a80', 'ef5350',
+];
+
+/** 그라디언트 각도 6가지 */
+const BG_ROTATIONS = [0, 60, 120, 180, 240, 300];
+
+/** 문자열 → 정수 해시 (djb2 변형) */
+function hashSeed(seed) {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 /**
  * DiceBear API를 사용하여 사용자별 고유 아바타 URL 생성
+ * thumbs 스타일 고정, 해시 기반으로 배경색·형태색·배경타입 다양화
  * @param {string} seed - 아바타 생성에 사용할 시드 (보통 user.id)
  * @returns {string} DiceBear 아바타 URL
  */
 export const generateDiceBearAvatar = (seed) => {
-  // thumbs 스타일 사용 (귀여운 캐릭터 스타일)
-  // 다른 스타일 옵션: avataaars, bottts, fun-emoji, lorelei, micah, notionists, personas, pixel-art
-  const style = 'thumbs';
-  // 파스텔톤 배경색 10가지 (storageService와 동일)
-  const backgroundColor = 'b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf,a3e4d7,f9e79f,fadbd8,d5dbdb,aed6f1';
+  const h = hashSeed(seed);
+  const bg = BG_COLORS[h % BG_COLORS.length];
+  const shape = SHAPE_COLORS[(h >> 4) % SHAPE_COLORS.length];
+  const eyes = EYE_COLORS[(h >> 8) % EYE_COLORS.length];
+  const mouth = MOUTH_COLORS[(h >> 12) % MOUTH_COLORS.length];
+  const isGradient = (h >> 16) % 3 === 0;
+  const bgType = isGradient ? 'gradientLinear' : 'solid';
+  const rotation = isGradient ? BG_ROTATIONS[(h >> 18) % BG_ROTATIONS.length] : 0;
 
-  return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${backgroundColor}`;
+  return `https://api.dicebear.com/7.x/thumbs/svg?seed=${encodeURIComponent(seed)}`
+    + `&backgroundColor=${bg}&backgroundType=${bgType}`
+    + `&shapeColor=${shape}&eyesColor=${eyes}&mouthColor=${mouth}`
+    + (isGradient ? `&backgroundRotation=${rotation}` : '');
 };
 
 /**
