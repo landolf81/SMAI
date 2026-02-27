@@ -328,9 +328,11 @@ const Home = () => {
         });
 
         // 시장 순서 정렬: DB 설정에서 가져온 market_order 사용
+        // marketSettings가 아직 로드되지 않았을 수 있으므로 직접 조회
+        const settings = marketSettings || await marketService.getMarketSettings();
         const sortedData = [...transformedData].sort((a, b) => {
-          if (marketSettings?.market_order?.length > 0) {
-            const orderArray = marketSettings.market_order;
+          if (settings?.market_order?.length > 0) {
+            const orderArray = settings.market_order;
             const indexA = orderArray.indexOf(a.name);
             const indexB = orderArray.indexOf(b.name);
             if (indexA !== -1 && indexB !== -1) return indexA - indexB;

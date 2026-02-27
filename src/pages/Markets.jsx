@@ -104,15 +104,14 @@ const Markets = () => {
     setLoading(true);
     const markets = await fetchAvailableMarkets(date);
 
-    // 저장된 정렬 순서 적용
-    const savedOrder = localStorage.getItem('market_order');
+    // DB 설정에서 정렬 순서 적용
+    const settings = await marketService.getMarketSettings();
     let sortedMarkets = markets;
-    if (savedOrder) {
-      const orderArray = JSON.parse(savedOrder);
+    if (settings?.market_order?.length > 0) {
+      const orderArray = settings.market_order;
       sortedMarkets = [...markets].sort((a, b) => {
         const indexA = orderArray.indexOf(a);
         const indexB = orderArray.indexOf(b);
-        // 목록에 없는 시장은 뒤로
         if (indexA === -1) return 1;
         if (indexB === -1) return -1;
         return indexA - indexB;
