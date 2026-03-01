@@ -49,13 +49,15 @@ const DMChatPage = () => {
   });
 
   // DM 창이 열릴 때 모든 메시지를 읽음으로 표시 (한 번만)
-  // DB 업데이트 완료 후 즉시 invalidate → 뱃지 즉시 소멸
+  // DB 업데이트 완료 후 즉시 invalidate → 인앱 뱃지 즉시 소멸
+  // 앱 아이콘 뱃지도 제거 (Android PWA Badging API)
   useEffect(() => {
     if (userId && isInitialMount.current) {
       isInitialMount.current = false;
       dmService.markAllAsReadFromUser(userId).then(() => {
         queryClient.invalidateQueries(['unreadCount']);
         queryClient.invalidateQueries(['conversations']);
+        navigator.clearAppBadge?.().catch?.(() => {});
       }).catch(() => {});
     }
   }, [userId, queryClient]);

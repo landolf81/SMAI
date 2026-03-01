@@ -41,26 +41,33 @@ self.addEventListener('push', (event) => {
   console.log('[SW] showNotification 호출:', data.title, options);
 
   event.waitUntil(
-    self.registration.showNotification(data.title || '참외이야기', options)
+    Promise.all([
+      self.registration.showNotification(data.title || '참외이야기', options),
+      // 앱 아이콘 뱃지 설정 (Android PWA 지원)
+      self.navigator?.setAppBadge?.(data.badge_count || 1).catch(() => {}),
+    ])
   );
 });
 
-// 알림 클릭 시 해당 URL로 이동
+// 알림 클릭 시 해당 URL로 이동 + 앱 아이콘 뱃지 제거
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const targetUrl = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(targetUrl);
-          return client.focus();
+    Promise.all([
+      self.navigator?.clearAppBadge?.().catch(() => {}),
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.navigate(targetUrl);
+            return client.focus();
+          }
         }
-      }
-      return clients.openWindow(targetUrl);
-    })
+        return clients.openWindow(targetUrl);
+      }),
+    ])
   );
 });
 
