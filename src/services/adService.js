@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { deleteFromR2, isR2Url } from './r2Service.js';
 
+// v2: end_date/start_date 필터 YYYY-MM-DD 형식 사용
 /**
  * 광고 서비스
  * - 메모리 캐시로 세션 내 중복 노출 추적 방지
