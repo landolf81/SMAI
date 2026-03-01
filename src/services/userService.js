@@ -707,6 +707,39 @@ export const userService = {
   },
 
   /**
+   * 관리자용 전체 사용자 통계 조회
+   * @returns {Promise<{total, superAdmins, admins, active, banned}>}
+   */
+  async getAdminUserStats() {
+    try {
+      const [
+        { count: total },
+        { count: active },
+        { count: banned },
+        { count: superAdmins },
+        { count: adminRoles },
+      ] = await Promise.all([
+        supabase.from('users').select('*', { count: 'exact', head: true }),
+        supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabase.from('users').select('*', { count: 'exact', head: true }).eq('status', 'banned'),
+        supabase.from('admin_roles').select('*', { count: 'exact', head: true }).eq('role', 'super_admin'),
+        supabase.from('admin_roles').select('*', { count: 'exact', head: true }).in('role', ['content_admin', 'market_admin', 'advertiser']),
+      ]);
+
+      return {
+        total: total || 0,
+        active: active || 0,
+        banned: banned || 0,
+        superAdmins: superAdmins || 0,
+        admins: adminRoles || 0,
+      };
+    } catch (error) {
+      console.error('사용자 통계 조회 오류:', error);
+      return { total: 0, active: 0, banned: 0, superAdmins: 0, admins: 0 };
+    }
+  },
+
+  /**
    * 사용자 상태 변경
    * @param {string} userId - 사용자 ID
    * @param {string} status - 새로운 상태 ('active', 'banned', 'inactive')

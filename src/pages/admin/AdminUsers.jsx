@@ -28,6 +28,7 @@ const AdminUsers = () => {
     total: 0,
     totalPages: 0
   });
+  const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, banned: 0, superAdmins: 0, admins: 0 });
 
   const fetchUsers = async (page = 1, search = '', role = 'all', status = 'all') => {
     try {
@@ -74,6 +75,11 @@ const AdminUsers = () => {
     }
   };
 
+  // 전체 통계는 최초 1회만 로드
+  useEffect(() => {
+    userService.getAdminUserStats().then(setGlobalStats);
+  }, []);
+
   useEffect(() => {
     fetchUsers(1, searchTerm, filterRole, filterStatus);
   }, [searchTerm, filterRole, filterStatus]);
@@ -95,6 +101,7 @@ const AdminUsers = () => {
       setUsers(users.map(user =>
         user.id === userId ? { ...user, status: newStatus } : user
       ));
+      userService.getAdminUserStats().then(setGlobalStats);
       alert(`사용자 상태가 ${newStatus === 'active' ? '활성화' : '차단'}되었습니다.`);
     } catch (err) {
       console.error('사용자 상태 변경 실패:', err);
@@ -122,6 +129,7 @@ const AdminUsers = () => {
       await userService.deleteUser(userId);
       setUsers(users.filter(user => user.id !== userId));
       setPagination(prev => ({ ...prev, total: prev.total - 1 }));
+      userService.getAdminUserStats().then(setGlobalStats);
       alert('사용자가 삭제되었습니다.');
     } catch (err) {
       console.error('사용자 삭제 실패:', err);
@@ -201,6 +209,7 @@ const AdminUsers = () => {
         {/* 콘텐츠 영역 */}
         <UserListContent
           users={users}
+          globalStats={globalStats}
           searchInput={searchInput}
           setSearchInput={setSearchInput}
           searchTerm={searchTerm}
@@ -229,6 +238,7 @@ const AdminUsers = () => {
 // 사용자 목록 컴포넌트
 const UserListContent = ({
   users = [],
+  globalStats = {},
   searchInput,
   setSearchInput,
   searchTerm,
@@ -251,13 +261,13 @@ const UserListContent = ({
 }) => {
   return (
     <div>
-      {/* 통계 카드 */}
+      {/* 통계 카드 - 전체 기준 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide">전체 사용자</p>
-              <p className="text-2xl font-bold text-blue-600 mt-1">{pagination?.total || users.length}</p>
+              <p className="text-2xl font-bold text-blue-600 mt-1">{globalStats.total ?? pagination?.total ?? 0}</p>
             </div>
             <PeopleIcon className="text-blue-600" fontSize="small" />
           </div>
@@ -267,9 +277,7 @@ const UserListContent = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide">Super Admin</p>
-              <p className="text-2xl font-bold text-purple-600 mt-1">
-                {users.filter(u => u.role === 'super_admin').length}
-              </p>
+              <p className="text-2xl font-bold text-purple-600 mt-1">{globalStats.superAdmins ?? 0}</p>
             </div>
             <SecurityIcon className="text-purple-600" fontSize="small" />
           </div>
@@ -279,9 +287,7 @@ const UserListContent = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide">Admins</p>
-              <p className="text-2xl font-bold text-[#004225] mt-1">
-                {users.filter(u => ['content_admin', 'market_admin', 'advertiser'].includes(u.role)).length}
-              </p>
+              <p className="text-2xl font-bold text-[#004225] mt-1">{globalStats.admins ?? 0}</p>
             </div>
             <EditIcon className="text-[#004225]" fontSize="small" />
           </div>
@@ -291,9 +297,7 @@ const UserListContent = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide">활성</p>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">
-                {users.filter(u => u.status === 'active').length}
-              </p>
+              <p className="text-2xl font-bold text-emerald-600 mt-1">{globalStats.active ?? 0}</p>
             </div>
             <CheckCircleIcon className="text-emerald-600" fontSize="small" />
           </div>
@@ -303,9 +307,7 @@ const UserListContent = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-500 uppercase tracking-wide">차단</p>
-              <p className="text-2xl font-bold text-red-600 mt-1">
-                {users.filter(u => u.status === 'banned').length}
-              </p>
+              <p className="text-2xl font-bold text-red-600 mt-1">{globalStats.banned ?? 0}</p>
             </div>
             <BlockIcon className="text-red-600" fontSize="small" />
           </div>
