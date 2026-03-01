@@ -10,9 +10,19 @@ import SecurityIcon from "@mui/icons-material/Security";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
+import ChatIcon from "@mui/icons-material/Chat";
+import SendIcon from "@mui/icons-material/Send";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { userService } from '../../services';
+import { dmService } from '../../services/dmService';
 import { generateDiceBearAvatar } from '../../utils/userHelper';
+
+const WELCOME_MESSAGE = `참외이야기에 오신 것을 환영합니다! 🍈
+
+성주군 농업인들이 함께 만들어가는 커뮤니티입니다.
+영농 정보 공유, 질문, 중고거래 등 편하게 이용해주세요.
+
+즐거운 참외 농사 되시길 바랍니다!`;
 
 const AdminUsers = () => {
   const [users, setUsers] = useState([]);
@@ -29,6 +39,8 @@ const AdminUsers = () => {
     totalPages: 0
   });
   const [globalStats, setGlobalStats] = useState({ total: 0, active: 0, banned: 0, superAdmins: 0, admins: 0 });
+  const [welcomeSending, setWelcomeSending] = useState({}); // { [userId]: true }
+  const [bulkSending, setBulkSending] = useState(false);
 
   const fetchUsers = async (page = 1, search = '', role = 'all', status = 'all') => {
     try {
@@ -137,6 +149,42 @@ const AdminUsers = () => {
     }
   };
 
+  // 개별 환영 DM 발송
+  const handleSendWelcomeDM = async (userId, displayName) => {
+    if (welcomeSending[userId]) return;
+    setWelcomeSending(prev => ({ ...prev, [userId]: true }));
+    try {
+      await dmService.sendMessage({ receiverId: userId, content: WELCOME_MESSAGE });
+      alert(`${displayName}님께 환영 DM을 발송했습니다.`);
+    } catch (err) {
+      alert(err.message || '환영 DM 발송에 실패했습니다.');
+    } finally {
+      setWelcomeSending(prev => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  // 현재 페이지 전체 환영 DM 일괄 발송
+  const handleBulkWelcomeDM = async () => {
+    if (bulkSending) return;
+    const targets = users.filter(u => u.status === 'active');
+    if (targets.length === 0) return alert('발송 대상이 없습니다.');
+    if (!confirm(`현재 목록의 활성 회원 ${targets.length}명에게 환영 DM을 발송하시겠습니까?`)) return;
+
+    setBulkSending(true);
+    let success = 0;
+    let fail = 0;
+    for (const user of targets) {
+      try {
+        await dmService.sendMessage({ receiverId: user.id, content: WELCOME_MESSAGE });
+        success++;
+      } catch {
+        fail++;
+      }
+    }
+    setBulkSending(false);
+    alert(`환영 DM 발송 완료: 성공 ${success}건 / 실패 ${fail}건`);
+  };
+
   const getRoleText = (role) => role || 'user';
 
   const getStatusColor = (status) => {
@@ -222,6 +270,10 @@ const AdminUsers = () => {
           handleStatusToggle={handleStatusToggle}
           handleRoleChange={handleRoleChange}
           handleDeleteUser={handleDeleteUser}
+          handleSendWelcomeDM={handleSendWelcomeDM}
+          handleBulkWelcomeDM={handleBulkWelcomeDM}
+          welcomeSending={welcomeSending}
+          bulkSending={bulkSending}
           getRoleText={getRoleText}
           getStatusColor={getStatusColor}
           getStatusText={getStatusText}
@@ -251,6 +303,10 @@ const UserListContent = ({
   handleStatusToggle,
   handleRoleChange,
   handleDeleteUser,
+  handleSendWelcomeDM,
+  handleBulkWelcomeDM,
+  welcomeSending = {},
+  bulkSending = false,
   getRoleText,
   getStatusColor,
   getStatusText,
@@ -312,6 +368,24 @@ const UserListContent = ({
             <BlockIcon className="text-red-600" fontSize="small" />
           </div>
         </div>
+      </div>
+
+      {/* 환영 DM 일괄 발송 */}
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-sm text-gray-500">
+          현재 목록 활성 회원 <span className="font-semibold text-gray-700">{users.filter(u => u.status === 'active').length}</span>명
+        </p>
+        <button
+          onClick={handleBulkWelcomeDM}
+          disabled={bulkSending || users.filter(u => u.status === 'active').length === 0}
+          className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {bulkSending ? (
+            <><div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />발송 중...</>
+          ) : (
+            <><SendIcon fontSize="small" />현재 목록 일괄 환영 DM</>
+          )}
+        </button>
       </div>
 
       {/* 검색 및 필터 */}
@@ -376,6 +450,7 @@ const UserListContent = ({
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">상태</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">가입일</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">활동</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">환영 DM</th>
                 <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">작업</th>
               </tr>
             </thead>
@@ -457,6 +532,20 @@ const UserListContent = ({
                       <span className="text-gray-600">댓글</span>
                       <span className="font-medium text-gray-900 ml-1">{user.comments_count || 0}</span>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={() => handleSendWelcomeDM(user.id, user.name || user.username)}
+                      disabled={!!welcomeSending[user.id]}
+                      className="p-2 rounded-lg text-teal-600 hover:bg-teal-50 transition-colors disabled:opacity-40"
+                      title="환영 DM 발송"
+                    >
+                      {welcomeSending[user.id] ? (
+                        <div className="w-4 h-4 border-2 border-teal-300 border-t-teal-600 rounded-full animate-spin" />
+                      ) : (
+                        <ChatIcon fontSize="small" />
+                      )}
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-2">
