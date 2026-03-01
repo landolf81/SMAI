@@ -11,6 +11,8 @@ import { storageService } from '../services';
 import { generateDiceBearAvatar } from '../utils/userHelper';
 import SendIcon from '@mui/icons-material/Send';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import AIBadge from '../components/AIBadge';
+import { AI_USER_ID } from '../config/aiUser';
 
 // 시간 포맷 (오늘이면 시:분, 아니면 날짜)
 const formatTime = (dateStr) => {
@@ -58,9 +60,10 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
   const isMe = msg.user_id === currentUserId;
+  const isAI = msg.user_id === AI_USER_ID;
 
   return (
-    <div className="flex items-start gap-2.5 px-4 py-1.5 group">
+    <div className={`flex items-start gap-2.5 px-4 py-1.5 group ${isMe ? 'bg-orange-50 border-l-2 border-orange-400' : ''}`}>
       <img
         src={profileUrl}
         alt={displayName}
@@ -73,6 +76,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
           <span className="text-[15px] font-semibold text-gray-800">{displayName}</span>
+          {isAI && <AIBadge />}
           <span className="text-[12px] text-gray-400">{formatTime(msg.created_at)}</span>
           {isMe && (
             <button
@@ -313,7 +317,8 @@ const Lounge = () => {
     >
       {/* 컨텍스트 바 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 py-1.5 text-center">
-        <span className="text-[12px] text-gray-400">광장 · 회원들의 이야기</span>
+        <span className="text-[12px] font-medium text-orange-500">광장</span>
+        <span className="text-[12px] text-gray-400"> · 회원들의 이야기</span>
       </div>
 
       {/* 메시지 목록 */}
