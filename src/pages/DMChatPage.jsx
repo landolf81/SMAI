@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dmService, userService } from '../services';
+import { dmService, userService, storageService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 
 // 아이콘
@@ -49,13 +49,16 @@ const DMChatPage = () => {
   });
 
   // DM 창이 열릴 때 모든 메시지를 읽음으로 표시 (한 번만)
+  // DB 업데이트 완료 후 즉시 invalidate → 뱃지 즉시 소멸
   useEffect(() => {
     if (userId && isInitialMount.current) {
       isInitialMount.current = false;
-      dmService.markAllAsReadFromUser(userId).catch(() => {});
-      // invalidate는 나갈 때 처리
+      dmService.markAllAsReadFromUser(userId).then(() => {
+        queryClient.invalidateQueries(['unreadCount']);
+        queryClient.invalidateQueries(['conversations']);
+      }).catch(() => {});
     }
-  }, [userId]);
+  }, [userId, queryClient]);
 
   // 메시지 목록 조회
   const { data: messages = [], isLoading } = useQuery({
@@ -142,19 +145,13 @@ const DMChatPage = () => {
 
   // 프로필 이미지 URL
   const profileUrl = useMemo(() => {
-    if (!otherUser?.profile_pic) return '/default/default_profile.png';
-    if (otherUser.profile_pic.startsWith('http')) return otherUser.profile_pic;
-    if (otherUser.profile_pic.startsWith('/uploads/')) return otherUser.profile_pic;
-    return `/uploads/profiles/${otherUser.profile_pic}`;
-  }, [otherUser?.profile_pic]);
+    return storageService.getProfileImageUrl(otherUser?.profile_pic, otherUser?.id);
+  }, [otherUser?.profile_pic, otherUser?.id]);
 
   // 뒤로가기
   const handleBack = useCallback(() => {
-    // 나갈 때 대화 목록 갱신
-    queryClient.invalidateQueries(['conversations']);
-    queryClient.invalidateQueries(['unreadCount']);
     navigate(-1);
-  }, [navigate, queryClient]);
+  }, [navigate]);
 
   return (
     <div className="fixed inset-0 flex flex-col bg-cloud-dancer" style={{ paddingTop: 'env(safe-area-inset-top, 0)' }}>
@@ -170,7 +167,7 @@ const DMChatPage = () => {
         <img
           src={profileUrl}
           alt={otherUser?.name || '사용자'}
-          className="w-10 h-10 rounded-full object-cover border-2 border-green-400"
+          className="w-10 h-10 rounded-full object-cover"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = '/default/default_profile.png';
