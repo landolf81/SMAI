@@ -17,6 +17,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import SendIcon from "@mui/icons-material/Send";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { AdminOnly } from '../../components/PermissionComponents';
+import { generateDiceBearAvatar, getProfilePic } from '../../utils/userHelper';
 import { verificationService } from '../../services';
 
 const AdminVerification = () => {
@@ -259,12 +260,12 @@ const AdminVerification = () => {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100">
                           <img
-                            src={request.users?.profile_pic || '/default/default_profile.png'}
+                            src={getProfilePic(request.users)}
                             alt="프로필"
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = '/default/default_profile.png';
+                              e.target.src = generateDiceBearAvatar(request.users?.id || request.users?.username || 'default');
                             }}
                           />
                         </div>
