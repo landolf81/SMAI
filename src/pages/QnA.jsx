@@ -9,10 +9,12 @@ import CloseIcon from '@mui/icons-material/Close';
 
 const PesticideInfo = lazy(() => import('../components/PesticideInfo'));
 const VinylInfo = lazy(() => import('../components/VinylInfo'));
+const PestDiseaseInfo = lazy(() => import('../components/PestDiseaseInfo'));
 
 /** 탭 목록 - 향후 탭 추가 시 여기에 추가 */
 const TABS = [
   { key: 'qna', label: 'Q&A' },
+  { key: 'pest', label: '병충해' },
   { key: 'pesticide', label: '농약정보' },
   { key: 'vinyl', label: '비닐' },
 ];
@@ -109,6 +111,17 @@ const QnA = () => {
             searchTerm={searchTerm}
           />
         </>
+      )}
+
+      {/* 병충해 탭 */}
+      {activeTab === 'pest' && (
+        <Suspense fallback={
+          <div className="flex justify-center py-12">
+            <span className="loading loading-spinner loading-md text-teal-500"></span>
+          </div>
+        }>
+          <PestDiseaseInfo />
+        </Suspense>
       )}
 
       {/* 농약정보 탭 */}
