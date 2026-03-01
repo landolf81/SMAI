@@ -117,6 +117,24 @@ export const userService = {
   },
 
   /**
+   * 별명/닉네임 중복 여부 확인
+   * @param {string} name - 확인할 별명
+   * @param {string} currentUserId - 현재 사용자 ID (자기 자신 제외)
+   * @returns {Promise<boolean>} 중복이면 true
+   */
+  async isNicknameTaken(name, currentUserId) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id')
+      .eq('name', name.trim())
+      .neq('id', currentUserId)
+      .maybeSingle();
+
+    if (error) throw error;
+    return !!data;
+  },
+
+  /**
    * 사용자 프로필 업데이트
    * @param {string} userId - 사용자 ID
    * @param {Object} updates - 업데이트할 데이터

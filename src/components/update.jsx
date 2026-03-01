@@ -492,6 +492,19 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       return;
     }
 
+    // 별명 변경 시 중복 체크 (인증 사용자만 name 변경 가능)
+    if (isVerified && info.name.trim() !== (user.name || '').trim()) {
+      try {
+        const taken = await userService.isNicknameTaken(info.name, user.id);
+        if (taken) {
+          setErrors(prev => ({ ...prev, name: '이미 사용 중인 별명입니다.' }));
+          return;
+        }
+      } catch {
+        // 중복 체크 실패 시 저장은 허용 (UX 우선)
+      }
+    }
+
     setIsLoading(true);
     setErrors({});
 
