@@ -22,6 +22,24 @@ const formatTime = (dateStr) => {
   return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 };
 
+// 전송 금지 패턴 검사 (전화번호, 음란·폭력 단어)
+const PHONE_REGEX = /01[0-9][-\s.]?\d{3,4}[-\s.]?\d{4}|0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}/;
+const BLOCKED_WORDS = [
+  // 음란
+  '씹', '보지', '자지', '섹스', '야동', '음란',
+  // 폭력·위협
+  '죽여버', '죽여라', '살인', '폭행', '때려죽',
+  // 욕설
+  '씨발', '개새끼', '병신', '지랄', '미친놈', '꺼져', '닥쳐',
+];
+const validateMessage = (content) => {
+  if (PHONE_REGEX.test(content)) return '전화번호는 광장에 남길 수 없어요.';
+  for (const word of BLOCKED_WORDS) {
+    if (content.includes(word)) return '부적절한 내용이 포함되어 있어요.';
+  }
+  return null;
+};
+
 // 날짜 구분선 표시용 키
 const getDateKey = (dateStr) => new Date(dateStr).toISOString().split('T')[0];
 
@@ -54,8 +72,8 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-2">
-          <span className="text-[13px] font-semibold text-gray-800">{displayName}</span>
-          <span className="text-[11px] text-gray-400">{formatTime(msg.created_at)}</span>
+          <span className="text-[15px] font-semibold text-gray-800">{displayName}</span>
+          <span className="text-[12px] text-gray-400">{formatTime(msg.created_at)}</span>
           {isMe && (
             <button
               onClick={() => onDelete(msg.id)}
@@ -65,7 +83,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
             </button>
           )}
         </div>
-        <p className="text-[14px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
+        <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
           {msg.content}
         </p>
       </div>
@@ -89,6 +107,7 @@ const Lounge = () => {
   const bottomRef = useRef(null);
   const subscriptionRef = useRef(null);
   const isAtBottomRef = useRef(true);
+  const containerRef = useRef(null);
 
   // 하단 여부 체크
   const checkIsAtBottom = useCallback(() => {
@@ -101,6 +120,30 @@ const Lounge = () => {
   const scrollToBottom = useCallback((behavior = 'smooth') => {
     bottomRef.current?.scrollIntoView({ behavior });
   }, []);
+
+  // iOS 키보드 감지: visualViewport resize 시 paddingBottom 동적 조정
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    let prevKeyboardHeight = 0;
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      el.style.paddingBottom = keyboardHeight > 50 ? '4px' : '80px';
+      // 키보드가 방금 열렸으면 하단으로 스크롤
+      if (keyboardHeight > 50 && prevKeyboardHeight <= 50) {
+        requestAnimationFrame(() => scrollToBottom('auto'));
+      }
+      prevKeyboardHeight = keyboardHeight;
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, [scrollToBottom]);
 
   // 초기 메시지 로드
   useEffect(() => {
@@ -206,6 +249,12 @@ const Lounge = () => {
       return;
     }
 
+    const filterError = validateMessage(trimmed);
+    if (filterError) {
+      alert(filterError);
+      return;
+    }
+
     setText('');
     setIsSending(true);
     try {
@@ -258,6 +307,7 @@ const Lounge = () => {
   return (
     // Navbar(56px) + BottomNav(80px) 사이 공간을 정확히 채우는 flex 컨테이너
     <div
+      ref={containerRef}
       className="flex flex-col bg-[#F5F5F5]"
       style={{ height: '100dvh', paddingTop: '56px', paddingBottom: '80px' }}
     >
@@ -298,7 +348,7 @@ const Lounge = () => {
               return (
                 <div key={item.key} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 h-px bg-gray-200" />
-                  <span className="text-[11px] text-gray-400 font-medium flex-shrink-0">
+                  <span className="text-[12px] text-gray-400 font-medium flex-shrink-0">
                     {item.label}
                   </span>
                   <div className="flex-1 h-px bg-gray-200" />
@@ -350,7 +400,7 @@ const Lounge = () => {
               placeholder="이야기를 남겨보세요... (최대 300자)"
               maxLength={300}
               rows={1}
-              className="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl text-[15px] outline-none focus:ring-2 focus:ring-orange-400 focus:bg-white resize-none leading-relaxed"
+              className="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl text-[15px] outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none leading-relaxed"
               style={{ fontSize: '16px', maxHeight: '80px', overflowY: 'auto' }}
             />
             <button

@@ -1,5 +1,5 @@
 // Supabase Edge Function - OpenClaw 에이전트 응답 수신기
-// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment')
+// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 (action: 'post_lounge')
 // 배포: supabase functions deploy openclaw-response
 // URL: https://<project>.supabase.co/functions/v1/openclaw-response
 
@@ -61,7 +61,47 @@ Deno.serve(async (req: Request) => {
 
   const action = ((body.action ?? '') as string).trim()
 
-  // ─── action: post_comment → AI 댓글 삽입 ───
+  // ─── action: post_lounge → 광장 메시지 삽입 (전기수) ───
+  if (action === 'post_lounge') {
+    const message = ((body.message ?? body.content ?? '') as string).trim()
+
+    if (!message) {
+      return jsonResponse({ error: 'message is required' }, 400)
+    }
+    if (!AI_USER_ID) {
+      console.error('[openclaw-response] AI_USER_ID 시크릿 미설정')
+      return jsonResponse({ error: 'AI_USER_ID not configured' }, 500)
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('lounge_messages')
+      .insert([{ user_id: AI_USER_ID, content: message }])
+      .select('id')
+      .single()
+
+    if (insertError) {
+      console.error('[openclaw-response] 광장 메시지 삽입 실패:', insertError)
+      return jsonResponse({ error: insertError.message }, 500)
+    }
+
+    console.log(`[openclaw-response] 전기수 광장 글 삽입 완료: id=${inserted.id}`)
+
+    const runId = ((body.run_id ?? '') as string).trim()
+    if (runId) {
+      await supabase.from('agent_logs').update({
+        status:       'done',
+        responded_at: new Date().toISOString(),
+        response:     message,
+        metadata:     { action: 'post_lounge', lounge_message_id: inserted.id },
+      }).eq('run_id', runId)
+    }
+
+    return jsonResponse({ ok: true, lounge_message_id: inserted.id })
+  }
+
+  // ─── action: post_comment → AI 댓글 삽입 (전기수) ───
   if (action === 'post_comment') {
     const postId   = (body.post_id ?? '') as string
     const comment  = ((body.comment ?? body.content ?? '') as string).trim()
@@ -95,7 +135,7 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: insertError.message }, 500)
     }
 
-    console.log(`[openclaw-response] AI 댓글 삽입 완료: comment_id=${inserted.id}, post_id=${postId}`)
+    console.log(`[openclaw-response] 전기수 댓글 삽입 완료: comment_id=${inserted.id}, post_id=${postId}`)
 
     // 선택: agent_logs에도 기록
     const runId = ((body.run_id ?? '') as string).trim()
