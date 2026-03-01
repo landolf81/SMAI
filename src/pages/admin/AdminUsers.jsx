@@ -15,7 +15,7 @@ import SendIcon from "@mui/icons-material/Send";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { userService } from '../../services';
 import { dmService } from '../../services/dmService';
-import { generateDiceBearAvatar } from '../../utils/userHelper';
+import { generateDiceBearAvatar, getProfilePic } from '../../utils/userHelper';
 
 const WELCOME_MESSAGE = `참외이야기에 오신 것을 환영합니다! 🍈
 
@@ -461,22 +461,12 @@ const UserListContent = ({
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
                         <img
-                          src={(() => {
-                            const pic = user.profilePic || user.profile_pic;
-                            if (!pic) {
-                              const seed = user.id || user.username || user.name || 'default';
-                              return generateDiceBearAvatar(seed);
-                            }
-                            if (pic.startsWith('http')) return pic;
-                            if (pic.startsWith('/uploads/')) return pic;
-                            return `/uploads/profiles/${pic}`;
-                          })()}
+                          src={getProfilePic(user)}
                           alt="프로필"
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             e.target.onerror = null;
-                            const seed = user.id || user.username || user.name || 'default';
-                            e.target.src = generateDiceBearAvatar(seed);
+                            e.target.src = generateDiceBearAvatar(user.id || user.username || 'default');
                           }}
                         />
                       </div>
