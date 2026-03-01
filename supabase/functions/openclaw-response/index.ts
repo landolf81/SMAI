@@ -1,6 +1,6 @@
 // Supabase Edge Function - OpenClaw 에이전트 응답 수신기
-// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 (action: 'post_lounge')
-// 배포: supabase functions deploy openclaw-response
+// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge')
+// 배포: supabase functions deploy openclaw-response --no-verify-jwt
 // URL: https://<project>.supabase.co/functions/v1/openclaw-response
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -60,6 +60,45 @@ Deno.serve(async (req: Request) => {
   console.log('[openclaw-response] 수신 body:', JSON.stringify(body))
 
   const action = ((body.action ?? '') as string).trim()
+
+  // ─── action: get_lounge → 광장 메시지 조회 ───
+  if (action === 'get_lounge') {
+    const limit      = Math.min(Number(body.limit ?? 30), 100)
+    const beforeTime = (body.before_time ?? '') as string
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    let query = supabase
+      .from('lounge_messages')
+      .select('id, content, created_at, user_id, users:user_id (id, name, username)')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (beforeTime) {
+      query = query.lt('created_at', beforeTime)
+    }
+
+    const { data, error: fetchError } = await query
+
+    if (fetchError) {
+      console.error('[openclaw-response] 광장 조회 실패:', fetchError)
+      return jsonResponse({ error: fetchError.message }, 500)
+    }
+
+    // 오래된 순으로 정렬해서 반환 (대화 흐름 파악에 자연스럽게)
+    const messages = (data ?? []).reverse().map((m) => ({
+      id:         m.id,
+      content:    m.content,
+      created_at: m.created_at,
+      author:     (m.users as { name?: string; username?: string } | null)?.name
+                  ?? (m.users as { name?: string; username?: string } | null)?.username
+                  ?? '알 수 없음',
+      is_ai:      m.user_id === AI_USER_ID,
+    }))
+
+    console.log(`[openclaw-response] 광장 조회 완료: ${messages.length}건`)
+    return jsonResponse({ ok: true, messages })
+  }
 
   // ─── action: post_lounge → 광장 메시지 삽입 (전기수) ───
   if (action === 'post_lounge') {
