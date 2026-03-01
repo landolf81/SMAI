@@ -31,13 +31,7 @@
       ]
     },
     {
-      "source": "/index.html",
-      "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
-      ]
-    },
-    {
-      "source": "/",
+      "source": "/((?!assets/|fonts/).*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
