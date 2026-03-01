@@ -673,26 +673,43 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     </div>
                   )}
                   {verificationRequest?.status === 'pending' && (
-                    <div className="flex items-center gap-2">
-                      <svg className="w-4 h-4 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                      </svg>
-                      <span className="text-xs text-blue-700">인증 요청 검토 중입니다...</span>
-                    </div>
-                  )}
-                  {verificationRequest?.status === 'code_sent' && (
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-green-700">인증 코드가 발송되었습니다.</span>
+                      <span className="text-xs text-yellow-700">SMS 발송 오류 — 다시 시도해주세요.</span>
                       <button
                         type="button"
-                        onClick={() => setShowVerificationCodeModal(true)}
-                        className="text-xs font-medium text-green-700 underline hover:text-green-800"
+                        onClick={() => setShowVerificationRequestModal(true)}
+                        className="text-xs font-medium text-yellow-700 underline hover:text-yellow-800"
                       >
-                        코드 입력
+                        다시 받기
                       </button>
                     </div>
                   )}
+                  {verificationRequest?.status === 'code_sent' && (() => {
+                    const isExpired = verificationRequest.code_expires_at && new Date(verificationRequest.code_expires_at) < new Date();
+                    return isExpired ? (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-orange-700">인증 코드가 만료되었습니다.</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowVerificationRequestModal(true)}
+                          className="text-xs font-medium text-orange-700 underline hover:text-orange-800"
+                        >
+                          재발송
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-green-700">인증 코드가 발송되었습니다.</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowVerificationCodeModal(true)}
+                          className="text-xs font-medium text-green-700 underline hover:text-green-800"
+                        >
+                          코드 입력
+                        </button>
+                      </div>
+                    );
+                  })()}
                   {verificationRequest?.status === 'rejected' && (
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-red-700">
@@ -1026,6 +1043,10 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       <VerificationRequestModal
         isOpen={showVerificationRequestModal}
         onClose={() => setShowVerificationRequestModal(false)}
+        onSmsSent={() => {
+          setShowVerificationRequestModal(false);
+          setShowVerificationCodeModal(true);
+        }}
       />
 
       {/* 인증 코드 입력 모달 */}

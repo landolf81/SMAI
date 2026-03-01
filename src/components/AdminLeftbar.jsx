@@ -18,6 +18,7 @@ import CachedIcon from "@mui/icons-material/Cached";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BackupIcon from "@mui/icons-material/Backup";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import ForumIcon from "@mui/icons-material/Forum";
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useLocation } from "react-router-dom";
@@ -157,12 +158,18 @@ const AdminLeftbar = () => {
       ]
     },
     {
-      title: "알림",
+      title: "알림 / 메시지",
       items: [
         {
           path: "/admin/push",
           icon: NotificationsActiveIcon,
           label: "푸시 알림",
+          badge: null
+        },
+        {
+          path: "/admin/dm",
+          icon: ForumIcon,
+          label: "DM 발송",
           badge: null
         }
       ]

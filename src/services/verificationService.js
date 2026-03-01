@@ -51,6 +51,36 @@ export const verificationService = {
   },
 
   /**
+   * SMS 자동 발송 인증 요청
+   * Edge Function을 호출하여 Twilio SMS로 인증 코드를 즉시 발송한다.
+   * verification_requests INSERT + SMS 발송이 Edge Function 내부에서 원자적으로 처리됨.
+   *
+   * @param {string} realName - 사용자 실명 (2자 이상)
+   * @param {string} phoneNumber - 전화번호 (010-XXXX-XXXX 형식)
+   */
+  async sendVerificationSms(realName, phoneNumber) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error('로그인이 필요합니다.');
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-verification-sms`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ realName, phoneNumber }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'SMS 발송에 실패했습니다.');
+    }
+
+    return response.json();
+  },
+
+  /**
    * 내 인증 요청 상태 조회
    */
   async getMyRequest() {
@@ -92,7 +122,7 @@ export const verificationService = {
 
     // 만료 확인
     if (request.code_expires_at && new Date(request.code_expires_at) < new Date()) {
-      throw new Error('인증 코드가 만료되었습니다. 관리자에게 재발급을 요청해주세요.');
+      throw new Error('인증 코드가 만료되었습니다. 다시 인증번호 받기를 해주세요.');
     }
 
     // 승인 처리

@@ -1,40 +1,87 @@
 /**
  * VinylInfo 컴포넌트
- * 역할: 참외 재배용 비닐 정보 UI
- * 데이터 소스 미정 - UI 껍데기 + 플레이스홀더
+ * 역할: 참외 재배용 비닐 종류 소개
  */
-import { useState } from 'react';
-import SearchIcon from '@mui/icons-material/Search';
+
+const Section = ({ title, children }) => (
+  <section className="mb-6">
+    <h3 className="text-base font-bold text-gray-800 border-l-4 border-teal-500 pl-3 mb-3">{title}</h3>
+    {children}
+  </section>
+);
 
 const VinylInfo = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-
   return (
-    <div className="max-w-3xl mx-auto p-4">
+    <div className="max-w-3xl mx-auto p-4 space-y-2">
       {/* 헤더 */}
-      <h2 className="text-lg font-bold text-gray-800 mb-1">참외 재배 비닐 정보</h2>
-      <p className="text-sm text-gray-500 mb-4">참외 재배에 사용되는 비닐 종류와 규격을 검색하세요.</p>
-
-      {/* 검색 */}
-      <div className="relative mb-6">
-        <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fontSize="small" />
-        <input
-          type="text"
-          placeholder="비닐 종류 검색..."
-          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none text-sm"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="mb-5">
+        <h2 className="text-xl font-bold text-gray-800">참외 재배용 비닐 종류</h2>
       </div>
 
-      {/* 플레이스홀더 - 데이터 연동 전 안내 */}
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center mb-4">
-          <span className="text-3xl">📦</span>
+      {/* 필름 종류 */}
+      <Section title="필름 종류별 특징">
+        <div className="overflow-x-auto rounded-xl border border-gray-200">
+          <table className="w-full text-sm">
+            <thead className="bg-teal-50 text-gray-700">
+              <tr>
+                <th className="px-3 py-2.5 text-left font-semibold">종류</th>
+                <th className="px-3 py-2.5 text-left font-semibold">장점</th>
+                <th className="px-3 py-2.5 text-left font-semibold">단점</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {[
+                {
+                  type: 'PE',
+                  pro: '가격 저렴, 구하기 쉬움',
+                  con: '보온/내구/방적 성능 낮음',
+                },
+                {
+                  type: 'EVA',
+                  pro: 'PE보다 보온·방적·연신성 개선',
+                  con: 'PE보다 비쌈',
+                },
+                {
+                  type: 'PO (장기성)',
+                  pro: '투광/보온/내구 균형 우수, 장기 사용 유리',
+                  con: '초기비용 높음',
+                },
+                {
+                  type: '기능성 다층필름',
+                  pro: 'IR보온, 방적/방무, 방진, 연광 등 기능 선택 가능',
+                  con: '제품별 성능 편차 큼',
+                },
+              ].map((row) => (
+                <tr key={row.type} className="hover:bg-gray-50">
+                  <td className="px-3 py-2.5 font-semibold text-teal-700 whitespace-nowrap">{row.type}</td>
+                  <td className="px-3 py-2.5 text-gray-700">{row.pro}</td>
+                  <td className="px-3 py-2.5 text-gray-600">{row.con}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <p className="text-gray-600 font-medium mb-1">데이터 준비 중입니다</p>
-        <p className="text-sm text-gray-400">참외 재배 비닐 정보가 곧 제공될 예정입니다.</p>
-      </div>
+      </Section>
+
+      {/* 주요 기능 설명 */}
+      <Section title="비닐 주요 기능">
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { icon: '🌡️', name: 'IR(보온)', desc: '야간 열손실 저감' },
+            { icon: '💧', name: '방적/방무', desc: '결로 물방울 억제' },
+            { icon: '☀️', name: 'UV 안정성', desc: '필름 열화(균열/탈색) 지연' },
+            { icon: '🌿', name: '광확산(연광)', desc: '식물체 내부 광분포 개선' },
+          ].map((f) => (
+            <div key={f.name} className="flex items-start gap-2 bg-gray-50 rounded-xl p-3 border border-gray-100">
+              <span className="text-lg leading-none mt-0.5">{f.icon}</span>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">{f.name}</p>
+                <p className="text-sm text-gray-700">{f.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
     </div>
   );
 };

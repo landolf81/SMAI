@@ -64,6 +64,7 @@ const AdminMarketSettings = lazy(() => import('./pages/admin/AdminMarketSettings
 const AdminVerification = lazy(() => import('./pages/admin/AdminVerification'));
 const AdminYouTube = lazy(() => import('./pages/admin/AdminYouTube'));
 const AdminPushNotifications = lazy(() => import('./pages/admin/AdminPushNotifications'));
+const AdminDM = lazy(() => import('./pages/admin/AdminDM'));
 
 // Other Pages - Lazy Loading
 const Prices = lazy(() => import('./pages/Prices'));
@@ -583,6 +584,10 @@ const router = createBrowserRouter(
       {
         path: '/admin/push',
         element: <ProtectedRoute><AdminPushNotifications /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/dm',
+        element: <ProtectedRoute><AdminDM /></ProtectedRoute>,
       },
     ],
   },

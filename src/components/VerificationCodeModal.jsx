@@ -91,7 +91,7 @@ const VerificationCodeModal = ({ isOpen, onClose, onSuccess }) => {
               autoFocus
             />
             <p className="text-xs text-gray-500 mt-2 text-center">
-              코드는 24시간 동안 유효합니다.
+              코드는 10분 동안 유효합니다.
             </p>
           </div>
 

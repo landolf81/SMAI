@@ -17,7 +17,7 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
     queryKey: ['myVerificationRequest'],
     queryFn: () => verificationService.getMyRequest(),
     enabled: !user?.verified,
-    refetchInterval: 30000 // 30초마다 상태 확인
+    refetchInterval: 10000 // 10초마다 상태 확인
   });
 
   if (isLoading) return null;
@@ -54,29 +54,54 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
     switch (request.status) {
       case 'pending':
         return (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-500 mt-0.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <svg className="w-5 h-5 text-yellow-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-blue-800">인증 요청 검토 중</h4>
-                <p className="text-xs text-blue-700 mt-1">
-                  관리자가 요청을 검토하고 있습니다. 검토 완료 후 SMS로 인증 코드가 발송됩니다.
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-yellow-800">SMS 발송에 문제가 발생했습니다</h4>
+                <p className="text-xs text-yellow-700 mt-1">
+                  인증번호 발송 중 오류가 발생했습니다. 아래 버튼을 눌러 다시 시도해주세요.
                 </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  요청일: {new Date(request.created_at).toLocaleDateString('ko-KR')}
-                </p>
+                <button
+                  onClick={() => setShowRequestModal(true)}
+                  className="mt-2 text-sm font-medium text-yellow-700 underline hover:text-yellow-800"
+                >
+                  다시 인증번호 받기
+                </button>
               </div>
             </div>
           </div>
         );
 
-      case 'code_sent':
-        return (
+      case 'code_sent': {
+        const isExpired = request.code_expires_at && new Date(request.code_expires_at) < new Date();
+        return isExpired ? (
+          <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <svg className="w-5 h-5 text-orange-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-orange-800">인증 코드가 만료되었습니다</h4>
+                <p className="text-xs text-orange-700 mt-1">
+                  10분이 지나 코드가 만료되었습니다. 새 인증번호를 받아주세요.
+                </p>
+                <button
+                  onClick={() => setShowRequestModal(true)}
+                  className="mt-2 px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 transition-colors"
+                >
+                  인증번호 재발송
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
@@ -99,6 +124,7 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
             </div>
           </div>
         );
+      }
 
       case 'rejected':
         return (
@@ -136,10 +162,14 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
     <>
       {renderBanner()}
 
-      {/* 인증 요청 모달 */}
+      {/* 인증 요청 모달 — SMS 발송 성공 시 코드 입력 모달로 즉시 전환 */}
       <VerificationRequestModal
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
+        onSmsSent={() => {
+          setShowRequestModal(false);
+          setShowCodeModal(true);
+        }}
       />
 
       {/* 인증 코드 입력 모달 */}
