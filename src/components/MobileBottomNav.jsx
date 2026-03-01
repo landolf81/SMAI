@@ -5,7 +5,7 @@ import { AuthContext } from '../context/AuthContext';
 import { dmService } from '../services';
 
 // Material UI Icons
-import TranslateIcon from '@mui/icons-material/Translate';
+import GroupsIcon from '@mui/icons-material/Groups';
 import ForumIcon from '@mui/icons-material/Forum';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
@@ -83,12 +83,12 @@ const MobileBottomNav = ({ scrollDirection }) => {
       activeColor: 'text-[#FFC600]' // 노랑
     },
     {
-      id: 'translate',
-      path: '/translate',
-      label: '번역',
-      icon: TranslateIcon,
+      id: 'lounge',
+      path: '/lounge',
+      label: '광장',
+      icon: GroupsIcon,
       showLabel: true,
-      activeColor: 'text-[#7CB342]' // 연두
+      activeColor: 'text-[#FF7043]' // 주황
     },
     {
       id: 'community',
@@ -101,7 +101,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'qna',
       path: '/qna',
-      label: 'Q&A',
+      label: '정보',
       icon: HelpOutlineIcon,
       showLabel: true,
       activeColor: 'text-[#42A5F5]', // 하늘
@@ -140,6 +140,10 @@ const MobileBottomNav = ({ scrollDirection }) => {
     }
     if (button.isProfile) {
       return location.pathname.startsWith('/profile');
+    }
+    // 번역 페이지는 정보 탭으로 이동했으므로 정보 탭 active 처리
+    if (button.id === 'qna') {
+      return location.pathname.startsWith('/qna') || location.pathname === '/translate';
     }
     return location.pathname === button.path;
   };

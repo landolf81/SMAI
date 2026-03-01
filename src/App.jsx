@@ -46,6 +46,7 @@ const Profile = lazy(() => import('./pages/profile'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const PostEditor = lazy(() => import('./pages/PostEditor'));
 const Translate = lazy(() => import('./pages/Translate'));
+const Lounge = lazy(() => import('./pages/Lounge'));
 const MarketLanding = lazy(() => import('./pages/MarketLanding'));
 const MarketTrend = lazy(() => import('./pages/MarketTrend'));
 
@@ -445,6 +446,10 @@ const router = createBrowserRouter(
       {
         path: '/translate',
         element: <Translate />,
+      },
+      {
+        path: '/lounge',
+        element: <Lounge />,
       },
       // 게시판 페이지들 (읽기는 누구나, 글쓰기/댓글은 각 페이지에서 로그인 체크)
       {

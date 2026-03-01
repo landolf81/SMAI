@@ -24,7 +24,7 @@ const LANGUAGES = [
   { code: 'lo', name: '라오어', speechLang: 'lo-LA', flag: '🇱🇦' }
 ];
 
-const Translate = () => {
+const Translate = ({ embedded = false }) => {
   const { currentUser } = useContext(AuthContext);
   const [isMobile] = useState(() => isMobileDevice());
 
@@ -544,7 +544,7 @@ const Translate = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cloud-dancer pt-16 px-4 pb-4">
+    <div className={embedded ? 'bg-cloud-dancer px-4 pb-4' : 'min-h-screen bg-cloud-dancer pt-16 px-4 pb-4'}>
       <div className="max-w-3xl mx-auto">
         {/* 헤더 */}
         <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl shadow-lg px-4 py-3 mb-4 text-white">

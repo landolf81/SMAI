@@ -1,6 +1,6 @@
 /**
  * QnA 페이지
- * 역할: Q&A + 영농 정보 탭 시스템 (농약정보, 비닐 등)
+ * 역할: Q&A + 영농 정보 탭 시스템 (농약정보, 비닐, 번역 등)
  */
 import React, { useState, useEffect, useRef, startTransition, lazy, Suspense } from 'react';
 import QnAList from '../components/QnAList';
@@ -10,6 +10,7 @@ import CloseIcon from '@mui/icons-material/Close';
 const PesticideInfo = lazy(() => import('../components/PesticideInfo'));
 const VinylInfo = lazy(() => import('../components/VinylInfo'));
 const PestDiseaseInfo = lazy(() => import('../components/PestDiseaseInfo'));
+const Translate = lazy(() => import('./Translate'));
 
 /** 탭 목록 - 향후 탭 추가 시 여기에 추가 */
 const TABS = [
@@ -17,7 +18,14 @@ const TABS = [
   { key: 'pest', label: '병충해' },
   { key: 'pesticide', label: '농약정보' },
   { key: 'vinyl', label: '비닐' },
+  { key: 'translate', label: '번역' },
 ];
+
+const TabFallback = () => (
+  <div className="flex justify-center py-12">
+    <span className="loading loading-spinner loading-md text-teal-500"></span>
+  </div>
+);
 
 const QnA = () => {
   const [activeTab, setActiveTab] = useState('qna');
@@ -115,34 +123,29 @@ const QnA = () => {
 
       {/* 병충해 탭 */}
       {activeTab === 'pest' && (
-        <Suspense fallback={
-          <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-md text-teal-500"></span>
-          </div>
-        }>
+        <Suspense fallback={<TabFallback />}>
           <PestDiseaseInfo />
         </Suspense>
       )}
 
       {/* 농약정보 탭 */}
       {activeTab === 'pesticide' && (
-        <Suspense fallback={
-          <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-md text-teal-500"></span>
-          </div>
-        }>
+        <Suspense fallback={<TabFallback />}>
           <PesticideInfo />
         </Suspense>
       )}
 
       {/* 비닐 탭 */}
       {activeTab === 'vinyl' && (
-        <Suspense fallback={
-          <div className="flex justify-center py-12">
-            <span className="loading loading-spinner loading-md text-teal-500"></span>
-          </div>
-        }>
+        <Suspense fallback={<TabFallback />}>
           <VinylInfo />
+        </Suspense>
+      )}
+
+      {/* 번역 탭 */}
+      {activeTab === 'translate' && (
+        <Suspense fallback={<TabFallback />}>
+          <Translate embedded />
         </Suspense>
       )}
     </div>

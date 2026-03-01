@@ -290,77 +290,89 @@ export const marketService = {
       // NFC 정규화 (유니코드 중복 방지)
       const normalizedMarkets = markets.map(nfc);
 
-      // 1. 현재 날짜의 시장 데이터 조회
+      // 60일 이내 데이터를 한 번에 조회 (N+1 쿼리 → 1 쿼리)
+      const pastDate = new Date(date);
+      pastDate.setDate(pastDate.getDate() - 60);
+      const startDate = pastDate.toISOString().split('T')[0];
+
       const { data, error } = await supabase
         .from('market_summary')
         .select('*')
         .in('market_name', normalizedMarkets)
-        .eq('market_date', date)
-        .order('market_name');
+        .gte('market_date', startDate)
+        .lte('market_date', date)
+        .order('market_date', { ascending: false });
 
       if (error) throw error;
 
-      // 2. 각 시장별로 전 경매일 찾기 및 비교 데이터 생성
-      const transformedMarkets = await Promise.all((data || []).map(async (market) => {
-        // 전 경매일 찾기 (현재 날짜보다 이전 날짜 중 가장 최근)
-        const { data: previousDateData } = await supabase
-          .from('market_summary')
-          .select('*')
-          .eq('market_name', market.market_name)
-          .lt('market_date', date)
-          .order('market_date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      // 시장별로 현재 날짜 / 가장 최근 이전 날짜 분리 (date 내림차순이므로 순서 보장)
+      const currentByMarket = {};
+      const prevByMarket = {};
+      for (const row of (data || [])) {
+        const name = row.market_name;
+        if (row.market_date === date) {
+          currentByMarket[name] = row;
+        } else if (!prevByMarket[name]) {
+          prevByMarket[name] = row;
+        }
+      }
 
-        // 전일 비교 계산
-        const currentAvgPrice = parseInt(market.avg_price) || 0;
-        const previousAvgPrice = previousDateData ? (parseInt(previousDateData.avg_price) || 0) : 0;
-        const avgChange = previousAvgPrice > 0 ? currentAvgPrice - previousAvgPrice : 0;
-        const avgChangePercent = previousAvgPrice > 0
-          ? Math.round((avgChange / previousAvgPrice) * 1000) / 10
-          : 0;
+      // 원래 순서 유지 + 현재 날짜 데이터가 있는 시장만 포함
+      const transformedMarkets = normalizedMarkets
+        .filter(name => currentByMarket[name])
+        .map(name => {
+          const market = currentByMarket[name];
+          const previousDateData = prevByMarket[name] || null;
 
-        const currentMinPrice = parseInt(market.min_price) || 0;
-        const previousMinPrice = previousDateData ? (parseInt(previousDateData.min_price) || 0) : 0;
+          // 전일 비교 계산
+          const currentAvgPrice = parseInt(market.avg_price) || 0;
+          const previousAvgPrice = previousDateData ? (parseInt(previousDateData.avg_price) || 0) : 0;
+          const avgChange = previousAvgPrice > 0 ? currentAvgPrice - previousAvgPrice : 0;
+          const avgChangePercent = previousAvgPrice > 0
+            ? Math.round((avgChange / previousAvgPrice) * 1000) / 10
+            : 0;
 
-        const currentMaxPrice = parseInt(market.max_price) || 0;
-        const previousMaxPrice = previousDateData ? (parseInt(previousDateData.max_price) || 0) : 0;
+          const currentMinPrice = parseInt(market.min_price) || 0;
+          const previousMinPrice = previousDateData ? (parseInt(previousDateData.min_price) || 0) : 0;
 
-        const currentVolume = parseInt(market.total_boxes) || 0;
-        const previousVolume = previousDateData ? (parseInt(previousDateData.total_boxes) || 0) : 0;
+          const currentMaxPrice = parseInt(market.max_price) || 0;
+          const previousMaxPrice = previousDateData ? (parseInt(previousDateData.max_price) || 0) : 0;
 
-        return {
-          market_name: market.market_name,
-          success: true,
-          data: {
-            summary: {
-              overall_avg_price: currentAvgPrice,
-              total_boxes: currentVolume,
-              total_amount: parseInt(market.total_amount) || 0
-            },
-            details: [
-              {
-                boxes: currentVolume,
-                min_price: currentMinPrice,
-                max_price: currentMaxPrice,
-                avg_price: currentAvgPrice
+          const currentVolume = parseInt(market.total_boxes) || 0;
+          const previousVolume = previousDateData ? (parseInt(previousDateData.total_boxes) || 0) : 0;
+
+          return {
+            market_name: market.market_name,
+            success: true,
+            data: {
+              summary: {
+                overall_avg_price: currentAvgPrice,
+                total_boxes: currentVolume,
+                total_amount: parseInt(market.total_amount) || 0
+              },
+              details: [
+                {
+                  boxes: currentVolume,
+                  min_price: currentMinPrice,
+                  max_price: currentMaxPrice,
+                  avg_price: currentAvgPrice
+                }
+              ],
+              previous_min_price: previousMinPrice,
+              previous_max_price: previousMaxPrice,
+              overall_comparison: {
+                comparison_available: previousAvgPrice > 0,
+                previousPrice: previousAvgPrice,
+                change: avgChange,
+                changePercent: avgChangePercent
+              },
+              volume_comparison: {
+                comparison_available: previousVolume > 0,
+                previousVolume: previousVolume
               }
-            ],
-            previous_min_price: previousMinPrice,
-            previous_max_price: previousMaxPrice,
-            overall_comparison: {
-              comparison_available: previousAvgPrice > 0,
-              previousPrice: previousAvgPrice,
-              change: avgChange,
-              changePercent: avgChangePercent
-            },
-            volume_comparison: {
-              comparison_available: previousVolume > 0,
-              previousVolume: previousVolume
             }
-          }
-        };
-      }));
+          };
+        });
 
       return {
         success: true,
