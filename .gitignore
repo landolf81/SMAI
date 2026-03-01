@@ -41,3 +41,7 @@ cookies.txt
 public/uploads/posts/*
 !public/uploads/posts/.gitkeep
 .env*.local
+
+# Claude Code
+.claude/worktrees/
+.claude/launch.json

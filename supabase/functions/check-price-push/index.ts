@@ -1,7 +1,7 @@
 /**
  * check-price-push Edge Function
- * pg_cron에서 KST 11:20~14:00 매 20분 호출
- * 선남농협 경락가 데이터가 당일 처음 도착하면 구독자 전원에게 푸시 발송
+ * pg_cron에서 KST 11:20~16:00 매 20분 호출
+ * 성주군 합계 경락가 데이터가 당일 처음 도착하면 구독자 전원에게 푸시 발송
  * price_push_tracker 테이블의 UNIQUE(market_name, market_date)로 중복 방지
  */
 
@@ -17,8 +17,9 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
 // ── 상수 ──
-const TARGET_MARKET = '선남농협'
-const PUSH_URL = '/prices'
+const TARGET_REGION = '성주군'
+const TRACKER_NAME = '성주군 합계'
+const PUSH_URL = '/'
 
 // ── 유틸 ──
 
@@ -67,10 +68,10 @@ Deno.serve(async (req) => {
     const kstHour = kstNow.getUTCHours()
     const todayKST = formatDateKST(kstNow)
 
-    // 1) 시간대 필터: KST 11:20 ~ 14:00 외에는 즉시 리턴
+    // 1) 시간대 필터: KST 11:20 ~ 16:00 외에는 즉시 리턴
     const kstMinute = kstNow.getUTCMinutes()
     const kstTotalMin = kstHour * 60 + kstMinute
-    if (kstTotalMin < 11 * 60 + 20 || kstTotalMin > 14 * 60) {
+    if (kstTotalMin < 11 * 60 + 20 || kstTotalMin > 16 * 60) {
       return jsonRes({ skipped: true, reason: 'outside_hours', kstHour, kstMinute })
     }
 
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
     const { data: tracker } = await supabase
       .from('price_push_tracker')
       .select('id')
-      .eq('market_name', TARGET_MARKET)
+      .eq('market_name', TRACKER_NAME)
       .eq('market_date', todayKST)
       .maybeSingle()
 
@@ -88,11 +89,11 @@ Deno.serve(async (req) => {
       return jsonRes({ skipped: true, reason: 'already_pushed', date: todayKST })
     }
 
-    // 3) 오늘 선남농협 데이터 존재 여부
+    // 3) 오늘 성주군 합계 데이터 존재 여부
     const { data: todayData, error: mktErr } = await supabase
-      .from('market_summary')
-      .select('avg_price, min_price, max_price, total_boxes, total_amount')
-      .eq('market_name', TARGET_MARKET)
+      .from('market_aggregate_summary')
+      .select('avg_price, max_price, total_boxes, total_amount')
+      .eq('region_name', TARGET_REGION)
       .eq('market_date', todayKST)
       .maybeSingle()
 
@@ -101,35 +102,14 @@ Deno.serve(async (req) => {
       return jsonRes({ skipped: true, reason: 'no_data', date: todayKST })
     }
 
-    // 4) 전일 데이터 조회 (전일比 비교용)
-    const { data: prevData } = await supabase
-      .from('market_summary')
-      .select('avg_price, total_boxes')
-      .eq('market_name', TARGET_MARKET)
-      .lt('market_date', todayKST)
-      .order('market_date', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-
-    // 5) 푸시 메시지 구성
+    // 4) 푸시 메시지 구성
+    const maxPrice = Number(todayData.max_price) || 0
     const avgPrice = Number(todayData.avg_price) || 0
-    const totalBoxes = Number(todayData.total_boxes) || 0
 
-    let comparison = ''
-    if (prevData) {
-      const prevAvg = Number(prevData.avg_price) || 0
-      if (prevAvg > 0) {
-        const diff = avgPrice - prevAvg
-        const pct = Math.round((diff / prevAvg) * 1000) / 10
-        const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : ''
-        comparison = ` (전일比 ${arrow}${Math.abs(pct)}%)`
-      }
-    }
+    const title = '오늘 경매가 도착'
+    const body = `최고가 ${fmtNum(maxPrice)}원 평균가 ${fmtNum(avgPrice)}원으로 시작합니다`
 
-    const title = '선남농협 오늘 경락가 도착'
-    const body = `평균 ${fmtNum(avgPrice)}원${comparison} · ${fmtNum(totalBoxes)}상자`
-
-    // 6) 구독자 전원 푸시 발송
+    // 5) 구독자 전원 푸시 발송
     const { data: subs, error: subErr } = await supabase
       .from('push_subscriptions')
       .select('id, endpoint, keys')
@@ -194,11 +174,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 7) 추적 테이블 기록 (UNIQUE 제약으로 race condition 방어)
+    // 6) 추적 테이블 기록 (UNIQUE 제약으로 race condition 방어)
     const { error: trackErr } = await supabase
       .from('price_push_tracker')
       .insert({
-        market_name: TARGET_MARKET,
+        market_name: TRACKER_NAME,
         market_date: todayKST,
         sent,
         failed,
@@ -206,11 +186,10 @@ Deno.serve(async (req) => {
       })
 
     if (trackErr?.code === '23505') {
-      // unique_violation — 다른 인스턴스가 먼저 기록
       return jsonRes({ skipped: true, reason: 'race_condition', date: todayKST })
     }
 
-    // 8) push_logs에도 기록 (관리자 페이지 발송 이력)
+    // 7) push_logs에도 기록 (관리자 페이지 발송 이력)
     await supabase.from('push_logs').insert({
       title,
       body,
