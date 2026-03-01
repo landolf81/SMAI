@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, body, url } = await req.json()
+    const { title, body, url, userId } = await req.json()
 
     if (!title || !body) {
       return new Response(JSON.stringify({ error: '제목과 내용이 필요합니다' }), {
@@ -37,11 +37,12 @@ Deno.serve(async (req) => {
       })
     }
 
-    // service_role 클라이언트로 모든 구독 조회
+    // service_role 클라이언트로 구독 조회
+    // userId 있으면 해당 사용자만, 없으면 전체 구독자 (관리자 브로드캐스트)
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    const { data: subscriptions, error } = await supabase
-      .from('push_subscriptions')
-      .select('id, endpoint, keys')
+    let query = supabase.from('push_subscriptions').select('id, endpoint, keys')
+    if (userId) query = query.eq('user_id', userId)
+    const { data: subscriptions, error } = await query
 
     if (error) throw error
 

@@ -189,6 +189,32 @@ export const pushNotificationService = {
 
     return data;
   },
+
+  /**
+   * DM 수신 시 특정 사용자에게 푸시 알림 발송 (fire-and-forget)
+   * @param {Object} params
+   * @param {string} params.receiverId - 수신자 사용자 ID
+   * @param {string} params.senderName - 발신자 이름
+   * @param {string} params.senderId - 발신자 ID (알림 클릭 시 이동할 대화 URL에 사용)
+   * @param {string} params.content - 메시지 내용
+   * @returns {Promise<void>}
+   */
+  async sendDmPush({ receiverId, senderName, senderId, content }) {
+    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
+    const { error } = await supabase.functions.invoke('send-push', {
+      body: {
+        userId: receiverId,
+        title: `💬 ${senderName}`,
+        body: preview,
+        url: `/dm/${senderId}`,
+        tag: 'dm',
+      },
+    });
+
+    if (error) {
+      console.warn('[Push] DM 알림 발송 실패 (무시):', error);
+    }
+  },
 };
 
 export default pushNotificationService;

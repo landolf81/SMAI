@@ -1,4 +1,5 @@
 import { supabase } from '../config/supabase.js';
+import { pushNotificationService } from './pushNotificationService.js';
 
 // DM 기능 사용 가능 여부 캐시 (세션 동안 유지)
 let dmFeatureAvailable = null;
@@ -245,6 +246,23 @@ export const dmService = {
         }
         throw new Error(`메시지 전송에 실패했습니다: ${error.message || error.code}`);
       }
+
+      // 수신자에게 Web Push 알림 발송 (fire-and-forget)
+      supabase
+        .from('users')
+        .select('name, username')
+        .eq('id', user.id)
+        .single()
+        .then(({ data: senderInfo }) => {
+          const senderName = senderInfo?.name || senderInfo?.username || '참외이야기';
+          pushNotificationService.sendDmPush({
+            receiverId: messageData.receiverId,
+            senderName,
+            senderId: user.id,
+            content: messageData.content,
+          }).catch(() => {});
+        })
+        .catch(() => {});
 
       return data;
     } catch (error) {
