@@ -136,12 +136,16 @@ async function fetchCorpData(corpCd: string, targetDate: string): Promise<Auctio
 
 // ── 데이터 집계 ──
 
+/** 한글 Unicode 정규화 (NFD→NFC 통일) */
+const normalize = (s: string) => s.normalize('NFC')
+
 /** 개별 경매 기록을 등급·무게별로 집계 */
 function aggregateRecords(
   records: AuctionRecord[],
   marketName: string,
   marketDate: string
 ): AggregatedData[] {
+  marketName = normalize(marketName)
   const groups = new Map<string, { prices: number[]; quantities: number[] }>()
 
   for (const r of records) {
@@ -191,6 +195,7 @@ function buildSummary(
   marketName: string,
   marketDate: string
 ) {
+  marketName = normalize(marketName)
   if (aggregated.length === 0) return null
 
   const totalBoxes = aggregated.reduce((s, a) => s + a.boxes, 0)

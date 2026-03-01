@@ -1,5 +1,8 @@
 import { supabase } from '../config/supabase.js';
 
+/** 한글 Unicode 정규화 (NFD→NFC 통일) */
+const nfc = (s) => typeof s === 'string' ? s.normalize('NFC') : s;
+
 /**
  * 시장 정보 서비스
  * 경락 정보 및 관심 시장, 알림 관리
@@ -267,8 +270,8 @@ export const marketService = {
 
       if (error) throw error;
 
-      // 중복 제거
-      const uniqueMarkets = [...new Set(data.map(item => item.market_name))];
+      // 중복 제거 (NFC 정규화로 유니코드 중복 방지)
+      const uniqueMarkets = [...new Set(data.map(item => nfc(item.market_name)))];
       return uniqueMarkets;
     } catch (error) {
       console.error('시장 목록 조회 오류:', error);
@@ -284,11 +287,14 @@ export const marketService = {
    */
   async getMultipleMarkets(markets, date) {
     try {
+      // NFC 정규화 (유니코드 중복 방지)
+      const normalizedMarkets = markets.map(nfc);
+
       // 1. 현재 날짜의 시장 데이터 조회
       const { data, error } = await supabase
         .from('market_summary')
         .select('*')
-        .in('market_name', markets)
+        .in('market_name', normalizedMarkets)
         .eq('market_date', date)
         .order('market_name');
 
@@ -374,6 +380,7 @@ export const marketService = {
    */
   async getMarketDataWithComparison(marketName, date) {
     try {
+      marketName = nfc(marketName);
       console.log('🔍 상세 경락가 조회:', marketName, date);
 
       // 1. market_summary에서 요약 정보 조회
@@ -559,8 +566,8 @@ export const marketService = {
 
       if (error) throw error;
 
-      // 중복 제거
-      const uniqueMarkets = [...new Set(data.map(item => item.market_name).filter(Boolean))];
+      // 중복 제거 (NFC 정규화)
+      const uniqueMarkets = [...new Set(data.map(item => nfc(item.market_name)).filter(Boolean))];
       return uniqueMarkets;
     } catch (error) {
       console.error('공판장 목록 조회 오류:', error);
@@ -575,6 +582,7 @@ export const marketService = {
    */
   async getMarketGrades(marketName) {
     try {
+      marketName = nfc(marketName);
       const { data, error } = await supabase
         .from('market_data')
         .select('grade')
@@ -612,13 +620,14 @@ export const marketService = {
         if (error) throw error;
         if (!data || data.length === 0) break;
 
-        // 시장별로 등급 그룹화
+        // 시장별로 등급 그룹화 (NFC 정규화)
         data.forEach(item => {
           if (!item.market_name || !item.grade) return;
-          if (!gradesByMarket[item.market_name]) {
-            gradesByMarket[item.market_name] = new Set();
+          const name = nfc(item.market_name);
+          if (!gradesByMarket[name]) {
+            gradesByMarket[name] = new Set();
           }
-          gradesByMarket[item.market_name].add(item.grade);
+          gradesByMarket[name].add(item.grade);
         });
 
         if (data.length < pageSize) break;
