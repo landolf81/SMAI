@@ -24,13 +24,14 @@ export const adService = {
    */
   async getActiveAds() {
     try {
-      const now = new Date().toISOString();
+      const today = new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
 
       const { data, error } = await supabase
         .from('ads')
         .select('*')
         .eq('is_active', true)
-        .or(`end_date.is.null,end_date.gte.${now}`)
+        .or(`end_date.is.null,end_date.gte.${today}`)
+        .lte('start_date', today)
         .order('priority', { ascending: false });
 
       if (error) throw error;
