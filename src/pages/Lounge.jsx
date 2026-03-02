@@ -1,7 +1,12 @@
 /**
  * Lounge.jsx
  * 역할: 광장 - 회원들이 짧은 텍스트 글을 나누는 단체 채팅방
- * 특징: 실시간 수신, 위로 스크롤 시 이전 메시지 로드, 텍스트 전용
+ * 특징:
+ *   - 실시간 수신 (Supabase Realtime)
+ *   - 위로 스크롤 시 이전 메시지 로드 (IntersectionObserver)
+ *   - 텍스트 전용, 도배 방지 15초 쿨다운
+ *   - 메시지 롱프레스 → TTS (Web Speech API, ko-KR)
+ *   - 닉네임 롱프레스 → @멘션 입력창 열기
  */
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,7 +19,9 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AIBadge from '../components/AIBadge';
 import { AI_USER_ID } from '../config/aiUser';
 
+// ─────────────────────────────────────────────
 // 시간 포맷 (오늘이면 시:분, 아니면 날짜)
+// ─────────────────────────────────────────────
 const formatTime = (dateStr) => {
   const date = new Date(dateStr);
   const today = new Date();
@@ -24,7 +31,9 @@ const formatTime = (dateStr) => {
   return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 };
 
+// ─────────────────────────────────────────────
 // 전송 금지 패턴 검사 (전화번호, 음란·폭력 단어)
+// ─────────────────────────────────────────────
 const PHONE_REGEX = /01[0-9][-\s.]?\d{3,4}[-\s.]?\d{4}|0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}/;
 const BLOCKED_WORDS = [
   // 음란
@@ -42,7 +51,9 @@ const validateMessage = (content) => {
   return null;
 };
 
+// ─────────────────────────────────────────────
 // 날짜 구분선 표시용 키
+// ─────────────────────────────────────────────
 const getDateKey = (dateStr) => new Date(dateStr).toISOString().split('T')[0];
 
 const formatDateLabel = (dateKey) => {
@@ -55,15 +66,61 @@ const formatDateLabel = (dateKey) => {
   return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 };
 
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
+const LONG_PRESS_DELAY = 500;
+const LONG_PRESS_MOVE_THRESHOLD = 10;
+
+// ─────────────────────────────────────────────
+// LoungeMessage
+// props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking
+// ─────────────────────────────────────────────
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
   const isMe = msg.user_id === currentUserId;
   const isAI = msg.user_id === AI_USER_ID;
 
+  // ── 닉네임 롱프레스 → @멘션 ──
+  const nameTimerRef = useRef(null);
+  const nameTouchRef = useRef({ x: 0, y: 0 });
+  const nameFiredRef = useRef(false);
+
+  const handleNameTouchStart = useCallback((e) => {
+    const t = e.touches[0];
+    nameTouchRef.current = { x: t.clientX, y: t.clientY };
+    nameFiredRef.current = false;
+    nameTimerRef.current = setTimeout(() => {
+      nameFiredRef.current = true;
+    }, LONG_PRESS_DELAY);
+  }, []);
+
+  const handleNameTouchMove = useCallback((e) => {
+    if (nameFiredRef.current || !nameTimerRef.current) return;
+    const t = e.touches[0];
+    if (Math.abs(t.clientX - nameTouchRef.current.x) > LONG_PRESS_MOVE_THRESHOLD ||
+        Math.abs(t.clientY - nameTouchRef.current.y) > LONG_PRESS_MOVE_THRESHOLD) {
+      clearTimeout(nameTimerRef.current);
+      nameTimerRef.current = null;
+    }
+  }, []);
+
+  const handleNameTouchEnd = useCallback(() => {
+    clearTimeout(nameTimerRef.current);
+    nameTimerRef.current = null;
+    if (nameFiredRef.current) {
+      onMention?.(displayName);
+    }
+    nameFiredRef.current = false;
+  }, [displayName, onMention]);
+
+  useEffect(() => () => clearTimeout(nameTimerRef.current), []);
+
   return (
-    <div className={`flex items-start gap-2.5 px-4 py-1.5 group ${isMe ? 'bg-orange-50 border-l-2 border-orange-400' : ''}`}>
+    <div
+      className={`flex items-start gap-2.5 px-4 py-2 group border-b border-gray-100 ${
+        isMe ? 'bg-orange-50 border-l-2 border-orange-400' : ''
+      } ${isSpeaking ? 'bg-blue-50' : ''}`}
+    >
       <img
         src={profileUrl}
         alt={displayName}
@@ -74,14 +131,38 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
         }}
       />
       <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2">
-          <span className="text-[15px] font-semibold text-gray-800">{displayName}</span>
+        <div className="flex items-center gap-1.5">
+          {/* 닉네임 — 롱프레스 시 @멘션 */}
+          <span
+            className="text-[15px] font-semibold text-gray-800 select-none"
+            style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+            onTouchStart={handleNameTouchStart}
+            onTouchMove={handleNameTouchMove}
+            onTouchEnd={handleNameTouchEnd}
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            {displayName}
+          </span>
           {isAI && <AIBadge />}
           <span className="text-[12px] text-gray-400">{formatTime(msg.created_at)}</span>
+          {/* TTS 버튼 */}
+          <button
+            onClick={() => onTTS?.(msg.content, msg.id)}
+            className={`p-0.5 rounded transition-colors ${isSpeaking ? 'text-blue-500' : 'text-gray-400 active:text-blue-400'}`}
+            aria-label={isSpeaking ? 'TTS 정지' : '읽어주기'}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+              {isSpeaking ? (
+                <path d="M5.75 3a.75.75 0 00-.75.75v12.5a.75.75 0 001.5 0V3.75A.75.75 0 005.75 3zm8.5 0a.75.75 0 00-.75.75v12.5a.75.75 0 001.5 0V3.75a.75.75 0 00-.75-.75z" />
+              ) : (
+                <path d="M6.3 2.84A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.27l9.344-5.891a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              )}
+            </svg>
+          </button>
           {isMe && (
             <button
               onClick={() => onDelete(msg.id)}
-              className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity ml-1"
+              className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
             >
               삭제
             </button>
@@ -96,6 +177,9 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete }) => {
 });
 LoungeMessage.displayName = 'LoungeMessage';
 
+// ─────────────────────────────────────────────
+// Lounge (메인 컴포넌트)
+// ─────────────────────────────────────────────
 const Lounge = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -109,6 +193,11 @@ const Lounge = () => {
   const [isComposing, setIsComposing] = useState(false);
   const [cooldownLeft, setCooldownLeft] = useState(0);
 
+  // TTS: 현재 재생 중인 메시지 ID
+  const [speakingMsgId, setSpeakingMsgId] = useState(null);
+  // ref로 관리해 stale closure 없이 toggle 판단
+  const speakingMsgIdRef = useRef(null);
+
   const scrollAreaRef = useRef(null);
   const topSentinelRef = useRef(null);
   const bottomRef = useRef(null);
@@ -116,26 +205,35 @@ const Lounge = () => {
   const isAtBottomRef = useRef(true);
   const textareaRef = useRef(null);
 
-  // 하단 여부 체크
+  // ── 하단 여부 체크 ──
   const checkIsAtBottom = useCallback(() => {
     const el = scrollAreaRef.current;
     if (!el) return true;
     return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
   }, []);
 
-  // 하단으로 스크롤
+  // ── 하단으로 스크롤 ──
   const scrollToBottom = useCallback((behavior = 'smooth') => {
     bottomRef.current?.scrollIntoView({ behavior });
   }, []);
 
-  // 도배 방지 쿨다운 카운트다운 (1초씩 감소)
+  // ── 도배 방지 쿨다운 카운트다운 (1초씩 감소) ──
   useEffect(() => {
     if (cooldownLeft <= 0) return;
     const timer = setTimeout(() => setCooldownLeft(c => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [cooldownLeft]);
 
-  // 초기 메시지 로드
+  // ── speechSynthesis 언마운트 클린업 ──
+  useEffect(() => {
+    return () => {
+      if (typeof speechSynthesis !== 'undefined') {
+        speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // ── 초기 메시지 로드 ──
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -154,7 +252,7 @@ const Lounge = () => {
     return () => { cancelled = true; };
   }, [scrollToBottom]);
 
-  // Realtime 구독
+  // ── Realtime 구독 ──
   useEffect(() => {
     subscriptionRef.current = loungeService.subscribeToNewMessages((newMsg) => {
       setMessages((prev) => {
@@ -174,7 +272,7 @@ const Lounge = () => {
     return () => subscriptionRef.current?.unsubscribe();
   }, [scrollToBottom]);
 
-  // 스크롤 이벤트: 하단 여부 추적
+  // ── 스크롤 이벤트: 하단 여부 추적 ──
   useEffect(() => {
     const el = scrollAreaRef.current;
     if (!el) return;
@@ -186,7 +284,7 @@ const Lounge = () => {
     return () => el.removeEventListener('scroll', onScroll);
   }, [checkIsAtBottom]);
 
-  // 위 센티넬 IntersectionObserver (이전 메시지 로드)
+  // ── 위 센티넬 IntersectionObserver (이전 메시지 로드) ──
   useEffect(() => {
     if (!topSentinelRef.current) return;
 
@@ -228,7 +326,49 @@ const Lounge = () => {
     return () => observer.disconnect();
   }, [messages, isLoadingMore, hasMore]);
 
-  // 메시지 전송
+  // ── TTS 핸들러 ──
+  // 같은 메시지를 다시 롱프레스하면 중지(토글), 다른 메시지이면 이전 것 중지 후 새로 시작
+  const handleTTS = useCallback((content, msgId) => {
+    if (typeof speechSynthesis === 'undefined') return;
+
+    // 현재 재생 중인 메시지와 동일하면 → 중지(토글)
+    if (speakingMsgIdRef.current === msgId) {
+      speechSynthesis.cancel();
+      speakingMsgIdRef.current = null;
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    // 다른 메시지 or 아무것도 재생 안 중 → 새로 시작
+    speechSynthesis.cancel(); // 이전 재생 정리
+
+    const utterance = new SpeechSynthesisUtterance(content);
+    utterance.lang = 'ko-KR';
+    utterance.rate = 0.9;
+
+    utterance.onstart = () => {
+      speakingMsgIdRef.current = msgId;
+      setSpeakingMsgId(msgId);
+    };
+    utterance.onend = () => {
+      speakingMsgIdRef.current = null;
+      setSpeakingMsgId(null);
+    };
+    utterance.onerror = () => {
+      speakingMsgIdRef.current = null;
+      setSpeakingMsgId(null);
+    };
+
+    speechSynthesis.speak(utterance);
+  }, []);
+
+  // ── @멘션 핸들러 (닉네임 롱프레스) ──
+  const handleMention = useCallback((name) => {
+    setText(`@${name} `);
+    setIsComposing(true);
+  }, []);
+
+  // ── 메시지 전송 ──
   const handleSend = useCallback(async (e) => {
     e?.preventDefault();
     const trimmed = text.trim();
@@ -268,7 +408,7 @@ const Lounge = () => {
     }
   }, [text, isSending, cooldownLeft, currentUser, navigate, scrollToBottom]);
 
-  // Enter(shift+enter는 줄바꿈)로 전송
+  // ── Enter(shift+enter는 줄바꿈)로 전송 ──
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -276,7 +416,7 @@ const Lounge = () => {
     }
   }, [handleSend]);
 
-  // 메시지 삭제
+  // ── 메시지 삭제 ──
   const handleDelete = useCallback(async (id) => {
     if (!window.confirm('이 메시지를 삭제하시겠습니까?')) return;
     try {
@@ -287,7 +427,7 @@ const Lounge = () => {
     }
   }, []);
 
-  // 날짜 구분선 삽입을 위한 렌더링 준비
+  // ── 날짜 구분선 삽입을 위한 렌더링 준비 ──
   const renderedItems = [];
   let lastDateKey = null;
   for (const msg of messages) {
@@ -357,6 +497,9 @@ const Lounge = () => {
                 msg={item.msg}
                 currentUserId={currentUser?.id}
                 onDelete={handleDelete}
+                onTTS={handleTTS}
+                onMention={handleMention}
+                isSpeaking={speakingMsgId === item.msg.id}
               />
             );
           })}
