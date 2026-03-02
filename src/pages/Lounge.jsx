@@ -106,12 +106,14 @@ const Lounge = () => {
   const [isSending, setIsSending] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
 
+  const [isComposing, setIsComposing] = useState(false);
+
   const scrollAreaRef = useRef(null);
   const topSentinelRef = useRef(null);
   const bottomRef = useRef(null);
   const subscriptionRef = useRef(null);
   const isAtBottomRef = useRef(true);
-  const containerRef = useRef(null);
+  const textareaRef = useRef(null);
 
   // 하단 여부 체크
   const checkIsAtBottom = useCallback(() => {
@@ -125,29 +127,6 @@ const Lounge = () => {
     bottomRef.current?.scrollIntoView({ behavior });
   }, []);
 
-  // iOS 키보드 감지: visualViewport resize 시 paddingBottom 동적 조정
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    let prevKeyboardHeight = 0;
-    const update = () => {
-      const el = containerRef.current;
-      if (!el) return;
-      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      el.style.paddingBottom = keyboardHeight > 50 ? '4px' : '80px';
-      // 키보드가 방금 열렸으면 하단으로 스크롤
-      if (keyboardHeight > 50 && prevKeyboardHeight <= 50) {
-        requestAnimationFrame(() => scrollToBottom('auto'));
-      }
-      prevKeyboardHeight = keyboardHeight;
-    };
-    vv.addEventListener('resize', update);
-    vv.addEventListener('scroll', update);
-    return () => {
-      vv.removeEventListener('resize', update);
-      vv.removeEventListener('scroll', update);
-    };
-  }, [scrollToBottom]);
 
   // 초기 메시지 로드
   useEffect(() => {
@@ -268,6 +247,7 @@ const Lounge = () => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         return [...prev, newMsg];
       });
+      setIsComposing(false);
       requestAnimationFrame(() => scrollToBottom());
     } catch (e) {
       console.error('[Lounge] 전송 실패:', e);
@@ -309,11 +289,10 @@ const Lounge = () => {
   }
 
   return (
-    // Navbar(56px) + BottomNav(80px) 사이 공간을 정확히 채우는 flex 컨테이너
+    <>
     <div
-      ref={containerRef}
       className="flex flex-col bg-[#F5F5F5]"
-      style={{ height: '100dvh', paddingTop: '56px', paddingBottom: '80px' }}
+      style={{ height: '100dvh', paddingTop: '56px' }}
     >
       {/* 컨텍스트 바 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 py-1.5 text-center">
@@ -325,6 +304,7 @@ const Lounge = () => {
       <main
         ref={scrollAreaRef}
         className="flex-1 overflow-y-auto overscroll-contain relative"
+        style={{ paddingBottom: '160px' }}
       >
         {/* 이전 메시지 로딩 센티넬 */}
         <div ref={topSentinelRef} className="h-1" />
@@ -387,43 +367,89 @@ const Lounge = () => {
         <div ref={bottomRef} />
       </main>
 
-      {/* 입력창 */}
-      <footer className="flex-shrink-0 bg-white border-t border-gray-200 px-3 py-2">
-        {!currentUser ? (
-          <button
-            onClick={() => navigate('/login')}
-            className="w-full py-3 text-[14px] text-gray-500 bg-gray-100 rounded-full"
-          >
-            로그인하고 이야기 나누기
-          </button>
-        ) : (
-          <form onSubmit={handleSend} className="flex items-end gap-2">
-            <textarea
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="이야기를 남겨보세요... (최대 300자)"
-              maxLength={300}
-              rows={1}
-              className="flex-1 px-4 py-2.5 bg-gray-100 rounded-2xl text-[15px] outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none leading-relaxed"
-              style={{ fontSize: '16px', maxHeight: '80px', overflowY: 'auto' }}
-            />
-            <button
-              type="submit"
-              disabled={!text.trim() || isSending}
-              className="p-2.5 bg-orange-500 text-white rounded-full disabled:bg-gray-300 disabled:cursor-not-allowed flex-shrink-0 active:bg-orange-600"
-            >
-              <SendIcon style={{ fontSize: 20 }} />
-            </button>
-          </form>
-        )}
-        {text.length > 0 && (
-          <p className="text-right text-[11px] text-gray-400 mt-1 pr-12">
-            {text.length}/300
-          </p>
-        )}
-      </footer>
     </div>
+
+    {/* 플로팅 글쓰기 버튼 */}
+    {!isComposing && (
+      <button
+        onClick={() => setIsComposing(true)}
+        className="fixed right-4 z-40 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3 transition-all duration-300 hover:shadow-xl active:scale-95"
+        style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}
+        aria-label="광장에 글쓰기"
+      >
+        <SendIcon style={{ fontSize: 22 }} />
+      </button>
+    )}
+
+    {/* 글쓰기 모달 - 화면 상단에 띄워 키보드와 충돌 방지 */}
+    {isComposing && (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-start pt-20">
+        {/* 배경 */}
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => { if (!text.trim()) setIsComposing(false); }}
+        />
+        {/* 카드 */}
+        <div className="relative w-[calc(100%-32px)] bg-white rounded-2xl shadow-xl border-2 border-blue-400 overflow-hidden">
+          {/* 헤더 */}
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500" />
+              <span className="text-[18px] font-bold text-gray-800">광장에 한마디</span>
+            </div>
+            <button
+              onClick={() => { setText(''); setIsComposing(false); }}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 text-[16px] hover:bg-gray-200 transition-colors"
+            >
+              ×
+            </button>
+          </div>
+
+          {!currentUser ? (
+            <div className="px-5 py-5">
+              <button
+                onClick={() => navigate('/login')}
+                className="w-full py-3 text-[14px] font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors"
+              >
+                로그인하고 이야기 나누기
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* 입력창 */}
+              <div className="px-5 pt-4 pb-3">
+                <textarea
+                  ref={textareaRef}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="이야기를 남겨보세요... (최대 300자)"
+                  maxLength={300}
+                  rows={3}
+                  autoFocus
+                  className="w-full px-4 py-3 border-2 border-blue-400 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-500 text-[15px] resize-none leading-relaxed text-gray-800 placeholder-gray-400 bg-gray-50 outline-none transition-all duration-200"
+                  style={{ fontSize: '16px', minHeight: '84px', maxHeight: '120px', overflowY: 'auto' }}
+                />
+              </div>
+              {/* 푸터 */}
+              <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                <span className={`text-[12px] transition-colors ${text.length > 0 ? 'text-gray-400' : 'text-transparent'}`}>
+                  {text.length}/300
+                </span>
+                <button
+                  onClick={handleSend}
+                  disabled={!text.trim() || isSending}
+                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
+                >
+                  전송
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
