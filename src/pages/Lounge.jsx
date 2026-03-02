@@ -3,7 +3,7 @@
  * 역할: 광장 - 회원들이 짧은 텍스트 글을 나누는 단체 채팅방
  * 특징: 실시간 수신, 위로 스크롤 시 이전 메시지 로드, 텍스트 전용
  */
-import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import loungeService from '../services/loungeService';
@@ -112,7 +112,6 @@ const Lounge = () => {
   const subscriptionRef = useRef(null);
   const isAtBottomRef = useRef(true);
   const containerRef = useRef(null);
-  const inputFooterRef = useRef(null);
 
   // 하단 여부 체크
   const checkIsAtBottom = useCallback(() => {
@@ -126,28 +125,16 @@ const Lounge = () => {
     bottomRef.current?.scrollIntoView({ behavior });
   }, []);
 
-  // 마운트 시 초기 paddingBottom 설정 (fixed 입력창 높이만큼)
-  useLayoutEffect(() => {
-    const footer = inputFooterRef.current;
-    const el = scrollAreaRef.current;
-    if (footer && el) {
-      el.style.paddingBottom = `${footer.offsetHeight}px`;
-    }
-  }, []);
-
-  // iOS 키보드 감지: visualViewport resize 시 fixed 입력창 bottom 위치 조정
+  // iOS 키보드 감지: visualViewport resize 시 paddingBottom 동적 조정
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     let prevKeyboardHeight = 0;
     const update = () => {
-      const footer = inputFooterRef.current;
-      const scrollEl = scrollAreaRef.current;
-      if (!footer) return;
+      const el = containerRef.current;
+      if (!el) return;
       const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      const inputBottom = keyboardHeight > 50 ? keyboardHeight : 80;
-      footer.style.bottom = `${inputBottom}px`;
-      if (scrollEl) scrollEl.style.paddingBottom = `${footer.offsetHeight}px`;
+      el.style.paddingBottom = keyboardHeight > 50 ? '4px' : '80px';
       // 키보드가 방금 열렸으면 하단으로 스크롤
       if (keyboardHeight > 50 && prevKeyboardHeight <= 50) {
         requestAnimationFrame(() => scrollToBottom('auto'));
@@ -322,11 +309,11 @@ const Lounge = () => {
   }
 
   return (
-    // Navbar(56px) 아래부터 전체 채우는 flex 컨테이너 (입력창은 fixed로 분리)
+    // Navbar(56px) + BottomNav(80px) 사이 공간을 정확히 채우는 flex 컨테이너
     <div
       ref={containerRef}
       className="flex flex-col bg-[#F5F5F5]"
-      style={{ height: '100dvh', paddingTop: '56px' }}
+      style={{ height: '100dvh', paddingTop: '56px', paddingBottom: '80px' }}
     >
       {/* 컨텍스트 바 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 py-1.5 text-center">
@@ -400,12 +387,8 @@ const Lounge = () => {
         <div ref={bottomRef} />
       </main>
 
-      {/* 입력창 - fixed 플로팅: 키보드 없을 때 80px(바텀 네비 위), 키보드 열리면 keyboardHeight */}
-      <footer
-        ref={inputFooterRef}
-        className="fixed left-0 right-0 bg-white border-t border-gray-200 px-3 py-2 z-40"
-        style={{ bottom: '80px' }}
-      >
+      {/* 입력창 */}
+      <footer className="flex-shrink-0 bg-white border-t border-gray-200 px-3 py-2">
         {!currentUser ? (
           <button
             onClick={() => navigate('/login')}
