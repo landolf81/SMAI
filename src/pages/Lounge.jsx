@@ -117,7 +117,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
 
   return (
     <div
-      className={`flex items-start gap-2.5 px-4 py-2 group border-b border-gray-100 ${
+      className={`flex items-start gap-2.5 px-4 py-2 group border-b border-gray-300 ${
         isMe ? 'bg-orange-50 border-l-2 border-orange-400' : ''
       } ${isSpeaking ? 'bg-blue-50' : ''}`}
     >
