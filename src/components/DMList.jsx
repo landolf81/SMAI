@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthContext } from '../context/AuthContext';
-import { dmService } from '../services';
+import { dmService, storageService } from '../services';
 import moment from 'moment';
 import 'moment/locale/ko';
 
@@ -54,14 +54,14 @@ const DMList = () => {
           </div>
           
           {/* 검색바 */}
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fontSize="small" />
+          <div className="flex items-center border rounded-lg focus-within:ring-2 focus-within:ring-market-500 focus-within:border-transparent bg-white">
+            <SearchIcon className="ml-3 flex-shrink-0 text-gray-400" fontSize="small" />
             <input
               type="text"
               placeholder="대화 상대를 검색하세요..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
+              className="flex-1 pl-2 pr-4 py-2 focus:outline-none bg-transparent"
             />
           </div>
         </div>
@@ -83,17 +83,12 @@ const DMList = () => {
                 <div className="flex items-start gap-3">
                   {/* 프로필 이미지 */}
                   <div className="relative">
-                    {conversation.other_user_profile ? (
-                      <img
-                        src={conversation.other_user_profile}
-                        alt={conversation.other_user_name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                        <PersonIcon className="text-gray-500" />
-                      </div>
-                    )}
+                    <img
+                      src={storageService.getProfileImageUrl(conversation.other_user_profile, conversation.other_user_id)}
+                      alt={conversation.other_user_name}
+                      className="w-12 h-12 rounded-full object-cover"
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/default/default_profile.png'; }}
+                    />
                     {/* 읽지 않은 메시지 표시 */}
                     {conversation.unread_count > 0 && (
                       <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">

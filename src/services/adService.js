@@ -24,13 +24,13 @@ export const adService = {
    */
   async getActiveAds() {
     try {
-      const now = new Date().toISOString();
+      const kstToday = _getKstToday();
 
       const { data, error } = await supabase
         .from('ads')
         .select('*')
         .eq('is_active', true)
-        .or(`end_date.is.null,end_date.gte.${now}`)
+        .or(`end_date.is.null,end_date.gte.${kstToday}`)
         .order('priority', { ascending: false });
 
       if (error) throw error;

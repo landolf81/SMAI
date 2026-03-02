@@ -538,6 +538,34 @@ const PostEditor = () => {
     setPreviewImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  const checkAdvertisingContent = (text) => {
+    // 전화번호 패턴 (010-xxxx-xxxx, 010xxxxxxxx 등)
+    const phonePattern = /0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{4}/;
+    // 외부 URL 패턴
+    const urlPattern = /https?:\/\/[^\s]+/i;
+    // 광고성 키워드
+    const adKeywords = [
+      '광고', '홍보', '판촉', '마케팅',
+      '무료나눔(?!.*씨앗|.*모종|.*농자재)', // 상업적 무료나눔
+      '대리점', '영업소', '업체 소개',
+      '할인 이벤트', '특가 세일', '한정 판매',
+      '구매 문의', '구매문의', '카카오톡 아이디', '카톡 아이디',
+      '인스타그램 팔로우', '유튜브 구독',
+    ];
+    const adKeywordPattern = new RegExp(adKeywords.join('|'), 'i');
+
+    if (phonePattern.test(text)) {
+      return '전화번호가 포함된 게시글은 광고성 게시글로 간주될 수 있어 게시가 제한됩니다. 개인 연락처는 댓글이나 쪽지로 공유해주세요.';
+    }
+    if (urlPattern.test(text)) {
+      return '외부 링크가 포함된 게시글은 광고성 게시글로 간주될 수 있어 게시가 제한됩니다. 링크 공유는 아래 링크 미리보기 기능을 이용해주세요.';
+    }
+    if (adKeywordPattern.test(text)) {
+      return '광고·홍보성 내용이 감지되었습니다. 참외이야기는 순수 커뮤니티로 상업적 광고 게시글은 허용되지 않습니다.';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -549,6 +577,12 @@ const PostEditor = () => {
 
     if (previewImages.length === 0 && uploadedVideos.length === 0 && !linkPreview) {
       setError('이미지, 동영상 또는 링크를 추가해주세요.');
+      return;
+    }
+
+    const adWarning = checkAdvertisingContent(desc);
+    if (adWarning) {
+      setError(adWarning);
       return;
     }
 
@@ -839,6 +873,13 @@ const PostEditor = () => {
               </div>
             </div>
 
+            {/* 광고성 게시글 금지 안내 */}
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-xs text-red-700 flex items-start">
+                <span className="mr-1.5 mt-0.5">🚫</span>
+                <span>전화번호·외부링크·홍보성 내용이 포함된 광고 게시글은 운영 정책에 따라 게시가 제한됩니다.</span>
+              </p>
+            </div>
           </div>
 
           {/* 링크 미리보기 */}

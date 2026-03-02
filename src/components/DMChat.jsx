@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { dmService } from '../services';
+import { dmService, storageService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import moment from 'moment';
 import 'moment/locale/ko';
@@ -13,8 +13,6 @@ import {
   MessageList,
   Message,
   MessageInput,
-  ConversationHeader,
-  Avatar,
   MessageSeparator,
 } from '@chatscope/chat-ui-kit-react';
 
@@ -112,13 +110,10 @@ const DMChat = ({ conversation, onClose }) => {
   }, [onClose]);
 
   // 프로필 이미지 URL
-  const profileUrl = conversation.other_user_profile
-    ? conversation.other_user_profile.startsWith('http')
-      ? conversation.other_user_profile
-      : conversation.other_user_profile.startsWith('/uploads/')
-        ? conversation.other_user_profile
-        : `/uploads/profiles/${conversation.other_user_profile}`
-    : '/default/default_profile.png';
+  const profileUrl = storageService.getProfileImageUrl(
+    conversation.other_user_profile,
+    conversation.other_user_id
+  );
 
   // 날짜 포맷
   const formatDate = (date) => {
@@ -139,35 +134,38 @@ const DMChat = ({ conversation, onClose }) => {
         className="w-full h-full md:w-full md:max-w-2xl md:h-[90vh] md:max-h-[700px] md:rounded-2xl overflow-hidden bg-white flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* 커스텀 헤더 */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white flex-shrink-0">
+          <img
+            src={profileUrl}
+            alt={conversation.other_user_name}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+            onError={(e) => { e.target.onerror = null; e.target.src = '/default/default_profile.png'; }}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-gray-900 truncate">
+              {conversation.other_user_name || conversation.other_user_username}
+            </p>
+            {conversation.other_user_username && conversation.other_user_username !== conversation.other_user_name && (
+              <p className="text-xs text-gray-500 truncate">@{conversation.other_user_username}</p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+
         <MainContainer
           style={{
             borderRadius: 'inherit',
-            height: '100%',
+            flex: 1,
+            minHeight: 0,
           }}
         >
           <ChatContainer>
-            <ConversationHeader>
-              <Avatar
-                src={profileUrl}
-                name={conversation.other_user_username}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/default/default_profile.png';
-                }}
-              />
-              <ConversationHeader.Content
-                userName={conversation.other_user_name || conversation.other_user_username}
-                info={conversation.other_user_username && conversation.other_user_username !== conversation.other_user_name ? `@${conversation.other_user_username}` : ''}
-              />
-              <ConversationHeader.Actions>
-                <button
-                  onClick={onClose}
-                  className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <CloseIcon />
-                </button>
-              </ConversationHeader.Actions>
-            </ConversationHeader>
 
             <MessageList
               loading={isLoading}
