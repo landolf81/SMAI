@@ -113,6 +113,8 @@ const Lounge = () => {
   const isAtBottomRef = useRef(true);
   const containerRef = useRef(null);
   const inputFooterRef = useRef(null);
+  // iOS Safari에서 window.innerHeight가 dvh처럼 변동 → vv.height 최댓값을 직접 추적
+  const stableVvHeight = useRef(window.visualViewport?.height ?? window.innerHeight);
 
   // 하단 여부 체크
   const checkIsAtBottom = useCallback(() => {
@@ -144,7 +146,9 @@ const Lounge = () => {
       const footer = inputFooterRef.current;
       const msgList = scrollAreaRef.current;
       if (!footer) return;
-      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      // vv.height 최댓값 갱신 (키보드 닫힐 때 기준값 업데이트)
+      if (vv.height > stableVvHeight.current) stableVvHeight.current = vv.height;
+      const keyboardHeight = Math.max(0, stableVvHeight.current - vv.height);
       const inputBottom = keyboardHeight > 50 ? keyboardHeight : 80;
       footer.style.bottom = `${inputBottom}px`;
       if (msgList) msgList.style.paddingBottom = `${footer.offsetHeight}px`;
