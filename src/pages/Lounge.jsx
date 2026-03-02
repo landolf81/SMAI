@@ -3,7 +3,7 @@
  * 역할: 광장 - 회원들이 짧은 텍스트 글을 나누는 단체 채팅방
  * 특징: 실시간 수신, 위로 스크롤 시 이전 메시지 로드, 텍스트 전용
  */
-import React, { useState, useEffect, useRef, useCallback, useContext, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import loungeService from '../services/loungeService';
@@ -112,9 +112,6 @@ const Lounge = () => {
   const subscriptionRef = useRef(null);
   const isAtBottomRef = useRef(true);
   const containerRef = useRef(null);
-  const inputFooterRef = useRef(null);
-  // iOS Safari에서 window.innerHeight가 dvh처럼 변동 → vv.height 최댓값을 직접 추적
-  const stableVvHeight = useRef(window.visualViewport?.height ?? window.innerHeight);
 
   // 하단 여부 체크
   const checkIsAtBottom = useCallback(() => {
@@ -128,30 +125,17 @@ const Lounge = () => {
     bottomRef.current?.scrollIntoView({ behavior });
   }, []);
 
-  // 마운트 시 메시지 목록 초기 paddingBottom = footer 높이
-  useLayoutEffect(() => {
-    const footer = inputFooterRef.current;
-    const el = scrollAreaRef.current;
-    if (footer && el) {
-      el.style.paddingBottom = `${footer.offsetHeight}px`;
-    }
-  }, []);
-
   // iOS 키보드 감지: visualViewport resize 시 paddingBottom 동적 조정
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
     let prevKeyboardHeight = 0;
     const update = () => {
-      const footer = inputFooterRef.current;
-      const msgList = scrollAreaRef.current;
-      if (!footer) return;
-      // vv.height 최댓값 갱신 (키보드 닫힐 때 기준값 업데이트)
-      if (vv.height > stableVvHeight.current) stableVvHeight.current = vv.height;
-      const keyboardHeight = Math.max(0, stableVvHeight.current - vv.height);
-      const inputBottom = keyboardHeight > 50 ? keyboardHeight : 80;
-      footer.style.bottom = `${inputBottom}px`;
-      if (msgList) msgList.style.paddingBottom = `${footer.offsetHeight}px`;
+      const el = containerRef.current;
+      if (!el) return;
+      const keyboardHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      el.style.paddingBottom = keyboardHeight > 50 ? '4px' : '80px';
+      // 키보드가 방금 열렸으면 하단으로 스크롤
       if (keyboardHeight > 50 && prevKeyboardHeight <= 50) {
         requestAnimationFrame(() => scrollToBottom('auto'));
       }
@@ -329,7 +313,7 @@ const Lounge = () => {
     <div
       ref={containerRef}
       className="flex flex-col bg-[#F5F5F5]"
-      style={{ height: '100dvh', paddingTop: '56px' }}
+      style={{ height: '100dvh', paddingTop: '56px', paddingBottom: '80px' }}
     >
       {/* 컨텍스트 바 */}
       <div className="flex-shrink-0 bg-white border-b border-gray-100 py-1.5 text-center">
@@ -404,11 +388,7 @@ const Lounge = () => {
       </main>
 
       {/* 입력창 */}
-      <footer
-        ref={inputFooterRef}
-        className="fixed left-0 right-0 bg-white border-t border-gray-200 px-3 py-2 z-40"
-        style={{ bottom: '80px' }}
-      >
+      <footer className="flex-shrink-0 bg-white border-t border-gray-200 px-3 py-2">
         {!currentUser ? (
           <button
             onClick={() => navigate('/login')}
