@@ -107,6 +107,7 @@ const Lounge = () => {
   const [showScrollDown, setShowScrollDown] = useState(false);
 
   const [isComposing, setIsComposing] = useState(false);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
 
   const scrollAreaRef = useRef(null);
   const topSentinelRef = useRef(null);
@@ -127,6 +128,12 @@ const Lounge = () => {
     bottomRef.current?.scrollIntoView({ behavior });
   }, []);
 
+  // 도배 방지 쿨다운 카운트다운 (1초씩 감소)
+  useEffect(() => {
+    if (cooldownLeft <= 0) return;
+    const timer = setTimeout(() => setCooldownLeft(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [cooldownLeft]);
 
   // 초기 메시지 로드
   useEffect(() => {
@@ -232,6 +239,9 @@ const Lounge = () => {
       return;
     }
 
+    // 도배 방지: 쿨다운 중이면 차단
+    if (cooldownLeft > 0) return;
+
     const filterError = validateMessage(trimmed);
     if (filterError) {
       alert(filterError);
@@ -247,6 +257,7 @@ const Lounge = () => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         return [...prev, newMsg];
       });
+      setCooldownLeft(15); // 15초 쿨다운 시작
       setIsComposing(false);
       requestAnimationFrame(() => scrollToBottom());
     } catch (e) {
@@ -255,7 +266,7 @@ const Lounge = () => {
     } finally {
       setIsSending(false);
     }
-  }, [text, isSending, currentUser, navigate, scrollToBottom]);
+  }, [text, isSending, cooldownLeft, currentUser, navigate, scrollToBottom]);
 
   // Enter(shift+enter는 줄바꿈)로 전송
   const handleKeyDown = useCallback((e) => {
@@ -433,12 +444,12 @@ const Lounge = () => {
               </div>
               {/* 푸터 */}
               <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                <span className={`text-[12px] transition-colors ${text.length > 0 ? 'text-gray-400' : 'text-transparent'}`}>
-                  {text.length}/300
+                <span className={`text-[12px] transition-colors ${cooldownLeft > 0 ? 'text-orange-400 font-medium' : text.length > 0 ? 'text-gray-400' : 'text-transparent'}`}>
+                  {cooldownLeft > 0 ? `${cooldownLeft}초 후 전송 가능` : `${text.length}/300`}
                 </span>
                 <button
                   onClick={handleSend}
-                  disabled={!text.trim() || isSending}
+                  disabled={!text.trim() || isSending || cooldownLeft > 0}
                   className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
                 >
                   전송
