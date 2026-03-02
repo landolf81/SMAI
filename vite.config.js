@@ -34,6 +34,11 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild',
     chunkSizeWarningLimit: 1000, // 1MB로 제한 증가
     rollupOptions: {
+      onwarn(warning, warn) {
+        // MUI "use client" 디렉티브 경고 무시 (RSC 호환용 디렉티브, 빌드에 영향 없음)
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return;
+        warn(warning);
+      },
       output: {
         manualChunks: {
           // 핵심 라이브러리
