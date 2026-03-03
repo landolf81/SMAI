@@ -85,6 +85,7 @@ const FAQ = lazy(() => import('./pages/FAQ'));
 const TradingPolicy = lazy(() => import('./pages/TradingPolicy'));
 const PCLanding = lazy(() => import('./pages/PCLanding'));
 const DMChatPage = lazy(() => import('./pages/DMChatPage'));
+const Notifications = lazy(() => import('./pages/Notifications'));
 
 // QueryClient는 컴포넌트 외부에서 1회만 생성 (App 리렌더 시 캐시 유지)
 const queryClient = new QueryClient({
@@ -186,6 +187,18 @@ const Layout = () => {
 
     window.addEventListener('close-floating-menu', handleCloseFloatingMenu);
     return () => window.removeEventListener('close-floating-menu', handleCloseFloatingMenu);
+  }, []);
+
+  // 앱 포커스 시 PWA 뱃지 클리어
+  useEffect(() => {
+    const clearBadge = () => {
+      if (document.visibilityState === 'visible') {
+        navigator.clearAppBadge?.().catch(() => {});
+      }
+    };
+    navigator.clearAppBadge?.().catch(() => {});
+    document.addEventListener('visibilitychange', clearBadge);
+    return () => document.removeEventListener('visibilitychange', clearBadge);
   }, []);
 
   // DM 페이지는 전체 화면으로 렌더링 (Navbar, Leftbar, BottomNav 숨김)
@@ -520,6 +533,10 @@ const router = createBrowserRouter(
       {
         path: '/alerts',
         element: <ProtectedRoute><Alerts /></ProtectedRoute>,
+      },
+      {
+        path: '/notifications',
+        element: <ProtectedRoute><Notifications /></ProtectedRoute>,
       },
       {
         path: '/settings',

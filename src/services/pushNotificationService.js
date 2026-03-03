@@ -199,6 +199,29 @@ export const pushNotificationService = {
    * @param {string} params.content - 메시지 내용
    * @returns {Promise<void>}
    */
+  /**
+   * 알림 이력 조회 (사용자용)
+   * push_logs 테이블에서 최근 알림 목록 반환
+   * @param {number} limit - 조회 개수 (기본 30)
+   * @returns {Promise<Array>} - { id, title, body, url, created_at }[]
+   */
+  async getNotificationHistory(limit = 30) {
+    const { data, error } = await supabase
+      .from('push_logs')
+      .select('id, title, body, url, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('[Push] 알림 이력 조회 실패:', error);
+      return [];
+    }
+    return data || [];
+  },
+
+  /**
+   * DM 수신 시 특정 사용자에게 푸시 알림 발송 (fire-and-forget)
+   */
   async sendDmPush({ receiverId, senderName, senderId, content }) {
     const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
     const { error } = await supabase.functions.invoke('send-push', {
