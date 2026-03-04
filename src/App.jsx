@@ -15,6 +15,7 @@ import './App.css';
 import Navbar from './components/Navbar';
 import Leftbar from './components/Leftbar';
 import MobileBottomNav from './components/MobileBottomNav';
+import OnboardingTooltip from './components/OnboardingTooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import { AuthContext } from './context/AuthContext';
 import { isMobileDevice, isTabletDevice } from './utils/deviceDetector';
@@ -384,6 +385,9 @@ const Layout = () => {
       {(isMobileDevice() || isTabletDevice() || window.innerWidth <= 768) && (
         <MobileBottomNav scrollDirection={scrollDirection} />
       )}
+
+      {/* 최초 접속자 광장 안내 툴팁 */}
+      <OnboardingTooltip />
     </div>
   );
 };

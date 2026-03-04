@@ -3,6 +3,7 @@
  * 역할: 광장(단체 채팅방) 메시지 CRUD + Realtime 구독
  */
 import { supabase } from '../config/supabase.js';
+import { pushNotificationService } from './pushNotificationService.js';
 
 const loungeService = {
   /**
@@ -58,6 +59,29 @@ const loungeService = {
       .single();
 
     if (error) throw error;
+
+    // @멘션 푸시 알림 (fire-and-forget)
+    const mentionRegex = /@([가-힣a-zA-Z0-9_-]+)/g;
+    let match;
+    while ((match = mentionRegex.exec(content)) !== null) {
+      const mentionedName = match[1];
+      supabase
+        .from('users')
+        .select('id')
+        .eq('name', mentionedName)
+        .maybeSingle()
+        .then(({ data: mentioned }) => {
+          if (mentioned && mentioned.id !== user.id) {
+            pushNotificationService.sendMentionPush({
+              receiverId: mentioned.id,
+              senderName: data.users?.name || '누군가',
+              content,
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
+
     return data;
   },
 

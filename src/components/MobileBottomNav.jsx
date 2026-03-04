@@ -168,6 +168,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
             return (
               <button
                 key={button.id}
+                data-onboarding={button.id === 'lounge' ? 'lounge' : undefined}
                 onClick={() => handleButtonClick(button)}
                 className={`flex flex-col items-center justify-center transition-colors duration-200 ${
                   button.showLabel ? 'px-3 py-2 flex-1' : 'px-4 py-2'

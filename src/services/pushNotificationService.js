@@ -222,6 +222,26 @@ export const pushNotificationService = {
   /**
    * DM 수신 시 특정 사용자에게 푸시 알림 발송 (fire-and-forget)
    */
+  /**
+   * 광장 @멘션 시 해당 사용자에게 푸시 알림 발송 (fire-and-forget)
+   */
+  async sendMentionPush({ receiverId, senderName, content }) {
+    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
+    const { error } = await supabase.functions.invoke('send-push', {
+      body: {
+        userId: receiverId,
+        title: `${senderName}님이 회원님을 언급했어요`,
+        body: preview,
+        url: '/lounge',
+        tag: 'mention',
+      },
+    });
+
+    if (error) {
+      console.warn('[Push] 멘션 알림 발송 실패 (무시):', error);
+    }
+  },
+
   async sendDmPush({ receiverId, senderName, senderId, content }) {
     const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
     const { error } = await supabase.functions.invoke('send-push', {

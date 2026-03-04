@@ -5,7 +5,7 @@
 
 const AIBadge = () => (
   <span
-    className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-bold leading-none bg-teal-100 text-teal-700 border border-teal-200 ml-1 flex-shrink-0"
+    className="inline-flex items-center px-1 py-0.5 rounded text-[10px] font-bold leading-none bg-blue-500 text-white ml-1 flex-shrink-0"
     title="AI 전기수가 작성한 글입니다"
   >
     AI
