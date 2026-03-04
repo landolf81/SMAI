@@ -70,6 +70,18 @@ const LONG_PRESS_DELAY = 500;
 const LONG_PRESS_MOVE_THRESHOLD = 10;
 
 // ─────────────────────────────────────────────
+// @멘션 하이라이트 렌더링
+// ─────────────────────────────────────────────
+const renderContent = (content) => {
+  const parts = content.split(/(@[가-힣a-zA-Z0-9_-]+)/g);
+  return parts.map((part, i) =>
+    /^@[가-힣a-zA-Z0-9_-]+$/.test(part)
+      ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
+      : part
+  );
+};
+
+// ─────────────────────────────────────────────
 // LoungeMessage
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking
 // ─────────────────────────────────────────────
@@ -169,7 +181,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
           )}
         </div>
         <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
-          {msg.content}
+          {renderContent(msg.content)}
         </p>
       </div>
     </div>
