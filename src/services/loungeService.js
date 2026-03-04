@@ -21,6 +21,7 @@ const loungeService = {
         content,
         created_at,
         user_id,
+        is_hidden,
         users:user_id (id, name, username, profile_pic)
       `)
       .order('created_at', { ascending: false })
@@ -54,6 +55,7 @@ const loungeService = {
         content,
         created_at,
         user_id,
+        is_hidden,
         users:user_id (id, name, username, profile_pic)
       `)
       .single();
@@ -61,7 +63,7 @@ const loungeService = {
     if (error) throw error;
 
     // @멘션 푸시 알림 (fire-and-forget)
-    const mentionRegex = /@([가-힣a-zA-Z0-9_-]+)/g;
+    const mentionRegex = /@([가-힣a-zA-Z0-9_-]+(?:\s[가-힣a-zA-Z0-9_-]+){0,2})/g;
     let match;
     while ((match = mentionRegex.exec(content)) !== null) {
       const mentionedName = match[1];
@@ -99,6 +101,20 @@ const loungeService = {
   },
 
   /**
+   * 메시지 숨기기/복구 (관리자 전용)
+   * @param {string} id - 메시지 UUID
+   * @param {boolean} isHidden - true: 숨기기, false: 복구
+   */
+  async hideMessage(id, isHidden) {
+    const { error } = await supabase
+      .from('lounge_messages')
+      .update({ is_hidden: isHidden })
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  /**
    * 새 메시지 실시간 구독
    * @param {Function} onNewMessage - 새 메시지 수신 시 콜백 (메시지 객체 전달)
    * @returns {{ unsubscribe: Function }}
@@ -120,6 +136,7 @@ const loungeService = {
               content,
               created_at,
               user_id,
+              is_hidden,
               users:user_id (id, name, username, profile_pic)
             `)
             .eq('id', payload.new.id)

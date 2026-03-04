@@ -73,9 +73,9 @@ const LONG_PRESS_MOVE_THRESHOLD = 10;
 // @멘션 하이라이트 렌더링
 // ─────────────────────────────────────────────
 const renderContent = (content) => {
-  const parts = content.split(/(@[가-힣a-zA-Z0-9_-]+)/g);
+  const parts = content.split(/(@[가-힣a-zA-Z0-9_-]+(?:\s[가-힣a-zA-Z0-9_-]+){0,2})/g);
   return parts.map((part, i) =>
-    /^@[가-힣a-zA-Z0-9_-]+$/.test(part)
+    /^@[가-힣a-zA-Z0-9_-]+(?:\s[가-힣a-zA-Z0-9_-]+){0,2}$/.test(part)
       ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
       : part
   );
@@ -83,9 +83,9 @@ const renderContent = (content) => {
 
 // ─────────────────────────────────────────────
 // LoungeMessage
-// props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking
+// props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -127,11 +127,13 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
 
   useEffect(() => () => clearTimeout(nameTimerRef.current), []);
 
+  const isHidden = msg.is_hidden;
+
   return (
     <div
       className={`flex items-start gap-2.5 px-4 py-2 group border-b border-gray-200/60 ${
         isMe ? 'bg-orange-50 border-l-2 border-orange-400' : ''
-      } ${isSpeaking ? 'bg-blue-50' : ''}`}
+      } ${isSpeaking ? 'bg-blue-50' : ''} ${isHidden ? 'opacity-40' : ''}`}
     >
       <img
         src={profileUrl}
@@ -156,6 +158,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             {displayName}
           </span>
           {isAI && <AIBadge />}
+          {isHidden && <span className="text-[10px] text-red-400 font-medium">숨김</span>}
           <span className="text-[12px] text-gray-400">{formatTime(msg.created_at)}</span>
           {/* TTS 버튼 */}
           <button
@@ -174,9 +177,17 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
           {isMe && (
             <button
               onClick={() => onDelete(msg.id)}
-              className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity ml-auto"
+              className="text-[11px] text-gray-500 ml-auto"
             >
               삭제
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => onHide(msg.id, !isHidden)}
+              className={`text-[11px] ${isMe ? '' : 'ml-auto'} ${isHidden ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}`}
+            >
+              {isHidden ? '복구' : '숨기기'}
             </button>
           )}
         </div>
@@ -439,10 +450,24 @@ const Lounge = () => {
     }
   }, []);
 
+  // ── 메시지 숨기기/복구 (관리자) ──
+  const handleHide = useCallback(async (id, isHidden) => {
+    const action = isHidden ? '숨기기' : '복구';
+    if (!window.confirm(`이 메시지를 ${action}하시겠습니까?`)) return;
+    try {
+      await loungeService.hideMessage(id, isHidden);
+      setMessages((prev) => prev.map((m) => m.id === id ? { ...m, is_hidden: isHidden } : m));
+    } catch (e) {
+      console.error(`[Lounge] ${action} 실패:`, e);
+    }
+  }, []);
+
   // ── 날짜 구분선 삽입을 위한 렌더링 준비 ──
+  const isAdmin = currentUser?.isAdmin;
+  const visibleMessages = isAdmin ? messages : messages.filter((m) => !m.is_hidden);
   const renderedItems = [];
   let lastDateKey = null;
-  for (const msg of messages) {
+  for (const msg of visibleMessages) {
     const dk = getDateKey(msg.created_at);
     if (dk !== lastDateKey) {
       renderedItems.push({ type: 'date', key: `date-${dk}`, label: formatDateLabel(dk) });
@@ -513,6 +538,8 @@ const Lounge = () => {
                 onTTS={handleTTS}
                 onMention={handleMention}
                 isSpeaking={speakingMsgId === item.msg.id}
+                isAdmin={isAdmin}
+                onHide={handleHide}
               />
             );
           })}
