@@ -4,6 +4,8 @@
  */
 import { supabase } from '../config/supabase.js';
 import { pushNotificationService } from './pushNotificationService.js';
+import { storageService } from './storageService.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const loungeService = {
   /**
@@ -19,6 +21,7 @@ const loungeService = {
       .select(`
         id,
         content,
+        image_url,
         created_at,
         user_id,
         is_hidden,
@@ -43,16 +46,21 @@ const loungeService = {
    * @param {string} content - 메시지 내용 (최대 300자)
    * @returns {Promise<Object>} 삽입된 메시지
    */
-  async sendMessage(content) {
+  async sendMessage(content, imageUrl = null) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('로그인이 필요합니다.');
 
+    const row = { user_id: user.id };
+    if (content?.trim()) row.content = content.trim();
+    if (imageUrl) row.image_url = imageUrl;
+
     const { data, error } = await supabase
       .from('lounge_messages')
-      .insert({ user_id: user.id, content: content.trim() })
+      .insert(row)
       .select(`
         id,
         content,
+        image_url,
         created_at,
         user_id,
         is_hidden,
@@ -154,6 +162,18 @@ const loungeService = {
     return {
       unsubscribe: () => supabase.removeChannel(channel),
     };
+  },
+
+  /**
+   * 광장 이미지 업로드 (CF Images)
+   * @param {File} file - 이미지 파일
+   * @returns {Promise<string>} 업로드된 이미지 URL
+   */
+  async uploadLoungeImage(file) {
+    const ext = file.name.split('.').pop();
+    const filename = `${uuidv4()}.${ext}`;
+    const result = await storageService.uploadFile('lounge', `images/${filename}`, file);
+    return result.url;
   },
 };
 

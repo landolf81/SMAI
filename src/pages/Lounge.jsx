@@ -85,7 +85,7 @@ const renderContent = (content) => {
 // LoungeMessage
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, onImageClick }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -191,9 +191,20 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             </button>
           )}
         </div>
-        <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
-          {renderContent(msg.content)}
-        </p>
+        {msg.content && (
+          <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
+            {renderContent(msg.content)}
+          </p>
+        )}
+        {msg.image_url && (
+          <img
+            src={msg.image_url}
+            alt="첨부 이미지"
+            className="mt-1.5 rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-gray-200"
+            loading="lazy"
+            onClick={() => onImageClick?.(msg.image_url)}
+          />
+        )}
       </div>
     </div>
   );
@@ -215,6 +226,11 @@ const Lounge = () => {
 
   const [isComposing, setIsComposing] = useState(false);
   const [cooldownLeft, setCooldownLeft] = useState(0);
+  const [selectedImage, setSelectedImage] = useState(null);     // 첨부할 이미지 File
+  const [imagePreview, setImagePreview] = useState(null);       // 미리보기 data URL
+  const [isUploading, setIsUploading] = useState(false);        // 업로드 중 여부
+  const [viewingImage, setViewingImage] = useState(null);       // 전체화면 보기 URL
+  const fileInputRef = useRef(null);
 
   // TTS: 현재 재생 중인 메시지 ID
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
@@ -391,11 +407,36 @@ const Lounge = () => {
     setIsComposing(true);
   }, []);
 
+  // ── 이미지 선택 핸들러 ──
+  const handleImageSelect = useCallback((e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 첨부할 수 있어요.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      alert('10MB 이하 이미지만 첨부할 수 있어요.');
+      return;
+    }
+    setSelectedImage(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target.result);
+    reader.readAsDataURL(file);
+  }, []);
+
+  const clearImage = useCallback(() => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }, []);
+
   // ── 메시지 전송 ──
   const handleSend = useCallback(async (e) => {
     e?.preventDefault();
     const trimmed = text.trim();
-    if (!trimmed || isSending) return;
+    const hasImage = !!selectedImage;
+    if ((!trimmed && !hasImage) || isSending) return;
 
     if (!currentUser) {
       navigate('/login');
@@ -405,16 +446,24 @@ const Lounge = () => {
     // 도배 방지: 쿨다운 중이면 차단
     if (cooldownLeft > 0) return;
 
-    const filterError = validateMessage(trimmed);
-    if (filterError) {
-      alert(filterError);
-      return;
+    if (trimmed) {
+      const filterError = validateMessage(trimmed);
+      if (filterError) {
+        alert(filterError);
+        return;
+      }
     }
 
     setText('');
     setIsSending(true);
+    setIsUploading(hasImage);
     try {
-      const newMsg = await loungeService.sendMessage(trimmed);
+      let imageUrl = null;
+      if (hasImage) {
+        imageUrl = await loungeService.uploadLoungeImage(selectedImage);
+        setIsUploading(false);
+      }
+      const newMsg = await loungeService.sendMessage(trimmed || null, imageUrl);
       // Realtime으로도 오겠지만 중복 방지 로직이 있으므로 미리 추가
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
@@ -422,14 +471,16 @@ const Lounge = () => {
       });
       setCooldownLeft(15); // 15초 쿨다운 시작
       setIsComposing(false);
+      clearImage();
       requestAnimationFrame(() => scrollToBottom());
     } catch (e) {
       console.error('[Lounge] 전송 실패:', e);
       setText(trimmed); // 실패 시 복원
+      setIsUploading(false);
     } finally {
       setIsSending(false);
     }
-  }, [text, isSending, cooldownLeft, currentUser, navigate, scrollToBottom]);
+  }, [text, selectedImage, isSending, cooldownLeft, currentUser, navigate, scrollToBottom, clearImage]);
 
   // ── Enter(shift+enter는 줄바꿈)로 전송 ──
   const handleKeyDown = useCallback((e) => {
@@ -540,6 +591,7 @@ const Lounge = () => {
                 isSpeaking={speakingMsgId === item.msg.id}
                 isAdmin={isAdmin}
                 onHide={handleHide}
+                onImageClick={setViewingImage}
               />
             );
           })}
@@ -581,7 +633,7 @@ const Lounge = () => {
         {/* 배경 */}
         <div
           className="absolute inset-0 bg-black/40"
-          onClick={() => { if (!text.trim()) setIsComposing(false); }}
+          onClick={() => { if (!text.trim() && !selectedImage) { setIsComposing(false); clearImage(); } }}
         />
         {/* 카드 */}
         <div className="relative w-[calc(100%-32px)] bg-white rounded-2xl shadow-xl border-2 border-blue-400 overflow-hidden">
@@ -592,7 +644,7 @@ const Lounge = () => {
               <span className="text-[18px] font-bold text-gray-800">광장에 한마디</span>
             </div>
             <button
-              onClick={() => { setText(''); setIsComposing(false); }}
+              onClick={() => { setText(''); clearImage(); setIsComposing(false); }}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 text-[16px] hover:bg-gray-200 transition-colors"
             >
               ×
@@ -610,6 +662,25 @@ const Lounge = () => {
             </div>
           ) : (
             <>
+              {/* 이미지 미리보기 */}
+              {imagePreview && (
+                <div className="px-5 pt-4 pb-0 relative inline-block">
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt="미리보기"
+                      className="w-24 h-24 rounded-xl object-cover border border-gray-200"
+                    />
+                    <button
+                      onClick={clearImage}
+                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-[12px] flex items-center justify-center shadow-md"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 입력창 */}
               <div className="px-5 pt-4 pb-3">
                 <textarea
@@ -627,20 +698,60 @@ const Lounge = () => {
               </div>
               {/* 푸터 */}
               <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-                <span className={`text-[12px] transition-colors ${cooldownLeft > 0 ? 'text-orange-400 font-medium' : text.length > 0 ? 'text-gray-400' : 'text-transparent'}`}>
-                  {cooldownLeft > 0 ? `${cooldownLeft}초 후 전송 가능` : `${text.length}/300`}
-                </span>
+                <div className="flex items-center gap-2">
+                  {/* 사진 첨부 버튼 */}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!!selectedImage || isSending}
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-40 transition-colors"
+                    aria-label="사진 첨부"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                      <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clipRule="evenodd" />
+                    </svg>
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                  />
+                  <span className={`text-[12px] transition-colors ${cooldownLeft > 0 ? 'text-orange-400 font-medium' : text.length > 0 ? 'text-gray-400' : 'text-transparent'}`}>
+                    {cooldownLeft > 0 ? `${cooldownLeft}초 후 전송 가능` : `${text.length}/300`}
+                  </span>
+                </div>
                 <button
                   onClick={handleSend}
-                  disabled={!text.trim() || isSending || cooldownLeft > 0}
+                  disabled={(!text.trim() && !selectedImage) || isSending || cooldownLeft > 0}
                   className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
                 >
-                  전송
+                  {isUploading ? '업로드 중...' : isSending ? '전송 중...' : '전송'}
                 </button>
               </div>
             </>
           )}
         </div>
+      </div>
+    )}
+    {/* 이미지 전체화면 뷰어 */}
+    {viewingImage && (
+      <div
+        className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center"
+        onClick={() => setViewingImage(null)}
+      >
+        <button
+          className="absolute top-4 right-4 w-10 h-10 bg-white/20 text-white rounded-full flex items-center justify-center text-[20px] backdrop-blur-sm"
+          onClick={() => setViewingImage(null)}
+        >
+          ×
+        </button>
+        <img
+          src={viewingImage}
+          alt="전체화면"
+          className="max-w-[95vw] max-h-[90vh] object-contain rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
       </div>
     )}
     </>
