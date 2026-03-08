@@ -278,6 +278,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
           </span>
           {/* 추세 차트 아이콘 */}
           <button
+            data-onboarding="market-trend"
             onClick={(e) => {
               e.stopPropagation();
               navigate(`/market-trend?market=${encodeURIComponent('성주군 합계')}`);

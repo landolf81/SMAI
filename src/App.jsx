@@ -16,6 +16,7 @@ import Navbar from './components/Navbar';
 import Leftbar from './components/Leftbar';
 import MobileBottomNav from './components/MobileBottomNav';
 import OnboardingTooltip from './components/OnboardingTooltip';
+import MarketTrendTooltip from './components/MarketTrendTooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import { AuthContext } from './context/AuthContext';
 import { isMobileDevice, isTabletDevice } from './utils/deviceDetector';
@@ -386,8 +387,9 @@ const Layout = () => {
         <MobileBottomNav scrollDirection={scrollDirection} />
       )}
 
-      {/* 최초 접속자 광장 안내 툴팁 */}
+      {/* 최초 접속자 안내 툴팁 */}
       <OnboardingTooltip />
+      <MarketTrendTooltip />
     </div>
   );
 };
