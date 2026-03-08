@@ -54,15 +54,22 @@ const validateMessage = (content) => {
 // ─────────────────────────────────────────────
 // 날짜 구분선 표시용 키
 // ─────────────────────────────────────────────
-const getDateKey = (dateStr) => new Date(dateStr).toISOString().split('T')[0];
+const getDateKey = (dateStr) => {
+  const d = new Date(dateStr);
+  // 한국 시간 기준 날짜 키 (YYYY-MM-DD)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 
 const formatDateLabel = (dateKey) => {
-  const date = new Date(dateKey);
+  const [y, m, d] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
   const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  if (date.toDateString() === today.toDateString()) return '오늘';
-  if (date.toDateString() === yesterday.toDateString()) return '어제';
+  const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+  if (dateKey === todayKey) return '오늘';
+  if (dateKey === yesterdayKey) return '어제';
   return date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 };
 
