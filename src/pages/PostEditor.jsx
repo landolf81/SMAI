@@ -854,12 +854,12 @@ const PostEditor = () => {
                 }`}
                 value={desc}
                 onChange={(e) => {
-                  // 400자 제한 (한글 기준)
-                  if (e.target.value.length <= 400) {
+                  // 1000자 제한
+                  if (e.target.value.length <= 1000) {
                     setDesc(e.target.value);
                   }
                 }}
-                maxLength={400}
+                maxLength={1000}
               />
               {isListening && (
                 <div className="absolute bottom-4 left-4 flex items-center gap-2 text-red-500 text-sm">
