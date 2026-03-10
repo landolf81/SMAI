@@ -71,9 +71,27 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// SW 설치 시 즉시 활성화
-self.addEventListener('install', () => {
+// fetch 핸들러 - PWA 네비게이션 요청 처리 (SPA 라우팅 지원)
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+
+  // 네비게이션 요청(페이지 이동)만 처리, 나머지는 브라우저 기본 동작
+  if (request.mode !== 'navigate') return;
+
+  event.respondWith(
+    fetch(request).catch(() => {
+      // 네트워크 실패 시 캐시된 index.html 반환 (SPA 폴백)
+      return caches.match('/index.html');
+    })
+  );
+});
+
+// SW 설치 시 index.html 캐시 + 즉시 활성화
+self.addEventListener('install', (event) => {
   console.log('[SW] 설치됨');
+  event.waitUntil(
+    caches.open('pwa-shell-v1').then((cache) => cache.add('/index.html'))
+  );
   self.skipWaiting();
 });
 
