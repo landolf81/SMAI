@@ -64,6 +64,7 @@ const AdminTagGroups = lazy(() => import('./pages/admin/AdminTagGroups'));
 const AdminBadgesNew = lazy(() => import('./pages/admin/AdminBadgesNew'));
 const AdminReports = lazy(() => import('./pages/AdminReports'));
 const AdminMarketSettings = lazy(() => import('./pages/admin/AdminMarketSettings'));
+const AdminAuctionTimes = lazy(() => import('./pages/admin/AdminAuctionTimes'));
 const AdminVerification = lazy(() => import('./pages/admin/AdminVerification'));
 const AdminYouTube = lazy(() => import('./pages/admin/AdminYouTube'));
 const AdminPushNotifications = lazy(() => import('./pages/admin/AdminPushNotifications'));
@@ -600,6 +601,10 @@ const router = createBrowserRouter(
       {
         path: '/admin/market-settings',
         element: <ProtectedRoute><AdminMarketSettings /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/auction-times',
+        element: <ProtectedRoute><AdminAuctionTimes /></ProtectedRoute>,
       },
       {
         path: '/admin/verification',

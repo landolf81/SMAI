@@ -18,6 +18,7 @@ import CachedIcon from "@mui/icons-material/Cached";
 import SpeedIcon from "@mui/icons-material/Speed";
 import BackupIcon from "@mui/icons-material/Backup";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import ForumIcon from "@mui/icons-material/Forum";
 import { useContext, useState, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
@@ -153,6 +154,12 @@ const AdminLeftbar = () => {
           path: "/admin/market-settings",
           icon: StoreIcon,
           label: "시장정보 설정",
+          badge: null
+        },
+        {
+          path: "/admin/auction-times",
+          icon: AccessTimeIcon,
+          label: "경매시간 관리",
           badge: null
         }
       ]

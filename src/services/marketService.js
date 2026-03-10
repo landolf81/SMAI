@@ -876,6 +876,94 @@ export const marketService = {
       console.error('연간 누적 조회 오류:', error);
       return { thisYear: { boxes: 0, amount: 0 }, lastYear: { boxes: 0, amount: 0 } };
     }
+  },
+
+  // ─── 경매시간 관리 ─────────────────────────────────────────
+
+  /**
+   * 특정 공판장의 해당 날짜 경매시간 조회
+   * @param {string} marketName - 공판장명
+   * @param {string} date - 조회 날짜 (YYYY-MM-DD)
+   * @returns {Promise<string|null>} 경매시간 (예: '13:00') 또는 null
+   */
+  async getAuctionTime(marketName, date) {
+    try {
+      const { data, error } = await supabase
+        .from('market_auction_times')
+        .select('auction_time')
+        .eq('market_name', marketName)
+        .lte('effective_from', date)
+        .or(`effective_to.is.null,effective_to.gte.${date}`)
+        .order('effective_from', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error) return null;
+      return data?.auction_time || null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * 경매시간 전체 목록 조회 (관리자용)
+   * @returns {Promise<Array>} 경매시간 목록
+   */
+  async getAuctionTimes() {
+    const { data, error } = await supabase
+      .from('market_auction_times')
+      .select('*')
+      .order('market_name')
+      .order('effective_from', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * 경매시간 등록/수정
+   * @param {Object} timeData - { id?, market_name, auction_time, effective_from, effective_to }
+   * @returns {Promise<Object>} 저장된 데이터
+   */
+  async upsertAuctionTime(timeData) {
+    const row = {
+      market_name: timeData.market_name,
+      auction_time: timeData.auction_time,
+      effective_from: timeData.effective_from,
+      effective_to: timeData.effective_to || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (timeData.id) {
+      const { data, error } = await supabase
+        .from('market_auction_times')
+        .update(row)
+        .eq('id', timeData.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const { data, error } = await supabase
+        .from('market_auction_times')
+        .insert(row)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+  },
+
+  /**
+   * 경매시간 삭제
+   * @param {string} id - 경매시간 ID
+   */
+  async deleteAuctionTime(id) {
+    const { error } = await supabase
+      .from('market_auction_times')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
   }
 };
 

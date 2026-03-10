@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import toast from 'react-hot-toast';
 import { marketService, briefingService } from '../services';
 import { useAdminPermissions } from '../hooks/usePermissions';
@@ -22,6 +23,7 @@ const Prices = () => {
   const [gradeSettings, setGradeSettings] = useState(null); // DB에서 가져온 등급 설정
   const [briefing, setBriefing] = useState(null); // AI 브리핑
   const [briefingGenerating, setBriefingGenerating] = useState(false); // 브리핑 생성 중
+  const [auctionTime, setAuctionTime] = useState(null); // 경매시간
   const adminPermissions = useAdminPermissions();
 
   // URL 파라미터에서 시장명과 날짜 가져오기
@@ -112,6 +114,11 @@ const Prices = () => {
 
     if (marketName) {
       fetchMarketData(marketName, selectedDate);
+
+      // 경매시간 조회
+      marketService.getAuctionTime(marketName, selectedDate)
+        .then(time => setAuctionTime(time))
+        .catch(() => setAuctionTime(null));
 
       // 모든 공판장에서 브리핑 조회
       briefingService.getBriefing(marketName, selectedDate)
@@ -370,8 +377,8 @@ const Prices = () => {
             {/* 요약 정보 - 카드 형태 */}
             {marketData.summary && (
               <div className="relative pt-4 mb-6">
-                {/* 공판장명 뱃지 - 카드 위에 걸쳐있는 형태 (공판장별 색상 적용) */}
-                <div className="absolute -top-0 left-4 z-10">
+                {/* 공판장명 뱃지 + 경매시간 */}
+                <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
                   <span
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-sm font-bold rounded-full shadow-md"
                     style={{ backgroundColor: getMarketBadgeColor() }}
@@ -379,6 +386,12 @@ const Prices = () => {
                     <span className="w-2 h-2 bg-white rounded-full"></span>
                     {marketName}
                   </span>
+                  {auctionTime && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white text-gray-700 text-sm font-semibold rounded-full shadow-md border border-gray-200">
+                      <AccessTimeIcon style={{ fontSize: 16 }} />
+                      {auctionTime} 경매
+                    </span>
+                  )}
                 </div>
 
                 {/* 카드 본체 */}
