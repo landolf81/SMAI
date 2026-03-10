@@ -70,26 +70,37 @@ const loungeService = {
 
     if (error) throw error;
 
-    // @멘션 푸시 알림 (fire-and-forget)
-    const mentionRegex = /@([가-힣a-zA-Z0-9_-]+(?:\s[가-힣a-zA-Z0-9_-]+){0,2})/g;
-    let match;
-    while ((match = mentionRegex.exec(content)) !== null) {
-      const mentionedName = match[1];
-      supabase
-        .from('users')
-        .select('id')
-        .eq('name', mentionedName)
-        .maybeSingle()
-        .then(({ data: mentioned }) => {
+    // @멘션 푸시 알림 (fire-and-forget) — greedy DB 매칭
+    // @뒤의 텍스트를 3단어→2단어→1단어 순으로 DB 조회하여 실제 닉네임만 매칭
+    const mentionStarts = [];
+    for (let idx = 0; idx < (content || '').length; idx++) {
+      if (content[idx] === '@' && (idx === 0 || content[idx - 1] === ' ' || content[idx - 1] === '\n')) {
+        mentionStarts.push(idx);
+      }
+    }
+    for (const start of mentionStarts) {
+      const after = content.slice(start + 1);
+      const words = after.split(/\s+/).filter(Boolean).slice(0, 3);
+      // 3단어 → 2단어 → 1단어 순으로 시도
+      (async () => {
+        for (let len = words.length; len >= 1; len--) {
+          const candidate = words.slice(0, len).join(' ');
+          if (!candidate) continue;
+          const { data: mentioned } = await supabase
+            .from('users')
+            .select('id')
+            .eq('name', candidate)
+            .maybeSingle();
           if (mentioned && mentioned.id !== user.id) {
             pushNotificationService.sendMentionPush({
               receiverId: mentioned.id,
               senderName: data.users?.name || '누군가',
               content,
             }).catch(() => {});
+            break; // 가장 긴 매칭으로 확정
           }
-        })
-        .catch(() => {});
+        }
+      })();
     }
 
     return data;

@@ -8,7 +8,7 @@
  *   - 메시지 롱프레스 → TTS (Web Speech API, ko-KR)
  *   - 닉네임 롱프레스 → @멘션 입력창 열기
  */
-import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import loungeService from '../services/loungeService';
@@ -77,12 +77,20 @@ const LONG_PRESS_DELAY = 500;
 const LONG_PRESS_MOVE_THRESHOLD = 10;
 
 // ─────────────────────────────────────────────
-// @멘션 하이라이트 렌더링
+// @멘션 하이라이트 렌더링 (닉네임 목록 기반 greedy match)
 // ─────────────────────────────────────────────
-const renderContent = (content) => {
-  const parts = content.split(/(@[가-힣a-zA-Z0-9_-]+(?:\s[가-힣a-zA-Z0-9_-]+){0,2})/g);
+const renderContent = (content, knownNames) => {
+  if (!content || !knownNames || knownNames.length === 0) return content;
+
+  // 긴 닉네임부터 매칭 (greedy)
+  const sorted = [...knownNames].sort((a, b) => b.length - a.length);
+  const escaped = sorted.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const splitPattern = new RegExp(`(@(?:${escaped.join('|')}))(?=\\s|$)`, 'g');
+  const testPattern = new RegExp(`^@(?:${escaped.join('|')})$`);
+
+  const parts = content.split(splitPattern);
   return parts.map((part, i) =>
-    /^@[가-힣a-zA-Z0-9_-]+(?:\s[가-힣a-zA-Z0-9_-]+){0,2}$/.test(part)
+    testPattern.test(part)
       ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
       : part
   );
@@ -90,9 +98,9 @@ const renderContent = (content) => {
 
 // ─────────────────────────────────────────────
 // LoungeMessage
-// props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide
+// props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, knownNames
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, onImageClick }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, onImageClick, knownNames }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -200,7 +208,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
         </div>
         {msg.content && (
           <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
-            {renderContent(msg.content)}
+            {renderContent(msg.content, knownNames)}
           </p>
         )}
         {msg.image_url && (
@@ -238,6 +246,16 @@ const Lounge = () => {
   const [isUploading, setIsUploading] = useState(false);        // 업로드 중 여부
   const [viewingImage, setViewingImage] = useState(null);       // 전체화면 보기 URL
   const fileInputRef = useRef(null);
+
+  // 로드된 메시지의 닉네임 목록 (멘션 하이라이트용)
+  const knownNames = useMemo(() => {
+    const names = new Set();
+    for (const m of messages) {
+      const name = m.users?.name;
+      if (name) names.add(name);
+    }
+    return [...names];
+  }, [messages]);
 
   // TTS: 현재 재생 중인 메시지 ID
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
@@ -599,6 +617,7 @@ const Lounge = () => {
                 isAdmin={isAdmin}
                 onHide={handleHide}
                 onImageClick={setViewingImage}
+                knownNames={knownNames}
               />
             );
           })}

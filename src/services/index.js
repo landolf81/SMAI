@@ -23,3 +23,4 @@ export { weatherBriefingService } from './weatherBriefingService.js';
 export { youtubeService } from './youtubeService.js';
 export { pushNotificationService } from './pushNotificationService.js';
 export * from './agentService.js';
+export { pesticideService } from './pesticideService.js';
