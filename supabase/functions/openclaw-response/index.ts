@@ -70,7 +70,12 @@ Deno.serve(async (req: Request) => {
 
     let query = supabase
       .from('lounge_messages')
-      .select('id, content, created_at, user_id, users:user_id (id, name, username)')
+      .select(`id, content, created_at, user_id, poll_id,
+        users:user_id (id, name, username),
+        lounge_polls:poll_id (
+          id, question, is_anonymous, is_multiple, is_closed, expires_at, total_votes,
+          lounge_poll_options ( id, label, sort_order, vote_count )
+        )`)
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -86,15 +91,41 @@ Deno.serve(async (req: Request) => {
     }
 
     // 오래된 순으로 정렬해서 반환 (대화 흐름 파악에 자연스럽게)
-    const messages = (data ?? []).reverse().map((m) => ({
-      id:         m.id,
-      content:    m.content,
-      created_at: m.created_at,
-      author:     (m.users as { name?: string; username?: string } | null)?.name
-                  ?? (m.users as { name?: string; username?: string } | null)?.username
-                  ?? '알 수 없음',
-      is_ai:      m.user_id === AI_USER_ID,
-    }))
+    const messages = (data ?? []).reverse().map((m) => {
+      const poll = m.lounge_polls as {
+        id: string; question: string; is_anonymous: boolean; is_multiple: boolean;
+        is_closed: boolean; expires_at: string | null; total_votes: number;
+        lounge_poll_options: { id: string; label: string; sort_order: number; vote_count: number }[];
+      } | null
+
+      const base: Record<string, unknown> = {
+        id:         m.id,
+        content:    m.content,
+        created_at: m.created_at,
+        author:     (m.users as { name?: string; username?: string } | null)?.name
+                    ?? (m.users as { name?: string; username?: string } | null)?.username
+                    ?? '알 수 없음',
+        is_ai:      m.user_id === AI_USER_ID,
+      }
+
+      // 투표 데이터가 있으면 포함
+      if (poll) {
+        const sortedOptions = [...(poll.lounge_poll_options ?? [])].sort((a, b) => a.sort_order - b.sort_order)
+        const isExpired = poll.expires_at ? new Date(poll.expires_at) < new Date() : false
+
+        base.poll = {
+          question:     poll.question,
+          is_closed:    poll.is_closed || isExpired,
+          total_votes:  poll.total_votes,
+          options:      sortedOptions.map((o) => ({
+            label:      o.label,
+            vote_count: o.vote_count,
+          })),
+        }
+      }
+
+      return base
+    })
 
     console.log(`[openclaw-response] 광장 조회 완료: ${messages.length}건`)
     return jsonResponse({ ok: true, messages })

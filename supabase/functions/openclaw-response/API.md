@@ -148,10 +148,27 @@ curl -X POST \
   "messages": [
     {
       "id": "UUID",
-      "content": "메시지 내용",
+      "content": "일반 메시지 내용",
       "created_at": "2026-03-02T10:00:00Z",
       "author": "닉네임",
       "is_ai": false
+    },
+    {
+      "id": "UUID",
+      "content": null,
+      "created_at": "2026-03-11T05:00:00Z",
+      "author": "닉네임",
+      "is_ai": false,
+      "poll": {
+        "question": "올해 참외 작형은 어떤 걸로 하시나요?",
+        "is_closed": false,
+        "total_votes": 15,
+        "options": [
+          { "label": "촉성재배", "vote_count": 8 },
+          { "label": "반촉성재배", "vote_count": 5 },
+          { "label": "터널재배", "vote_count": 2 }
+        ]
+      }
     }
   ]
 }
@@ -159,6 +176,8 @@ curl -X POST \
 
 - `is_ai: true` 인 경우 전기수(AI)가 작성한 메시지
 - 오래된 순(오름차순)으로 정렬되어 반환
+- 투표 메시지는 `content`가 `null`이고 `poll` 객체가 포함됨
+- `poll.is_closed: true`이면 마감된 투표
 
 ### curl 예시
 
