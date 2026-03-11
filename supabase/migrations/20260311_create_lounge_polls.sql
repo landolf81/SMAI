@@ -52,6 +52,11 @@ ALTER TABLE lounge_messages
 CREATE INDEX IF NOT EXISTS idx_lounge_messages_poll
   ON lounge_messages(poll_id) WHERE poll_id IS NOT NULL;
 
+-- 5) 기존 CHECK 제약조건 수정: poll_id만 있는 메시지도 허용
+ALTER TABLE lounge_messages DROP CONSTRAINT IF EXISTS lounge_messages_content_or_image;
+ALTER TABLE lounge_messages ADD CONSTRAINT lounge_messages_content_or_image
+  CHECK (content IS NOT NULL OR image_url IS NOT NULL OR poll_id IS NOT NULL);
+
 -- ============================================================
 -- 트리거 1: 투표 삽입/삭제 시 vote_count, total_votes 자동 갱신
 -- ============================================================
