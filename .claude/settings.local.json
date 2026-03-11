@@ -13,7 +13,14 @@
       "Bash(cat:*)",
       "Bash(xargs ls:*)",
       "Bash(curl:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git status:*)",
+      "Bash(open http://localhost:3000/community)",
+      "Bash(npm install:*)",
+      "Bash(brew list:*)",
+      "Bash(npx --yes sharp-cli:*)",
+      "Bash(node -e:*)",
+      "Bash(ls:*)"
     ],
     "deny": [],
     "ask": []

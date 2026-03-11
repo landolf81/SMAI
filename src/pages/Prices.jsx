@@ -1,12 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import toast from 'react-hot-toast';
-import { marketService, briefingService } from '../services';
+import { marketService, briefingService, adService } from '../services';
 import { useAdminPermissions } from '../hooks/usePermissions';
 import LoadingSpinner from '../components/LoadingSpinner';
+import MobileAdDisplay from '../components/MobileAdDisplay';
+import { shouldShowAds } from '../utils/deviceDetector';
+import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 
 // 뱃지 색상 - 파랑으로 통일
@@ -35,6 +39,18 @@ const Prices = () => {
 
   // 설정 로드 상태
   const [settingsLoaded, setSettingsLoaded] = useState(false);
+
+  // 광고 데이터 (모바일만)
+  const { data: adsData } = useQuery({
+    queryKey: ['ads', 'active', 'prices'],
+    queryFn: () => adService.getActiveAds(),
+    staleTime: 5 * 60 * 1000,
+    enabled: shouldShowAds(),
+  });
+  const sortedAds = useMemo(() => {
+    if (!adsData || adsData.length === 0) return [];
+    return sortAdsByPriority(adsData, getAdViewCounts());
+  }, [adsData]);
 
   // 페이지 진입 시 홈 캐시 무효화 플래그 세팅 (뒤로가기 시 홈이 신선한 데이터 로드)
   useEffect(() => {
@@ -527,6 +543,13 @@ const Prices = () => {
           </>
         )}
       </div>
+
+      {/* 최하단 광고 */}
+      {shouldShowAds() && sortedAds.length > 0 && (
+        <div className="mt-4 px-4">
+          <MobileAdDisplay ad={sortedAds[0]} />
+        </div>
+      )}
 
       {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 (모든 공판장) */}
       {adminPermissions.isAdmin && (

@@ -175,10 +175,10 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "이미 다른 사용자가 인증한 전화번호입니다." }, 409)
   }
 
-  // ── 인증 코드 생성 및 만료 시간 설정 (10분) ───────────────────
+  // ── 인증 코드 생성 및 만료 시간 설정 (30분) ───────────────────
   const code = generateCode()
   const now = new Date()
-  const expiresAt = new Date(now.getTime() + 10 * 60 * 1000)
+  const expiresAt = new Date(now.getTime() + 30 * 60 * 1000)
   const runId = crypto.randomUUID()
 
   // ── verification_requests INSERT 또는 UPDATE (pending 재사용) ──
