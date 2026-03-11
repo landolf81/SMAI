@@ -24,3 +24,4 @@ export { youtubeService } from './youtubeService.js';
 export { pushNotificationService } from './pushNotificationService.js';
 export * from './agentService.js';
 export { pesticideService } from './pesticideService.js';
+export { default as loungePollService } from './loungePollService.js';

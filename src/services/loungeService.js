@@ -6,6 +6,14 @@ import { supabase } from '../config/supabase.js';
 import { pushNotificationService } from './pushNotificationService.js';
 import { storageService } from './storageService.js';
 import { v4 as uuidv4 } from 'uuid';
+import { POLL_SELECT } from './loungePollService.js';
+
+/** 메시지 조회 시 poll 데이터 포함한 select 문 */
+const MSG_SELECT = `
+  id, content, image_url, created_at, user_id, is_hidden, poll_id,
+  users:user_id (id, name, username, profile_pic),
+  lounge_polls:poll_id ( ${POLL_SELECT} )
+`;
 
 const loungeService = {
   /**
@@ -18,15 +26,7 @@ const loungeService = {
   async getMessages({ beforeTime = null, limit = 30 } = {}) {
     let query = supabase
       .from('lounge_messages')
-      .select(`
-        id,
-        content,
-        image_url,
-        created_at,
-        user_id,
-        is_hidden,
-        users:user_id (id, name, username, profile_pic)
-      `)
+      .select(MSG_SELECT)
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -57,15 +57,7 @@ const loungeService = {
     const { data, error } = await supabase
       .from('lounge_messages')
       .insert(row)
-      .select(`
-        id,
-        content,
-        image_url,
-        created_at,
-        user_id,
-        is_hidden,
-        users:user_id (id, name, username, profile_pic)
-      `)
+      .select(MSG_SELECT)
       .single();
 
     if (error) throw error;
@@ -147,17 +139,10 @@ const loungeService = {
         async (payload) => {
           if (!payload.new?.id) return;
 
-          // users 정보 포함해서 조회
+          // users + poll 정보 포함해서 조회
           const { data } = await supabase
             .from('lounge_messages')
-            .select(`
-              id,
-              content,
-              created_at,
-              user_id,
-              is_hidden,
-              users:user_id (id, name, username, profile_pic)
-            `)
+            .select(MSG_SELECT)
             .eq('id', payload.new.id)
             .single();
 

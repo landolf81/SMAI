@@ -12,12 +12,16 @@ import React, { useState, useEffect, useRef, useCallback, useContext, useMemo } 
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import loungeService from '../services/loungeService';
+import loungePollService from '../services/loungePollService';
 import { storageService } from '../services';
 import { generateDiceBearAvatar } from '../utils/userHelper';
 import SendIcon from '@mui/icons-material/Send';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AIBadge from '../components/AIBadge';
 import { AI_USER_ID } from '../config/aiUser';
+import PollBadge from '../components/lounge/PollBadge';
+import PollCard from '../components/lounge/PollCard';
+import PollCreateForm from '../components/lounge/PollCreateForm';
 
 // ─────────────────────────────────────────────
 // 시간 포맷 (오늘이면 시:분, 아니면 날짜)
@@ -100,7 +104,7 @@ const renderContent = (content, knownNames) => {
 // LoungeMessage
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, knownNames
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, onImageClick, knownNames }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -173,6 +177,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             {displayName}
           </span>
           {isAI && <AIBadge />}
+          {msg.poll_id && <PollBadge />}
           {isHidden && <span className="text-[10px] text-red-400 font-medium">숨김</span>}
           <span className="text-[12px] text-gray-400">{formatTime(msg.created_at)}</span>
           {/* TTS 버튼 */}
@@ -220,6 +225,16 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             onClick={() => onImageClick?.(msg.image_url)}
           />
         )}
+        {msg.lounge_polls && (
+          <PollCard
+            poll={msg.lounge_polls}
+            myVotes={myPollVotes || []}
+            onVote={onVote}
+            onClose={onClosePoll}
+            currentUserId={currentUserId}
+            isVoting={isVoting}
+          />
+        )}
       </div>
     </div>
   );
@@ -240,12 +255,16 @@ const Lounge = () => {
   const [showScrollDown, setShowScrollDown] = useState(false);
 
   const [isComposing, setIsComposing] = useState(false);
+  const [isPollMode, setIsPollMode] = useState(false);          // 투표 생성 모드
   const [cooldownLeft, setCooldownLeft] = useState(0);
   const [selectedImage, setSelectedImage] = useState(null);     // 첨부할 이미지 File
   const [imagePreview, setImagePreview] = useState(null);       // 미리보기 data URL
   const [isUploading, setIsUploading] = useState(false);        // 업로드 중 여부
   const [viewingImage, setViewingImage] = useState(null);       // 전체화면 보기 URL
+  const [myPollVotes, setMyPollVotes] = useState({});           // { pollId: [optionId, ...] }
+  const [votingPollId, setVotingPollId] = useState(null);       // 투표 처리 중인 pollId
   const fileInputRef = useRef(null);
+  const pollVoteSubRef = useRef(null);
 
   // 로드된 메시지의 닉네임 목록 (멘션 하이라이트용)
   const knownNames = useMemo(() => {
@@ -306,6 +325,13 @@ const Lounge = () => {
         if (!cancelled) {
           setMessages(data);
           setHasMore(data.length === 30);
+          // 투표가 포함된 메시지에서 내 투표 데이터 로드
+          const pollIds = data.filter((m) => m.poll_id).map((m) => m.poll_id);
+          if (pollIds.length > 0) {
+            loungePollService.batchGetMyVotes(pollIds).then((votes) => {
+              if (!cancelled) setMyPollVotes(votes);
+            }).catch(() => {});
+          }
           // 초기 로드 후 즉시 하단으로
           requestAnimationFrame(() => scrollToBottom('auto'));
         }
@@ -335,6 +361,25 @@ const Lounge = () => {
 
     return () => subscriptionRef.current?.unsubscribe();
   }, [scrollToBottom]);
+
+  // ── 투표 Realtime 구독 (투표 변경 시 메시지 내 poll 데이터 갱신) ──
+  useEffect(() => {
+    pollVoteSubRef.current = loungePollService.subscribeToVotes(async (payload) => {
+      const pollId = payload.new?.poll_id || payload.old?.poll_id;
+      if (!pollId) return;
+      try {
+        const updatedPoll = await loungePollService.getPollData(pollId);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.poll_id === pollId ? { ...m, lounge_polls: updatedPoll } : m
+          )
+        );
+      } catch {
+        // 무시
+      }
+    });
+    return () => pollVoteSubRef.current?.unsubscribe();
+  }, []);
 
   // ── 스크롤 이벤트: 하단 여부 추적 ──
   useEffect(() => {
@@ -430,6 +475,61 @@ const Lounge = () => {
   const handleMention = useCallback((name) => {
     setText(`@${name} `);
     setIsComposing(true);
+    setIsPollMode(false);
+  }, []);
+
+  // ── 투표 핸들러 ──
+  const handleVote = useCallback(async (pollId, optionId) => {
+    if (votingPollId || !currentUser) return;
+    setVotingPollId(pollId);
+
+    // 해당 poll의 is_multiple 확인
+    const msg = messages.find((m) => m.poll_id === pollId);
+    const isMultiple = msg?.lounge_polls?.is_multiple || false;
+
+    // 옵티미스틱 업데이트
+    setMyPollVotes((prev) => {
+      const current = prev[pollId] || [];
+      if (current.includes(optionId)) {
+        // 취소
+        return { ...prev, [pollId]: current.filter((id) => id !== optionId) };
+      }
+      if (isMultiple) {
+        return { ...prev, [pollId]: [...current, optionId] };
+      }
+      // 단일선택: 새 옵션으로 교체
+      return { ...prev, [pollId]: [optionId] };
+    });
+
+    try {
+      await loungePollService.toggleVote(pollId, optionId, isMultiple);
+      // Realtime이 poll 데이터를 갱신해줌
+    } catch (e) {
+      console.error('[Lounge] 투표 실패:', e);
+      // 롤백: 서버에서 실제 투표 상태 재조회
+      try {
+        const votes = await loungePollService.getMyVotes(pollId);
+        setMyPollVotes((prev) => ({ ...prev, [pollId]: votes }));
+      } catch { /* ignore */ }
+    } finally {
+      setVotingPollId(null);
+    }
+  }, [votingPollId, currentUser, messages]);
+
+  // ── 투표 마감 핸들러 ──
+  const handleClosePoll = useCallback(async (pollId) => {
+    try {
+      await loungePollService.closePoll(pollId);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.poll_id === pollId
+            ? { ...m, lounge_polls: { ...m.lounge_polls, is_closed: true } }
+            : m
+        )
+      );
+    } catch (e) {
+      console.error('[Lounge] 투표 마감 실패:', e);
+    }
   }, []);
 
   // ── 이미지 선택 핸들러 ──
@@ -455,6 +555,28 @@ const Lounge = () => {
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
+
+  // ── 투표 생성 제출 ──
+  const handlePollSubmit = useCallback(async (pollData) => {
+    if (isSending || cooldownLeft > 0 || !currentUser) return;
+    setIsSending(true);
+    try {
+      const newMsg = await loungePollService.createPoll(pollData);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
+      setCooldownLeft(15);
+      setIsComposing(false);
+      setIsPollMode(false);
+      requestAnimationFrame(() => scrollToBottom());
+    } catch (e) {
+      console.error('[Lounge] 투표 생성 실패:', e);
+      alert('투표 생성에 실패했습니다.');
+    } finally {
+      setIsSending(false);
+    }
+  }, [isSending, cooldownLeft, currentUser, scrollToBottom]);
 
   // ── 메시지 전송 ──
   const handleSend = useCallback(async (e) => {
@@ -618,6 +740,10 @@ const Lounge = () => {
                 onHide={handleHide}
                 onImageClick={setViewingImage}
                 knownNames={knownNames}
+                myPollVotes={item.msg.poll_id ? (myPollVotes[item.msg.poll_id] || []) : undefined}
+                onVote={handleVote}
+                onClosePoll={handleClosePoll}
+                isVoting={votingPollId === item.msg.poll_id}
               />
             );
           })}
@@ -643,14 +769,26 @@ const Lounge = () => {
 
     {/* 플로팅 글쓰기 버튼 */}
     {!isComposing && (
-      <button
-        onClick={() => setIsComposing(true)}
-        className="fixed right-4 z-40 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3 transition-all duration-300 hover:shadow-xl active:scale-95"
-        style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}
-        aria-label="광장에 글쓰기"
-      >
-        <SendIcon style={{ fontSize: 22 }} />
-      </button>
+      <div className="fixed right-4 z-40 flex flex-col gap-2" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
+        {/* 투표 만들기 버튼 */}
+        <button
+          onClick={() => { setIsComposing(true); setIsPollMode(true); }}
+          className="bg-gradient-to-r from-purple-400 to-purple-500 text-white rounded-full shadow-lg p-3 transition-all duration-300 hover:shadow-xl active:scale-95"
+          aria-label="투표 만들기"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+            <path d="M3 3a1 1 0 011-1h1a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3zM7 7a1 1 0 011-1h1a1 1 0 011 1v6a1 1 0 01-1 1H8a1 1 0 01-1-1V7zM12 5a1 1 0 00-1 1v7a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1h-1z" />
+          </svg>
+        </button>
+        {/* 글쓰기 버튼 */}
+        <button
+          onClick={() => { setIsComposing(true); setIsPollMode(false); }}
+          className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3 transition-all duration-300 hover:shadow-xl active:scale-95"
+          aria-label="광장에 글쓰기"
+        >
+          <SendIcon style={{ fontSize: 22 }} />
+        </button>
+      </div>
     )}
 
     {/* 글쓰기 모달 - 화면 상단에 띄워 키보드와 충돌 방지 */}
@@ -659,18 +797,23 @@ const Lounge = () => {
         {/* 배경 */}
         <div
           className="absolute inset-0 bg-black/40"
-          onClick={() => { if (!text.trim() && !selectedImage) { setIsComposing(false); clearImage(); } }}
+          onClick={() => {
+            if (isPollMode) { setIsComposing(false); setIsPollMode(false); return; }
+            if (!text.trim() && !selectedImage) { setIsComposing(false); clearImage(); }
+          }}
         />
         {/* 카드 */}
-        <div className="relative w-[calc(100%-32px)] bg-white rounded-2xl shadow-xl border-2 border-blue-400 overflow-hidden">
+        <div className={`relative w-[calc(100%-32px)] bg-white rounded-2xl shadow-xl border-2 overflow-hidden ${isPollMode ? 'border-purple-400' : 'border-blue-400'}`}>
           {/* 헤더 */}
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-500" />
-              <span className="text-[18px] font-bold text-gray-800">광장에 한마디</span>
+              <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${isPollMode ? 'from-purple-400 to-purple-500' : 'from-yellow-400 to-yellow-500'}`} />
+              <span className="text-[18px] font-bold text-gray-800">
+                {isPollMode ? '투표 만들기' : '광장에 한마디'}
+              </span>
             </div>
             <button
-              onClick={() => { setText(''); clearImage(); setIsComposing(false); }}
+              onClick={() => { setText(''); clearImage(); setIsComposing(false); setIsPollMode(false); }}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 text-[16px] hover:bg-gray-200 transition-colors"
             >
               ×
@@ -686,6 +829,13 @@ const Lounge = () => {
                 로그인하고 이야기 나누기
               </button>
             </div>
+          ) : isPollMode ? (
+            <PollCreateForm
+              onSubmit={handlePollSubmit}
+              onCancel={() => setIsPollMode(false)}
+              isSubmitting={isSending}
+              cooldownLeft={cooldownLeft}
+            />
           ) : (
             <>
               {/* 이미지 미리보기 */}
