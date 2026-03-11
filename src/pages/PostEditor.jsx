@@ -869,7 +869,7 @@ const PostEditor = () => {
               )}
               {/* 글자 수 표시 */}
               <div className="absolute bottom-2 right-3 text-xs text-gray-400">
-                {desc.length}/400
+                {desc.length}/1000
               </div>
             </div>
 
