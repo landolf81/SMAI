@@ -43,8 +43,20 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
   // pwa-install 광고는 렌더링 안 함
   if (ad?.link_url === 'pwa-install') return null;
 
-  const imageUrl = ad.image_url ? toSmallVariant(getImageUrl(ad.image_url)) : null;
   const content = stripHtml(ad.content);
+
+  // image_url도 동영상/스트림일 수 있으므로 타입 판별
+  const mainMedia = (() => {
+    if (!ad.image_url) return null;
+    const url = ad.image_url;
+    if (isCloudflareStreamUrl(url)) {
+      return { type: 'stream', url, uid: getCloudflareStreamUid(url) || url };
+    }
+    if (isVideoFile(url)) {
+      return { type: 'video', url: getImageUrl(url) };
+    }
+    return { type: 'image', url: toSmallVariant(getImageUrl(url)) };
+  })();
 
   // ── ad_media에서 첫 번째 미디어 로드 ──
   useEffect(() => {
@@ -99,13 +111,13 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
     adService.trackAdClick(ad.id);
     if (firstMedia?.type === 'image') {
       onImageClick?.(firstMedia.url);
-    } else if (imageUrl) {
-      onImageClick?.(getImageUrl(ad.image_url));
+    } else if (mainMedia?.type === 'image') {
+      onImageClick?.(mainMedia.url);
     }
-  }, [ad.id, ad.image_url, imageUrl, firstMedia, onImageClick]);
+  }, [ad.id, firstMedia, mainMedia, onImageClick]);
 
   // 표시할 미디어 결정: ad_media 우선, 없으면 image_url fallback
-  const displayMedia = firstMedia || (imageUrl ? { type: 'image', url: imageUrl } : null);
+  const displayMedia = firstMedia || mainMedia;
 
   return (
     <div
