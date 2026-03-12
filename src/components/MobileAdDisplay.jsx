@@ -380,7 +380,11 @@ const MobileAdDisplay = ({ ad }) => {
 
     // PWA 설치 광고: Android는 네이티브 설치, iOS는 모달로 안내
     if (isPWAInstallAd && canInstall) {
-      await promptInstall();
+      try {
+        await promptInstall();
+      } catch {
+        // hook에서 이미 에러 처리됨 — 방어적 catch
+      }
       return;
     }
 

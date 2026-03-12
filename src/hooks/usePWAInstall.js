@@ -54,15 +54,24 @@ export const usePWAInstall = () => {
     const prompt = deferredPrompt || savedPrompt;
     if (!prompt) return false;
 
-    prompt.prompt();
-    const { outcome } = await prompt.userChoice;
+    try {
+      prompt.prompt();
+      const { outcome } = await prompt.userChoice;
 
-    if (outcome === 'accepted') {
-      setIsInstalled(true);
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+      }
+      return outcome === 'accepted';
+    } catch (error) {
+      // InvalidStateError: prompt already used or stale event
+      console.warn('[PWA] Install prompt failed:', error);
+      return false;
+    } finally {
+      // 사용 후 항상 정리 — prompt는 1회성이므로 재사용 불가
+      // 앱이 여전히 설치 가능하면 브라우저가 새 beforeinstallprompt 이벤트 발생
       setDeferredPrompt(null);
       savedPrompt = null;
     }
-    return outcome === 'accepted';
   }, [deferredPrompt]);
 
   /** Android 설치 가능 여부 (prompt 존재) */
