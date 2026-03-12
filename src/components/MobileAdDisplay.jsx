@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
@@ -6,6 +6,9 @@ import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
 import CloudflareStreamPlayer from './CloudflareStreamPlayer';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { supabase } from '../config/supabase.js';
+import AdPollCard from './ad/AdPollCard';
+import adPollService from '../services/adPollService.js';
 
 /** Cloudflare Images URL의 variant를 축소 (public → w=600) */
 const toSmallVariant = (url) => {
@@ -28,6 +31,66 @@ const MobileAdDisplay = ({ ad }) => {
   const impressionTimerRef = useRef(null); // 노출 타이머
   const scrollYRef = useRef(0); // 스크롤 위치 저장
   const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
+
+  // ── 투표(Poll) 관련 state ──
+  const [pollData, setPollData] = useState(ad?.ad_polls || null);
+  const [myPollVotes, setMyPollVotes] = useState([]);
+  const [isVoting, setIsVoting] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const pollSubRef = useRef(null);
+
+  // 현재 유저 ID 가져오기
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
+  }, []);
+
+  // 내 투표 로드
+  useEffect(() => {
+    if (pollData?.id && currentUserId) {
+      adPollService.getMyVotes(pollData.id).then(setMyPollVotes).catch(() => {});
+    }
+  }, [pollData?.id, currentUserId]);
+
+  // 실시간 투표 구독
+  useEffect(() => {
+    if (!pollData?.id) return;
+    pollSubRef.current = adPollService.subscribeToVotes(async (payload) => {
+      const pid = payload.new?.poll_id || payload.old?.poll_id;
+      if (pid === pollData.id) {
+        try {
+          const updated = await adPollService.getPollData(pid);
+          setPollData(updated);
+        } catch { /* ignore */ }
+      }
+    });
+    return () => pollSubRef.current?.unsubscribe();
+  }, [pollData?.id]);
+
+  // 투표 핸들러 (옵티미스틱 UI + rollback)
+  const handlePollVote = useCallback(async (pollId, optionId) => {
+    if (isVoting || !currentUserId) return;
+    setIsVoting(true);
+    const prevVotes = [...myPollVotes];
+    // 옵티미스틱 업데이트
+    setMyPollVotes((prev) => {
+      if (prev.includes(optionId)) return prev.filter((id) => id !== optionId);
+      if (!pollData?.is_multiple) return [optionId];
+      return [...prev, optionId];
+    });
+    try {
+      await adPollService.toggleVote(pollId, optionId, pollData?.is_multiple);
+      // 최신 데이터 반영
+      const updated = await adPollService.getPollData(pollId);
+      setPollData(updated);
+    } catch {
+      // rollback
+      setMyPollVotes(prevVotes);
+    } finally {
+      setIsVoting(false);
+    }
+  }, [isVoting, currentUserId, myPollVotes, pollData?.is_multiple]);
 
   // pwa-install 광고인데 이미 설치된 환경이면 렌더링 안 함
   const isPWAInstallAd = ad?.link_url === 'pwa-install';
@@ -477,7 +540,18 @@ const MobileAdDisplay = ({ ad }) => {
               {ad.content.replace(/<[^>]*>/g, '')}
             </p>
           )}
-          
+
+          {/* 광고 투표 */}
+          {pollData && (
+            <AdPollCard
+              poll={pollData}
+              myVotes={myPollVotes}
+              onVote={handlePollVote}
+              isVoting={isVoting}
+              currentUserId={currentUserId}
+            />
+          )}
+
           {/* 액션 버튼 */}
           <button 
             onClick={handleAdClick}
@@ -624,6 +698,19 @@ const MobileAdDisplay = ({ ad }) => {
                   <p className="text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {ad.content.replace(/<[^>]*>/g, '')}
                   </p>
+                </div>
+              )}
+
+              {/* 모달 내 광고 투표 */}
+              {pollData && (
+                <div className="mb-4">
+                  <AdPollCard
+                    poll={pollData}
+                    myVotes={myPollVotes}
+                    onVote={handlePollVote}
+                    isVoting={isVoting}
+                    currentUserId={currentUserId}
+                  />
                 </div>
               )}
 
