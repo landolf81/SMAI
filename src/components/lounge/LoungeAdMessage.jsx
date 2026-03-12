@@ -2,11 +2,14 @@
  * LoungeAdMessage.jsx
  * 역할: 광장 피드 내 메시지형 경량 광고 컴포넌트
  * LoungeMessage와 동일한 레이아웃으로 자연스럽게 삽입
+ * 이미지 / 일반 동영상 / Cloudflare Stream 동영상 지원
  * 사용 위치: Lounge.jsx (15개 메시지마다 1개 삽입)
  */
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { adService } from '../../services';
 import { getImageUrl } from '../../config/api';
+import { isCloudflareStreamUrl, getCloudflareStreamUid, isVideoFile } from '../../utils/mediaUtils';
+import CloudflareStreamPlayer from '../CloudflareStreamPlayer';
 
 /** HTML 태그 제거 */
 const stripHtml = (html) => (html ? html.replace(/<[^>]*>/g, '') : '');
@@ -17,10 +20,25 @@ const toSmallVariant = (url) => {
   return url.replace(/\/public$/, '/w=600');
 };
 
+/** 미디어 항목에서 첫 번째 항목의 타입 판별 */
+const getMediaInfo = (media) => {
+  if (!media?.media_url) return null;
+  const url = media.media_url;
+  if (isCloudflareStreamUrl(url)) {
+    return { type: 'stream', url, uid: getCloudflareStreamUid(url) || url };
+  }
+  if (media.media_type === 'video' || isVideoFile(url)) {
+    return { type: 'video', url };
+  }
+  return { type: 'image', url: toSmallVariant(getImageUrl(url)) };
+};
+
 const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
   const containerRef = useRef(null);
   const hasTrackedRef = useRef(false);
   const timerRef = useRef(null);
+  const [firstMedia, setFirstMedia] = useState(null); // 첫 번째 미디어
+  const [isVisible, setIsVisible] = useState(false);
 
   // pwa-install 광고는 렌더링 안 함
   if (ad?.link_url === 'pwa-install') return null;
@@ -28,20 +46,34 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
   const imageUrl = ad.image_url ? toSmallVariant(getImageUrl(ad.image_url)) : null;
   const content = stripHtml(ad.content);
 
-  // ── 노출 추적 (IAB: 50% visible + 1초) ──
+  // ── ad_media에서 첫 번째 미디어 로드 ──
+  useEffect(() => {
+    let cancelled = false;
+    adService.getAdMedia(ad.id)
+      .then((mediaList) => {
+        if (!cancelled && Array.isArray(mediaList) && mediaList.length > 0) {
+          setFirstMedia(getMediaInfo(mediaList[0]));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [ad.id]);
+
+  // ── 노출 추적 (IAB: 50% visible + 1초) + 비디오 자동재생 ──
   useEffect(() => {
     const el = containerRef.current;
-    if (!el || hasTrackedRef.current) return;
+    if (!el) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
+        setIsVisible(entry.isIntersecting);
         if (entry.isIntersecting) {
-          timerRef.current = setTimeout(() => {
-            if (!hasTrackedRef.current) {
+          if (!hasTrackedRef.current) {
+            timerRef.current = setTimeout(() => {
               hasTrackedRef.current = true;
               adService.trackAdImpression(ad.id);
-            }
-          }, 1000);
+            }, 1000);
+          }
         } else {
           clearTimeout(timerRef.current);
         }
@@ -64,11 +96,16 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
   }, [ad.id, ad.link_url]);
 
   const handleImageClick = useCallback(() => {
-    if (imageUrl) {
-      adService.trackAdClick(ad.id);
+    adService.trackAdClick(ad.id);
+    if (firstMedia?.type === 'image') {
+      onImageClick?.(firstMedia.url);
+    } else if (imageUrl) {
       onImageClick?.(getImageUrl(ad.image_url));
     }
-  }, [ad.id, ad.image_url, imageUrl, onImageClick]);
+  }, [ad.id, ad.image_url, imageUrl, firstMedia, onImageClick]);
+
+  // 표시할 미디어 결정: ad_media 우선, 없으면 image_url fallback
+  const displayMedia = firstMedia || (imageUrl ? { type: 'image', url: imageUrl } : null);
 
   return (
     <div
@@ -101,15 +138,42 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
           </p>
         )}
 
-        {/* 이미지 (1장) */}
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt={ad.title || '광고 이미지'}
-            className="mt-1.5 rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-gray-200"
-            loading="lazy"
-            onClick={handleImageClick}
-          />
+        {/* 미디어 (이미지 / 동영상 / Cloudflare Stream) */}
+        {displayMedia && (
+          <div className="mt-1.5 max-w-[280px]">
+            {displayMedia.type === 'stream' && (
+              <div className="rounded-xl overflow-hidden border border-gray-200">
+                <CloudflareStreamPlayer
+                  uid={displayMedia.uid}
+                  autoplay={isVisible}
+                  muted={true}
+                  loop={true}
+                  controls={true}
+                  className="w-full"
+                />
+              </div>
+            )}
+            {displayMedia.type === 'video' && (
+              <video
+                src={displayMedia.url}
+                className="rounded-xl max-w-full max-h-[240px] object-cover border border-gray-200"
+                autoPlay={isVisible}
+                muted
+                loop
+                playsInline
+                controls
+              />
+            )}
+            {displayMedia.type === 'image' && (
+              <img
+                src={displayMedia.url}
+                alt={ad.title || '광고 이미지'}
+                className="rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-gray-200"
+                loading="lazy"
+                onClick={handleImageClick}
+              />
+            )}
+          </div>
         )}
 
         {/* 링크 버튼 */}
