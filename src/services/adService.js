@@ -87,10 +87,10 @@ export const adService = {
 
       if (countError) throw countError;
 
-      // 데이터 조회
+      // 데이터 조회 (투표 데이터 JOIN 포함)
       const { data, error } = await supabase
         .from('ads')
-        .select('*')
+        .select(`*, ad_polls:poll_id ( ${AD_POLL_SELECT} )`)
         .order(sortBy, { ascending: sortOrder.toLowerCase() === 'asc' })
         .range((page - 1) * limit, page * limit - 1);
 

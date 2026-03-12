@@ -3,6 +3,7 @@ import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
 import CloudflareStreamPlayer from './CloudflareStreamPlayer';
+import AdPollResults from './ad/AdPollResults';
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -522,6 +523,14 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
                     {ad.content.replace(/<[^>]*>/g, '')}
                   </p>
                 </div>
+              )}
+
+              {/* 투표 결과 섹션 */}
+              {ad.ad_polls && (
+                <AdPollResults
+                  poll={ad.ad_polls}
+                  onPollClosed={() => setShowDetailModal(false)}
+                />
               )}
 
               {/* 외부 링크 섹션 */}
