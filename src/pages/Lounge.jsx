@@ -22,6 +22,9 @@ import { AI_USER_ID } from '../config/aiUser';
 import PollBadge from '../components/lounge/PollBadge';
 import PollCard from '../components/lounge/PollCard';
 import PollCreateForm from '../components/lounge/PollCreateForm';
+import LoungeAdMessage from '../components/lounge/LoungeAdMessage';
+import { adService } from '../services';
+import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 
 // ─────────────────────────────────────────────
 // 시간 포맷 (오늘이면 시:분, 아니면 날짜)
@@ -263,6 +266,7 @@ const Lounge = () => {
   const [viewingImage, setViewingImage] = useState(null);       // 전체화면 보기 URL
   const [myPollVotes, setMyPollVotes] = useState({});           // { pollId: [optionId, ...] }
   const [votingPollId, setVotingPollId] = useState(null);       // 투표 처리 중인 pollId
+  const [loungeAds, setLoungeAds] = useState([]);               // 광장 피드 광고
   const fileInputRef = useRef(null);
   const pollVoteSubRef = useRef(null);
 
@@ -314,6 +318,19 @@ const Lounge = () => {
         speechSynthesis.cancel();
       }
     };
+  }, []);
+
+  // ── 광장 피드 광고 로드 ──
+  useEffect(() => {
+    let cancelled = false;
+    adService.getActiveAds()
+      .then((ads) => {
+        if (!cancelled && ads?.length > 0) {
+          setLoungeAds(sortAdsByPriority(ads, getAdViewCounts()));
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, []);
 
   // ── 초기 메시지 로드 ──
@@ -660,11 +677,14 @@ const Lounge = () => {
     }
   }, []);
 
-  // ── 날짜 구분선 삽입을 위한 렌더링 준비 ──
+  // ── 날짜 구분선 + 광고 삽입을 위한 렌더링 준비 ──
+  const LOUNGE_AD_INTERVAL = 15; // 15개 메시지마다 광고 1개
   const isAdmin = currentUser?.isAdmin;
   const visibleMessages = isAdmin ? messages : messages.filter((m) => !m.is_hidden);
   const renderedItems = [];
   let lastDateKey = null;
+  let messageCount = 0;
+  let adIndex = 0;
   for (const msg of visibleMessages) {
     const dk = getDateKey(msg.created_at);
     if (dk !== lastDateKey) {
@@ -672,6 +692,13 @@ const Lounge = () => {
       lastDateKey = dk;
     }
     renderedItems.push({ type: 'msg', key: msg.id, msg });
+    messageCount++;
+    // 광고 삽입
+    if (loungeAds.length > 0 && messageCount % LOUNGE_AD_INTERVAL === 0) {
+      const ad = loungeAds[adIndex % loungeAds.length];
+      renderedItems.push({ type: 'ad', key: `lounge-ad-${ad.id}-${messageCount}`, ad });
+      adIndex++;
+    }
   }
 
   return (
@@ -725,6 +752,15 @@ const Lounge = () => {
                     {item.label}
                   </span>
                 </div>
+              );
+            }
+            if (item.type === 'ad') {
+              return (
+                <LoungeAdMessage
+                  key={item.key}
+                  ad={item.ad}
+                  onImageClick={setViewingImage}
+                />
               );
             }
             return (
