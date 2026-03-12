@@ -158,7 +158,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   }, [data, userId]);
 
   // 게시물, 광고, 뉴스, YouTube 영상을 합친 목록 생성
-  // - 광고: 3개마다 삽입
+  // - 광고: 4개마다 삽입
   // - 뉴스: 7개마다 삽입 (광고보다 낮은 빈도)
   // - YouTube: 5개마다 삽입 (첫 번째 영상은 4번째 위치에)
   const postsWithAds = useMemo(() => {
@@ -180,8 +180,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       // 게시물 추가
       result.push({ type: 'post', data: post, key: `post-${post.id}` });
 
-      // 카드 3개당 광고 1개 (인덱스 3, 7, 11, ... 일 때)
-      if ((index + 1) % 4 === 0 && ads.length > 0) {
+      // 카드 4개당 광고 1개 (인덱스 4, 9, 14, ... 일 때)
+      if ((index + 1) % 5 === 0 && ads.length > 0) {
         const ad = ads[adIndex % ads.length];
         if (ad && ad.id) {
           result.push({
@@ -221,8 +221,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       }
     });
 
-    // 게시물이 4개 미만이고 광고가 아직 표시되지 않았다면, 마지막에 광고 추가
-    if (allPosts.length > 0 && allPosts.length < 4 && ads.length > 0 && adIndex === 0) {
+    // 게시물이 5개 미만이고 광고가 아직 표시되지 않았다면, 마지막에 광고 추가
+    if (allPosts.length > 0 && allPosts.length < 5 && ads.length > 0 && adIndex === 0) {
       const ad = ads[0];
       if (ad && ad.id) {
         result.push({
