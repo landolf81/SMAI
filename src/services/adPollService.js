@@ -7,8 +7,10 @@
  * - 투표는 광고(ad_id) 에 귀속됨 (lounge_messages 연결 없음)
  * - createPoll 후 ads 테이블의 poll_id 컬럼을 업데이트
  * - deletePoll: 투표 삭제 + ads.poll_id 초기화 (관리자 수정용)
+ * - 비로그인 투표 지원: user_id 없으면 session_id로 식별
  */
 import { supabase } from '../config/supabase.js';
+import { getAdSessionId } from '../utils/adSessionId.js';
 
 /** 광고 투표의 선택지를 포함한 poll 조인 쿼리 문자열 */
 export const AD_POLL_SELECT = `
@@ -101,26 +103,33 @@ const adPollService = {
   },
 
   /**
-   * 현재 유저의 특정 투표에 대한 투표 목록 조회
+   * 현재 유저(또는 세션)의 특정 투표에 대한 투표 목록 조회
+   * 로그인 유저는 user_id, 비로그인은 session_id로 조회
    * @param {string} pollId
    * @returns {Promise<string[]>} 투표한 option_id 배열
    */
   async getMyVotes(pollId) {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return [];
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('ad_poll_votes')
       .select('option_id')
-      .eq('poll_id', pollId)
-      .eq('user_id', user.id);
+      .eq('poll_id', pollId);
 
+    if (user) {
+      query = query.eq('user_id', user.id);
+    } else {
+      query = query.eq('session_id', getAdSessionId());
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     return (data || []).map((v) => v.option_id);
   },
 
   /**
    * 여러 광고 투표에 대한 내 투표 일괄 조회
+   * 로그인 유저는 user_id, 비로그인은 session_id로 조회
    * @param {string[]} pollIds
    * @returns {Promise<Object>} { pollId: [optionId, ...], ... }
    */
@@ -128,14 +137,19 @@ const adPollService = {
     if (!pollIds.length) return {};
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return {};
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('ad_poll_votes')
       .select('poll_id, option_id')
-      .in('poll_id', pollIds)
-      .eq('user_id', user.id);
+      .in('poll_id', pollIds);
 
+    if (user) {
+      query = query.eq('user_id', user.id);
+    } else {
+      query = query.eq('session_id', getAdSessionId());
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
 
     const result = {};
@@ -157,7 +171,9 @@ const adPollService = {
    */
   async toggleVote(pollId, optionId, isMultiple = false) {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('로그인이 필요합니다.');
+    const sessionId = user ? null : getAdSessionId();
+    const idField = user ? 'user_id' : 'session_id';
+    const idValue = user ? user.id : sessionId;
 
     // 이미 이 옵션에 투표했는지 확인
     const { data: existing } = await supabase
@@ -165,7 +181,7 @@ const adPollService = {
       .select('id')
       .eq('poll_id', pollId)
       .eq('option_id', optionId)
-      .eq('user_id', user.id)
+      .eq(idField, idValue)
       .maybeSingle();
 
     if (existing) {
@@ -184,17 +200,23 @@ const adPollService = {
         .from('ad_poll_votes')
         .delete()
         .eq('poll_id', pollId)
-        .eq('user_id', user.id);
+        .eq(idField, idValue);
     }
 
-    // 새 투표 삽입
+    // 새 투표 삽입 (로그인: user_id, 비로그인: session_id)
+    const insertRow = {
+      poll_id: pollId,
+      option_id: optionId,
+    };
+    if (user) {
+      insertRow.user_id = user.id;
+    } else {
+      insertRow.session_id = sessionId;
+    }
+
     const { error } = await supabase
       .from('ad_poll_votes')
-      .insert({
-        poll_id: pollId,
-        option_id: optionId,
-        user_id: user.id,
-      });
+      .insert(insertRow);
 
     if (error) throw error;
     return { voted: true };

@@ -46,9 +46,9 @@ const MobileAdDisplay = ({ ad }) => {
     });
   }, []);
 
-  // 내 투표 로드
+  // 내 투표 로드 (로그인/비로그인 모두 — 서비스에서 session_id fallback)
   useEffect(() => {
-    if (pollData?.id && currentUserId) {
+    if (pollData?.id) {
       adPollService.getMyVotes(pollData.id).then(setMyPollVotes).catch(() => {});
     }
   }, [pollData?.id, currentUserId]);
@@ -68,9 +68,9 @@ const MobileAdDisplay = ({ ad }) => {
     return () => pollSubRef.current?.unsubscribe();
   }, [pollData?.id]);
 
-  // 투표 핸들러 (옵티미스틱 UI + rollback)
+  // 투표 핸들러 (옵티미스틱 UI + rollback, 비로그인도 session_id로 가능)
   const handlePollVote = useCallback(async (pollId, optionId) => {
-    if (isVoting || !currentUserId) return;
+    if (isVoting) return;
     setIsVoting(true);
     const prevVotes = [...myPollVotes];
     // 옵티미스틱 업데이트
@@ -90,7 +90,7 @@ const MobileAdDisplay = ({ ad }) => {
     } finally {
       setIsVoting(false);
     }
-  }, [isVoting, currentUserId, myPollVotes, pollData?.is_multiple]);
+  }, [isVoting, myPollVotes, pollData?.is_multiple]);
 
   // pwa-install 광고인데 이미 설치된 환경이면 렌더링 안 함
   const isPWAInstallAd = ad?.link_url === 'pwa-install';

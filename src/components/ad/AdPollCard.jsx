@@ -58,12 +58,12 @@ const AdPollCard = ({ poll, myVotes = [], onVote, currentUserId, isVoting = fals
     return `${minutes}분 남음`;
   }, [poll?.expires_at, isClosed]);
 
-  // 투표 핸들러
+  // 투표 핸들러 (비로그인도 session_id로 투표 가능)
   const handleVote = useCallback((optionId) => {
-    if (isClosed || isVoting || !currentUserId) return;
+    if (isClosed || isVoting) return;
     setSelectedForVote(optionId);
     onVote?.(poll.id, optionId);
-  }, [isClosed, isVoting, currentUserId, onVote, poll?.id]);
+  }, [isClosed, isVoting, onVote, poll?.id]);
 
   if (!poll || !sortedOptions.length) return null;
 
