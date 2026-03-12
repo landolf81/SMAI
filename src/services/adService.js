@@ -1,9 +1,11 @@
 import { supabase } from '../config/supabase.js';
 import { deleteFromR2, isR2Url } from './r2Service.js';
+import { AD_POLL_SELECT } from './adPollService.js';
 
 /**
  * 광고 서비스
  * - 메모리 캐시로 세션 내 중복 노출 추적 방지
+ * - 투표(poll) 데이터 조인 지원
  */
 
 // 세션 내 노출 추적 메모리 캐시 (adId_YYYY-MM-DD 키)
@@ -28,7 +30,7 @@ export const adService = {
 
       const { data, error } = await supabase
         .from('ads')
-        .select('*')
+        .select(`*, ad_polls:poll_id ( ${AD_POLL_SELECT} )`)
         .eq('is_active', true)
         .or(`end_date.is.null,end_date.gte.${kstToday}`)
         .order('priority', { ascending: false });

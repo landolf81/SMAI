@@ -11,10 +11,12 @@ import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { adService, storageService } from '../../services';
+import adPollService from '../../services/adPollService.js';
 import { getImageUrl } from '../../config/api';
 import { getAcceptedFileTypes } from '../../utils/mediaUtils';
 import MediaGallery from '../../components/MediaGallery';
 import AdminAdCard from '../../components/AdminAdCard';
+import AdPollCreateForm from '../../components/ad/AdPollCreateForm';
 import { v4 as uuidv4 } from 'uuid';
 
 const AdminAdsNew = () => {
@@ -51,6 +53,10 @@ const AdminAdsNew = () => {
     is_active: true,
     priority_boost: 0
   });
+
+  // 투표 폼 데이터 (null = 투표 없음)
+  const [pollFormData, setPollFormData] = useState(null);
+  const [existingPollId, setExistingPollId] = useState(null); // 수정 시 기존 poll_id
 
   // 광고 목록 조회
   const fetchAds = useCallback(async (page = pagination.page) => {
@@ -177,6 +183,30 @@ const AdminAdsNew = () => {
           console.log('추가 미디어 DB 저장 완료');
         }
 
+        // 투표 처리 (수정 모드)
+        if (pollFormData && pollFormData.question?.trim()) {
+          const validOpts = pollFormData.options.filter((o) => o.trim());
+          if (validOpts.length >= 2) {
+            // 기존 투표 삭제 후 새로 생성
+            if (existingPollId) {
+              await adPollService.deletePoll(existingPollId, editingAd.id);
+            }
+            await adPollService.createPoll({
+              adId: editingAd.id,
+              question: pollFormData.question,
+              options: validOpts,
+              isAnonymous: pollFormData.isAnonymous,
+              isMultiple: pollFormData.isMultiple,
+              expiresInHours: pollFormData.expiresInHours,
+            });
+            console.log('광고 투표 저장 완료');
+          }
+        } else if (!pollFormData && existingPollId) {
+          // 투표 제거된 경우
+          await adPollService.deletePoll(existingPollId, editingAd.id);
+          console.log('기존 광고 투표 삭제 완료');
+        }
+
         alert('광고가 수정되었습니다.');
       } else {
         // 생성 모드
@@ -222,6 +252,22 @@ const AdminAdsNew = () => {
         if (mediaUrls.length > 0 && createdAd?.id) {
           await adService.addAdMedia(createdAd.id, mediaUrls);
           console.log('추가 미디어 DB 저장 완료');
+        }
+
+        // 투표 생성 (생성 모드)
+        if (pollFormData && pollFormData.question?.trim() && createdAd?.id) {
+          const validOpts = pollFormData.options.filter((o) => o.trim());
+          if (validOpts.length >= 2) {
+            await adPollService.createPoll({
+              adId: createdAd.id,
+              question: pollFormData.question,
+              options: validOpts,
+              isAnonymous: pollFormData.isAnonymous,
+              isMultiple: pollFormData.isMultiple,
+              expiresInHours: pollFormData.expiresInHours,
+            });
+            console.log('광고 투표 생성 완료');
+          }
         }
 
         alert('광고가 생성되었습니다.');
@@ -306,6 +352,8 @@ const AdminAdsNew = () => {
     });
     setSelectedFiles([]);
     setEditingAd(null);
+    setPollFormData(null);
+    setExistingPollId(null);
   };
 
   // 수정 모드 진입
@@ -325,6 +373,28 @@ const AdminAdsNew = () => {
     });
     setSelectedFiles([]);
     setCurrentView('edit');
+
+    // 기존 투표 데이터 로드
+    if (ad.poll_id) {
+      setExistingPollId(ad.poll_id);
+      adPollService.getPollData(ad.poll_id).then((poll) => {
+        setPollFormData({
+          question: poll.question || '',
+          options: poll.ad_poll_options
+            ?.sort((a, b) => a.sort_order - b.sort_order)
+            .map((o) => o.label) || ['', ''],
+          isAnonymous: poll.is_anonymous || false,
+          isMultiple: poll.is_multiple || false,
+          expiresInHours: null, // 기존 만료시간은 역산 불가
+        });
+      }).catch(() => {
+        setPollFormData(null);
+        setExistingPollId(null);
+      });
+    } else {
+      setPollFormData(null);
+      setExistingPollId(null);
+    }
   };
 
   // 입력 핸들러
@@ -971,6 +1041,32 @@ const AdminAdsNew = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                {/* 투표 설정 (선택사항) */}
+                <div className="lg:col-span-2 mt-6 pt-6 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-sm">📊</span>
+                      투표 (선택사항)
+                    </h3>
+                    {!pollFormData && (
+                      <button
+                        type="button"
+                        onClick={() => setPollFormData({ question: '', options: ['', ''], isAnonymous: false, isMultiple: false, expiresInHours: null })}
+                        className="text-sm text-amber-600 hover:text-amber-800 font-medium px-3 py-1.5 rounded-lg hover:bg-amber-50 transition-colors"
+                      >
+                        + 투표 추가
+                      </button>
+                    )}
+                  </div>
+                  {pollFormData && (
+                    <AdPollCreateForm
+                      pollData={pollFormData}
+                      onChange={setPollFormData}
+                      onRemove={() => setPollFormData(null)}
+                    />
+                  )}
                 </div>
 
                 {/* 저장 버튼 */}
