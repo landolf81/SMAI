@@ -13,6 +13,9 @@ import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
 import { isMobileDevice } from '../utils/deviceDetector';
 import { getAcceptedFileTypes } from '../utils/mediaUtils';
+import AIBadge from './AIBadge';
+import { isAIUser } from '../config/aiUser';
+import { getProfilePic } from '../utils/userHelper';
 
 // 아이콘
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -961,18 +964,16 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                       profile_pic: answer.profilePic
                     })}
                   >
-                    {answer.profilePic ? (
-                      <img
-                        src={answer.profilePic.startsWith('http') ? answer.profilePic : `/uploads/profiles/${answer.profilePic}`}
-                        alt="프로필"
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <PersonIcon className="w-6 h-6 text-gray-400 bg-gray-200 rounded-full p-1" />
-                    )}
+                    <img
+                      src={getProfilePic({ profile_pic: answer.profilePic, id: answer.user_id })}
+                      alt="프로필"
+                      className="w-6 h-6 rounded-full object-cover"
+                      onError={(e) => { e.target.onerror = null; e.target.src = '/default/default_profile.png'; }}
+                    />
                     <div className="text-right">
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-gray-900 flex items-center gap-1">
                         {answer.user_name || answer.username}
+                        {isAIUser({ user_id: answer.user_id }) && <AIBadge />}
                       </div>
                       <div className="text-gray-500">
                         {moment(answer.created_at).fromNow()}
