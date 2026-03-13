@@ -117,18 +117,18 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
         <div className="px-4 py-3 flex items-center justify-between bg-base-200">
           <button
             onClick={goToPrevMonth}
-            className="p-2 rounded-full hover:bg-base-300 transition-colors text-[#004225] dark:text-green-400"
+            className="p-2 rounded-full hover:bg-base-300 transition-colors text-base-content"
           >
             <ChevronLeftIcon />
           </button>
 
-          <span className="text-lg font-bold text-[#004225] dark:text-green-400">
+          <span className="text-lg font-bold text-base-content">
             {currentYear}년 {currentMonth + 1}월
           </span>
 
           <button
             onClick={goToNextMonth}
-            className="p-2 rounded-full hover:bg-base-300 transition-colors text-[#004225] dark:text-green-400"
+            className="p-2 rounded-full hover:bg-base-300 transition-colors text-base-content"
           >
             <ChevronRightIcon />
           </button>
@@ -192,7 +192,7 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
           </button>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-lg font-medium transition-colors border border-base-300 text-[#004225] dark:text-green-400"
+            className="flex-1 py-2.5 rounded-lg font-medium transition-colors border border-base-300 text-base-content"
           >
             취소
           </button>

@@ -665,7 +665,7 @@ const Home = () => {
 
       {/* 날짜 선택기 헤더 - 카드 상단 고정 */}
       <div
-        className="flex items-center justify-between px-3 py-2 shadow-sm border-b border-base-300 sticky top-14 z-30 bg-base-200 text-[#004225] dark:text-green-400"
+        className="flex items-center justify-between px-3 py-2 shadow-sm border-b border-base-300 sticky top-14 z-30 bg-base-200 text-base-content"
       >
         {/* 왼쪽 여백 (날씨 위젯과 균형) */}
         <div className="w-12 shrink-0"></div>
