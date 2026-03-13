@@ -10,14 +10,15 @@ import { adService } from '../../services';
 import { getImageUrl } from '../../config/api';
 import { isCloudflareStreamUrl, getCloudflareStreamUid, isVideoFile } from '../../utils/mediaUtils';
 import CloudflareStreamPlayer from '../CloudflareStreamPlayer';
+import { changeVariant, IMAGE_VARIANTS } from '../../services/cfImagesService';
 
 /** HTML 태그 제거 */
 const stripHtml = (html) => (html ? html.replace(/<[^>]*>/g, '') : '');
 
-/** Cloudflare Images URL의 variant를 축소 */
+/** Cloudflare Images URL의 variant를 모바일 최적화 크기로 변환 (public → medium/640px) */
 const toSmallVariant = (url) => {
   if (!url || !url.includes('imagedelivery.net')) return url;
-  return url.replace(/\/public$/, '/w=600');
+  return changeVariant(url, IMAGE_VARIANTS.MEDIUM);
 };
 
 /** 미디어 항목에서 첫 번째 항목의 타입 판별 */

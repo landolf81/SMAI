@@ -9,11 +9,12 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
 import { supabase } from '../config/supabase.js';
 import AdPollCard from './ad/AdPollCard';
 import adPollService from '../services/adPollService.js';
+import { changeVariant, IMAGE_VARIANTS } from '../services/cfImagesService';
 
-/** Cloudflare Images URL의 variant를 축소 (public → w=600) */
+/** Cloudflare Images URL의 variant를 모바일 최적화 크기로 변환 (public → medium/640px) */
 const toSmallVariant = (url) => {
   if (!url || !url.includes('imagedelivery.net')) return url;
-  return url.replace(/\/public$/, '/w=600');
+  return changeVariant(url, IMAGE_VARIANTS.MEDIUM);
 };
 
 const MobileAdDisplay = ({ ad }) => {

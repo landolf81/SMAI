@@ -240,9 +240,9 @@ export const normalizeMediaUrl = (url, baseUrl = '/uploads/posts/', options = {}
 
   // 이미 완전한 URL인 경우
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    // Cloudflare Images URL이고 피드 최적화 옵션이 있으면 large variant 사용
+    // Cloudflare Images URL이고 피드 최적화 옵션이 있으면 medium variant 사용 (모바일 640px, Retina 2x 커버)
     if (options.useFeedVariant && isCloudflareImagesUrl(url)) {
-      return changeVariant(url, IMAGE_VARIANTS.LARGE);
+      return changeVariant(url, IMAGE_VARIANTS.MEDIUM);
     }
     return url;
   }
