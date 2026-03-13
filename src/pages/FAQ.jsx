@@ -100,7 +100,7 @@ const FAQ = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cloud-dancer pt-14 pb-20">
+    <div className="min-h-screen bg-base-200 pt-14 pb-20">
       {/* 헤더 */}
       <div className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white py-8 px-4">
         <div className="max-w-3xl mx-auto text-center">
@@ -115,7 +115,7 @@ const FAQ = () => {
         {faqData.map((category, categoryIndex) => (
           <div key={categoryIndex} className="mb-8">
             {/* 카테고리 제목 */}
-            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-base-content mb-4 flex items-center gap-2">
               <div className="w-1 h-6 bg-amber-500 rounded-full"></div>
               {category.category}
             </h2>
@@ -129,30 +129,30 @@ const FAQ = () => {
                 return (
                   <div
                     key={itemIndex}
-                    className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-100"
+                    className="bg-base-100 rounded-lg shadow-sm overflow-hidden border border-base-200"
                   >
                     {/* 질문 */}
                     <button
                       onClick={() => toggleItem(categoryIndex, itemIndex)}
-                      className="w-full px-4 py-4 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
+                      className="w-full px-4 py-4 flex items-center justify-between text-left hover:bg-base-200 transition-colors"
                     >
                       <div className="flex items-start gap-3 flex-1">
                         <span className="text-amber-500 font-bold flex-shrink-0 mt-0.5">Q.</span>
-                        <span className="text-gray-800 font-medium">{item.question}</span>
+                        <span className="text-base-content font-medium">{item.question}</span>
                       </div>
                       {isOpen ? (
-                        <ExpandLessIcon className="text-gray-400 flex-shrink-0" />
+                        <ExpandLessIcon className="text-base-content/40 flex-shrink-0" />
                       ) : (
-                        <ExpandMoreIcon className="text-gray-400 flex-shrink-0" />
+                        <ExpandMoreIcon className="text-base-content/40 flex-shrink-0" />
                       )}
                     </button>
 
                     {/* 답변 */}
                     {isOpen && (
-                      <div className="px-4 pb-4 pt-2 bg-amber-50/30 border-t border-gray-100 animate-fade-in-up">
+                      <div className="px-4 pb-4 pt-2 bg-amber-50/30 border-t border-base-200 animate-fade-in-up">
                         <div className="flex items-start gap-3">
                           <span className="text-blue-500 font-bold flex-shrink-0">A.</span>
-                          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                          <p className="text-base-content/70 leading-relaxed whitespace-pre-line">
                             {item.answer}
                           </p>
                         </div>
@@ -166,12 +166,12 @@ const FAQ = () => {
         ))}
 
         {/* 추가 문의 안내 */}
-        <div className="mt-12 bg-white rounded-lg shadow-sm border border-gray-100 p-6 text-center">
+        <div className="mt-12 bg-base-100 rounded-lg shadow-sm border border-base-200 p-6 text-center">
           <HelpOutlineIcon className="text-amber-500 mb-3" style={{ fontSize: 40 }} />
-          <h3 className="text-lg font-bold text-gray-800 mb-2">
+          <h3 className="text-lg font-bold text-base-content mb-2">
             더 궁금한 점이 있으신가요?
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-base-content/60 mb-4">
             QnA 게시판에서 질문하시면 커뮤니티 회원들이 답변해드립니다
           </p>
           <button

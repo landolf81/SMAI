@@ -436,25 +436,25 @@ const MobileAdDisplay = ({ ad }) => {
   return (
     <div ref={adCardRef} className="w-full max-w-md mx-auto mb-6">
       {/* 인스타그램 스타일 광고 카드 */}
-      <div className="bg-white rounded-xl overflow-hidden shadow-lg"
+      <div className="bg-base-100 rounded-xl overflow-hidden shadow-lg"
            style={{
              boxShadow: '-4px 0 15px rgba(255, 165, 0, 0.3), 0 4px 15px rgba(0, 0, 0, 0.1)'
            }}>
         
         {/* 광고 헤더 */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-base-200">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-bold">AD</span>
             </div>
-            <span className="text-base font-bold text-gray-900 line-clamp-1">{ad.title}</span>
+            <span className="text-base font-bold text-base-content line-clamp-1">{ad.title}</span>
           </div>
-          <span className="text-xs text-gray-500">광고</span>
+          <span className="text-xs text-base-content/50">광고</span>
         </div>
 
         {/* 메인 미디어 */}
         <div
-          className="relative bg-gray-100 cursor-pointer overflow-hidden aspect-square"
+          className="relative bg-base-200 cursor-pointer overflow-hidden aspect-square"
           onClick={handleAdClick}
         >
           {/* 미디어 예시 */}
@@ -498,7 +498,7 @@ const MobileAdDisplay = ({ ad }) => {
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                       <div className="bg-white/90 rounded-full p-3">
                         <svg
-                          className="w-8 h-8 text-gray-800"
+                          className="w-8 h-8 text-neutral"
                           fill="currentColor"
                           viewBox="0 0 24 24"
                         >
@@ -523,10 +523,10 @@ const MobileAdDisplay = ({ ad }) => {
 
             </div>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-base-200 to-base-300">
               <div className="text-center">
                 <div className="text-4xl mb-2">📷</div>
-                <div className="text-gray-500 text-sm">이미지 없음</div>
+                <div className="text-base-content/50 text-sm">이미지 없음</div>
               </div>
             </div>
           )}
@@ -535,13 +535,13 @@ const MobileAdDisplay = ({ ad }) => {
         {/* 콘텐츠 영역 */}
         <div className="p-4">
           {/* 제목 */}
-          <h3 className="text-base font-bold text-gray-900 mb-2 leading-tight">
+          <h3 className="text-base font-bold text-base-content mb-2 leading-tight">
             {ad.title}
           </h3>
           
           {/* 내용 */}
           {ad.content && (
-            <p className="text-sm text-gray-700 mb-3 leading-relaxed whitespace-pre-wrap line-clamp-2">
+            <p className="text-sm text-base-content/70 mb-3 leading-relaxed whitespace-pre-wrap line-clamp-2">
               {ad.content.replace(/<[^>]*>/g, '')}
             </p>
           )}
@@ -574,18 +574,18 @@ const MobileAdDisplay = ({ ad }) => {
           <div className="fixed bottom-0 left-0 right-0 h-20 bg-transparent z-[9999] pointer-events-none"></div>
 
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000] landing-modal">
-            <div className="bg-white w-full h-full flex flex-col overflow-hidden sm:rounded-lg sm:max-w-md sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:mx-4">
+            <div className="bg-base-100 w-full h-full flex flex-col overflow-hidden sm:rounded-lg sm:max-w-md sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:mx-4">
             {/* 모달 헤더 */}
             <div className="flex items-center justify-between py-2 px-4 border-b">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs font-bold">AD</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">{ad.title}</h3>
+                <h3 className="text-lg font-bold text-base-content">{ad.title}</h3>
               </div>
               <button
                 onClick={closeLandingModal}
-                className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                className="text-base-content/50 hover:text-base-content/70 text-xl font-bold"
               >
                 ×
               </button>
@@ -700,7 +700,7 @@ const MobileAdDisplay = ({ ad }) => {
               {/* 광고 내용 */}
               {ad.content && (
                 <div className="mb-4">
-                  <p className="text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  <p className="text-base text-base-content/70 leading-relaxed whitespace-pre-wrap">
                     {ad.content.replace(/<[^>]*>/g, '')}
                   </p>
                 </div>
@@ -723,7 +723,7 @@ const MobileAdDisplay = ({ ad }) => {
               {ad.link_url && !isPWAInstallAd && (
                 <div className="mb-4">
                   <div className="p-3">
-                    <p className="text-sm text-gray-500 mb-2 break-all">{ad.link_url}</p>
+                    <p className="text-sm text-base-content/50 mb-2 break-all">{ad.link_url}</p>
                     <button
                       onClick={() => window.open(ad.link_url, '_blank')}
                       className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200"
@@ -737,10 +737,10 @@ const MobileAdDisplay = ({ ad }) => {
             </div>
 
             {/* 모달 액션 */}
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t bg-base-200">
               <button
                 onClick={closeLandingModal}
-                className="w-full bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200"
+                className="w-full bg-base-300 text-base-content font-semibold py-2 px-4 rounded-lg hover:bg-base-content/20 transition-all duration-200"
               >
                 닫기
               </button>

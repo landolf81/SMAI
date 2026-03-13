@@ -473,10 +473,10 @@ const SecondHandEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cloud-dancer">
+    <div className="min-h-screen bg-base-200">
       {/* 메인 컨텐츠 */}
       <div className="max-w-2xl mx-auto px-4 pt-20 pb-24">
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
+        <form onSubmit={handleSubmit} className="bg-base-100 rounded-xl shadow-sm p-6">
           {/* 사용자 정보 */}
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-orange-400 p-0.5">
@@ -487,8 +487,8 @@ const SecondHandEditor = () => {
               />
             </div>
             <div>
-              <p className="font-semibold text-gray-800 text-sm">{currentUser.name}</p>
-              <p className="text-xs text-gray-500">
+              <p className="font-semibold text-base-content text-sm">{currentUser.name}</p>
+              <p className="text-xs text-base-content/50">
                 {isEditMode ? '수정 중' : '중고거래 글쓰기'}
               </p>
             </div>
@@ -496,34 +496,34 @@ const SecondHandEditor = () => {
 
           {/* 제목 입력 */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-base-content/70 mb-2">
               제목 <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               placeholder="상품 제목을 입력하세요"
-              className="w-full p-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full p-4 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               maxLength={20}
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/20</p>
+            <p className="text-xs text-base-content/40 mt-1 text-right">{title.length}/20</p>
           </div>
 
           {/* 파일 업로드 */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-base-content/70 mb-2">
               <FontAwesomeIcon icon={faImage} className="mr-2 text-orange-500" />
               이미지 또는 동영상 <span className="text-red-500">*</span>
             </label>
 
             <label
               htmlFor="imageInput"
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-base-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
             >
-              <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-gray-400" />
-              <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 파일 업로드</span></p>
-              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB)</p>
+              <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-base-content/40" />
+              <p className="text-sm text-base-content/50"><span className="font-semibold">클릭하여 파일 업로드</span></p>
+              <p className="text-xs text-base-content/50">PNG, JPG, HEIC, MP4, MOV (최대 50MB)</p>
             </label>
             <input
               id="imageInput"
@@ -620,7 +620,7 @@ const SecondHandEditor = () => {
           {/* 내용 입력 */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-base-content/70">
                 내용 <span className="text-red-500">*</span>
               </label>
               {speechSupported && (
@@ -630,7 +630,7 @@ const SecondHandEditor = () => {
                   className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
                     isListening
                       ? 'bg-red-500 text-white animate-pulse'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                   }`}
                   disabled={loading}
                   title={isListening ? '음성 입력 중지' : '음성 입력'}
@@ -641,12 +641,12 @@ const SecondHandEditor = () => {
             </div>
             <textarea
               placeholder="상품에 대해 자세히 설명해주세요.&#10;(가격, 상태, 거래 방법 등)"
-              className="w-full min-h-[150px] p-4 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+              className="w-full min-h-[150px] p-4 border border-base-300 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               maxLength={200}
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{content.length}/200</p>
+            <p className="text-xs text-base-content/40 mt-1 text-right">{content.length}/200</p>
 
             {gpsData && (
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -672,7 +672,7 @@ const SecondHandEditor = () => {
               type="button"
               onClick={() => navigate(-1)}
               disabled={loading}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all disabled:opacity-50"
+              className="flex-1 py-3 bg-base-200 text-base-content/70 rounded-xl font-medium hover:bg-base-300 transition-all disabled:opacity-50"
             >
               취소
             </button>

@@ -112,7 +112,7 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-[10000] pt-16">
       <div
-        className="bg-[#f0eee9] w-full max-w-lg rounded-3xl max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden animate-slide-down mx-4"
+        className="bg-base-200 w-full max-w-lg rounded-3xl max-h-[calc(100vh-5rem)] flex flex-col overflow-hidden animate-slide-down mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -142,7 +142,7 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
 
         {/* AI 브리핑 */}
         {briefing && (
-          <div className="bg-[#f0eee9] text-gray-800 px-4 py-3 text-base border-b border-gray-200">
+          <div className="bg-base-200 text-base-content px-4 py-3 text-base border-b border-base-300">
             <span className="text-[#154734] font-medium mr-2">참외 날씨</span>
             <span>{briefing}</span>
           </div>
@@ -161,7 +161,7 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
               className={`flex-1 py-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-base-content/50 hover:text-base-content/70'
               }`}
             >
               {tab.label}
@@ -176,7 +176,7 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
               <LoadingSpinner size="lg" />
             </div>
           ) : error ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-base-content/50">
               <p className="text-4xl mb-2">😢</p>
               <p>{error}</p>
             </div>
@@ -196,46 +196,46 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
                 return (
                 <div className="space-y-4">
                   {/* 현재 날씨 카드 */}
-                  <div className="bg-[#d3e4f1] rounded-2xl p-6 text-center">
+                  <div className="bg-info/20 rounded-2xl p-6 text-center">
                     <div className="text-6xl mb-2">
                       {getWeatherIcon(currentSky, currentPty)?.icon || '☀️'}
                     </div>
-                    <div className="text-5xl font-bold text-gray-800 mb-1">
+                    <div className="text-5xl font-bold text-base-content mb-1">
                       {currentTemp}°
                     </div>
-                    <div className="text-gray-600">
+                    <div className="text-base-content/60">
                       {getWeatherIcon(currentSky, currentPty)?.text || '맑음'}
                     </div>
                   </div>
 
                   {/* 상세 정보 */}
                   <div className="grid grid-cols-4 gap-2">
-                    <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <div className="bg-base-100 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">💧</div>
-                      <div className="text-xs text-gray-500">습도</div>
-                      <div className="font-bold text-gray-700">{currentHumidity || '--'}%</div>
+                      <div className="text-xs text-base-content/50">습도</div>
+                      <div className="font-bold text-base-content">{currentHumidity || '--'}%</div>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <div className="bg-base-100 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">🌧️</div>
-                      <div className="text-xs text-gray-500">강수확률</div>
-                      <div className="font-bold text-gray-700">{currentPop}%</div>
+                      <div className="text-xs text-base-content/50">강수확률</div>
+                      <div className="font-bold text-base-content">{currentPop}%</div>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <div className="bg-base-100 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">🌬️</div>
-                      <div className="text-xs text-gray-500">풍속</div>
-                      <div className="font-bold text-gray-700">{currentWindSpeed || '--'}m/s</div>
+                      <div className="text-xs text-base-content/50">풍속</div>
+                      <div className="font-bold text-base-content">{currentWindSpeed || '--'}m/s</div>
                     </div>
-                    <div className="bg-gray-50 rounded-xl p-3 text-center">
+                    <div className="bg-base-100 rounded-xl p-3 text-center">
                       <div className="text-2xl mb-1">☔</div>
-                      <div className="text-xs text-gray-500">강수량</div>
-                      <div className="font-bold text-gray-700">{currentPrecipitation}mm</div>
+                      <div className="text-xs text-base-content/50">강수량</div>
+                      <div className="font-bold text-base-content">{currentPrecipitation}mm</div>
                     </div>
                   </div>
 
                   {/* 오늘 예보 요약 */}
                   {weather.daily?.[0] && (
-                    <div className="bg-[#d3e4f1] rounded-xl p-4">
-                      <div className="text-sm text-gray-600 mb-2">오늘 예보</div>
+                    <div className="bg-info/20 rounded-xl p-4">
+                      <div className="text-sm text-base-content/60 mb-2">오늘 예보</div>
                       <div className="flex justify-between items-center">
                         <span className="text-blue-600">
                           최저 {weather.daily[0].minTemp}°
@@ -269,14 +269,14 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
                     .map((hour, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center p-3 bg-gray-50 rounded-xl"
+                      className="flex items-center p-3 bg-base-100 rounded-xl"
                     >
                       {/* 시간 */}
                       <div className="w-16">
-                        <div className="font-medium text-gray-800">
+                        <div className="font-medium text-base-content">
                           {formatTime(hour.time)}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-base-content/50">
                           {formatDate(hour.date)}
                         </div>
                       </div>
@@ -287,11 +287,11 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
                         </span>
                       </div>
                       {/* 강수확률 */}
-                      <div className={`w-14 text-center text-sm ${hour.pop > 0 ? 'text-blue-500' : 'text-gray-400'}`}>
+                      <div className={`w-14 text-center text-sm ${hour.pop > 0 ? 'text-blue-500' : 'text-base-content/40'}`}>
                         🌧️ {hour.pop}%
                       </div>
                       {/* 온도 */}
-                      <div className="flex-1 text-right font-bold text-lg text-gray-800">
+                      <div className="flex-1 text-right font-bold text-lg text-base-content">
                         {hour.temp}°
                       </div>
                     </div>
@@ -306,25 +306,25 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
                   {[...(weather?.daily || []), ...(weather?.midTerm || [])].map((day, idx) => (
                     <div
                       key={`weekly-${idx}`}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                      className="flex items-center justify-between p-3 bg-base-100 rounded-xl"
                     >
                       <div className="flex items-center gap-3">
                         <span className="text-2xl">
                           {day.icon || getWeatherIcon(day.sky, day.pty)?.icon || '☀️'}
                         </span>
                         <div>
-                          <div className="font-medium text-gray-800">
+                          <div className="font-medium text-base-content">
                             {formatDate(day.date)}
                           </div>
                           {day.weather && (
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-base-content/50">
                               {day.weather}
                             </div>
                           )}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className={`text-xs min-w-[40px] ${day.pop > 0 ? 'text-blue-500' : 'text-gray-400'}`}>
+                        <div className={`text-xs min-w-[40px] ${day.pop > 0 ? 'text-blue-500' : 'text-base-content/40'}`}>
                           🌧️{day.pop ?? 0}%
                         </div>
                         <div className="flex items-center gap-2 min-w-[70px] justify-end">
@@ -336,7 +336,7 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
                   ))}
 
                   {(!weather?.daily?.length && !weather?.midTerm?.length) && (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-base-content/50">
                       주간 예보 데이터가 없습니다.
                     </div>
                   )}
@@ -347,8 +347,8 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
 
           {/* 출처 표시 (공공데이터포털 이용허락 조건) */}
           {!loading && !error && (
-            <div className="mt-4 pt-3 border-t border-gray-100 text-center">
-              <p className="text-xs text-gray-400">
+            <div className="mt-4 pt-3 border-t border-base-200 text-center">
+              <p className="text-xs text-base-content/40">
                 출처: 기상청 (공공데이터포털)
               </p>
             </div>

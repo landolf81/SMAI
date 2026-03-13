@@ -113,7 +113,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
 
     // 미디어가 없거나 1개 이하면 슬라이더 없이 단순 표시
     if (!normalizedImages || normalizedImages.length === 0) {
-        return <div className={`${containerClass} bg-gray-200 flex items-center justify-center text-gray-500`}>미디어가 없습니다.</div>;
+        return <div className={`${containerClass} bg-base-300 flex items-center justify-center text-base-content/50`}>미디어가 없습니다.</div>;
     }
 
     // 단일 미디어용 비디오 ref

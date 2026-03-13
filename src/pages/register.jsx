@@ -119,15 +119,15 @@ const Register = () => {
             alt="참외 이야기 로고"
             className="h-24 md:h-32 mx-auto mb-8 object-contain"
           />
-          <p className="text-xl md:text-2xl text-gray-600 font-light">
+          <p className="text-xl md:text-2xl text-base-content/60 font-light">
             성주 참외 시세를 쉽게 확인하는 페이지
           </p>
         </div>
 
         {/* 스크롤 안내 */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-8 h-12 border-2 border-gray-400 rounded-full flex justify-center pt-2">
-            <div className="w-1.5 h-3 bg-gray-400 rounded-full animate-pulse"></div>
+          <div className="w-8 h-12 border-2 border-base-content/40 rounded-full flex justify-center pt-2">
+            <div className="w-1.5 h-3 bg-base-content/40 rounded-full animate-pulse"></div>
           </div>
         </div>
       </section>
@@ -138,12 +138,12 @@ const Register = () => {
         className="min-h-screen flex flex-col items-center justify-center px-6 py-20 opacity-0 translate-y-16 transition-all duration-700"
       >
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-2xl md:text-3xl text-gray-700 leading-relaxed font-light">
+          <p className="text-2xl md:text-3xl text-base-content/70 leading-relaxed font-light">
             이 페이지는 <span className="font-semibold text-yellow-600">성주 지역 공판장</span>에서
             거래된 참외 경락 가격을 편하게 확인할 수 있도록 만들어졌습니다.
           </p>
           <div className="mt-12 h-px w-24 bg-yellow-400 mx-auto"></div>
-          <p className="mt-12 text-xl md:text-2xl text-gray-600 leading-relaxed font-light">
+          <p className="mt-12 text-xl md:text-2xl text-base-content/60 leading-relaxed font-light">
             참외 재배 농가와 구매자가 참고할 수 있는<br />
             <span className="font-medium">기본적인 시세 정보</span>를 제공합니다.
           </p>
@@ -159,15 +159,15 @@ const Register = () => {
           {/* 참외 경락 정보 */}
           <div className="mb-20 text-center">
             <div className="text-5xl mb-6">📊</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-6">
               참외 경락 정보
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-light max-w-xl mx-auto">
+            <p className="text-xl md:text-2xl text-base-content/60 leading-relaxed font-light max-w-xl mx-auto">
               성주 공판장에서 나온<br />
               <span className="font-medium">일자별 · 등급별 · 중량별</span><br />
               참외 가격을 확인할 수 있습니다.
             </p>
-            <p className="mt-8 text-lg text-gray-500">
+            <p className="mt-8 text-lg text-base-content/50">
               참외 시세만 간단하게 볼 수 있도록 구성했습니다.
             </p>
           </div>
@@ -178,14 +178,14 @@ const Register = () => {
           {/* 농업 커뮤니티 */}
           <div className="text-center">
             <div className="text-5xl mb-6">👨‍🌾</div>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-6">
               농업 커뮤니티
             </h2>
-            <p className="text-xl md:text-2xl text-gray-600 leading-relaxed font-light max-w-xl mx-auto">
+            <p className="text-xl md:text-2xl text-base-content/60 leading-relaxed font-light max-w-xl mx-auto">
               참외 농사와 관련된 이야기나 정보를<br />
               가볍게 나눌 수 있는 공간입니다.
             </p>
-            <p className="mt-8 text-lg text-gray-500">
+            <p className="mt-8 text-lg text-base-content/50">
               누구나 자유롭게 소통할 수 있습니다.
             </p>
           </div>
@@ -199,19 +199,19 @@ const Register = () => {
       >
         <div className="max-w-md mx-auto w-full">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-base-content mb-4">
               지금 시작하세요
             </h2>
-            <p className="text-xl text-gray-600 font-light">
+            <p className="text-xl text-base-content/60 font-light">
               카카오톡으로 간편하게 가입하고
             </p>
-            <p className="text-lg text-gray-500 mt-2">
+            <p className="text-lg text-base-content/50 mt-2">
               시세 조회와 커뮤니티를 이용해보세요.
             </p>
           </div>
 
           {/* 카카오 로그인 카드 */}
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8">
+          <div className="bg-base-100 rounded-3xl shadow-xl border border-base-200 p-8">
             {/* 카카오 로그인 버튼 */}
             <button
               type="button"
@@ -235,15 +235,15 @@ const Register = () => {
             </button>
 
             {/* 약관 안내 */}
-            <p className="mt-4 text-center text-xs text-gray-400">
+            <p className="mt-4 text-center text-xs text-base-content/40">
               시작하기를 누르면{' '}
               <Link to="/terms" className="underline">이용약관</Link> 및{' '}
               <Link to="/privacy" className="underline">개인정보처리방침</Link>에 동의하게 됩니다.
             </p>
 
             {/* 로그인 링크 */}
-            <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-              <p className="text-gray-500 text-sm">
+            <div className="mt-6 pt-6 border-t border-base-200 text-center">
+              <p className="text-base-content/50 text-sm">
                 이미 계정이 있으신가요?
                 <Link to="/login" className="text-yellow-600 hover:text-yellow-700 font-semibold ml-2">
                   로그인

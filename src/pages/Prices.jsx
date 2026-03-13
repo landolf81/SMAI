@@ -270,12 +270,12 @@ const Prices = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
+      <div className="flex items-center justify-center min-h-screen bg-base-200">
         <div className="text-center">
           <LoadingSpinner size="lg" className="mx-auto" />
-          <p className="mt-4 text-gray-600">경락가격 정보를 불러오는 중...</p>
+          <p className="mt-4 text-base-content/60">경락가격 정보를 불러오는 중...</p>
           {marketName && (
-            <p className="text-sm text-gray-500 mt-2">{marketName} - {selectedDate}</p>
+            <p className="text-sm text-base-content/50 mt-2">{marketName} - {selectedDate}</p>
           )}
         </div>
       </div>
@@ -284,7 +284,7 @@ const Prices = () => {
 
   if (error || !marketName) {
     return (
-      <div className="min-h-screen bg-cloud-dancer pt-16 pb-24">
+      <div className="min-h-screen bg-base-200 pt-16 pb-24">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="text-center py-12">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 max-w-md mx-auto">
@@ -324,9 +324,9 @@ const Prices = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cloud-dancer pt-16 pb-24">
+    <div className="min-h-screen bg-base-200 pt-16 pb-24">
       {/* 헤더 */}
-      <div className="bg-cloud-dancer shadow-sm border-b sticky top-14 z-10">
+      <div className="bg-base-200 shadow-sm border-b sticky top-14 z-10">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="flex items-center justify-between">
             {/* 뒤로가기 버튼 */}
@@ -343,7 +343,7 @@ const Prices = () => {
               {/* 이전 날짜 */}
               <button
                 onClick={handlePrevDate}
-                className="p-1 text-[#004225] hover:bg-gray-100 rounded-full transition-colors active:scale-90"
+                className="p-1 text-[#004225] hover:bg-base-200 rounded-full transition-colors active:scale-90"
                 title="이전 날짜"
               >
                 <ChevronLeftIcon fontSize="small" />
@@ -352,10 +352,10 @@ const Prices = () => {
               {/* 날짜 텍스트 (클릭 시 datepicker) */}
               <button
                 onClick={() => dateInputRef.current?.showPicker?.()}
-                className="flex items-center gap-1 px-1 py-1 rounded-lg hover:bg-gray-100 transition-colors active:scale-95"
+                className="flex items-center gap-1 px-1 py-1 rounded-lg hover:bg-base-200 transition-colors active:scale-95"
               >
                 <CalendarTodayIcon style={{ fontSize: 14 }} className="text-[#004225]" />
-                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
+                <span className="text-sm font-medium text-base-content whitespace-nowrap">
                   {formatDateShort(selectedDate)}
                 </span>
               </button>
@@ -375,8 +375,8 @@ const Prices = () => {
                 disabled={isToday}
                 className={`p-1 rounded-full transition-colors active:scale-90 ${
                   isToday
-                    ? 'text-gray-300 cursor-not-allowed'
-                    : 'text-[#004225] hover:bg-gray-100'
+                    ? 'text-base-content/30 cursor-not-allowed'
+                    : 'text-[#004225] hover:bg-base-200'
                 }`}
                 title="다음 날짜"
               >
@@ -385,7 +385,7 @@ const Prices = () => {
             </div>
 
             {/* 단위 표시 */}
-            <span className="text-xs text-gray-500 shrink-0 whitespace-nowrap">
+            <span className="text-xs text-base-content/50 shrink-0 whitespace-nowrap">
               단위 : 원
             </span>
           </div>
@@ -398,9 +398,9 @@ const Prices = () => {
           className="w-full max-w-screen-xl mx-auto px-4 pt-4"
           onClick={handleShareBriefing}
         >
-          <div className="bg-white text-gray-700 rounded-xl px-4 py-3 border border-gray-200 shadow-sm cursor-pointer active:scale-[0.98] transition-transform">
+          <div className="bg-base-100 text-base-content/70 rounded-xl px-4 py-3 border border-base-300 shadow-sm cursor-pointer active:scale-[0.98] transition-transform">
             <p className="text-base leading-relaxed font-medium">{briefing.briefing}</p>
-            <p className="text-xs text-gray-500 mt-1">터치하여 공유하기</p>
+            <p className="text-xs text-base-content/50 mt-1">터치하여 공유하기</p>
           </div>
         </div>
       )}
@@ -480,7 +480,7 @@ const Prices = () => {
                     {marketName}
                   </span>
                   {auctionTime && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white text-gray-700 text-sm font-semibold rounded-full shadow-md border border-gray-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-base-100 text-base-content/70 text-sm font-semibold rounded-full shadow-md border border-base-300">
                       <AccessTimeIcon style={{ fontSize: 16 }} />
                       {auctionTime} 경매
                     </span>
@@ -488,36 +488,36 @@ const Prices = () => {
                 </div>
 
                 {/* 카드 본체 */}
-                <div className="bg-white rounded-2xl shadow-md border border-gray-100 pt-6 pb-4 px-4">
+                <div className="bg-base-100 rounded-2xl shadow-md border border-base-200 pt-6 pb-4 px-4">
                   {/* 날짜 정보 */}
-                  <div className="text-xs text-gray-500 mb-3">
+                  <div className="text-xs text-base-content/50 mb-3">
                     {formatDate(selectedDate)} 거래 요약
                   </div>
 
                   {/* 요약 정보 그리드 */}
                   <div className="grid grid-cols-3 gap-1 text-center">
                     {/* 총 출하량 */}
-                    <div className="bg-gray-50 rounded-lg py-3 px-1">
-                      <div className="text-xs text-gray-500 mb-1">총 출하량</div>
-                      <div className="text-base font-bold text-gray-800 whitespace-nowrap">
+                    <div className="bg-base-200 rounded-lg py-3 px-1">
+                      <div className="text-xs text-base-content/50 mb-1">총 출하량</div>
+                      <div className="text-base font-bold text-base-content whitespace-nowrap">
                         {formatPrice(marketData.summary.total_boxes)}상자
                       </div>
                     </div>
 
                     {/* 평균가 */}
-                    <div className="bg-gray-50 rounded-lg py-3 px-1">
-                      <div className="text-xs text-gray-500 mb-1">평균가</div>
-                      <div className="text-base font-bold text-gray-900 whitespace-nowrap">
+                    <div className="bg-base-200 rounded-lg py-3 px-1">
+                      <div className="text-xs text-base-content/50 mb-1">평균가</div>
+                      <div className="text-base font-bold text-base-content whitespace-nowrap">
                         {formatPrice(marketData.summary.overall_avg_price)}
                       </div>
                     </div>
 
                     {/* 전일대비 */}
-                    <div className="bg-gray-50 rounded-lg py-3 px-1">
-                      <div className="text-xs text-gray-500 mb-1">전일대비</div>
+                    <div className="bg-base-200 rounded-lg py-3 px-1">
+                      <div className="text-xs text-base-content/50 mb-1">전일대비</div>
                       <div className={`text-base font-bold whitespace-nowrap ${
-                        !marketData.overall_comparison?.comparison_available ? 'text-gray-400' :
-                        Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-gray-600' :
+                        !marketData.overall_comparison?.comparison_available ? 'text-base-content/40' :
+                        Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-base-content/60' :
                         marketData.overall_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'
                       }`}>
                         {!marketData.overall_comparison?.comparison_available ? '-' :
@@ -559,10 +559,10 @@ const Prices = () => {
                     </div>
 
                     {/* 카드 본체 */}
-                    <div className="bg-white rounded-2xl shadow-md border border-gray-100 pt-6 pb-4 px-4">
+                    <div className="bg-base-100 rounded-2xl shadow-md border border-base-200 pt-6 pb-4 px-4">
                       {/* 품목 정보 */}
-                      <div className="text-base text-gray-600 mb-3 flex items-center gap-2">
-                        <span>참외 {item.weight} · 수량 <span className="font-semibold text-gray-800">{formatPrice(item.boxes)}상자</span></span>
+                      <div className="text-base text-base-content/60 mb-3 flex items-center gap-2">
+                        <span>참외 {item.weight} · 수량 <span className="font-semibold text-base-content">{formatPrice(item.boxes)}상자</span></span>
                         {boxesComparison.comparison_available && boxesComparison.change !== 0 && (
                           <span className={`text-base font-medium ${boxesComparison.change > 0 ? 'text-red-500' : 'text-blue-500'}`}>
                             ({boxesComparison.change > 0 ? '+' : ''}{formatPrice(boxesComparison.change)})
@@ -573,19 +573,19 @@ const Prices = () => {
                       {/* 가격 정보 그리드 */}
                       <div className="grid grid-cols-4 gap-1 text-center">
                         {/* 평균가 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-1">
-                          <div className="text-xs text-gray-500 mb-1">평균가</div>
-                          <div className="text-base font-bold text-gray-900 whitespace-nowrap">
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-xs text-base-content/50 mb-1">평균가</div>
+                          <div className="text-base font-bold text-base-content whitespace-nowrap">
                             {formatPrice(item.avg_price)}
                           </div>
                         </div>
 
                         {/* 전일대비 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-1">
-                          <div className="text-xs text-gray-500 mb-1">전일대비</div>
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-xs text-base-content/50 mb-1">전일대비</div>
                           <div className={`text-base font-bold whitespace-nowrap ${
-                            !priceComparison.comparison_available ? 'text-gray-400' :
-                            Math.abs(priceComparison.changePercent) < 0.1 ? 'text-gray-600' :
+                            !priceComparison.comparison_available ? 'text-base-content/40' :
+                            Math.abs(priceComparison.changePercent) < 0.1 ? 'text-base-content/60' :
                             priceComparison.change > 0 ? 'text-red-500' : 'text-blue-500'
                           }`}>
                             {!priceComparison.comparison_available ? '-' :
@@ -596,16 +596,16 @@ const Prices = () => {
                         </div>
 
                         {/* 최고가 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-1">
-                          <div className="text-xs text-gray-500 mb-1">최고가</div>
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-xs text-base-content/50 mb-1">최고가</div>
                           <div className="text-base font-bold text-red-500 whitespace-nowrap">
                             {formatPrice(item.max_price)}
                           </div>
                         </div>
 
                         {/* 최저가 */}
-                        <div className="bg-gray-50 rounded-lg py-3 px-1">
-                          <div className="text-xs text-gray-500 mb-1">최저가</div>
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-xs text-base-content/50 mb-1">최저가</div>
                           <div className="text-base font-bold text-blue-500 whitespace-nowrap">
                             {formatPrice(item.min_price)}
                           </div>
@@ -635,7 +635,7 @@ const Prices = () => {
           disabled={briefingGenerating}
           className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
             briefingGenerating
-              ? 'bg-gray-400 cursor-not-allowed'
+              ? 'bg-base-300 cursor-not-allowed'
               : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
           }`}
           title="AI 브리핑 생성"

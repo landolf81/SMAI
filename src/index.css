@@ -1,9 +1,36 @@
 /* index.css */
+/* 역할: 전역 기본 스타일, CSS 변수(다크모드), 커스텀 컴포넌트, 애니메이션, Chatscope 테마 */
+
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 @import './responsive.css';
 @import './mobile-enhancements.css';
+
+/* ========== 다크모드 CSS 변수 ========== */
+[data-theme="market-light"] {
+  --surface-card: #ffffff;
+  --surface-page: #f0eee9;
+  --surface-elevated: #f9fafb;
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --border-default: #e5e7eb;
+  --border-light: #f3f4f6;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="market-dark"] {
+  --surface-card: #1f2937;
+  --surface-page: #111827;
+  --surface-elevated: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+  --border-default: #374151;
+  --border-light: #1f2937;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
 
 /* Noto Sans KR 폰트 로컬 호스팅 */
 @font-face {
@@ -40,9 +67,11 @@
 body {
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
-  color: #374151;
+  color: var(--text-primary, #374151);
   background: linear-gradient(135deg, #f0fdf4 0%, #fff7ed 100%);
   min-height: 100vh;
+  /* 테마 전환 시 부드러운 색상 전환 */
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* 커스텀 컴포넌트 스타일 */
@@ -50,63 +79,64 @@ body {
   .market-card {
     @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100;
   }
-  
+
   .market-card:hover {
     @apply transform -translate-y-1;
   }
-  
+
   .price-trend-up {
     @apply text-market-600 bg-market-50 px-2 py-1 rounded-full text-xs font-semibold;
   }
-  
+
   .price-trend-down {
     @apply text-red-600 bg-red-50 px-2 py-1 rounded-full text-xs font-semibold;
   }
-  
+
   .price-trend-stable {
     @apply text-gray-600 bg-gray-50 px-2 py-1 rounded-full text-xs font-semibold;
   }
-  
+
   .market-badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-market-100 text-market-800;
   }
-  
+
   .nav-gradient {
     background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
   }
-  
+
   .sidebar-gradient {
-    background: linear-gradient(180deg, #f9fafb 0%, #ffffff 100%);
+    /* 테마 변수 사용: 라이트에선 f9fafb→white, 다크에선 374151→1f2937 */
+    background: linear-gradient(180deg, var(--surface-elevated, #f9fafb) 0%, var(--surface-card, #ffffff) 100%);
   }
-  
+
   .button-market {
     @apply bg-market-500 hover:bg-market-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
   }
-  
+
   .button-produce {
     @apply bg-produce-500 hover:bg-produce-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
   }
-  
+
   .input-market {
     @apply border-market-200 focus:border-market-500 focus:ring-market-500 rounded-lg;
   }
-  
+
   .table-market {
     @apply bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden;
   }
-  
+
   .table-market th {
     @apply bg-market-50 text-market-800 font-semibold py-3 px-4 text-left;
   }
-  
+
   .table-market td {
     @apply py-3 px-4 border-b border-gray-100;
   }
-  
+
   .stat-card {
     @apply bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 shadow-md border border-gray-100;
   }
-  
+
   .loading-spinner {
     @apply animate-spin rounded-full h-6 w-6 border-b-2 border-market-500;
   }
@@ -123,11 +153,11 @@ body {
   .market-card {
     @apply mx-2;
   }
-  
+
   .table-market {
     @apply text-sm;
   }
-  
+
   .stat-card {
     @apply p-4;
   }
@@ -139,17 +169,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--surface-elevated, #f1f5f9);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border-default, #cbd5e1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--text-tertiary, #94a3b8);
 }
 
 /* 애니메이션 효과 */
@@ -213,18 +243,18 @@ body {
 @keyframes dots {
   0%, 20% {
     color: rgba(0,0,0,0);
-    text-shadow: 
+    text-shadow:
       .25em 0 0 rgba(0,0,0,0),
       .5em 0 0 rgba(0,0,0,0);
   }
   40% {
     color: #22c55e;
-    text-shadow: 
+    text-shadow:
       .25em 0 0 rgba(0,0,0,0),
       .5em 0 0 rgba(0,0,0,0);
   }
   60% {
-    text-shadow: 
+    text-shadow:
       .25em 0 0 #22c55e,
       .5em 0 0 rgba(0,0,0,0);
   }
@@ -322,9 +352,10 @@ body {
   50% { opacity: 1; }
 }
 
-/* Chatscope 테마 커스터마이징 - 참외이야기 */
+/* ========== Chatscope 테마 커스터마이징 - 참외이야기 ========== */
 .cs-main-container {
-  --cs-main-container-bg: white;
+  /* 테마 변수 사용: 다크모드에서 카드 배경으로 전환 */
+  --cs-main-container-bg: var(--surface-card, white);
   font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif !important;
   display: flex !important;
   flex-direction: column !important;
@@ -341,23 +372,25 @@ body {
 
 /* 헤더 고정 - flex로 고정 */
 .cs-conversation-header {
-  background-color: white !important;
-  border-bottom: 1px solid #d1d5db !important;
+  /* 테마 변수 사용: 카드 배경, 하단 테두리 */
+  background-color: var(--surface-card, white) !important;
+  border-bottom: 1px solid var(--border-default, #d1d5db) !important;
   padding: 14px 16px !important;
   flex-shrink: 0 !important;
   flex-grow: 0 !important;
   z-index: 10 !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 1px 3px var(--shadow-color, rgba(0, 0, 0, 0.08)) !important;
 }
 
 .cs-conversation-header__user-name {
-  color: #111827 !important;
+  /* 헤딩 색상 - text-primary보다 약간 더 진한 색 유지, 다크모드에서도 --text-primary로 충분 */
+  color: var(--text-primary, #111827) !important;
   font-weight: 700 !important;
   font-size: 17px !important;
 }
 
 .cs-conversation-header__info {
-  color: #6b7280 !important;
+  color: var(--text-secondary, #6b7280) !important;
   font-size: 14px !important;
 }
 
@@ -367,12 +400,14 @@ body {
 }
 
 .cs-avatar > img {
+  /* 브랜드 컬러 - 테마 변경 불필요 */
   border: 2px solid #22c55e !important;
 }
 
 /* 메시지 목록 - 스크롤 영역 */
 .cs-message-list {
-  background-color: #f9fafb !important;
+  /* 테마 변수 사용: 약간 띄워진 배경 */
+  background-color: var(--surface-elevated, #f9fafb) !important;
   padding: 12px !important;
   flex: 1 1 auto !important;
   overflow-y: auto !important;
@@ -381,36 +416,36 @@ body {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* 보낸 메시지 - 연한 노랑 */
+/* 보낸 메시지 - 연한 노랑 (브랜드 색상, 테마 무관) */
 .cs-message--outgoing .cs-message__content {
   background-color: #fef08a !important;
-  color: #1f2937 !important;
+  color: var(--text-primary, #1f2937) !important;
   border-radius: 18px 18px 4px 18px !important;
   font-size: 15px !important;
   padding: 10px 14px !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 2px var(--shadow-color, rgba(0, 0, 0, 0.05)) !important;
 }
 
-/* 받은 메시지 - 흰색 */
+/* 받은 메시지 - 카드 배경 */
 .cs-message--incoming .cs-message__content {
-  background-color: white !important;
-  color: #1f2937 !important;
-  border: 1px solid #e5e7eb !important;
+  background-color: var(--surface-card, white) !important;
+  color: var(--text-primary, #1f2937) !important;
+  border: 1px solid var(--border-default, #e5e7eb) !important;
   border-radius: 18px 18px 18px 4px !important;
   font-size: 15px !important;
   padding: 10px 14px !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 2px var(--shadow-color, rgba(0, 0, 0, 0.05)) !important;
 }
 
 .cs-message__footer {
   font-size: 12px !important;
-  color: #9ca3af !important;
+  color: var(--text-tertiary, #9ca3af) !important;
   margin-top: 4px !important;
 }
 
 /* 날짜 구분선 */
 .cs-message-separator {
-  color: #374151 !important;
+  color: var(--text-primary, #374151) !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   margin: 16px 0 !important;
@@ -418,22 +453,24 @@ body {
 
 .cs-message-separator::before,
 .cs-message-separator::after {
-  background-color: #d1d5db !important;
+  background-color: var(--border-default, #d1d5db) !important;
 }
 
 /* 입력창 - iOS 확대 방지를 위해 font-size 16px 이상 */
 .cs-message-input {
-  background-color: white !important;
-  border-top: 1px solid #e5e7eb !important;
+  /* 테마 변수 사용: 카드 배경, 상단 테두리 */
+  background-color: var(--surface-card, white) !important;
+  border-top: 1px solid var(--border-default, #e5e7eb) !important;
   padding: 10px 12px !important;
   padding-bottom: calc(10px + env(safe-area-inset-bottom, 0)) !important;
   flex-shrink: 0 !important;
 }
 
 .cs-message-input__content-editor-wrapper {
-  background-color: #f3f4f6 !important;
+  /* 테마 변수 사용: 약간 띄워진 배경, 기본 테두리 */
+  background-color: var(--border-light, #f3f4f6) !important;
   border-radius: 22px !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid var(--border-default, #e5e7eb) !important;
 }
 
 .cs-message-input__content-editor {
@@ -446,7 +483,7 @@ body {
   background-color: transparent !important;
 }
 
-/* 전송 버튼 */
+/* 전송 버튼 - 브랜드 컬러 */
 .cs-button--send {
   color: #22c55e !important;
   font-size: 18px !important;

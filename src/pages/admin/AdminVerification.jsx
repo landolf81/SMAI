@@ -77,7 +77,7 @@ const AdminVerification = () => {
       case 'code_sent': return 'bg-blue-100 text-blue-700 border-blue-200';
       case 'approved':  return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'rejected':  return 'bg-red-100 text-red-700 border-red-200';
-      default:          return 'bg-gray-100 text-gray-700 border-gray-200';
+      default:          return 'bg-base-200 text-base-content border-base-300';
     }
   };
 
@@ -97,10 +97,10 @@ const AdminVerification = () => {
   if (isLoading && requests.length === 0) {
     return (
       <AdminOnly>
-        <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
+        <div className="flex items-center justify-center min-h-screen bg-base-200">
           <div className="text-center">
             <div className="loading loading-spinner loading-lg text-[#004225]"></div>
-            <p className="mt-4 text-gray-600">인증 요청 목록을 불러오는 중...</p>
+            <p className="mt-4 text-base-content/60">인증 요청 목록을 불러오는 중...</p>
           </div>
         </div>
       </AdminOnly>
@@ -117,8 +117,8 @@ const AdminVerification = () => {
               <VerifiedUserIcon className="text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">인증 현황</h1>
-              <p className="text-gray-500 text-sm">사용자 인증 내역 모니터링 (SMS 자동 발송)</p>
+              <h1 className="text-2xl font-bold text-base-content">인증 현황</h1>
+              <p className="text-base-content/60 text-sm">사용자 인증 내역 모니터링 (SMS 자동 발송)</p>
             </div>
           </div>
 
@@ -137,22 +137,22 @@ const AdminVerification = () => {
 
         {/* 통계 카드 */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">전체</p>
-                <p className="text-2xl font-bold text-gray-800 mt-1">{stats?.total || 0}</p>
+                <p className="text-xs text-base-content/60 uppercase tracking-wide">전체</p>
+                <p className="text-2xl font-bold text-base-content mt-1">{stats?.total || 0}</p>
               </div>
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                <VerifiedUserIcon className="text-gray-600" fontSize="small" />
+              <div className="w-10 h-10 bg-base-200 rounded-lg flex items-center justify-center">
+                <VerifiedUserIcon className="text-base-content/60" fontSize="small" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">SMS 오류</p>
+                <p className="text-xs text-base-content/60 uppercase tracking-wide">SMS 오류</p>
                 <p className="text-2xl font-bold text-amber-600 mt-1">{stats?.pending || 0}</p>
               </div>
               <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
@@ -161,10 +161,10 @@ const AdminVerification = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">코드발송</p>
+                <p className="text-xs text-base-content/60 uppercase tracking-wide">코드발송</p>
                 <p className="text-2xl font-bold text-blue-600 mt-1">{stats?.code_sent || 0}</p>
               </div>
               <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -173,10 +173,10 @@ const AdminVerification = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">승인</p>
+                <p className="text-xs text-base-content/60 uppercase tracking-wide">승인</p>
                 <p className="text-2xl font-bold text-emerald-600 mt-1">{stats?.approved || 0}</p>
               </div>
               <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
@@ -185,10 +185,10 @@ const AdminVerification = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">거부</p>
+                <p className="text-xs text-base-content/60 uppercase tracking-wide">거부</p>
                 <p className="text-2xl font-bold text-red-600 mt-1">{stats?.rejected || 0}</p>
               </div>
               <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
@@ -199,18 +199,18 @@ const AdminVerification = () => {
         </div>
 
         {/* 검색 및 필터 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 flex gap-2">
               <div className="flex-1 relative">
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
                 <input
                   type="text"
                   placeholder="실명 또는 연락처로 검색..."
                   value={searchInput}
                   onChange={(e) => setSearchInput(e.target.value)}
                   onKeyPress={handleSearchKeyPress}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-base-100 text-base-content"
                 />
               </div>
               <button
@@ -228,7 +228,7 @@ const AdminVerification = () => {
                   setFilterStatus(e.target.value);
                   setPage(1);
                 }}
-                className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="px-4 py-2.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-base-100 text-base-content"
               >
                 <option value="all">모든 상태</option>
                 <option value="pending">SMS 오류</option>
@@ -241,24 +241,24 @@ const AdminVerification = () => {
         </div>
 
         {/* 인증 요청 목록 */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-base-200 border-b border-base-300">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">사용자</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">실명</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">연락처</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">상태</th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">요청일</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">사용자</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">실명</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">연락처</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">상태</th>
+                  <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">요청일</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-base-300">
                 {requests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={request.id} className="hover:bg-base-200 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100">
+                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-base-300 bg-base-200">
                           <img
                             src={getProfilePic(request.users)}
                             alt="프로필"
@@ -270,16 +270,16 @@ const AdminVerification = () => {
                           />
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900">{request.users?.username || request.users?.name || '-'}</div>
-                          <div className="text-xs text-gray-500">{request.users?.email || '-'}</div>
+                          <div className="font-medium text-base-content">{request.users?.username || request.users?.name || '-'}</div>
+                          <div className="text-xs text-base-content/60">{request.users?.email || '-'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-medium text-gray-900">{maskRealName(request.real_name)}</span>
+                      <span className="font-medium text-base-content">{maskRealName(request.real_name)}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-gray-700 font-mono">{maskPhoneNumber(request.phone_number)}</span>
+                      <span className="text-base-content font-mono">{maskPhoneNumber(request.phone_number)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(request.status)}`}>
@@ -295,10 +295,10 @@ const AdminVerification = () => {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-base-content/60">
                         {new Date(request.created_at).toLocaleDateString('ko-KR')}
                       </span>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-base-content/40 mt-0.5">
                         {new Date(request.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </td>
@@ -310,19 +310,19 @@ const AdminVerification = () => {
         </div>
 
         {requests.length === 0 && !isLoading && (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-100 mt-6">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <VerifiedUserIcon className="text-gray-400 text-3xl" />
+          <div className="text-center py-16 bg-base-100 rounded-xl border border-base-300 mt-6">
+            <div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <VerifiedUserIcon className="text-base-content/40 text-3xl" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">인증 내역이 없습니다</h3>
-            <p className="text-gray-500">검색 조건을 확인하거나 필터를 변경해보세요.</p>
+            <h3 className="text-lg font-medium text-base-content mb-2">인증 내역이 없습니다</h3>
+            <p className="text-base-content/60">검색 조건을 확인하거나 필터를 변경해보세요.</p>
           </div>
         )}
 
         {/* 페이지네이션 */}
         {pagination.totalPages > 1 && (
           <div className="flex flex-col items-center gap-4 mt-6">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-base-content/60">
               전체 <span className="font-medium">{pagination.total}</span>건 중{' '}
               <span className="font-medium">{((pagination.page - 1) * 20) + 1}</span>-
               <span className="font-medium">{Math.min(pagination.page * 20, pagination.total)}</span>건 표시
@@ -330,14 +330,14 @@ const AdminVerification = () => {
 
             <div className="flex items-center gap-1">
               <button
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={pagination.page === 1 || isLoading}
                 onClick={() => setPage(1)}
               >
                 ««
               </button>
               <button
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={pagination.page === 1 || isLoading}
                 onClick={() => setPage(p => p - 1)}
               >
@@ -358,7 +358,7 @@ const AdminVerification = () => {
                       className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                         i === currentPage
                           ? 'bg-[#004225] text-white'
-                          : 'border border-gray-200 bg-white hover:bg-gray-50'
+                          : 'border border-base-300 bg-base-100 hover:bg-base-200'
                       }`}
                       onClick={() => setPage(i)}
                       disabled={isLoading}
@@ -371,14 +371,14 @@ const AdminVerification = () => {
               })()}
 
               <button
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={pagination.page >= pagination.totalPages || isLoading}
                 onClick={() => setPage(p => p + 1)}
               >
                 »
               </button>
               <button
-                className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={pagination.page >= pagination.totalPages || isLoading}
                 onClick={() => setPage(pagination.totalPages)}
               >

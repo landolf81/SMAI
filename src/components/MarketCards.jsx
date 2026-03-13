@@ -115,22 +115,20 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
     }
   };
 
-  // 공판장 카드 통일 테마 (파랑 뱃지 + 흰색 배경 + 파랑-녹색 그라데이션 버튼)
+  // 공판장 카드 통일 테마 (파랑 뱃지 + 파랑-녹색 그라데이션 버튼)
   const getMarketTheme = (isTotal = false) => {
     if (isTotal) {
       // 성주군 합계 카드는 청록 그라데이션 뱃지
       return {
         badgeGradient: 'linear-gradient(to right, #1D4ED8, #16A34A)', // 청색 → 녹색 그라데이션
         text: 'text-[#1D4ED8]', // 파랑 텍스트
-        buttonGradient: 'from-[#1D4ED8] to-[#16A34A]', // 파랑 → 녹색 그라데이션
-        cardBackground: '#F7F7F7' // cloud-dancer 배경
+        buttonGradient: 'from-[#1D4ED8] to-[#16A34A]' // 파랑 → 녹색 그라데이션
       };
     }
     return {
       badgeColor: '#1D4ED8', // 파랑 (Blue-700)
       text: 'text-[#1D4ED8]', // 파랑 텍스트
-      buttonGradient: 'from-[#1D4ED8] to-[#16A34A]', // 파랑 → 녹색 그라데이션
-      cardBackground: '#FFFFFF' // 흰색 배경
+      buttonGradient: 'from-[#1D4ED8] to-[#16A34A]' // 파랑 → 녹색 그라데이션
     };
   };
 
@@ -141,7 +139,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
     const change = currentPrice - previousPrice;
     const isPositive = change > 0;
 
-    if (change === 0) return <span className="text-gray-500 text-sm">보합</span>;
+    if (change === 0) return <span className="text-base-content/50 text-sm">보합</span>;
 
     return (
       <div className="flex items-center justify-center space-x-1 text-sm">
@@ -163,37 +161,37 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
         <div className="w-full mx-auto relative pt-4 animate-pulse">
           {/* 뱃지 스켈레톤 */}
           <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
-            <div className="h-9 w-28 bg-gray-300 rounded-full"></div>
-            <div className="w-9 h-9 bg-gray-200 rounded-full"></div>
+            <div className="h-9 w-28 bg-base-content/20 rounded-full"></div>
+            <div className="w-9 h-9 bg-base-300 rounded-full"></div>
           </div>
           {/* 카드 본체 스켈레톤 */}
-          <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-[#F7F7F7]">
+          <div className="rounded-2xl overflow-hidden shadow-md border border-base-200 bg-base-200">
             <div className="px-4 py-4 pt-8">
               {/* 출하량 */}
               <div className="flex items-center mb-2">
-                <div className="h-5 w-16 bg-gray-200 rounded"></div>
-                <div className="h-6 w-20 bg-gray-300 rounded ml-2"></div>
-                <div className="h-4 w-8 bg-gray-200 rounded ml-1"></div>
+                <div className="h-5 w-16 bg-base-300 rounded"></div>
+                <div className="h-6 w-20 bg-base-content/20 rounded ml-2"></div>
+                <div className="h-4 w-8 bg-base-300 rounded ml-1"></div>
               </div>
               {/* 출하금액 */}
               <div className="flex items-center mb-4">
-                <div className="h-5 w-20 bg-gray-200 rounded"></div>
-                <div className="h-5 w-32 bg-gray-300 rounded ml-2"></div>
+                <div className="h-5 w-20 bg-base-300 rounded"></div>
+                <div className="h-5 w-32 bg-base-content/20 rounded ml-2"></div>
               </div>
               {/* 가격 3열 그리드 */}
               <div className="grid grid-cols-3 gap-1 text-center">
                 {[0, 1, 2].map((j) => (
-                  <div key={j} className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                    <div className="h-3 w-10 bg-gray-200 rounded mx-auto mb-1"></div>
-                    <div className="h-7 w-16 bg-gray-300 rounded mx-auto"></div>
-                    <div className="h-4 w-12 bg-gray-200 rounded mx-auto mt-1"></div>
+                  <div key={j} className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                    <div className="h-3 w-10 bg-base-300 rounded mx-auto mb-1"></div>
+                    <div className="h-7 w-16 bg-base-content/20 rounded mx-auto"></div>
+                    <div className="h-4 w-12 bg-base-300 rounded mx-auto mt-1"></div>
                   </div>
                 ))}
               </div>
             </div>
             {/* 상세 버튼 스켈레톤 */}
             <div className="px-4 pb-4 pt-2">
-              <div className="h-11 w-full bg-gray-300 rounded-xl"></div>
+              <div className="h-11 w-full bg-base-content/20 rounded-xl"></div>
             </div>
           </div>
         </div>
@@ -283,32 +281,31 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               e.stopPropagation();
               navigate(`/market-trend?market=${encodeURIComponent('성주군 합계')}`);
             }}
-            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 active:scale-95 transition-all"
+            className="p-2 bg-base-100 rounded-full shadow-md hover:bg-base-200 active:scale-95 transition-all"
             title="성주군 합계 추세 보기"
           >
             <ShowChartIcon style={{ fontSize: 20, color: '#1D4ED8' }} />
           </button>
         </div>
 
-        {/* 카드 본체 - 흰색 배경 (개별 공판장과 동일) */}
+        {/* 카드 본체 - base-100 배경 (개별 공판장과 동일) */}
         <div
-          className="rounded-2xl overflow-hidden shadow-md border border-gray-100 transition-all duration-300"
-          style={{ backgroundColor: '#FFFFFF' }}
+          className="rounded-2xl overflow-hidden shadow-md border border-base-200 bg-base-100 transition-all duration-300"
         >
           {/* 가격 정보 영역 - 개별 공판장과 동일한 패딩 */}
           <div className="px-4 py-4 pt-8">
             {/* 총 출하량 정보 */}
-            <div className="flex items-center text-base text-gray-600 mb-2">
+            <div className="flex items-center text-base text-base-content/60 mb-2">
               <span>총 출하량</span>
-              <span className="font-bold text-gray-800 text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
-              <span className="text-sm text-gray-500 ml-1">{seongjuTotal.unit}</span>
+              <span className="font-bold text-base-content text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
+              <span className="text-sm text-base-content/50 ml-1">{seongjuTotal.unit}</span>
               {/* 수량 변동폭: 당일+17시 전이면 '집계중', 과거 날짜는 항상 표시 */}
               {(() => {
                 const koreanToday = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
                 const isToday = selectedDate === koreanToday;
                 const isBefore5pm = new Date().getHours() < 17;
                 if (isToday && isBefore5pm) {
-                  return <span className="ml-2 text-xs text-gray-400">집계중</span>;
+                  return <span className="ml-2 text-xs text-base-content/40">집계중</span>;
                 }
                 if (seongjuTotal.previousTotalQuantity) {
                   return <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>;
@@ -317,30 +314,30 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               })()}
             </div>
             {/* 총 출하금액 정보 */}
-            <div className="text-base text-gray-600 mb-4">
-              총 출하금액 <span className="font-bold text-gray-800">{formatPrice(seongjuTotal.totalAmount)}</span> <span className="text-gray-600">원</span>
+            <div className="text-base text-base-content/60 mb-4">
+              총 출하금액 <span className="font-bold text-base-content">{formatPrice(seongjuTotal.totalAmount)}</span> <span className="text-base-content/60">원</span>
             </div>
 
             {/* 가격 정보 그리드 - 3열 */}
             <div className="grid grid-cols-3 gap-1 text-center">
               {/* 평균가 */}
-              <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                <div className="text-xs text-gray-500 mb-0.5">평균가</div>
-                <div className="text-xl font-bold text-gray-900">
+              <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                <div className="text-xs text-base-content/50 mb-0.5">평균가</div>
+                <div className="text-xl font-bold text-base-content">
                   {formatPrice(seongjuTotal.averagePrice)}
                 </div>
                 <div className="mt-0.5 min-h-[20px]">
                   {seongjuTotal.previousAveragePrice ? (
                     renderPriceChange(seongjuTotal.averagePrice, seongjuTotal.previousAveragePrice)
                   ) : (
-                    <span className="text-xs text-gray-400">-</span>
+                    <span className="text-xs text-base-content/40">-</span>
                   )}
                 </div>
               </div>
 
               {/* 최고가 */}
-              <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                <div className="text-xs text-gray-500 mb-0.5">최고가</div>
+              <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                <div className="text-xs text-base-content/50 mb-0.5">최고가</div>
                 <div className="text-xl font-bold text-red-600">
                   {formatPrice(seongjuTotal.maxPrice)}
                 </div>
@@ -348,14 +345,14 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                   {seongjuTotal.previousMaxPrice ? (
                     renderPriceChange(seongjuTotal.maxPrice, seongjuTotal.previousMaxPrice)
                   ) : (
-                    <span className="text-xs text-gray-400">-</span>
+                    <span className="text-xs text-base-content/40">-</span>
                   )}
                 </div>
               </div>
 
               {/* 최저가 */}
-              <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                <div className="text-xs text-gray-500 mb-0.5">최저가</div>
+              <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                <div className="text-xs text-base-content/50 mb-0.5">최저가</div>
                 <div className="text-xl font-bold text-blue-600">
                   {formatPrice(seongjuTotal.minPrice)}
                 </div>
@@ -363,7 +360,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                   {seongjuTotal.previousMinPrice ? (
                     renderPriceChange(seongjuTotal.minPrice, seongjuTotal.previousMinPrice)
                   ) : (
-                    <span className="text-xs text-gray-400">-</span>
+                    <span className="text-xs text-base-content/40">-</span>
                   )}
                 </div>
               </div>
@@ -415,17 +412,16 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                     e.stopPropagation();
                     navigate(`/market-trend?market=${encodeURIComponent(market.name)}`);
                   }}
-                  className="p-2 bg-white rounded-full shadow-md hover:bg-gray-50 active:scale-95 transition-all"
+                  className="p-2 bg-base-100 rounded-full shadow-md hover:bg-base-200 active:scale-95 transition-all"
                   title="경락가 추세 보기"
                 >
                   <ShowChartIcon style={{ fontSize: 20, color: theme.badgeColor }} />
                 </button>
               </div>
 
-              {/* 카드 본체 - 흰색 배경 */}
+              {/* 카드 본체 - base-100 배경 */}
               <div
-                className="rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 haptic-feedback no-select market-card cursor-pointer"
-                style={{ backgroundColor: theme.cardBackground }}
+                className="rounded-2xl overflow-hidden shadow-md border border-base-200 bg-base-100 hover:shadow-lg transition-all duration-300 haptic-feedback no-select market-card cursor-pointer"
                 onClick={() => handleCardClick(market.name)}
               >
               {/* 가격 정보 영역 */}
@@ -433,48 +429,48 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               {market.error ? (
                 <div className="text-center py-8">
                   <div className="flex flex-col items-center space-y-3">
-                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center">
                       <span className="text-2xl">📊</span>
                     </div>
-                    <div className="text-gray-500 text-base font-medium">경락가 정보가 없습니다</div>
+                    <div className="text-base-content/50 text-base font-medium">경락가 정보가 없습니다</div>
                   </div>
                 </div>
               ) : (
                 <>
                   {/* 총 출하량 정보 */}
-                  <div className="flex items-center text-base text-gray-600 mb-2">
+                  <div className="flex items-center text-base text-base-content/60 mb-2">
                     <span>총 출하량</span>
-                    <span className="font-bold text-gray-800 text-lg ml-1">{formatPrice(market.totalQuantity)}</span>
-                    <span className="text-sm text-gray-500 ml-1">{market.unit}</span>
+                    <span className="font-bold text-base-content text-lg ml-1">{formatPrice(market.totalQuantity)}</span>
+                    <span className="text-sm text-base-content/50 ml-1">{market.unit}</span>
                     {market.previousTotalQuantity ? (
                       <span className="ml-2">{renderPriceChange(market.totalQuantity, market.previousTotalQuantity)}</span>
                     ) : null}
                   </div>
                   {/* 총 출하금액 정보 (DB에서 제공하는 실제 거래금액) */}
-                  <div className="text-base text-gray-600 mb-4">
-                    총 출하금액 <span className="font-bold text-gray-800">{formatPrice(market.totalAmount)}</span> <span className="text-gray-600">원</span>
+                  <div className="text-base text-base-content/60 mb-4">
+                    총 출하금액 <span className="font-bold text-base-content">{formatPrice(market.totalAmount)}</span> <span className="text-base-content/60">원</span>
                   </div>
 
                   {/* 가격 정보 그리드 - 3열 (평균가, 최고가, 최저가) + 각각 전일대비 */}
                   <div className="grid grid-cols-3 gap-1 text-center">
                     {/* 평균가 */}
-                    <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="text-xs text-gray-500 mb-0.5">평균가</div>
-                      <div className="text-xl font-bold text-gray-900">
+                    <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                      <div className="text-xs text-base-content/50 mb-0.5">평균가</div>
+                      <div className="text-xl font-bold text-base-content">
                         {formatPrice(market.averagePrice)}
                       </div>
                       <div className="mt-0.5 min-h-[20px]">
                         {market.previousAveragePrice ? (
                           renderPriceChange(market.averagePrice, market.previousAveragePrice)
                         ) : (
-                          <span className="text-xs text-gray-400">-</span>
+                          <span className="text-xs text-base-content/40">-</span>
                         )}
                       </div>
                     </div>
 
                     {/* 최고가 */}
-                    <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="text-xs text-gray-500 mb-0.5">최고가</div>
+                    <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                      <div className="text-xs text-base-content/50 mb-0.5">최고가</div>
                       <div className="text-xl font-bold text-red-600">
                         {formatPrice(market.maxPrice)}
                       </div>
@@ -482,14 +478,14 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                         {market.previousMaxPrice ? (
                           renderPriceChange(market.maxPrice, market.previousMaxPrice)
                         ) : (
-                          <span className="text-xs text-gray-400">-</span>
+                          <span className="text-xs text-base-content/40">-</span>
                         )}
                       </div>
                     </div>
 
                     {/* 최저가 */}
-                    <div className="bg-white rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="text-xs text-gray-500 mb-0.5">최저가</div>
+                    <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
+                      <div className="text-xs text-base-content/50 mb-0.5">최저가</div>
                       <div className="text-xl font-bold text-blue-600">
                         {formatPrice(market.minPrice)}
                       </div>
@@ -497,7 +493,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                         {market.previousMinPrice ? (
                           renderPriceChange(market.minPrice, market.previousMinPrice)
                         ) : (
-                          <span className="text-xs text-gray-400">-</span>
+                          <span className="text-xs text-base-content/40">-</span>
                         )}
                       </div>
                     </div>

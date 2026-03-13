@@ -162,10 +162,10 @@ const Alerts = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
+      <div className="flex items-center justify-center min-h-screen bg-base-200">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="mt-4 text-gray-600">알림 목록을 불러오는 중...</p>
+          <p className="mt-4 text-base-content/60">알림 목록을 불러오는 중...</p>
         </div>
       </div>
     );
@@ -173,7 +173,7 @@ const Alerts = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-cloud-dancer pb-20">
+      <div className="min-h-screen bg-base-200 pb-20">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="text-center py-12">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md mx-auto">
@@ -200,22 +200,22 @@ const Alerts = () => {
   }
 
   return (
-    <div className="min-h-screen bg-cloud-dancer pb-20">
+    <div className="min-h-screen bg-base-200 pb-20">
       <div className="w-full max-w-screen-xl mx-auto p-4">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center">
+            <h1 className="text-3xl font-bold text-base-content flex items-center">
               <NotificationsIcon className="mr-3 text-blue-500" />
               가격 알림
             </h1>
-            <p className="text-gray-600 mt-2">원하는 가격에 도달하면 알림을 받아보세요</p>
+            <p className="text-base-content/60 mt-2">원하는 가격에 도달하면 알림을 받아보세요</p>
           </div>
           
           <div className="flex items-center gap-2">
             <button 
               onClick={loadData}
-              className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              className="p-2 text-base-content/50 hover:text-green-600 hover:bg-green-500/10 rounded-lg transition-colors"
               title="새로고침"
             >
               <RefreshIcon fontSize="small" />
@@ -234,18 +234,18 @@ const Alerts = () => {
         {/* 알림 추가 폼 모달 */}
         {showAddForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-base-100 rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">가격 알림 추가</h3>
-              
+
               <form onSubmit={handleAddAlert} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-base-content/70 mb-1">
                     시장명
                   </label>
                   <select
                     value={newAlert.market_name}
                     onChange={(e) => setNewAlert({...newAlert, market_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     required
                   >
                     <option value="">시장을 선택하세요</option>
@@ -256,14 +256,14 @@ const Alerts = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-base-content/70 mb-1">
                     품목
                   </label>
                   <input
                     type="text"
                     value={newAlert.item_name}
                     onChange={(e) => setNewAlert({...newAlert, item_name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     placeholder="예: 참외"
                     required
                   />
@@ -271,13 +271,13 @@ const Alerts = () => {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-base-content/70 mb-1">
                       중량
                     </label>
                     <select
                       value={newAlert.weight}
                       onChange={(e) => setNewAlert({...newAlert, weight: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="5kg">5kg</option>
                       <option value="10kg">10kg</option>
@@ -287,13 +287,13 @@ const Alerts = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-base-content/70 mb-1">
                       등급
                     </label>
                     <select
                       value={newAlert.grade}
                       onChange={(e) => setNewAlert({...newAlert, grade: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="특품">특품</option>
                       <option value="상품">상품</option>
@@ -304,13 +304,13 @@ const Alerts = () => {
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-base-content/70 mb-1">
                       알림 조건
                     </label>
                     <select
                       value={newAlert.alert_type}
                       onChange={(e) => setNewAlert({...newAlert, alert_type: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="above">가격 이상</option>
                       <option value="below">가격 이하</option>
@@ -318,14 +318,14 @@ const Alerts = () => {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-base-content/70 mb-1">
                       목표 가격
                     </label>
                     <input
                       type="number"
                       value={newAlert.target_price}
                       onChange={(e) => setNewAlert({...newAlert, target_price: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                       placeholder="예: 35000"
                       required
                     />
@@ -355,19 +355,19 @@ const Alerts = () => {
         {/* 알림 수정 폼 모달 */}
         {editingAlert && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="bg-base-100 rounded-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">알림 수정</h3>
-              
+
               <form onSubmit={handleUpdateAlert} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-base-content/70 mb-1">
                     목표 가격
                   </label>
                   <input
                     type="number"
                     value={editingAlert.target_price}
                     onChange={(e) => setEditingAlert({...editingAlert, target_price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-base-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     required
                   />
                 </div>
@@ -380,7 +380,7 @@ const Alerts = () => {
                       onChange={(e) => setEditingAlert({...editingAlert, is_active: e.target.checked})}
                       className="checkbox"
                     />
-                    <span className="text-sm font-medium text-gray-700">알림 활성화</span>
+                    <span className="text-sm font-medium text-base-content/70">알림 활성화</span>
                   </label>
                 </div>
                 
@@ -408,16 +408,16 @@ const Alerts = () => {
         {alerts.length > 0 ? (
           <div className="space-y-4">
             {alerts.map(alert => (
-              <div key={alert.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+              <div key={alert.id} className="bg-base-100 rounded-lg shadow hover:shadow-lg transition-shadow">
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-3 ${alert.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+                      <div className={`w-3 h-3 rounded-full mr-3 ${alert.is_active ? 'bg-green-500' : 'bg-base-content/40'}`} />
                       <div>
-                        <h3 className="font-semibold text-lg text-gray-800">
+                        <h3 className="font-semibold text-lg text-base-content">
                           {alert.market_name}
                         </h3>
-                        <p className="text-gray-600">
+                        <p className="text-base-content/60">
                           {alert.item_name} {alert.weight} {alert.grade}
                         </p>
                       </div>
@@ -425,14 +425,14 @@ const Alerts = () => {
                     
                     <div className="flex items-center gap-2">
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        alert.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        alert.is_active ? 'bg-green-100 text-green-700' : 'bg-base-200 text-base-content/50'
                       }`}>
                         {alert.is_active ? '활성' : '비활성'}
                       </span>
                       
                       <button 
                         onClick={() => setEditingAlert(alert)}
-                        className="text-gray-400 hover:text-blue-500 transition-colors"
+                        className="text-base-content/40 hover:text-blue-500 transition-colors"
                         title="수정"
                       >
                         <EditIcon fontSize="small" />
@@ -440,7 +440,7 @@ const Alerts = () => {
                       
                       <button 
                         onClick={() => handleDeleteAlert(alert.id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
+                        className="text-base-content/40 hover:text-red-500 transition-colors"
                         title="삭제"
                       >
                         <DeleteIcon fontSize="small" />
@@ -449,8 +449,8 @@ const Alerts = () => {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div className="text-center p-3 bg-gray-50 rounded">
-                      <p className="text-sm text-gray-500 mb-1">알림 조건</p>
+                    <div className="text-center p-3 bg-base-200 rounded">
+                      <p className="text-sm text-base-content/50 mb-1">알림 조건</p>
                       <div className="flex items-center justify-center">
                         {alert.alert_type === 'above' ? (
                           <TrendingUpIcon className="text-red-500 mr-1" />
@@ -463,15 +463,15 @@ const Alerts = () => {
                       </div>
                     </div>
                     
-                    <div className="text-center p-3 bg-gray-50 rounded">
-                      <p className="text-sm text-gray-500 mb-1">목표 가격</p>
-                      <p className="font-bold text-lg text-gray-800">
+                    <div className="text-center p-3 bg-base-200 rounded">
+                      <p className="text-sm text-base-content/50 mb-1">목표 가격</p>
+                      <p className="font-bold text-lg text-base-content">
                         {formatPrice(alert.target_price)} 원
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex justify-between items-center text-sm text-gray-500">
+                  <div className="flex justify-between items-center text-sm text-base-content/50">
                     <p>등록일: {formatDate(alert.created_at)}</p>
                     <p>알림 방식: {alert.notification_type === 'web' ? '웹' : '이메일'}</p>
                   </div>
@@ -481,9 +481,9 @@ const Alerts = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <NotificationsIcon className="text-gray-300 text-6xl mb-4 mx-auto" />
-            <h3 className="text-xl text-gray-500 mb-2">설정된 가격 알림이 없습니다</h3>
-            <p className="text-gray-400 mb-6">원하는 가격에 도달하면 알림을 받아보세요</p>
+            <NotificationsIcon className="text-base-content/30 text-6xl mb-4 mx-auto" />
+            <h3 className="text-xl text-base-content/50 mb-2">설정된 가격 알림이 없습니다</h3>
+            <p className="text-base-content/40 mb-6">원하는 가격에 도달하면 알림을 받아보세요</p>
             <button 
               onClick={() => setShowAddForm(true)}
               className="btn btn-primary"

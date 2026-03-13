@@ -2,17 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { useTheme } from '../context/ThemeContext';
 
-// 색상 정의
+// 색상 정의 (테마 불변 브랜드 컬러만 유지)
 const COLORS = {
-  mainGreen: '#154734',      // PANTONE 3435 C
   lightGreen: '#6CC24A',     // 농협 라이트 그린
   pointYellow: '#FFD400',    // 포인트 노랑
-  neutralBg: '#F7F7F7',      // 중립 배경
-  border: '#E1E4E8',         // 테두리
 };
 
 const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate }) => {
+  const { isDark } = useTheme();
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
 
@@ -97,7 +96,7 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div
-        className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
+        className="bg-base-100 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl"
         style={{ maxHeight: '90vh' }}
       >
         {/* 헤더 - 청색-녹색 그라데이션 */}
@@ -115,39 +114,33 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
         </div>
 
         {/* 월 네비게이션 */}
-        <div
-          className="px-4 py-3 flex items-center justify-between"
-          style={{ backgroundColor: COLORS.neutralBg }}
-        >
+        <div className="px-4 py-3 flex items-center justify-between bg-base-200">
           <button
             onClick={goToPrevMonth}
-            className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+            className="p-2 rounded-full hover:bg-base-300 transition-colors text-[#004225] dark:text-green-400"
           >
-            <ChevronLeftIcon style={{ color: COLORS.mainGreen }} />
+            <ChevronLeftIcon />
           </button>
 
-          <span className="text-lg font-bold" style={{ color: COLORS.mainGreen }}>
+          <span className="text-lg font-bold text-[#004225] dark:text-green-400">
             {currentYear}년 {currentMonth + 1}월
           </span>
 
           <button
             onClick={goToNextMonth}
-            className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+            className="p-2 rounded-full hover:bg-base-300 transition-colors text-[#004225] dark:text-green-400"
           >
-            <ChevronRightIcon style={{ color: COLORS.mainGreen }} />
+            <ChevronRightIcon />
           </button>
         </div>
 
         {/* 요일 헤더 */}
-        <div
-          className="grid grid-cols-7 py-2 border-b"
-          style={{ borderColor: COLORS.border }}
-        >
+        <div className="grid grid-cols-7 py-2 border-b border-base-300">
           {weekDays.map((day, index) => (
             <div
               key={day}
               className={`text-center text-sm font-medium py-1 ${
-                index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-gray-600'
+                index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-base-content/60'
               }`}
             >
               {day}
@@ -163,18 +156,20 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
               onClick={() => item.day && handleSelectDate(item.dateStr)}
               disabled={!item.day || item.isFuture}
               className={`
-                aspect-square flex items-center justify-center rounded-full text-sm font-medium
+                aspect-square flex items-center justify-center rounded-full text-sm font-medium text-base-content
                 transition-all duration-200
                 ${!item.day ? 'invisible' : ''}
-                ${item.isFuture ? 'text-gray-300 cursor-not-allowed' : ''}
+                ${item.isFuture ? 'text-base-content/20 cursor-not-allowed' : ''}
                 ${item.isSelected ? 'text-white shadow-md' : ''}
                 ${item.isToday && !item.isSelected ? 'font-bold' : ''}
-                ${!item.isSelected && !item.isFuture && item.day ? 'hover:bg-gray-100' : ''}
+                ${!item.isSelected && !item.isFuture && item.day ? 'hover:bg-base-200' : ''}
                 ${index % 7 === 0 && !item.isSelected && !item.isFuture ? 'text-red-500' : ''}
                 ${index % 7 === 6 && !item.isSelected && !item.isFuture ? 'text-blue-500' : ''}
               `}
               style={{
-                backgroundColor: item.isSelected ? COLORS.mainGreen : item.isToday ? COLORS.pointYellow + '40' : 'transparent',
+                backgroundColor: item.isSelected
+                  ? (isDark ? '#22c55e' : '#004225')
+                  : item.isToday ? COLORS.pointYellow + '40' : 'transparent',
                 border: item.isToday && !item.isSelected ? `2px solid ${COLORS.pointYellow}` : 'none',
               }}
             >
@@ -184,30 +179,20 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
         </div>
 
         {/* 하단 버튼 */}
-        <div
-          className="px-4 py-3 flex gap-2 border-t"
-          style={{ borderColor: COLORS.border }}
-        >
+        <div className="px-4 py-3 flex gap-2 border-t border-base-300">
           <button
             onClick={() => {
               onSelectDate(maxDate);
               onClose();
             }}
-            className="flex-1 py-2.5 rounded-lg font-medium transition-colors"
-            style={{
-              backgroundColor: COLORS.lightGreen,
-              color: 'white'
-            }}
+            className="flex-1 py-2.5 rounded-lg font-medium transition-colors text-white"
+            style={{ backgroundColor: COLORS.lightGreen }}
           >
             오늘
           </button>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-lg font-medium transition-colors border"
-            style={{
-              borderColor: COLORS.border,
-              color: COLORS.mainGreen
-            }}
+            className="flex-1 py-2.5 rounded-lg font-medium transition-colors border border-base-300 text-[#004225] dark:text-green-400"
           >
             취소
           </button>

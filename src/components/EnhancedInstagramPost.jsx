@@ -853,20 +853,20 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   if (isPending) {
     return (
-      <div className="w-full max-w-md mx-auto bg-white border-b border-gray-200 animate-pulse">
+      <div className="w-full max-w-md mx-auto bg-base-100 border-b border-base-300 animate-pulse">
         <div className="p-4">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+            <div className="w-8 h-8 bg-base-content/20 rounded-full"></div>
             <div className="flex-1">
-              <div className="h-4 bg-gray-300 rounded w-24"></div>
-              <div className="h-3 bg-gray-300 rounded w-16 mt-1"></div>
+              <div className="h-4 bg-base-content/20 rounded w-24"></div>
+              <div className="h-3 bg-base-content/20 rounded w-16 mt-1"></div>
             </div>
           </div>
         </div>
-        <div className="w-full h-80 bg-gray-300"></div>
+        <div className="w-full h-80 bg-base-content/20"></div>
         <div className="p-4">
-          <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-          <div className="h-3 bg-gray-300 rounded w-1/2 mt-2"></div>
+          <div className="h-4 bg-base-content/20 rounded w-3/4"></div>
+          <div className="h-3 bg-base-content/20 rounded w-1/2 mt-2"></div>
         </div>
       </div>
     );
@@ -875,8 +875,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   // 배경색 계산
   const getPostBackgroundColor = () => {
     return {
-      backgroundColor: 'white',
-      boxShadow: '-3px 0 15px rgba(255, 165, 0, 0.25), 0 3px 15px rgba(0, 0, 0, 0.1)'
+      backgroundColor: 'var(--surface-card)',
+      boxShadow: '-3px 0 15px rgba(255, 165, 0, 0.25), 0 3px 15px var(--shadow-color, rgba(0, 0, 0, 0.1))'
     };
   };
 
@@ -907,7 +907,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       )}
 
       {/* 헤더 */}
-      <header className="flex items-center justify-between py-1.5 px-3 border-b border-gray-100">
+      <header className="flex items-center justify-between py-1.5 px-3 border-b border-base-200">
         <div className="flex items-center space-x-1.5 flex-1">
           {/* 프로필 사진 - 클릭 시 모달 열기 (탈퇴 사용자는 클릭 불가) */}
           <button
@@ -920,7 +920,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             className={`relative flex-shrink-0 ${!canClickProfile ? 'cursor-default' : ''}`}
             disabled={!canClickProfile}
           >
-            <div className={`w-10 h-10 rounded-full overflow-hidden ring-2 ring-white ring-offset-1 ${canClickProfile ? 'hover:ring-gray-200' : ''} transition-all duration-200 ${avatarClassName}`}>
+            <div className={`w-10 h-10 rounded-full overflow-hidden ring-2 ring-base-100 ring-offset-1 ${canClickProfile ? 'hover:ring-base-300' : ''} transition-all duration-200 ${avatarClassName}`}>
               <img
                 src={authorProfilePic}
                 alt={`${authorName} 프로필`}
@@ -935,10 +935,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
           {/* 사용자 정보 - 클릭 불가 */}
           <div className="flex-1 min-w-0">
-            <p className={`font-semibold text-sm truncate leading-tight ${!canClickProfile ? 'text-gray-500' : 'text-gray-900'}`}>
+            <p className={`font-semibold text-sm truncate leading-tight ${!canClickProfile ? 'text-base-content/50' : 'text-base-content'}`}>
               {authorName}
             </p>
-            <div className="flex items-center space-x-1 text-[10px] text-gray-500">
+            <div className="flex items-center space-x-1 text-[10px] text-base-content/50">
               <span>{formatTime(post.createdAt)}</span>
               {post.related_market && (
                 <>
@@ -949,7 +949,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             </div>
             {/* 고유번호 표시 - 관리자/운영자만 */}
             {post.title && isAdminOrModerator && (
-              <div className="text-[10px] text-gray-400 font-mono">
+              <div className="text-[10px] text-base-content/40 font-mono">
                 {post.title}
               </div>
             )}
@@ -966,13 +966,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         {/* 비밀글 표시 */}
         {post.isPrivate && (
           <div className="mr-2">
-            <LockIcon className="w-4 h-4 text-gray-500" />
+            <LockIcon className="w-4 h-4 text-base-content/50" />
           </div>
         )}
 
         {/* 조회수 표시 - 0보다 클 때만 표시 */}
         {post.views_count && post.views_count > 0 && (
-          <div className="mr-2 flex items-center text-gray-500 view-count" style={{ content: 'none' }}>
+          <div className="mr-2 flex items-center text-base-content/50 view-count" style={{ content: 'none' }}>
             <span className="text-sm font-medium">
               {post.views_count}
             </span>
@@ -984,14 +984,14 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         <div className="dropdown dropdown-end">
           <button
             tabIndex={0}
-            className="btn btn-ghost btn-circle btn-sm hover:bg-gray-100"
+            className="btn btn-ghost btn-circle btn-sm hover:bg-base-200"
             onClick={(e) => {
               e.stopPropagation();
             }}
           >
-            <FontAwesomeIcon icon={faEllipsisH} className="w-4 h-4 text-gray-600" />
+            <FontAwesomeIcon icon={faEllipsisH} className="w-4 h-4 text-base-content/60" />
           </button>
-          <ul className="dropdown-content z-50 py-2 shadow-xl bg-white/70 backdrop-blur-xl rounded-2xl w-28 text-sm border border-white/50">
+          <ul className="dropdown-content z-50 py-2 shadow-xl bg-base-100/70 backdrop-blur-xl rounded-2xl w-28 text-sm border border-base-100/50">
             {/* 수정 - 작성자만 */}
             {post.userId === currentUser.id && (
               <li>
@@ -1002,7 +1002,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     e.stopPropagation();
                     handleEdit();
                   }}
-                  className="w-full text-center py-3 hover:bg-gray-100 rounded-xl text-gray-800 font-semibold transition-colors"
+                  className="w-full text-center py-3 hover:bg-base-200 rounded-xl text-base-content font-semibold transition-colors"
                 >
                   수정
                 </button>
@@ -1022,8 +1022,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   disabled={hideMutation.isPending}
                   className={`w-full text-center py-3 rounded-xl font-semibold transition-colors ${
                     hideMutation.isPending
-                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                      : 'text-gray-800 hover:bg-gray-100'
+                      ? 'text-base-content/40 bg-base-200 cursor-not-allowed'
+                      : 'text-base-content hover:bg-base-200'
                   }`}
                 >
                   {hideMutation.isPending ? '처리 중...' : post.is_hidden ? '숨김 해제' : '숨기기'}
@@ -1044,8 +1044,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   disabled={pinMutation.isPending}
                   className={`w-full text-center py-3 rounded-xl font-semibold transition-colors ${
                     pinMutation.isPending
-                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                      : 'text-gray-800 hover:bg-gray-100'
+                      ? 'text-base-content/40 bg-base-200 cursor-not-allowed'
+                      : 'text-base-content hover:bg-base-200'
                   }`}
                 >
                   {pinMutation.isPending ? '처리 중...' : post.is_pinned ? '고정 해제' : '고정'}
@@ -1057,7 +1057,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             {((post.userId === currentUser.id || featurePermissions.canPinPosts) &&
               (canDelete || (post.userId !== currentUser.id && !isBanned))) && (
               <li className="my-1">
-                <div className="border-t border-gray-200"></div>
+                <div className="border-t border-base-300"></div>
               </li>
             )}
 
@@ -1101,7 +1101,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   disabled={deleteMutation.isPending}
                   className={`w-full text-center py-3 rounded-xl font-semibold transition-colors ${
                     deleteMutation.isPending
-                      ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                      ? 'text-base-content/40 bg-base-200 cursor-not-allowed'
                       : 'text-red-500 hover:bg-red-50'
                   }`}
                 >
@@ -1137,7 +1137,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       {/* 미디어 컨텐츠 - 링크가 없을 때만 표시 */}
       {!post.link_url && hasMedia && (
         <div
-          className="relative w-full bg-gray-100 select-none"
+          className="relative w-full bg-base-200 select-none"
           onMouseEnter={() => setShowControls(true)}
           onMouseLeave={() => setShowControls(false)}
           onDoubleClick={handleMediaDoubleTap}
@@ -1175,7 +1175,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 />
               ) : (isVideo || isR2Video) ? (
                 mediaLoadError ? (
-                  <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500">
+                  <div className="w-full h-full bg-base-300 flex flex-col items-center justify-center text-base-content/50">
                     <div className="text-4xl mb-2">🎥</div>
                     <div className="text-sm">동영상을 로드할 수 없습니다</div>
                     <div className="text-xs mt-1 opacity-75">파일이 존재하지 않거나 손상되었습니다</div>
@@ -1227,7 +1227,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 )
               ) : (
                 imageLoadError ? (
-                  <div className="w-full h-full bg-gray-200 flex flex-col items-center justify-center text-gray-500">
+                  <div className="w-full h-full bg-base-300 flex flex-col items-center justify-center text-base-content/50">
                     <div className="text-4xl mb-2">🖼️</div>
                     <div className="text-sm">이미지를 로드할 수 없습니다</div>
                     <div className="text-xs mt-1 opacity-75">파일이 존재하지 않거나 손상되었습니다</div>
@@ -1289,10 +1289,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             >
               <FontAwesomeIcon
                 icon={faHeart}
-                className={`w-5 h-5 transition-colors duration-200 ${localIsLiked ? 'text-red-500' : 'text-gray-700 hover:text-red-500'}`}
+                className={`w-5 h-5 transition-colors duration-200 ${localIsLiked ? 'text-red-500' : 'text-base-content/70 hover:text-red-500'}`}
               />
               {localLikeCount > 0 && (
-                <span className={`ml-0.5 text-xs font-medium ${localIsLiked ? 'text-red-500' : 'text-gray-700'}`}>{localLikeCount}</span>
+                <span className={`ml-0.5 text-xs font-medium ${localIsLiked ? 'text-red-500' : 'text-base-content/70'}`}>{localLikeCount}</span>
               )}
             </button>
 
@@ -1302,7 +1302,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 setShowCommentsModal(true);
               }}
               className={`flex items-center justify-center transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${
-                (post.commentsCount || 0) > 0 ? 'text-blue-600' : 'text-gray-700 hover:text-blue-500'
+                (post.commentsCount || 0) > 0 ? 'text-blue-600' : 'text-base-content/70 hover:text-blue-500'
               }`}
               aria-label="댓글"
             >
@@ -1317,7 +1317,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 // 공유 버튼 클릭 로그 제거
                 handleShare();
               }}
-              className="text-gray-700 hover:text-green-500 transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0"
+              className="text-base-content/70 hover:text-green-500 transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0"
               aria-label="공유"
             >
               <FontAwesomeIcon icon={faShare} className="w-5 h-5" />
@@ -1370,7 +1370,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 console.error('저장 처리 오류:', error);
               }
             }}
-            className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'}`}
+            className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-base-content/70 hover:text-blue-500'}`}
             aria-label={isSaved ? '저장 취소' : '저장'}
           >
             <FontAwesomeIcon icon={faBookmark} className="w-5 h-5" />
@@ -1379,20 +1379,20 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
         {/* QnA 게시글 제목 */}
         {post.post_type === 'question' && post.title && (
-          <div className="text-sm text-gray-900 mb-1">
-            <span className={`font-semibold mr-2 ${!canClickProfile ? 'text-gray-500' : ''}`}>{authorName}</span>
-            <span className="font-bold text-gray-800 block mb-0.5">[Q&A] {post.title}</span>
+          <div className="text-sm text-base-content mb-1">
+            <span className={`font-semibold mr-2 ${!canClickProfile ? 'text-base-content/50' : ''}`}>{authorName}</span>
+            <span className="font-bold text-base-content block mb-0.5">[Q&A] {post.title}</span>
           </div>
         )}
 
         {/* 게시물 내용 */}
         {(post.Desc || post.desc) && (
-          <div className="text-base text-gray-900 mb-1 pl-2">
+          <div className="text-base text-base-content mb-1 pl-2">
             <span className="whitespace-pre-wrap break-words">{displayDescription}</span>
             {shouldShowMore && (
               <button
                 onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-gray-500 ml-2 hover:text-gray-700 text-sm"
+                className="text-base-content/50 ml-2 hover:text-base-content/70 text-sm"
               >
                 {showFullDescription ? '간략히' : '더보기'}
               </button>
@@ -1410,17 +1410,17 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 <div className="flex items-center gap-2 mb-2">
                   <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
                     post.tradeInfo.status === 'completed' || post.tradeInfo.status === 'sold'
-                      ? 'bg-gray-200 text-gray-600'
+                      ? 'bg-base-300 text-base-content/60'
                       : 'bg-green-100 text-green-700'
                   }`}>
                     {post.tradeInfo.status === 'completed' || post.tradeInfo.status === 'sold' ? '판매완료' : '판매중'}
                   </span>
-                  <h4 className="font-semibold text-gray-900">{post.tradeInfo.item_name}</h4>
+                  <h4 className="font-semibold text-base-content">{post.tradeInfo.item_name}</h4>
                 </div>
 
                 {/* 본문 */}
                 {(post.content || post.Desc || post.desc) && (
-                  <p className="text-sm text-gray-700 line-clamp-2">
+                  <p className="text-sm text-base-content/70 line-clamp-2">
                     {post.content || post.Desc || post.desc}
                   </p>
                 )}
@@ -1502,17 +1502,17 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     {/* 로그인 필요 모달 */}
     {showLoginModal && (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={() => setShowLoginModal(false)}>
-        <div className="bg-white rounded-2xl p-6 mx-4 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-base-100 rounded-2xl p-6 mx-4 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
           <div className="text-center">
             <div className="text-4xl mb-4">🔐</div>
-            <h3 className="text-lg font-bold text-gray-800 mb-2">로그인이 필요합니다</h3>
-            <p className="text-gray-600 text-sm mb-6">
+            <h3 className="text-lg font-bold text-base-content mb-2">로그인이 필요합니다</h3>
+            <p className="text-base-content/60 text-sm mb-6">
               이 기능을 사용하려면 로그인이 필요합니다.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLoginModal(false)}
-                className="flex-1 py-2.5 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 py-2.5 px-4 border border-base-300 rounded-lg text-base-content/70 font-medium hover:bg-base-200 transition-colors"
               >
                 취소
               </button>

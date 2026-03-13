@@ -109,8 +109,7 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
       onClick={onClose}
     >
       <div
-        className="rounded-2xl max-w-sm w-full relative overflow-hidden"
-        style={{ backgroundColor: '#f0eee9' }}
+        className="rounded-2xl max-w-sm w-full relative overflow-hidden bg-base-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
@@ -139,10 +138,10 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
           {/* 로딩 중일 때 전체 로딩 표시 */}
           {isLoading ? (
             <div className="py-8 flex flex-col items-center">
-              <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-white shadow-lg -mt-12 mb-4 flex items-center justify-center">
+              <div className="w-24 h-24 rounded-full bg-base-300 border-4 border-white shadow-lg -mt-12 mb-4 flex items-center justify-center">
                 <div className="loading loading-spinner loading-md text-orange-500"></div>
               </div>
-              <p className="text-gray-500 text-sm">프로필을 불러오는 중...</p>
+              <p className="text-base-content/50 text-sm">프로필을 불러오는 중...</p>
             </div>
           ) : (
             <>
@@ -161,7 +160,7 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
               </div>
 
               <div className="flex items-center justify-center gap-2 mb-1">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-base-content">
                   {displayUser.name || displayUser.user_name || displayUser.username}
                 </h2>
                 {isAIUser(displayUser) && <AIBadge />}
@@ -172,7 +171,7 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
                       onClose();
                       navigate(`/dm/${userId}`);
                     }}
-                    className="text-blue-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-50"
+                    className="text-blue-500 hover:text-blue-600 transition-colors p-1 rounded-full hover:bg-blue-500/10"
                     title="메시지 보내기"
                   >
                     <MailOutlineIcon fontSize="small" />
@@ -181,7 +180,7 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
               </div>
 
               {displayUser.username && displayUser.name && (
-                <p className="text-sm text-gray-500 text-center mb-4">@{displayUser.username}</p>
+                <p className="text-sm text-base-content/50 text-center mb-4">@{displayUser.username}</p>
               )}
             </>
           )}

@@ -626,20 +626,20 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   const LoadingSkeleton = () => (
     <div className="w-full max-w-md mx-auto">
       {[...Array(3)].map((_, index) => (
-        <div key={index} className="w-full bg-white border-b border-gray-200 animate-pulse">
+        <div key={index} className="w-full bg-base-100 border-b border-base-300 animate-pulse">
           <div className="p-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+              <div className="w-8 h-8 bg-base-content/20 rounded-full"></div>
               <div className="flex-1">
-                <div className="h-4 bg-gray-300 rounded w-24 mb-1"></div>
-                <div className="h-3 bg-gray-300 rounded w-16"></div>
+                <div className="h-4 bg-base-content/20 rounded w-24 mb-1"></div>
+                <div className="h-3 bg-base-content/20 rounded w-16"></div>
               </div>
             </div>
           </div>
-          <div className="w-full h-80 bg-gray-300"></div>
+          <div className="w-full h-80 bg-base-content/20"></div>
           <div className="p-4">
-            <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+            <div className="h-4 bg-base-content/20 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-base-content/20 rounded w-1/2"></div>
           </div>
         </div>
       ))}
@@ -654,18 +654,18 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-gray-900 mb-2">게시글을 불러올 수 없습니다</h3>
-      <p className="text-gray-600 mb-4">{error.message}</p>
+      <h3 className="text-lg font-medium text-base-content mb-2">게시글을 불러올 수 없습니다</h3>
+      <p className="text-base-content/60 mb-4">{error.message}</p>
       <div className="flex flex-col space-y-2">
-        <button 
+        <button
           onClick={handleRefresh}
           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
         >
           다시 시도
         </button>
-        <button 
+        <button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          className="px-4 py-2 bg-base-300 text-base-content/70 rounded-md hover:bg-base-content/20 transition-colors"
         >
           페이지 새로고침
         </button>
@@ -676,13 +676,13 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   // 빈 상태 컴포넌트
   const EmptyComponent = () => (
     <div className="w-full max-w-md mx-auto p-8 text-center">
-      <div className="text-gray-400 mb-6">
+      <div className="text-base-content/40 mb-6">
         <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
         </svg>
       </div>
-      <h3 className="text-xl font-medium text-gray-900 mb-3">게시글이 없습니다</h3>
-      <p className="text-gray-600 mb-6">
+      <h3 className="text-xl font-medium text-base-content mb-3">게시글이 없습니다</h3>
+      <p className="text-base-content/60 mb-6">
         {tag ? `'${tag}' 태그의 게시글이 없습니다.` : 
          search ? `'${search}' 검색 결과가 없습니다.` :
          '아직 작성된 게시글이 없습니다.'}
@@ -707,7 +707,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
   return (
     <div
       ref={pullToRefreshRef}
-      className={`w-full max-w-md mx-auto bg-gray-50 ${
+      className={`w-full max-w-md mx-auto bg-base-200 ${
         enableSnapScroll ? 'snap-y snap-mandatory overflow-y-scroll' : ''
       }`}
       onTouchStart={handleTouchStart}
@@ -719,7 +719,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
         className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 transition-all duration-200"
         style={{ display: 'none' }}
       >
-        <div className="bg-white rounded-full p-3 shadow-lg border">
+        <div className="bg-base-100 rounded-full p-3 shadow-lg border">
           <div className="spinner w-6 h-6 border-2 border-blue-500 rounded-full animate-spin border-r-transparent"></div>
         </div>
       </div>
@@ -770,8 +770,8 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
           {/* 로딩 인디케이터 */}
           {isFetchingNextPage && (
-            <div className="w-full py-12 flex justify-center bg-white">
-              <div className="flex flex-col items-center space-y-3 text-gray-500">
+            <div className="w-full py-12 flex justify-center bg-base-100">
+              <div className="flex flex-col items-center space-y-3 text-base-content/50">
                 <LoadingSpinner size="md" />
                 <span className="text-sm font-medium">새로운 게시글을 불러오는 중...</span>
               </div>
@@ -780,16 +780,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
           {/* 끝 메시지 */}
           {!hasNextPage && allPosts.length > 0 && (
-            <div className="w-full py-12 text-center text-gray-500 bg-white">
+            <div className="w-full py-12 text-center text-base-content/50 bg-base-100">
               <div className="flex flex-col items-center space-y-3">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-base-200 rounded-full flex items-center justify-center">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                   </svg>
                 </div>
                 <div>
                   <p className="text-sm font-medium">모든 게시글을 확인했습니다</p>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-xs text-base-content/40 mt-1">
                     총 {allPosts.length}개의 게시글
                   </p>
                 </div>

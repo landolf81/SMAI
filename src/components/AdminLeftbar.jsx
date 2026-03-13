@@ -243,13 +243,13 @@ const AdminLeftbar = () => {
             aria-label="close sidebar"
             className="drawer-overlay"
           ></label>
-          <ul className="menu p-4 w-80 min-h-full bg-cloud-dancer border-r border-gray-200 overflow-y-auto">
+          <ul className="menu p-4 w-80 min-h-full bg-base-200 border-r border-base-300 overflow-y-auto">
 
             {/* 관리자 프로필 */}
-            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <div className="mb-6 p-4 bg-base-200 rounded-xl border border-base-300">
               <div className="flex items-center gap-3">
                 <div className="avatar">
-                  <div className="w-12 rounded-full border-2 border-white">
+                  <div className="w-12 rounded-full border-2 border-base-100">
                     <img
                       alt="관리자"
                       src={storageService.getProfileImageUrl(currentUser.profilePic || currentUser.profile_pic, currentUser.id)}
@@ -257,7 +257,7 @@ const AdminLeftbar = () => {
                   </div>
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-800 flex items-center gap-2">
+                  <div className="font-semibold text-base-content flex items-center gap-2">
                     {currentUser.username}
                     <AdminPanelSettingsIcon className="text-[#004225] text-sm" />
                   </div>
@@ -269,7 +269,7 @@ const AdminLeftbar = () => {
             {/* 관리자 메뉴 섹션들 */}
             {menuSections.map((section, sectionIndex) => (
               <div key={sectionIndex} className="mb-5">
-                <h3 className="font-semibold text-gray-500 mb-2 px-3 text-xs uppercase tracking-wider">
+                <h3 className="font-semibold text-base-content/50 mb-2 px-3 text-xs uppercase tracking-wider">
                   {section.title}
                 </h3>
 
@@ -284,7 +284,7 @@ const AdminLeftbar = () => {
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-1 ${
                         isActive
                           ? 'bg-[#004225] text-white shadow-md'
-                          : 'hover:bg-gray-100 text-gray-700'
+                          : 'hover:bg-base-200 text-base-content/70'
                       }`}
                     >
                       <IconComponent className={`text-lg ${isActive ? 'text-white' : 'text-[#004225]'}`} />
@@ -303,8 +303,8 @@ const AdminLeftbar = () => {
             ))}
 
             {/* 개발자 도구 (별도 섹션) */}
-            <div className="mt-auto pt-4 border-t border-gray-200">
-              <h3 className="font-semibold text-gray-500 mb-2 px-3 text-xs uppercase tracking-wider">
+            <div className="mt-auto pt-4 border-t border-base-300">
+              <h3 className="font-semibold text-base-content/50 mb-2 px-3 text-xs uppercase tracking-wider">
                 개발자 도구
               </h3>
               <Link
@@ -312,7 +312,7 @@ const AdminLeftbar = () => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 mb-2 ${
                   isActiveLink("/admin/developer")
                     ? 'bg-[#004225] text-white shadow-md'
-                    : 'hover:bg-gray-100 text-gray-700'
+                    : 'hover:bg-base-200 text-base-content/70'
                 }`}
               >
                 <DeveloperBoardIcon className={`text-lg ${isActiveLink("/admin/developer") ? 'text-white' : 'text-[#004225]'}`} />
@@ -321,8 +321,8 @@ const AdminLeftbar = () => {
             </div>
 
             {/* 푸터 */}
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="text-xs text-gray-500 px-2 text-center">
+            <div className="mt-4 pt-4 border-t border-base-300">
+              <div className="text-xs text-base-content/50 px-2 text-center">
                 <div className="font-bold text-[#004225] mb-1">Meridian Admin</div>
                 <div>농업 커뮤니티 관리 시스템</div>
                 <div className="mt-2 flex justify-center gap-1">

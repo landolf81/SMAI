@@ -155,37 +155,37 @@ const Markets = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
+      <div className="flex items-center justify-center min-h-screen bg-base-200">
         <div className="text-center">
           <div className="loading loading-spinner loading-lg text-primary"></div>
-          <p className="mt-4 text-gray-600">시장 정보를 불러오는 중...</p>
+          <p className="mt-4 text-base-content/60">시장 정보를 불러오는 중...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-cloud-dancer pb-20">
+    <div className="min-h-screen bg-base-200 pb-20">
       {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b sticky top-16 z-10">
+      <div className="bg-base-100 shadow-sm border-b sticky top-16 z-10">
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">시장 정보</h1>
+            <h1 className="text-2xl font-bold text-base-content">시장 정보</h1>
             
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <CalendarTodayIcon fontSize="small" className="text-gray-500" />
+                <CalendarTodayIcon fontSize="small" className="text-base-content/50" />
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={handleDateChange}
                   max={new Date().toISOString().split('T')[0]}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="px-3 py-2 border border-base-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
               </div>
               <button
                 onClick={handleRefresh}
-                className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                className="p-2 text-base-content/50 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                 title="새로고침"
               >
                 <RefreshIcon fontSize="small" />
@@ -193,7 +193,7 @@ const Markets = () => {
             </div>
           </div>
 
-          <p className="text-gray-600">
+          <p className="text-base-content/60">
             {formatDate(selectedDate)}에 거래 데이터가 있는 농산물 시장들을 확인할 수 있습니다.
           </p>
         </div>
@@ -217,17 +217,17 @@ const Markets = () => {
               </div>
               
               <InfoIcon className="w-12 h-12 mx-auto mb-4 text-blue-600" />
-              <h3 className="text-xl font-bold text-gray-800 mb-3">
+              <h3 className="text-xl font-bold text-base-content mb-3">
                 📊 경락 정보가 없습니다
               </h3>
-              <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+              <p className="text-base-content/60 text-sm mb-6 leading-relaxed">
                 <span className="font-semibold text-blue-700">{formatDate(selectedDate)}</span>에<br/>
                 거래된 경락가 데이터가 없습니다.
               </p>
               
-              <div className="bg-white rounded-lg p-4 mb-6 text-left">
-                <h4 className="font-semibold text-gray-700 mb-2 text-center">💡 참고사항</h4>
-                <div className="space-y-2 text-sm text-gray-600">
+              <div className="bg-base-100 rounded-lg p-4 mb-6 text-left">
+                <h4 className="font-semibold text-base-content/70 mb-2 text-center">💡 참고사항</h4>
+                <div className="space-y-2 text-sm text-base-content/60">
                   <p className="flex items-center">
                     <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
                     평일 오전 6시~오후 2시에 경매가 진행됩니다
@@ -276,7 +276,7 @@ const Markets = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
             {marketDetails.map((market) => (
-              <div key={market.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+              <div key={market.id} className="bg-base-100 rounded-lg shadow hover:shadow-lg transition-shadow">
                 {/* 시장 헤더 */}
                 <div className={`p-4 rounded-t-lg ${market.hasData ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gray-400'}`}>
                   <div className="flex items-center gap-2 text-white">
@@ -289,35 +289,35 @@ const Markets = () => {
                 <div className="p-4">
                   <div className="space-y-3">
                     <div className="flex items-start gap-2">
-                      <InfoIcon fontSize="small" className="text-gray-500 mt-0.5" />
-                      <p className="text-gray-600 text-sm">{market.description}</p>
+                      <InfoIcon fontSize="small" className="text-base-content/50 mt-0.5" />
+                      <p className="text-base-content/60 text-sm">{market.description}</p>
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
-                      <LocationOnIcon fontSize="small" className="text-gray-500" />
-                      <p className="text-gray-600 text-sm">{market.location}</p>
+                      <LocationOnIcon fontSize="small" className="text-base-content/50" />
+                      <p className="text-base-content/60 text-sm">{market.location}</p>
                     </div>
                     
                     <div className="border-t pt-3">
-                      <p className="text-gray-500 text-xs mb-2">운영시간</p>
+                      <p className="text-base-content/50 text-xs mb-2">운영시간</p>
                       <p className="font-medium text-market-600">{market.operatingHours}</p>
                     </div>
 
                     {/* 거래 요약 정보 */}
                     {market.hasData && market.summary && (
                       <div className="border-t pt-3">
-                        <p className="text-gray-500 text-xs mb-2">오늘의 거래 요약</p>
+                        <p className="text-base-content/50 text-xs mb-2">오늘의 거래 요약</p>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div>
-                            <span className="text-gray-500">총 출수량:</span>
+                            <span className="text-base-content/50">총 출수량:</span>
                             <p className="font-semibold">{formatPrice(market.summary.totalBoxes)} 상자</p>
                           </div>
                           <div>
-                            <span className="text-gray-500">평균 가격:</span>
+                            <span className="text-base-content/50">평균 가격:</span>
                             <p className="font-semibold text-green-600">{formatPrice(market.summary.avgPrice)} 원</p>
                           </div>
                         </div>
-                        <div className="mt-2 text-xs text-gray-500">
+                        <div className="mt-2 text-xs text-base-content/50">
                           총 {market.summary.itemCount}개 품목 거래
                         </div>
                       </div>
@@ -334,7 +334,7 @@ const Markets = () => {
                               e.target.style.display = 'none';
                             }}
                           />
-                          <p className="text-gray-500 text-sm mb-3 font-medium">
+                          <p className="text-base-content/50 text-sm mb-3 font-medium">
                             📊 선택한 날짜에<br/>경락 데이터가 없습니다
                           </p>
                           <div className="flex flex-col gap-1">
@@ -378,9 +378,9 @@ const Markets = () => {
         {/* 하단 정보 */}
         {marketDetails.length > 0 && (
           <div className="mt-8 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm border">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-base-100 rounded-lg shadow-sm border">
               <StoreIcon fontSize="small" className="text-green-600" />
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-base-content/60">
                 총 {marketDetails.length}개 시장에서 {formatDate(selectedDate)} 거래 진행
               </span>
             </div>

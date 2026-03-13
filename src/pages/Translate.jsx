@@ -66,11 +66,6 @@ const Translate = ({ embedded = false }) => {
     staleTime: 5 * 60 * 1000 // 5분
   });
 
-  // 광고 데이터 디버깅
-  useEffect(() => {
-    console.log('광고 데이터:', adsData);
-  }, [adsData]);
-
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechRecognition) {
@@ -544,7 +539,7 @@ const Translate = ({ embedded = false }) => {
   };
 
   return (
-    <div className={embedded ? 'bg-cloud-dancer px-4 pb-4' : 'min-h-screen bg-cloud-dancer pt-16 px-4 pb-4'}>
+    <div className={embedded ? 'bg-base-200 px-4 pb-4' : 'min-h-screen bg-base-200 pt-16 px-4 pb-4'}>
       <div className="max-w-3xl mx-auto">
         {/* 헤더 */}
         <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl shadow-lg px-4 py-3 mb-4 text-white">
@@ -555,14 +550,14 @@ const Translate = ({ embedded = false }) => {
         </div>
 
         {/* 언어 선택 */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
+        <div className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
           <div className="flex items-center gap-3">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-slate-600 mb-2">입력 언어</label>
+              <label className="block text-xs font-medium text-base-content/70 mb-2">입력 언어</label>
               <select
                 value={inputLang}
                 onChange={(e) => setInputLang(e.target.value)}
-                className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-medium"
+                className="w-full px-4 py-3 bg-base-100 border-2 border-base-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-medium"
               >
                 {LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code}>{lang.flag} {lang.name}</option>
@@ -579,11 +574,11 @@ const Translate = ({ embedded = false }) => {
             </button>
 
             <div className="flex-1">
-              <label className="block text-xs font-medium text-slate-600 mb-2">번역 언어</label>
+              <label className="block text-xs font-medium text-base-content/70 mb-2">번역 언어</label>
               <select
                 value={targetLang}
                 onChange={(e) => setTargetLang(e.target.value)}
-                className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
+                className="w-full px-4 py-3 bg-base-100 border-2 border-base-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-medium"
               >
                 {LANGUAGES.map(lang => (
                   <option key={lang.code} value={lang.code}>{lang.flag} {lang.name}</option>
@@ -594,14 +589,14 @@ const Translate = ({ embedded = false }) => {
         </div>
 
         {/* 입력 영역 */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
-          <label className="block text-sm font-bold text-slate-700 mb-3">
+        <div className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
+          <label className="block text-sm font-bold text-base-content mb-3">
             {LANGUAGES.find(l => l.code === inputLang)?.flag} {LANGUAGES.find(l => l.code === inputLang)?.name}
           </label>
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            className="w-full h-36 p-4 bg-white border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none text-lg"
+            className="w-full h-36 p-4 bg-base-100 border-2 border-base-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none text-lg"
             placeholder="번역할 텍스트를 입력하세요..."
           />
           <div className="flex gap-3 mt-4 relative z-10">
@@ -609,7 +604,7 @@ const Translate = ({ embedded = false }) => {
               type="button"
               onClick={handleTranslate}
               disabled={!inputText.trim() || isTranslating}
-              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-blue-700 disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-lg"
+              className="flex-1 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-xl font-bold hover:from-emerald-700 hover:to-blue-700 disabled:from-base-content/30 disabled:to-base-content/40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg text-lg"
             >
               {isTranslating ? (
                 <span className="flex items-center justify-center gap-2">
@@ -636,9 +631,9 @@ const Translate = ({ embedded = false }) => {
         {/* 번역 결과 */}
         {translations.target && (
           <>
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
+            <div className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
               <div className="flex items-center justify-between mb-3">
-                <label className="block text-sm font-bold text-slate-700">
+                <label className="block text-sm font-bold text-base-content">
                   {LANGUAGES.find(l => l.code === targetLang)?.flag} {LANGUAGES.find(l => l.code === targetLang)?.name}
                 </label>
                 <div className="flex gap-2">
@@ -647,7 +642,7 @@ const Translate = ({ embedded = false }) => {
                     disabled={isSpeaking}
                     className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all shadow-md ${
                       isSpeaking
-                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                        ? 'bg-base-300 text-base-content/50 cursor-not-allowed'
                         : 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600'
                     }`}
                   >
@@ -658,9 +653,9 @@ const Translate = ({ embedded = false }) => {
               </div>
               <div
                 onClick={openTranslationModal}
-                className="p-5 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-xl border-2 border-blue-200 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all active:scale-[0.99]"
+                className="p-5 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 rounded-xl border-2 border-blue-500/30 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all active:scale-[0.99]"
               >
-                <p className="text-slate-800 whitespace-pre-wrap text-lg leading-relaxed">{translations.target}</p>
+                <p className="text-base-content whitespace-pre-wrap text-lg leading-relaxed">{translations.target}</p>
                 <p className="text-xs text-blue-500 mt-2 text-center">👆 터치하여 크게 보기</p>
               </div>
 
@@ -668,14 +663,14 @@ const Translate = ({ embedded = false }) => {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleCopy}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-base-200 to-base-300 hover:from-base-300 hover:to-base-300 text-base-content rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                   <ContentCopyIcon fontSize="small" />
                   복사하기
                 </button>
                 <button
                   onClick={handleShare}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-100 to-emerald-100 hover:from-blue-200 hover:to-emerald-200 text-slate-700 rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500/15 to-emerald-500/15 hover:from-blue-500/20 hover:to-emerald-500/20 text-base-content rounded-xl font-medium transition-all shadow-sm hover:shadow-md"
                 >
                   <ShareIcon fontSize="small" />
                   공유하기
@@ -683,14 +678,14 @@ const Translate = ({ embedded = false }) => {
               </div>
             </div>
 
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
-              <label className="block text-sm font-bold text-slate-700 mb-3">
+            <div className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mb-5">
+              <label className="block text-sm font-bold text-base-content mb-3">
                 {LANGUAGES.find(l => l.code === inputLang)?.flag} 역번역 (품질 검증)
               </label>
-              <div className="p-5 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border-2 border-slate-200">
-                <p className="text-slate-700 whitespace-pre-wrap text-lg leading-relaxed">{translations.backTranslation}</p>
+              <div className="p-5 bg-gradient-to-br from-base-200 to-blue-500/10 rounded-xl border-2 border-base-300">
+                <p className="text-base-content whitespace-pre-wrap text-lg leading-relaxed">{translations.backTranslation}</p>
               </div>
-              <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
+              <p className="text-xs text-base-content/50 mt-3 flex items-center gap-1">
                 <span className="text-lg">💡</span>
                 원문과 역번역을 비교하여 번역 정확도를 확인하세요.
               </p>
@@ -707,31 +702,31 @@ const Translate = ({ embedded = false }) => {
 
         {/* 번역 히스토리 */}
         {currentUser && history.length > 0 && (
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mt-6">
+          <div className="bg-base-100/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 mt-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="bg-gradient-to-r from-emerald-500 to-blue-500 p-2 rounded-lg">
                 <HistoryIcon className="text-white" fontSize="small" />
               </div>
-              <h2 className="text-lg font-bold text-slate-800">번역 기록</h2>
-              <span className="text-sm text-slate-500 font-medium">({historyCount}/100)</span>
+              <h2 className="text-lg font-bold text-base-content">번역 기록</h2>
+              <span className="text-sm text-base-content/50 font-medium">({historyCount}/100)</span>
             </div>
-            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+            <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-base-300 scrollbar-track-base-200">
               {history.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => setSelectedHistory(item)}
-                  className="p-4 bg-gradient-to-br from-white to-slate-50 hover:from-blue-50 hover:to-emerald-50 rounded-xl cursor-pointer transition-all border-2 border-slate-200 hover:border-blue-300 hover:shadow-md"
+                  className="p-4 bg-gradient-to-br from-base-100 to-base-200 hover:from-blue-500/10 hover:to-emerald-500/10 rounded-xl cursor-pointer transition-all border-2 border-base-300 hover:border-blue-400 hover:shadow-md"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <div className="flex items-center gap-2 text-sm font-medium text-base-content">
                       <span className="text-lg">{LANGUAGES.find(l => l.code === item.input_lang)?.flag}</span>
                       <span className="text-emerald-600">→</span>
                       <span className="text-lg">{LANGUAGES.find(l => l.code === item.target_lang)?.flag}</span>
                     </div>
-                    <span className="text-xs text-slate-400 font-medium">{formatDate(item.created_at)}</span>
+                    <span className="text-xs text-base-content/40 font-medium">{formatDate(item.created_at)}</span>
                   </div>
-                  <p className="text-sm text-slate-800 line-clamp-2 font-medium leading-relaxed">{item.input_text}</p>
-                  <p className="text-xs text-slate-500 mt-2 line-clamp-1 leading-relaxed">{item.target_translation}</p>
+                  <p className="text-sm text-base-content line-clamp-2 font-medium leading-relaxed">{item.input_text}</p>
+                  <p className="text-xs text-base-content/50 mt-2 line-clamp-1 leading-relaxed">{item.target_translation}</p>
                 </div>
               ))}
             </div>
@@ -751,19 +746,19 @@ const Translate = ({ embedded = false }) => {
       {/* 음성 입력 모달 */}
       {showVoiceModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in duration-200">
+          <div className="bg-base-100 rounded-3xl shadow-2xl w-full max-w-sm p-6 relative animate-in fade-in zoom-in duration-200">
             {/* 닫기 버튼 */}
             <button
               onClick={stopVoiceInput}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-base-200 transition-colors"
             >
-              <CloseIcon className="text-gray-500" />
+              <CloseIcon className="text-base-content/50" />
             </button>
 
             {/* 헤더 */}
             <div className="text-center mb-6">
-              <h3 className="text-xl font-bold text-gray-800">음성 입력</h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <h3 className="text-xl font-bold text-base-content">음성 입력</h3>
+              <p className="text-sm text-base-content/50 mt-1">
                 {LANGUAGES.find(l => l.code === inputLang)?.flag} {LANGUAGES.find(l => l.code === inputLang)?.name}로 말씀하세요
               </p>
             </div>
@@ -792,24 +787,24 @@ const Translate = ({ embedded = false }) => {
               </p>
               {/* 인식 중인 텍스트 표시 */}
               {voiceInputText && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-xl">
-                  <p className="text-gray-700 text-sm">{voiceInputText}</p>
+                <div className="mt-3 p-3 bg-base-200 rounded-xl">
+                  <p className="text-base-content/70 text-sm">{voiceInputText}</p>
                 </div>
               )}
             </div>
 
             {/* 입력된 텍스트 미리보기 */}
             {inputText && (
-              <div className="mb-6 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+              <div className="mb-6 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
                 <p className="text-xs text-emerald-600 font-medium mb-1">입력된 텍스트</p>
-                <p className="text-gray-700 text-sm line-clamp-3">{inputText}</p>
+                <p className="text-base-content/70 text-sm line-clamp-3">{inputText}</p>
               </div>
             )}
 
             {/* 중지 버튼 */}
             <button
               onClick={stopVoiceInput}
-              className="w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all shadow-md flex items-center justify-center gap-2"
+              className="w-full py-4 bg-gradient-to-r from-base-content/60 to-base-content/70 text-white rounded-xl font-bold hover:from-base-content/70 hover:to-base-content/80 transition-all shadow-md flex items-center justify-center gap-2"
             >
               <MicOffIcon />
               음성 입력 중지
@@ -825,22 +820,22 @@ const Translate = ({ embedded = false }) => {
           onClick={closeTranslationModal}
         >
           <div
-            className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 relative"
+            className="bg-base-100 rounded-3xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto p-6 relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* 닫기 안내 */}
             <div className="text-center mb-4">
-              <p className="text-sm text-gray-400">화면을 터치하면 닫힙니다</p>
+              <p className="text-sm text-base-content/40">화면을 터치하면 닫힙니다</p>
             </div>
 
             {/* 번역 결과 - 큰 폰트 */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-2xl">{LANGUAGES.find(l => l.code === targetLang)?.flag}</span>
-                <span className="text-lg font-bold text-slate-700">{LANGUAGES.find(l => l.code === targetLang)?.name}</span>
+                <span className="text-lg font-bold text-base-content">{LANGUAGES.find(l => l.code === targetLang)?.name}</span>
               </div>
-              <div className="p-6 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-2xl border-2 border-blue-200">
-                <p className="text-slate-800 whitespace-pre-wrap text-2xl md:text-3xl leading-relaxed font-medium">
+              <div className="p-6 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 rounded-2xl border-2 border-blue-500/30">
+                <p className="text-base-content whitespace-pre-wrap text-2xl md:text-3xl leading-relaxed font-medium">
                   {translations.target}
                 </p>
               </div>
@@ -850,10 +845,10 @@ const Translate = ({ embedded = false }) => {
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xl">{LANGUAGES.find(l => l.code === inputLang)?.flag}</span>
-                <span className="text-sm font-bold text-slate-600">역번역 (품질 검증)</span>
+                <span className="text-sm font-bold text-base-content/70">역번역 (품질 검증)</span>
               </div>
-              <div className="p-4 bg-gradient-to-br from-slate-50 to-blue-50 rounded-xl border-2 border-slate-200">
-                <p className="text-slate-700 whitespace-pre-wrap text-lg leading-relaxed">
+              <div className="p-4 bg-gradient-to-br from-base-200 to-blue-500/10 rounded-xl border-2 border-base-300">
+                <p className="text-base-content whitespace-pre-wrap text-lg leading-relaxed">
                   {translations.backTranslation}
                 </p>
               </div>
@@ -861,7 +856,7 @@ const Translate = ({ embedded = false }) => {
 
             {/* 음성 재생 상태 표시 */}
             <div className="mt-4 text-center">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/15 text-green-600 dark:text-green-400 rounded-full text-sm">
                 <VolumeUpIcon fontSize="small" className="animate-pulse" />
                 <span>음성 반복 재생 중...</span>
               </div>
@@ -870,7 +865,7 @@ const Translate = ({ embedded = false }) => {
             {/* 닫기 버튼 */}
             <button
               onClick={closeTranslationModal}
-              className="mt-6 w-full py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all shadow-md flex items-center justify-center gap-2"
+              className="mt-6 w-full py-4 bg-gradient-to-r from-base-content/60 to-base-content/70 text-white rounded-xl font-bold hover:from-base-content/70 hover:to-base-content/80 transition-all shadow-md flex items-center justify-center gap-2"
             >
               <CloseIcon />
               닫기

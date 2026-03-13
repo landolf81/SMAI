@@ -159,7 +159,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
         scrollDirection === 'down' ? 'translate-y-full' : 'translate-y-0'
       }`}
     >
-      <div className="bg-white/90 backdrop-blur-md border-t border-gray-200 safe-area-bottom">
+      <div className="bg-base-100/90 backdrop-blur-md border-t border-base-300 safe-area-bottom">
         <div className="flex items-center justify-around h-20 max-w-screen-xl mx-auto px-2">
           {buttons.map((button) => {
             const IconComponent = button.icon;
@@ -175,12 +175,12 @@ const MobileBottomNav = ({ scrollDirection }) => {
                 } ${
                   isActive
                     ? `${button.activeColor} -translate-y-1`
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-base-content/60 hover:text-base-content'
                 }`}
                 aria-label={button.label}
               >
                 <div className={`relative p-2 rounded-full transition-colors duration-200 ${
-                  isActive ? 'bg-white/60 backdrop-blur-sm shadow-lg ring-1 ring-white/50' : ''
+                  isActive ? 'bg-base-content/5' : ''
                 }`}>
                   {button.id === 'home' ? (
                     <IconComponent

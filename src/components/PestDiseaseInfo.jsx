@@ -177,37 +177,37 @@ const PESTICIDE_TIPS = [
 
 const Section = ({ title, children }) => (
   <section className="mb-6">
-    <h3 className="text-base font-bold text-gray-800 border-l-4 border-teal-500 pl-3 mb-3">{title}</h3>
+    <h3 className="text-base font-bold text-base-content border-l-4 border-teal-500 pl-3 mb-3">{title}</h3>
     {children}
   </section>
 );
 
 const DetailRow = ({ label, text, highlight }) => (
   <div>
-    <p className={`text-xs font-semibold mb-0.5 ${highlight ? 'text-orange-700' : 'text-gray-500'}`}>{label}</p>
-    <p className="text-sm text-gray-700 leading-relaxed">{text}</p>
+    <p className={`text-xs font-semibold mb-0.5 ${highlight ? 'text-orange-700' : 'text-base-content/50'}`}>{label}</p>
+    <p className="text-sm text-base-content/80 leading-relaxed">{text}</p>
   </div>
 );
 
 const PestCard = ({ item, isOpen, onToggle, accentColor }) => {
-  const hoverBg = accentColor === 'red' ? 'hover:bg-red-50' : 'hover:bg-teal-50';
-  const expandedBg = accentColor === 'red' ? 'bg-red-50/40' : 'bg-teal-50/40';
+  const hoverBg = accentColor === 'red' ? 'hover:bg-red-500/10' : 'hover:bg-teal-500/10';
+  const expandedBg = accentColor === 'red' ? 'bg-red-500/10' : 'bg-teal-500/10';
   const badgeCls = accentColor === 'red'
-    ? 'bg-red-100 text-red-700'
-    : 'bg-teal-100 text-teal-700';
+    ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+    : 'bg-teal-500/15 text-teal-600 dark:text-teal-400';
   const symptomLabel = accentColor === 'red' ? '주요 증상' : '주요 피해';
 
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
+    <div className="border border-base-300 rounded-xl overflow-hidden">
       <button
-        className={`w-full flex items-center gap-3 px-4 py-3 bg-white ${hoverBg} transition-colors text-left`}
+        className={`w-full flex items-center gap-3 px-4 py-3 bg-base-100 ${hoverBg} transition-colors text-left`}
         onClick={onToggle}
       >
         {item.image ? (
           <img
             src={item.image}
             alt={item.name}
-            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-gray-100"
+            className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-base-200"
             onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
           />
         ) : null}
@@ -218,18 +218,18 @@ const PestCard = ({ item, isOpen, onToggle, accentColor }) => {
           {item.icon}
         </span>
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-semibold text-gray-800">{item.name}</span>
+          <span className="text-sm font-semibold text-base-content">{item.name}</span>
           {item.badge && (
             <span className={`ml-2 px-1.5 py-0.5 text-xs rounded-full font-medium ${badgeCls}`}>{item.badge}</span>
           )}
         </div>
-        <span className={`text-gray-400 transition-transform duration-200 text-lg leading-none flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`text-base-content/40 transition-transform duration-200 text-lg leading-none flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}>
           ▾
         </span>
       </button>
 
       {isOpen && (
-        <div className={`border-t border-gray-100 ${expandedBg}`}>
+        <div className={`border-t border-base-200 ${expandedBg}`}>
           {item.image && (
             <img
               src={item.image}
@@ -267,19 +267,19 @@ const PestDiseaseInfo = () => {
     <div className="max-w-3xl mx-auto p-4 space-y-2">
       {/* 헤더 */}
       <div className="mb-5">
-        <h2 className="text-xl font-bold text-gray-800">참외 병충해 관리</h2>
-        <p className="text-sm text-gray-600 mt-1">농촌진흥청 농업기술길잡이 105 기반</p>
+        <h2 className="text-xl font-bold text-base-content">참외 병충해 관리</h2>
+        <p className="text-sm text-base-content/60 mt-1">농촌진흥청 농업기술길잡이 105 기반</p>
       </div>
 
       {/* 공통 원칙 */}
       <Section title="공통 원칙">
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-2">
           {COMMON_PRINCIPLES.map((p) => (
             <div key={p.num} className="flex items-start gap-2">
               <span className="flex-shrink-0 w-5 h-5 bg-amber-400 text-white text-xs font-bold rounded-full flex items-center justify-center mt-0.5">
                 {p.num}
               </span>
-              <p className="text-sm text-gray-700">{p.text}</p>
+              <p className="text-sm text-base-content/80">{p.text}</p>
             </div>
           ))}
         </div>
@@ -317,13 +317,13 @@ const PestDiseaseInfo = () => {
       <Section title="농약 사용법 (실무)">
         <div className="space-y-3">
           {PESTICIDE_TIPS.map((tip) => (
-            <div key={tip.num} className="bg-gray-50 border border-gray-100 rounded-xl p-4">
-              <p className="text-sm font-semibold text-gray-800 mb-2">
+            <div key={tip.num} className="bg-base-200 border border-base-200 rounded-xl p-4">
+              <p className="text-sm font-semibold text-base-content mb-2">
                 <span className="text-teal-600 mr-1">{tip.num}.</span>{tip.title}
               </p>
               <ul className="space-y-1">
                 {tip.items.map((item, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-sm text-gray-700">
+                  <li key={i} className="flex items-start gap-1.5 text-sm text-base-content/80">
                     <span className="text-teal-500 mt-0.5 flex-shrink-0">•</span>
                     {item}
                   </li>
@@ -336,9 +336,9 @@ const PestDiseaseInfo = () => {
 
       {/* 법·준수사항 */}
       <Section title="농약 관련 법·준수사항">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-2">
-          <p className="text-sm text-gray-700">농약관리법 및 농촌진흥청 고시 기준 준수</p>
-          <p className="text-sm text-gray-700">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 space-y-2">
+          <p className="text-sm text-base-content/80">농약관리법 및 농촌진흥청 고시 기준 준수</p>
+          <p className="text-sm text-base-content/80">
             <span className="font-semibold">PLS(농약허용물질목록관리제도)</span>: 등록된 작물·병해충·사용기준 외 사용 금지.
             미준수 시 잔류허용기준 위반으로 출하 제한/행정조치 가능.
           </p>
@@ -347,7 +347,7 @@ const PestDiseaseInfo = () => {
               href="https://psis.rda.go.kr/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg font-medium hover:bg-blue-200 transition-colors"
+              className="text-xs px-3 py-1.5 bg-blue-500/15 text-blue-600 dark:text-blue-400 rounded-lg font-medium hover:bg-blue-500/25 transition-colors"
             >
               PSIS 농약안전정보시스템 →
             </a>
@@ -355,7 +355,7 @@ const PestDiseaseInfo = () => {
               href="https://www.nongsaro.go.kr/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs px-3 py-1.5 bg-green-100 text-green-700 rounded-lg font-medium hover:bg-green-200 transition-colors"
+              className="text-xs px-3 py-1.5 bg-green-500/15 text-green-600 dark:text-green-400 rounded-lg font-medium hover:bg-green-500/25 transition-colors"
             >
               농사로 →
             </a>

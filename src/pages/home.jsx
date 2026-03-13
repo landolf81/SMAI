@@ -659,14 +659,13 @@ const Home = () => {
 
   // 모바일 사용자를 위한 기존 화면
   return (
-    <div className="min-h-screen bg-cloud-dancer pb-28 safe-area-bottom">
+    <div className="min-h-screen bg-base-200 pb-28 safe-area-bottom">
       {/* 상단 헤더 공간 확보 */}
       <div className="h-14"></div>
 
       {/* 날짜 선택기 헤더 - 카드 상단 고정 */}
       <div
-        className="flex items-center justify-between px-3 py-2 shadow-sm border-b sticky top-14 z-30 bg-cloud-dancer"
-        style={{ borderColor: COLORS.border, color: COLORS.mainGreen }}
+        className="flex items-center justify-between px-3 py-2 shadow-sm border-b border-base-300 sticky top-14 z-30 bg-base-200 text-[#004225] dark:text-green-400"
       >
         {/* 왼쪽 여백 (날씨 위젯과 균형) */}
         <div className="w-12 shrink-0"></div>
@@ -743,23 +742,23 @@ const Home = () => {
           <div className="mt-6" ref={hottestPostSentinelRef}>
             {hottestPostLoading && (
               <div className="animate-pulse">
-                <div className="h-5 w-24 bg-gray-200 rounded mb-3"></div>
-                <div className="rounded-2xl overflow-hidden shadow-md border border-gray-100 bg-white">
+                <div className="h-5 w-24 bg-base-300 rounded mb-3"></div>
+                <div className="rounded-2xl overflow-hidden shadow-md border border-base-200 bg-base-100">
                   <div className="p-4 space-y-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="h-4 w-24 bg-gray-200 rounded"></div>
+                      <div className="w-10 h-10 bg-base-300 rounded-full"></div>
+                      <div className="h-4 w-24 bg-base-300 rounded"></div>
                     </div>
-                    <div className="h-4 w-full bg-gray-200 rounded"></div>
-                    <div className="h-4 w-3/4 bg-gray-200 rounded"></div>
-                    <div className="aspect-[4/5] bg-gray-100 rounded-lg"></div>
+                    <div className="h-4 w-full bg-base-300 rounded"></div>
+                    <div className="h-4 w-3/4 bg-base-300 rounded"></div>
+                    <div className="aspect-[4/5] bg-base-content/20 rounded-lg"></div>
                   </div>
                 </div>
               </div>
             )}
             {hottestPost && (
               <>
-                <span className="font-bold text-gray-800 mb-3 block">인기 게시물</span>
+                <span className="font-bold text-base-content mb-3 block">인기 게시물</span>
                 <EnhancedInstagramPost
                   post={hottestPost}
                   isVisible={true}

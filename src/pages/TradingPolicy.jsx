@@ -8,7 +8,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 
 const TradingPolicy = () => {
   return (
-    <div className="min-h-screen bg-cloud-dancer pt-14 pb-20">
+    <div className="min-h-screen bg-base-200 pt-14 pb-20">
       {/* 헤더 */}
       <div className="bg-gradient-to-r from-purple-600 to-violet-600 text-white py-8 px-4">
         <div className="max-w-3xl mx-auto text-center">
@@ -20,18 +20,18 @@ const TradingPolicy = () => {
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-8">
         {/* 안전 거래 원칙 */}
-        <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <section className="bg-base-100 rounded-lg shadow-sm border border-base-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-6 bg-purple-600 rounded-full"></div>
             <ShieldIcon className="text-purple-600" />
-            <h2 className="text-xl font-bold text-gray-800">안전 거래 원칙</h2>
+            <h2 className="text-xl font-bold text-base-content">안전 거래 원칙</h2>
           </div>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="text-green-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">직거래 권장</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">직거래 권장</h3>
+                <p className="text-base-content/60 text-sm">
                   가급적 안전한 장소에서 직접 만나 물품을 확인하고 거래하세요.
                 </p>
               </div>
@@ -39,8 +39,8 @@ const TradingPolicy = () => {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="text-green-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">공개된 장소에서 거래</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">공개된 장소에서 거래</h3>
+                <p className="text-base-content/60 text-sm">
                   CCTV가 설치된 카페, 농협, 주민센터 등 공개된 장소를 이용하세요.
                 </p>
               </div>
@@ -48,8 +48,8 @@ const TradingPolicy = () => {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="text-green-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">물품 상태 확인</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">물품 상태 확인</h3>
+                <p className="text-base-content/60 text-sm">
                   거래 전 반드시 물품의 상태를 직접 확인하고 테스트하세요.
                 </p>
               </div>
@@ -57,8 +57,8 @@ const TradingPolicy = () => {
             <div className="flex items-start gap-3">
               <CheckCircleIcon className="text-green-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">현장 결제</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">현장 결제</h3>
+                <p className="text-base-content/60 text-sm">
                   물품 인수와 동시에 현장에서 결제하는 것을 원칙으로 하세요.
                 </p>
               </div>
@@ -67,18 +67,18 @@ const TradingPolicy = () => {
         </section>
 
         {/* 주의사항 */}
-        <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <section className="bg-base-100 rounded-lg shadow-sm border border-base-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-6 bg-orange-500 rounded-full"></div>
             <WarningIcon className="text-orange-500" />
-            <h2 className="text-xl font-bold text-gray-800">주의사항</h2>
+            <h2 className="text-xl font-bold text-base-content">주의사항</h2>
           </div>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">선입금 거래 금지</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">선입금 거래 금지</h3>
+                <p className="text-base-content/60 text-sm">
                   물품을 확인하기 전에 절대 선입금하지 마세요. 사기 피해의 주요 원인입니다.
                 </p>
               </div>
@@ -86,8 +86,8 @@ const TradingPolicy = () => {
             <div className="flex items-start gap-3">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">개인정보 보호</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">개인정보 보호</h3>
+                <p className="text-base-content/60 text-sm">
                   불필요한 개인정보(주민번호, 계좌비밀번호 등)를 요구하는 경우 주의하세요.
                 </p>
               </div>
@@ -95,8 +95,8 @@ const TradingPolicy = () => {
             <div className="flex items-start gap-3">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">의심스러운 저가 상품</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">의심스러운 저가 상품</h3>
+                <p className="text-base-content/60 text-sm">
                   시세보다 지나치게 저렴한 상품은 사기일 가능성이 높으니 주의하세요.
                 </p>
               </div>
@@ -104,8 +104,8 @@ const TradingPolicy = () => {
             <div className="flex items-start gap-3">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-1" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800">택배 거래 시 주의</h3>
-                <p className="text-gray-600 text-sm">
+                <h3 className="font-semibold text-base-content">택배 거래 시 주의</h3>
+                <p className="text-base-content/60 text-sm">
                   부득이하게 택배 거래 시 안전결제 서비스를 이용하고, 물품 수령 후 검수하세요.
                 </p>
               </div>
@@ -114,11 +114,11 @@ const TradingPolicy = () => {
         </section>
 
         {/* 금지 품목 */}
-        <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <section className="bg-base-100 rounded-lg shadow-sm border border-base-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-6 bg-red-600 rounded-full"></div>
             <GavelIcon className="text-red-600" />
-            <h2 className="text-xl font-bold text-gray-800">거래 금지 품목</h2>
+            <h2 className="text-xl font-bold text-base-content">거래 금지 품목</h2>
           </div>
           <div className="bg-red-50 rounded-lg p-4 mb-4">
             <p className="text-red-800 text-sm font-medium mb-2">
@@ -126,92 +126,92 @@ const TradingPolicy = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">불법 복제품</h3>
-                <p className="text-gray-600 text-xs">위조품, 모조품, 불법 복제 소프트웨어</p>
+                <h3 className="font-semibold text-base-content text-sm">불법 복제품</h3>
+                <p className="text-base-content/60 text-xs">위조품, 모조품, 불법 복제 소프트웨어</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">의약품</h3>
-                <p className="text-gray-600 text-xs">전문의약품, 한약재 등 허가받지 않은 의약품</p>
+                <h3 className="font-semibold text-base-content text-sm">의약품</h3>
+                <p className="text-base-content/60 text-xs">전문의약품, 한약재 등 허가받지 않은 의약품</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">불법 개조 물품</h3>
-                <p className="text-gray-600 text-xs">안전인증 없는 개조 전기제품 등</p>
+                <h3 className="font-semibold text-base-content text-sm">불법 개조 물품</h3>
+                <p className="text-base-content/60 text-xs">안전인증 없는 개조 전기제품 등</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">위험물</h3>
-                <p className="text-gray-600 text-xs">폭발물, 화약류, 유해화학물질</p>
+                <h3 className="font-semibold text-base-content text-sm">위험물</h3>
+                <p className="text-base-content/60 text-xs">폭발물, 화약류, 유해화학물질</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">음란물</h3>
-                <p className="text-gray-600 text-xs">음란물, 성인용품(일부)</p>
+                <h3 className="font-semibold text-base-content text-sm">음란물</h3>
+                <p className="text-base-content/60 text-xs">음란물, 성인용품(일부)</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">야생동물 및 부산물</h3>
-                <p className="text-gray-600 text-xs">멸종위기종, 야생동물 및 그 부산물</p>
+                <h3 className="font-semibold text-base-content text-sm">야생동물 및 부산물</h3>
+                <p className="text-base-content/60 text-xs">멸종위기종, 야생동물 및 그 부산물</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">도난·분실 물품</h3>
-                <p className="text-gray-600 text-xs">도난당하거나 습득한 물품</p>
+                <h3 className="font-semibold text-base-content text-sm">도난·분실 물품</h3>
+                <p className="text-base-content/60 text-xs">도난당하거나 습득한 물품</p>
               </div>
             </div>
-            <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-2 p-3 bg-base-200 rounded-lg">
               <CancelIcon className="text-red-500 flex-shrink-0 mt-0.5" fontSize="small" />
               <div>
-                <h3 className="font-semibold text-gray-800 text-sm">기타 불법 물품</h3>
-                <p className="text-gray-600 text-xs">법률로 거래가 금지된 모든 물품</p>
+                <h3 className="font-semibold text-base-content text-sm">기타 불법 물품</h3>
+                <p className="text-base-content/60 text-xs">법률로 거래가 금지된 모든 물품</p>
               </div>
             </div>
           </div>
         </section>
 
         {/* 사기 예방 */}
-        <section className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <section className="bg-base-100 rounded-lg shadow-sm border border-base-200 p-6">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1 h-6 bg-blue-600 rounded-full"></div>
             <ShieldIcon className="text-blue-600" />
-            <h2 className="text-xl font-bold text-gray-800">사기 예방 체크리스트</h2>
+            <h2 className="text-xl font-bold text-base-content">사기 예방 체크리스트</h2>
           </div>
           <div className="space-y-2">
             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
               <input type="checkbox" className="checkbox checkbox-primary" disabled />
-              <span className="text-gray-700 text-sm">판매자의 프로필과 거래 이력을 확인했나요?</span>
+              <span className="text-base-content/70 text-sm">판매자의 프로필과 거래 이력을 확인했나요?</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
               <input type="checkbox" className="checkbox checkbox-primary" disabled />
-              <span className="text-gray-700 text-sm">상품 사진이 실제 촬영한 것인지 확인했나요?</span>
+              <span className="text-base-content/70 text-sm">상품 사진이 실제 촬영한 것인지 확인했나요?</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
               <input type="checkbox" className="checkbox checkbox-primary" disabled />
-              <span className="text-gray-700 text-sm">거래 장소는 안전한 공개된 장소인가요?</span>
+              <span className="text-base-content/70 text-sm">거래 장소는 안전한 공개된 장소인가요?</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
               <input type="checkbox" className="checkbox checkbox-primary" disabled />
-              <span className="text-gray-700 text-sm">판매자가 선입금을 요구하지 않나요?</span>
+              <span className="text-base-content/70 text-sm">판매자가 선입금을 요구하지 않나요?</span>
             </div>
             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
               <input type="checkbox" className="checkbox checkbox-primary" disabled />
-              <span className="text-gray-700 text-sm">상품 가격이 시세에 비해 적정한가요?</span>
+              <span className="text-base-content/70 text-sm">상품 가격이 시세에 비해 적정한가요?</span>
             </div>
           </div>
         </section>
@@ -241,9 +241,9 @@ const TradingPolicy = () => {
         </section>
 
         {/* 책임 제한 */}
-        <section className="bg-gray-100 rounded-lg p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-3">책임의 제한</h2>
-          <div className="text-sm text-gray-600 space-y-2">
+        <section className="bg-base-200 rounded-lg p-6">
+          <h2 className="text-lg font-bold text-base-content mb-3">책임의 제한</h2>
+          <div className="text-sm text-base-content/60 space-y-2">
             <p>
               • 참외 이야기는 회원 간 거래를 중개하는 플랫폼으로, 직접적인 거래 당사자가 아닙니다.
             </p>
@@ -260,10 +260,10 @@ const TradingPolicy = () => {
         </section>
 
         {/* 문의 안내 */}
-        <div className="text-center bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <div className="text-center bg-base-100 rounded-lg shadow-sm border border-base-200 p-6">
           <PolicyIcon className="mx-auto text-purple-600 mb-3" style={{ fontSize: 40 }} />
-          <h3 className="text-lg font-bold text-gray-800 mb-2">거래 정책 관련 문의</h3>
-          <p className="text-gray-600 mb-4">
+          <h3 className="text-lg font-bold text-base-content mb-2">거래 정책 관련 문의</h3>
+          <p className="text-base-content/60 mb-4">
             거래 정책에 대해 궁금한 점이 있으신가요?
           </p>
           <button

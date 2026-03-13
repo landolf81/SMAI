@@ -169,14 +169,14 @@
 /* Loading Skeleton */
 .skeleton {
   animation: shimmer 1.5s infinite;
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, var(--surface-elevated) 25%, var(--border-default) 50%, var(--surface-elevated) 75%);
   background-size: 1000px 100%;
 }
 
 /* Instagram Post Base Styles */
 .instagram-post {
-  background: white;
-  border: 1px solid #dbdbdb;
+  background-color: var(--surface-card);
+  border: 1px solid var(--border-default);
   border-radius: 8px;
   margin-bottom: 24px;
   transition: all 0.3s ease;
@@ -299,15 +299,15 @@
   transform: scale(0.95);
 }
 
-/* Dark Mode Support */
+/* 다크 모드 지원 - DaisyUI 시맨틱 CSS 변수로 자동 처리됨 */
 @media (prefers-color-scheme: dark) {
   .instagram-post {
-    background-color: #1a1a1a;
-    border-color: #333;
-    color: #fff;
+    background-color: var(--surface-card);
+    border-color: var(--border-default);
+    color: var(--text-primary);
   }
-  
+
   .skeleton {
-    background: linear-gradient(90deg, #2a2a2a 25%, #1a1a1a 50%, #2a2a2a 75%);
+    background: linear-gradient(90deg, var(--surface-elevated) 25%, var(--border-default) 50%, var(--surface-elevated) 75%);
   }
 }

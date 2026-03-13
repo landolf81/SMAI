@@ -21,7 +21,7 @@ const loungeService = {
    * @param {Object} options
    * @param {string|null} options.beforeTime - 이 시각보다 이전 메시지만 (null이면 최신부터)
    * @param {number} options.limit - 가져올 개수 (기본 30)
-   * @returns {Promise<Array>} 오래된 순으로 정렬된 메시지 배열
+   * @returns {Promise<Array>} 최신순(내림차순)으로 정렬된 메시지 배열
    */
   async getMessages({ beforeTime = null, limit = 30 } = {}) {
     let query = supabase
@@ -37,8 +37,8 @@ const loungeService = {
     const { data, error } = await query;
     if (error) throw error;
 
-    // 내림차순으로 받았으므로 뒤집어서 오래된 순으로 반환
-    return (data || []).reverse();
+    // 최신순(내림차순) 그대로 반환
+    return data || [];
   },
 
   /**

@@ -73,6 +73,32 @@
       }
     }
     </script>
+
+    <!-- FOUC 방지: 다크모드 초기화 (React 로드 전에 실행) -->
+    <script>
+      (function() {
+        var stored = localStorage.getItem('theme');
+        var isDark;
+        if (stored === 'dark') {
+          isDark = true;
+        } else if (stored === 'light') {
+          isDark = false;
+        } else {
+          // null (첫 방문): 기본 라이트 테마
+          // 'system': 시스템 설정 따름
+          isDark = stored === 'system'
+            ? window.matchMedia('(prefers-color-scheme: dark)').matches
+            : false;
+        }
+        var theme = isDark ? 'market-dark' : 'market-light';
+        document.documentElement.setAttribute('data-theme', theme);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

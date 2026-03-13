@@ -84,14 +84,14 @@ const Login = () => {
         />
 
         {/* 타이틀 */}
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">참외 이야기</h1>
-        <p className="text-gray-500 mb-8 text-center leading-relaxed">
+        <h1 className="text-2xl font-bold text-base-content mb-2">참외 이야기</h1>
+        <p className="text-base-content/50 mb-8 text-center leading-relaxed">
           참외가 자라기 전의 이야기<br />
           농부의 이야기 밭의 이야기
         </p>
 
         {/* 로그인 카드 */}
-        <div className="w-full max-w-sm bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 p-6">
+        <div className="w-full max-w-sm bg-base-100/80 backdrop-blur-lg rounded-3xl shadow-xl border border-base-300/50 p-6">
           {/* 에러 메시지 */}
           {err && (
             <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-xl text-sm mb-4">
@@ -128,17 +128,17 @@ const Login = () => {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-yellow-500 focus:ring-yellow-400 transition-all"
+                className="w-4 h-4 rounded border-base-300 text-yellow-500 focus:ring-yellow-400 transition-all"
               />
-              <span className="ml-2 text-gray-600 text-sm group-hover:text-gray-800 transition-colors">
+              <span className="ml-2 text-base-content/60 text-sm group-hover:text-base-content transition-colors">
                 로그인 상태 유지
               </span>
             </label>
           </div>
 
           {/* 회원가입 안내 */}
-          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
-            <p className="text-gray-500 text-sm mb-2">처음이신가요?</p>
+          <div className="mt-6 pt-6 border-t border-base-200 text-center">
+            <p className="text-base-content/50 text-sm mb-2">처음이신가요?</p>
             <Link
               to="/register"
               className="inline-flex items-center gap-1 text-yellow-600 hover:text-yellow-700 font-medium text-sm transition-colors"

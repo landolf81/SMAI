@@ -38,53 +38,53 @@ const PCLanding = () => {
           참외 이야기
         </h1>
 
-        <p className="text-xl text-gray-600 mb-12">
+        <p className="text-xl text-base-content/60 mb-12">
           참외가 자라기 전의 이야기<br />
           농부의 이야기 밭의 이야기
         </p>
 
         {/* 모바일 안내 카드 */}
-        <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-xl border border-gray-200/50 p-8 mb-8">
+        <div className="bg-base-100/80 backdrop-blur-lg rounded-3xl shadow-xl border border-base-300/50 p-8 mb-8">
           <div className="text-6xl mb-4">📱</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">
+          <h2 className="text-2xl font-bold text-base-content mb-3">
             모바일에서 이용해주세요
           </h2>
-          <p className="text-gray-600 leading-relaxed">
+          <p className="text-base-content/60 leading-relaxed">
             참외 이야기는 모바일에 최적화된 서비스입니다.<br />
             스마트폰으로 접속하시면 더 편리하게 이용하실 수 있습니다.
           </p>
 
           {/* QR 코드 영역 */}
           <div className="mt-6 flex flex-col items-center">
-            <div className="p-4 bg-gray-50 rounded-xl">
+            <div className="p-4 bg-base-200 rounded-xl">
               <img
                 src="https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=https://www.seonnam.com"
                 alt="QR Code - seonnam.com"
                 className="w-32 h-32 rounded-lg"
               />
             </div>
-            <p className="text-sm text-gray-500 mt-2">스마트폰으로 스캔하세요</p>
+            <p className="text-sm text-base-content/50 mt-2">스마트폰으로 스캔하세요</p>
           </div>
         </div>
 
         {/* 관리자 로그인 버튼 */}
         <button
           onClick={() => setShowAdminModal(true)}
-          className="text-gray-400 hover:text-gray-600 text-sm transition-colors underline"
+          className="text-base-content/40 hover:text-base-content/60 text-sm transition-colors underline"
         >
           관리자 로그인
         </button>
       </div>
 
       {/* 푸터 */}
-      <div className="relative mt-8 pb-6 text-center text-gray-400 text-sm space-y-1">
+      <div className="relative mt-8 pb-6 text-center text-base-content/40 text-sm space-y-1">
         <p>&copy; 2025 참외이야기. All rights reserved.</p>
         <p>
-          <a href="/privacy" className="hover:text-gray-600 transition-colors">개인정보처리방침</a>
+          <a href="/privacy" className="hover:text-base-content/60 transition-colors">개인정보처리방침</a>
           <span className="mx-2">|</span>
-          <a href="/terms" className="hover:text-gray-600 transition-colors">이용약관</a>
+          <a href="/terms" className="hover:text-base-content/60 transition-colors">이용약관</a>
           <span className="mx-2">|</span>
-          <a href="mailto:support@chamoe.kr" className="hover:text-gray-600 transition-colors">문의</a>
+          <a href="mailto:support@chamoe.kr" className="hover:text-base-content/60 transition-colors">문의</a>
         </p>
       </div>
 

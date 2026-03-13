@@ -27,12 +27,12 @@ const AdminPage = () => {
     
     return (
         <AdminOnly>
-            <div className="admin-page bg-cloud-dancer min-h-screen pt-14">
+            <div className="admin-page bg-base-200 min-h-screen pt-14">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* 헤더 */}
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">관리자 대시보드</h1>
-                        <p className="text-gray-600">참외 이야기 웹앱 관리 페이지입니다.</p>
+                        <h1 className="text-3xl font-bold text-base-content mb-2">관리자 대시보드</h1>
+                        <p className="text-base-content/60">참외 이야기 웹앱 관리 페이지입니다.</p>
                         
                         {/* 권한 정보 표시 */}
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -181,14 +181,14 @@ const DashboardContent = ({ navigate }) => {
                             <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
                                 <div>
                                     <div className="font-medium">스팸성 광고 글</div>
-                                    <div className="text-sm text-gray-500">신고 5건 • 2시간 전</div>
+                                    <div className="text-sm text-base-content/50">신고 5건 • 2시간 전</div>
                                 </div>
                                 <button className="btn btn-error btn-sm">처리</button>
                             </div>
                             <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                                 <div>
                                     <div className="font-medium">부적절한 내용</div>
-                                    <div className="text-sm text-gray-500">신고 2건 • 4시간 전</div>
+                                    <div className="text-sm text-base-content/50">신고 2건 • 4시간 전</div>
                                 </div>
                                 <button className="btn btn-warning btn-sm">검토</button>
                             </div>
@@ -204,21 +204,21 @@ const DashboardContent = ({ navigate }) => {
                                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                 <div>
                                     <div className="font-medium">데이터베이스 백업 완료</div>
-                                    <div className="text-sm text-gray-500">30분 전</div>
+                                    <div className="text-sm text-base-content/50">30분 전</div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                 <div>
                                     <div className="font-medium">새 사용자 가입 알림</div>
-                                    <div className="text-sm text-gray-500">1시간 전</div>
+                                    <div className="text-sm text-base-content/50">1시간 전</div>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
                                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                                 <div>
                                     <div className="font-medium">광고 캠페인 시작</div>
-                                    <div className="text-sm text-gray-500">3시간 전</div>
+                                    <div className="text-sm text-base-content/50">3시간 전</div>
                                 </div>
                             </div>
                         </div>

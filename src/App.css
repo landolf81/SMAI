@@ -88,12 +88,12 @@ body {
 .data-table th {
   position: sticky;
   top: 0;
-  background: white;
+  background-color: var(--surface-card);
   z-index: 10;
 }
 
 .data-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--surface-elevated);
 }
 
 /* 모바일 최적화 */
@@ -127,11 +127,11 @@ body {
   .no-print {
     display: none !important;
   }
-  
+
   .market-card {
     break-inside: avoid;
     box-shadow: none;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-default);
   }
 }
 
@@ -157,7 +157,7 @@ body {
 /* 사용자 정의 스크롤바 */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+  scrollbar-color: var(--border-default) var(--surface-elevated);
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -165,12 +165,12 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background-color: var(--surface-elevated);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background-color: var(--border-default);
   border-radius: 3px;
 }
 

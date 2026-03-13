@@ -115,17 +115,17 @@ const AuthNew = () => {
 
   // 인증 방법 선택 화면
   const renderChooseMethod = () => (
-    <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
+    <div className="max-w-md mx-auto bg-base-100 rounded-xl shadow-lg p-8">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">참외 이야기 로그인</h1>
-        <p className="text-gray-600">로그인 방법을 선택해주세요</p>
+        <h1 className="text-2xl font-bold text-base-content mb-2">참외 이야기 로그인</h1>
+        <p className="text-base-content/60">로그인 방법을 선택해주세요</p>
       </div>
 
       <div className="space-y-4">
         {/* 휴대폰 인증 로그인 */}
         <button
           onClick={() => setAuthStep('phone')}
-          className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-center px-4 py-3 border border-base-300 rounded-lg shadow-sm bg-base-100 text-base-content/70 hover:bg-base-200 transition-colors"
         >
           <span className="text-2xl mr-3">📱</span>
           <span className="font-medium">휴대폰 번호로 로그인</span>
@@ -141,7 +141,7 @@ const AuthNew = () => {
         </button>
       </div>
 
-      <div className="mt-8 text-center text-sm text-gray-500">
+      <div className="mt-8 text-center text-sm text-base-content/50">
         <p>처음 이용하시는 경우 자동으로 회원가입됩니다.</p>
       </div>
     </div>
@@ -149,21 +149,21 @@ const AuthNew = () => {
 
   // 휴대폰 번호 입력 화면
   const renderPhoneInput = () => (
-    <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
+    <div className="max-w-md mx-auto bg-base-100 rounded-xl shadow-lg p-8">
       <div className="text-center mb-8">
         <button
           onClick={() => setAuthStep('choose')}
-          className="mb-4 text-gray-500 hover:text-gray-700"
+          className="mb-4 text-base-content/50 hover:text-base-content/70"
         >
           ← 뒤로가기
         </button>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">휴대폰 인증</h1>
-        <p className="text-gray-600">휴대폰 번호를 입력해주세요</p>
+        <h1 className="text-2xl font-bold text-base-content mb-2">휴대폰 인증</h1>
+        <p className="text-base-content/60">휴대폰 번호를 입력해주세요</p>
       </div>
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-base-content/70 mb-2">
             휴대폰 번호
           </label>
           <input
@@ -172,7 +172,7 @@ const AuthNew = () => {
             onChange={handlePhoneChange}
             placeholder="010-1234-5678"
             maxLength={13}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-base-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
           />
         </div>
 
@@ -181,7 +181,7 @@ const AuthNew = () => {
           disabled={loading || !phoneNumber}
           className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
             loading || !phoneNumber
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              ? 'bg-base-content/20 text-base-content/50 cursor-not-allowed'
               : 'bg-green-600 text-white hover:bg-green-700'
           }`}
         >
@@ -193,16 +193,16 @@ const AuthNew = () => {
 
   // 인증번호 입력 화면
   const renderVerification = () => (
-    <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
+    <div className="max-w-md mx-auto bg-base-100 rounded-xl shadow-lg p-8">
       <div className="text-center mb-8">
         <button
           onClick={() => setAuthStep('phone')}
-          className="mb-4 text-gray-500 hover:text-gray-700"
+          className="mb-4 text-base-content/50 hover:text-base-content/70"
         >
           ← 뒤로가기
         </button>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">인증번호 입력</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold text-base-content mb-2">인증번호 입력</h1>
+        <p className="text-base-content/60">
           {phoneNumber}로 발송된<br />
           인증번호 6자리를 입력해주세요
         </p>
@@ -210,7 +210,7 @@ const AuthNew = () => {
 
       <div className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-base-content/70 mb-2">
             인증번호
           </label>
           <input
@@ -219,11 +219,11 @@ const AuthNew = () => {
             onChange={(e) => setVerificationCode(e.target.value)}
             placeholder="123456"
             maxLength={6}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-2xl tracking-widest"
+            className="w-full px-4 py-3 border border-base-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-center text-2xl tracking-widest"
           />
-          
+
           {countdown > 0 && (
-            <p className="text-sm text-gray-500 mt-2 text-center">
+            <p className="text-sm text-base-content/50 mt-2 text-center">
               남은 시간: {Math.floor(countdown / 60)}분 {countdown % 60}초
             </p>
           )}
@@ -235,7 +235,7 @@ const AuthNew = () => {
             disabled={loading || !verificationCode}
             className={`w-full py-3 px-4 rounded-lg font-medium transition-colors ${
               loading || !verificationCode
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'bg-base-content/20 text-base-content/50 cursor-not-allowed'
                 : 'bg-green-600 text-white hover:bg-green-700'
             }`}
           >
@@ -247,7 +247,7 @@ const AuthNew = () => {
             disabled={!canResend || loading}
             className={`w-full py-2 px-4 text-sm rounded-lg transition-colors ${
               !canResend || loading
-                ? 'text-gray-400 cursor-not-allowed'
+                ? 'text-base-content/40 cursor-not-allowed'
                 : 'text-green-600 hover:text-green-700 hover:bg-green-50'
             }`}
           >

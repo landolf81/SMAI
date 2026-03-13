@@ -281,7 +281,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
       <div className="px-4 py-2">
         <div className="flex items-center space-x-2">
           <LoadingSpinner size="sm" />
-          <span className="text-gray-500 text-sm">댓글을 불러오는 중...</span>
+          <span className="text-base-content/50 text-sm">댓글을 불러오는 중...</span>
         </div>
       </div>
     );
@@ -308,7 +308,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
   }
 
   return (
-    <div className="border-t border-gray-100 bg-gray-50">
+    <div className="border-t border-base-200 bg-base-200">
       {/* 댓글 목록 미리보기 */}
       {comments.length > 0 && (
         <div className="px-4 py-2 space-y-2">
@@ -331,23 +331,23 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                   <div className="flex items-start">
                     {isAIUser(comment) && <AIBadge />}
                     {comment.is_secret && (
-                      <span className="mr-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+                      <span className="mr-1 text-xs bg-base-200 text-base-content/60 px-1 py-0.5 rounded">
                         🔒 비밀글
                       </span>
                     )}
-                    <span className="text-sm text-gray-700 flex-1 break-words">
+                    <span className="text-sm text-base-content/70 flex-1 break-words">
                       {comment.canView === false ? (
-                        <span className="text-gray-500 italic">🔒 비밀 댓글입니다.</span>
+                        <span className="text-base-content/50 italic">🔒 비밀 댓글입니다.</span>
                       ) : (
                         comment.desc
                       )}
                     </span>
                     {currentUser && !previewMode && (
                       <div className="dropdown dropdown-end ml-2">
-                        <div tabIndex={0} role="button" className="text-gray-400 hover:text-gray-600 cursor-pointer">
+                        <div tabIndex={0} role="button" className="text-base-content/40 hover:text-base-content/60 cursor-pointer">
                           <FontAwesomeIcon icon={faEllipsisV} className="w-3 h-3" />
                         </div>
-                        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-white rounded-box w-32">
+                        <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-32">
                           {comment.userId === currentUser?.id ? (
                             <>
                               <li>
@@ -388,13 +388,13 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                     {currentUser && !previewMode && (
                       <button
                         onClick={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
-                        className="text-xs text-gray-500 hover:text-orange-500 inline-flex items-center gap-0.5"
+                        className="text-xs text-base-content/50 hover:text-orange-500 inline-flex items-center gap-0.5"
                       >
                         <FontAwesomeIcon icon={faReply} className="w-2.5 h-2.5" />
                         <span className="leading-none">답글</span>
                       </button>
                     )}
-                    <span className="text-xs text-gray-500 leading-none ml-auto">
+                    <span className="text-xs text-base-content/50 leading-none ml-auto">
                       {moment(comment.created_at).fromNow()}
                     </span>
                   </div>
@@ -405,7 +405,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                       <textarea
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
-                        className="w-full p-2 border border-gray-200 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+                        className="w-full p-2 border border-base-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
                         rows="2"
                       />
                       <div className="flex space-x-2 mt-2">
@@ -422,7 +422,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                             setEditingComment(null);
                             setEditText('');
                           }}
-                          className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
+                          className="px-3 py-1 bg-base-300 text-base-content/70 rounded text-xs hover:bg-base-content/30"
                         >
                           취소
                         </button>
@@ -449,7 +449,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
                             placeholder="답글을 입력하세요..."
-                            className="w-full p-2 border border-gray-200 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            className="w-full p-2 border border-base-300 rounded text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
                             rows="2"
                           />
                           <div className="flex items-center gap-2 mt-2">
@@ -461,7 +461,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                                 className={`w-7 h-7 flex-shrink-0 flex items-center justify-center rounded-full transition-all ${
                                   isReplyListening
                                     ? 'bg-red-500 text-white animate-pulse'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                    : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                                 }`}
                                 title={isReplyListening ? '음성 입력 중지' : '음성 입력'}
                               >
@@ -485,7 +485,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                                   setIsReplyListening(false);
                                 }
                               }}
-                              className="px-3 py-1 bg-gray-300 text-gray-700 rounded text-xs hover:bg-gray-400"
+                              className="px-3 py-1 bg-base-300 text-base-content/70 rounded text-xs hover:bg-base-content/30"
                             >
                               취소
                             </button>
@@ -517,26 +517,26 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                         <div className="flex items-start">
                           {isAIUser(reply) && <AIBadge />}
                           {reply.is_secret && (
-                            <span className="mr-1 text-xs bg-gray-100 text-gray-600 px-1 py-0.5 rounded">
+                            <span className="mr-1 text-xs bg-base-200 text-base-content/60 px-1 py-0.5 rounded">
                               🔒 비밀글
                             </span>
                           )}
-                          <span className="text-sm text-gray-700 flex-1 break-words">
+                          <span className="text-sm text-base-content/70 flex-1 break-words">
                             {reply.canView === false ? (
-                              <span className="text-gray-500 italic">🔒 비밀 댓글입니다.</span>
+                              <span className="text-base-content/50 italic">🔒 비밀 댓글입니다.</span>
                             ) : (
                               reply.desc
                             )}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500 leading-none block text-right">
+                        <span className="text-xs text-base-content/50 leading-none block text-right">
                           {moment(reply.created_at).fromNow()}
                         </span>
                       </div>
                     </div>
                   ))}
                   {comment.replies.length > 2 && (
-                    <button className="text-xs text-gray-500 ml-7">
+                    <button className="text-xs text-base-content/50 ml-7">
                       답글 {comment.replies.length - 2}개 더 보기
                     </button>
                   )}
@@ -559,7 +559,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                   setShowAllComments(true);
                 }
               }}
-              className="text-sm text-gray-500 hover:text-gray-700 mt-2 font-medium"
+              className="text-sm text-base-content/50 hover:text-base-content/70 mt-2 font-medium"
             >
               댓글 더 보기
             </button>
@@ -569,10 +569,10 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
 
       {/* 댓글 작성 토글 버튼 - 로그인한 사용자에게만, previewMode가 아닐 때만 표시 */}
       {!previewMode && currentUser && !showCommentForm && onToggleCommentForm && (
-        <div className="px-4 py-2 border-t border-gray-200">
+        <div className="px-4 py-2 border-t border-base-300">
           <button
             onClick={onToggleCommentForm}
-            className="text-gray-500 text-sm hover:text-gray-700 transition-colors flex items-center space-x-2"
+            className="text-base-content/50 text-sm hover:text-base-content/70 transition-colors flex items-center space-x-2"
           >
             <span>✏️</span>
             <span>댓글 작성하기</span>
@@ -582,8 +582,8 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
 
       {/* 비로그인 사용자를 위한 로그인 유도 메시지 */}
       {!currentUser && (
-        <div className="px-4 py-2 border-t border-gray-200">
-          <div className="text-center text-gray-500 text-sm">
+        <div className="px-4 py-2 border-t border-base-300">
+          <div className="text-center text-base-content/50 text-sm">
             <span>댓글을 작성하려면 </span>
             <Link to="/login" className="text-orange-600 hover:text-orange-700 font-medium">
               로그인
@@ -595,7 +595,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
 
       {/* 댓글 작성 폼 - 로그인한 사용자에게만 표시 */}
       {currentUser && showCommentForm && (
-        <form onSubmit={handleSubmitComment} className="px-4 py-3 border-t border-gray-200 bg-white">
+        <form onSubmit={handleSubmitComment} className="px-4 py-3 border-t border-base-300 bg-base-100">
           <div className="flex items-center gap-2">
             {/* 음성 입력 버튼 */}
             {speechSupported && (
@@ -605,7 +605,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
                 className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full transition-all ${
                   isListening
                     ? 'bg-red-500 text-white animate-pulse'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                 }`}
                 title={isListening ? '음성 입력 중지' : '음성 입력'}
               >
@@ -617,7 +617,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="댓글을 입력하세요..."
-              className="flex-1 min-w-0 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
+              className="flex-1 min-w-0 px-3 py-2 border border-base-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
             />
             <button
               type="submit"
@@ -634,15 +634,15 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
           {/* 중고거래 게시물에서만 비밀 댓글 옵션 표시 */}
           {isSecondHand && (
             <div className="mt-2">
-              <label className="flex items-center space-x-2 text-xs text-gray-600">
+              <label className="flex items-center space-x-2 text-xs text-base-content/60">
                 <input
                   type="checkbox"
                   checked={isSecretComment}
                   onChange={(e) => setIsSecretComment(e.target.checked)}
-                  className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+                  className="rounded border-base-300 text-orange-500 focus:ring-orange-400"
                 />
                 <span>🔒 비밀 댓글</span>
-                <span className="text-xs text-gray-500">(판매자와 본인만 볼 수 있음)</span>
+                <span className="text-xs text-base-content/50">(판매자와 본인만 볼 수 있음)</span>
               </label>
             </div>
           )}
@@ -651,7 +651,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
 
       {/* 댓글이 없을 때 메시지 - previewMode에서는 표시하지 않음 */}
       {comments.length === 0 && !previewMode && (
-        <div className="px-4 py-6 text-center text-gray-500 text-sm">
+        <div className="px-4 py-6 text-center text-base-content/50 text-sm">
           첫 번째 댓글을 작성해보세요!
         </div>
       )}

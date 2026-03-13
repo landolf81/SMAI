@@ -74,14 +74,21 @@ export const useScrollDirection = () => {
       });
     };
 
+    // 내부 스크롤 컨테이너(예: Lounge)에서 방향을 직접 전달하는 커스텀 이벤트
+    const handleOverride = (e) => {
+      setScrollDirection(e.detail?.direction || 'up');
+    };
+
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scroll-restore-start', handleScrollRestoreStart);
     window.addEventListener('scroll-restore-end', handleScrollRestoreEnd);
+    window.addEventListener('scroll-direction-override', handleOverride);
 
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('scroll-restore-start', handleScrollRestoreStart);
       window.removeEventListener('scroll-restore-end', handleScrollRestoreEnd);
+      window.removeEventListener('scroll-direction-override', handleOverride);
     };
   }, []);
 

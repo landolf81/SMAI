@@ -97,7 +97,7 @@
 
 /* 로딩 애니메이션 */
 .loading-spinner {
-    @apply animate-spin rounded-full border-4 border-gray-200 border-t-blue-600;
+    @apply animate-spin rounded-full border-4 border-base-300 border-t-blue-600;
 }
 
 /* 폼 검증 에러 스타일 */
@@ -181,7 +181,7 @@
 
 /* 프로그레스 바 */
 .progress-bar {
-    @apply w-full bg-gray-200 rounded-full h-2;
+    @apply w-full bg-base-300 rounded-full h-2;
 }
 
 .progress-fill {
@@ -190,7 +190,7 @@
 
 /* 툴팁 */
 .tooltip {
-    @apply absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg opacity-0 pointer-events-none transition-opacity duration-200;
+    @apply absolute z-50 px-2 py-1 text-xs text-white bg-neutral rounded shadow-lg opacity-0 pointer-events-none transition-opacity duration-200;
 }
 
 .tooltip.show {
@@ -213,15 +213,15 @@
 
 /* 스켈레톤 로더 */
 .skeleton {
-    @apply animate-pulse bg-gray-200 rounded;
+    @apply animate-pulse bg-base-300 rounded;
 }
 
 .skeleton-text {
-    @apply h-4 bg-gray-200 rounded animate-pulse;
+    @apply h-4 bg-base-300 rounded animate-pulse;
 }
 
 .skeleton-avatar {
-    @apply w-12 h-12 bg-gray-200 rounded-full animate-pulse;
+    @apply w-12 h-12 bg-base-300 rounded-full animate-pulse;
 }
 
 /* 버튼 로딩 상태 */
@@ -245,7 +245,7 @@
 }
 
 .ad-position-sidebar {
-    @apply bg-white shadow-lg border border-gray-100;
+    @apply bg-base-100 shadow-lg border border-base-200;
 }
 
 .ad-position-banner {
@@ -257,29 +257,29 @@
 }
 
 .ad-position-footer {
-    @apply bg-gray-100 border border-gray-300;
+    @apply bg-base-200 border border-base-300;
 }
 
-/* 다크 모드 지원 (미래 확장용) */
+/* 다크 모드 지원 (DaisyUI 시맨틱 클래스로 자동 처리됨) */
 @media (prefers-color-scheme: dark) {
     .ad-dashboard {
-        @apply bg-gray-900 text-white;
+        @apply bg-base-100 text-base-content;
     }
-    
+
     .ad-dashboard .bg-white {
-        @apply bg-gray-800 border-gray-700;
+        @apply bg-base-200 border-base-300;
     }
-    
+
     .ad-dashboard .text-gray-900 {
-        @apply text-gray-100;
+        @apply text-base-content;
     }
-    
+
     .ad-dashboard .text-gray-600 {
-        @apply text-gray-300;
+        @apply text-base-content/60;
     }
-    
+
     .ad-dashboard .border-gray-200 {
-        @apply border-gray-700;
+        @apply border-base-300;
     }
 }
 
@@ -297,15 +297,16 @@
     .ad-dashboard .no-print {
         display: none;
     }
-    
+
     .ad-dashboard {
-        @apply text-black bg-white;
+        color: black;
+        background: white;
     }
-    
+
     .ad-dashboard .shadow-lg,
     .ad-dashboard .shadow-md,
     .ad-dashboard .shadow-sm {
         box-shadow: none;
-        @apply border border-gray-300;
+        border: 1px solid #d1d5db;
     }
 }

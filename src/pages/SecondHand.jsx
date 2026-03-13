@@ -230,36 +230,36 @@ const SecondHand = () => {
 
   if (!currentUser) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
+      <div className="flex items-center justify-center min-h-screen bg-base-200">
         <div className="text-center">
-          <ShoppingBagIcon className="mx-auto text-6xl text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">사고팔고</h2>
-          <p className="text-gray-500">로그인이 필요한 서비스입니다.</p>
+          <ShoppingBagIcon className="mx-auto text-6xl text-base-content/40 mb-4" />
+          <h2 className="text-xl font-semibold text-base-content/70 mb-2">사고팔고</h2>
+          <p className="text-base-content/50">로그인이 필요한 서비스입니다.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="secondhand-page min-h-screen bg-cloud-dancer pt-14">
+    <div className="secondhand-page min-h-screen bg-base-200 pt-14">
       {/* 상단 고정 검색창 (검색 모드) */}
       {isSearchMode && (
-        <div className="sticky top-14 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm animate-slide-down">
+        <div className="sticky top-14 z-30 bg-base-100/90 backdrop-blur-md border-b border-base-300 p-4 shadow-sm animate-slide-down">
           <div className="max-w-3xl mx-auto flex items-center gap-2">
             <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
               <input
                 ref={searchInputRef}
                 type="text"
                 placeholder="상품명 검색..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none"
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-base-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-200 outline-none"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <button
               onClick={handleCloseSearch}
-              className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+              className="p-2 text-base-content/60 hover:text-base-content transition-colors"
             >
               <CloseIcon />
             </button>
@@ -267,7 +267,7 @@ const SecondHand = () => {
 
           {/* 검색 결과 개수 */}
           {searchTerm && posts && (
-            <div className="max-w-3xl mx-auto mt-2 text-sm text-gray-600">
+            <div className="max-w-3xl mx-auto mt-2 text-sm text-base-content/60">
               "{searchTerm}" 검색 결과: {posts.length}개
             </div>
           )}
@@ -283,9 +283,9 @@ const SecondHand = () => {
             </div>
           ) : error ? (
             <div className="text-center py-12">
-              <ShoppingBagIcon className="mx-auto text-6xl text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">오류가 발생했습니다</h3>
-              <p className="text-gray-500">잠시 후 다시 시도해주세요.</p>
+              <ShoppingBagIcon className="mx-auto text-6xl text-base-content/40 mb-4" />
+              <h3 className="text-lg font-medium text-base-content mb-2">오류가 발생했습니다</h3>
+              <p className="text-base-content/50">잠시 후 다시 시도해주세요.</p>
             </div>
           ) : postsWithAds && postsWithAds.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -326,11 +326,11 @@ const SecondHand = () => {
             <div className="text-center py-12">
               {isSearchMode && searchTerm ? (
                 <>
-                  <SearchIcon className="mx-auto text-6xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  <SearchIcon className="mx-auto text-6xl text-base-content/40 mb-4" />
+                  <h3 className="text-lg font-medium text-base-content mb-2">
                     "{searchTerm}"에 대한 검색 결과가 없습니다
                   </h3>
-                  <p className="text-gray-500 mb-4">다른 검색어로 시도해보세요</p>
+                  <p className="text-base-content/50 mb-4">다른 검색어로 시도해보세요</p>
                   <button
                     onClick={handleCloseSearch}
                     className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
@@ -340,9 +340,9 @@ const SecondHand = () => {
                 </>
               ) : (
                 <>
-                  <ShoppingBagIcon className="mx-auto text-6xl text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">등록된 상품이 없습니다</h3>
-                  <p className="text-gray-500 mb-4">첫 번째 상품을 등록해보세요!</p>
+                  <ShoppingBagIcon className="mx-auto text-6xl text-base-content/40 mb-4" />
+                  <h3 className="text-lg font-medium text-base-content mb-2">등록된 상품이 없습니다</h3>
+                  <p className="text-base-content/50 mb-4">첫 번째 상품을 등록해보세요!</p>
                   <button
                     onClick={() => {
                       if (currentUser?.is_verified || currentUser?.verified) {
@@ -364,18 +364,18 @@ const SecondHand = () => {
 
       {/* 상세보기 모달 - Portal로 body에 직접 렌더링 */}
       {selectedPost && createPortal(
-        <div ref={modalRef} className="fixed inset-0 z-[9999] bg-white overflow-y-auto">
+        <div ref={modalRef} className="fixed inset-0 z-[9999] bg-base-100 overflow-y-auto">
           {/* 헤더 - 닫기 버튼 */}
-          <div className="sticky top-0 z-[10000] bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800 truncate pr-2">
+          <div className="sticky top-0 z-[10000] bg-base-100 border-b border-base-300 px-4 py-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-base-content truncate pr-2">
               {selectedPost.title || '상세보기'}
             </h2>
             <button
               onClick={() => setSelectedPost(null)}
-              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors flex-shrink-0"
+              className="w-10 h-10 rounded-full hover:bg-base-200 flex items-center justify-center transition-colors flex-shrink-0"
               title="닫기"
             >
-              <CloseIcon className="text-gray-600" />
+              <CloseIcon className="text-base-content/60" />
             </button>
           </div>
 
@@ -390,7 +390,7 @@ const SecondHand = () => {
           <div className="px-4 pb-4 pt-2">
             <button
               onClick={() => setSelectedPost(null)}
-              className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-base-200 hover:bg-base-300 text-base-content/70 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >
               <CloseIcon fontSize="small" />
               닫기

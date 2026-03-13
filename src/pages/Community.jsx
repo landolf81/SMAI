@@ -17,7 +17,7 @@ const Community = () => {
     }, [location.state, isBanned]);
 
     return (
-        <div className="community-page min-h-screen bg-cloud-dancer pt-14">
+        <div className="community-page min-h-screen bg-base-200 pt-14">
             {/* 차단 알림 */}
             {showBannedAlert && (
                 <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mx-4 mt-4" role="alert">

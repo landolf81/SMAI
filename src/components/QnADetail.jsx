@@ -589,7 +589,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
     return (
       <div className="text-center py-12">
         <p className="text-red-500">질문을 불러오는데 실패했습니다.</p>
-        <p className="text-gray-500 text-sm mt-2">{error?.message}</p>
+        <p className="text-base-content/50 text-sm mt-2">{error?.message}</p>
         <button
           onClick={handleBack}
           className="mt-4 px-4 py-2 text-market-600 border border-market-600 rounded-lg hover:bg-market-50 transition-colors"
@@ -624,7 +624,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
         <div className="mb-6">
           <button
             onClick={handleBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
+            className="flex items-center gap-2 text-base-content/60 hover:text-base-content/70 mb-4"
           >
             <ArrowBackIcon fontSize="small" />
             질문 목록으로
@@ -633,7 +633,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       )}
 
       {/* 질문 카드 */}
-      <div className="bg-white rounded-lg p-6 border shadow-sm mb-6">
+      <div className="bg-base-100 rounded-lg p-6 border shadow-sm mb-6">
         {/* 작성자 정보 헤더 */}
         <div className="flex items-start justify-between mb-4">
           <div
@@ -655,13 +655,13 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 className="w-10 h-10 rounded-full object-cover"
               />
             ) : (
-              <PersonIcon className="w-10 h-10 text-gray-400 bg-gray-200 rounded-full p-1" />
+              <PersonIcon className="w-10 h-10 text-base-content/40 bg-base-300 rounded-full p-1" />
             )}
             <div>
-              <div className="font-medium text-gray-900">
+              <div className="font-medium text-base-content">
                 {question.user_name || question.username}
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-base-content/50">
                 {moment(question.created_at).fromNow()}
               </div>
             </div>
@@ -670,13 +670,13 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
           {/* 더보기 메뉴 (수정/삭제) */}
           {currentUser && currentUser.id === question.user_id && (
             <div className="relative group">
-              <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded">
+              <button className="p-2 text-base-content/50 hover:text-base-content/70 hover:bg-base-200 rounded">
                 <FontAwesomeIcon icon={faEllipsisH} />
               </button>
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border hidden group-hover:block z-10">
+              <div className="absolute right-0 mt-2 w-48 bg-base-100 rounded-lg shadow-lg border hidden group-hover:block z-10">
                 <button
                   onClick={() => handleOpenEditModal(question)}
-                  className="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                  className="w-full px-4 py-2 text-left text-base-content/70 hover:bg-base-200 flex items-center gap-2"
                 >
                   <EditIcon fontSize="small" />
                   수정
@@ -695,7 +695,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
         {/* 질문 제목 */}
         <div className="mb-4">
-          <h1 className="text-xl font-bold text-gray-900">
+          <h1 className="text-xl font-bold text-base-content">
             {question.title || (question.description || question.desc || '').split('\n')[0].replace('[Q&A]', '').trim() || 'Q&A 질문'}
           </h1>
           {question.question_status === 'answered' && (
@@ -708,7 +708,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
         {/* 질문 내용 */}
         <div className="prose max-w-none mb-6">
-          <p className="text-gray-700 whitespace-pre-wrap">
+          <p className="text-base-content/70 whitespace-pre-wrap">
             {(() => {
               const desc = question.description || question.desc || '';
               // title이 있으면 description 그대로 표시
@@ -763,7 +763,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
         })()}
 
         {/* 질문 메타 정보 */}
-        <div className="flex items-center gap-4 pt-4 border-t text-sm text-gray-500">
+        <div className="flex items-center gap-4 pt-4 border-t text-sm text-base-content/50">
           <span className="flex items-center gap-1">
             <ChatBubbleOutlineIcon fontSize="small" />
             {stats?.totalAnswers || 0}개 답변
@@ -785,7 +785,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
       {/* 답변 섹션 */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-base-content mb-4">
           답변 ({stats.totalAnswers}개)
         </h2>
 
@@ -795,7 +795,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
             answers.map((answer) => (
               <div
                 key={answer.id}
-                className="bg-white rounded-lg p-6 border shadow-sm relative"
+                className="bg-base-100 rounded-lg p-6 border shadow-sm relative"
               >
                 {/* 수정 모드일 때 */}
                 {editingAnswerId === answer.id ? (
@@ -803,14 +803,14 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                     <textarea
                       value={editingAnswerContent}
                       onChange={(e) => setEditingAnswerContent(e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 resize-y min-h-[120px]"
+                      className="w-full p-3 border border-base-300 rounded-lg focus:ring-2 focus:ring-market-500 focus:border-market-500 resize-y min-h-[120px]"
                       rows={8}
                       placeholder="답변 내용을 입력하세요..."
                     />
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={handleCancelEditAnswer}
-                        className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="px-4 py-2 text-base-content/60 hover:bg-base-200 rounded-lg transition-colors"
                       >
                         취소
                       </button>
@@ -834,7 +834,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                           className={`flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors ${
                             speakingAnswerId === answer.id
                               ? 'text-green-600 bg-green-100 hover:bg-green-200'
-                              : 'text-gray-500 hover:text-green-600 hover:bg-green-50'
+                              : 'text-base-content/50 hover:text-green-600 hover:bg-green-500/10'
                           }`}
                           title={speakingAnswerId === answer.id ? '읽기 중지' : '답변 읽어주기'}
                         >
@@ -857,17 +857,17 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                         <div className="relative">
                           <button
                             onClick={(e) => handleAnswerMenuToggle(e, answer.id)}
-                            className="p-0.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                            className="p-0.5 text-base-content/40 hover:text-base-content/60 hover:bg-base-200 rounded transition-colors"
                           >
                             <FontAwesomeIcon icon={faEllipsisH} />
                           </button>
 
                           {/* 드롭다운 메뉴 */}
                           {answerMenuOpen === answer.id && (
-                            <div className="absolute right-0 top-7 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
+                            <div className="absolute right-0 top-7 bg-base-100 border rounded-lg shadow-lg py-1 z-10 min-w-[100px]">
                               <button
                                 onClick={() => handleStartEditAnswer(answer)}
-                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                                className="w-full px-4 py-2 text-left text-sm text-base-content/70 hover:bg-base-200 flex items-center gap-2"
                               >
                                 <EditIcon fontSize="small" />
                                 수정
@@ -887,7 +887,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
                     {/* 답변 내용 */}
                     <div className="prose max-w-none mb-4">
-                      <p className="text-gray-700 whitespace-pre-wrap">{answer.content}</p>
+                      <p className="text-base-content/70 whitespace-pre-wrap">{answer.content}</p>
                     </div>
 
                     {/* 답변 이미지/영상 */}
@@ -938,7 +938,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                           className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
                             answer.user_liked
                               ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
-                              : 'text-gray-500 hover:text-blue-600 hover:bg-blue-50'
+                              : 'text-base-content/50 hover:text-blue-600 hover:bg-blue-500/10'
                           } ${!currentUser ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                           {answer.user_liked ? (
@@ -971,11 +971,11 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                       onError={(e) => { e.target.onerror = null; e.target.src = '/default/default_profile.png'; }}
                     />
                     <div className="text-right">
-                      <div className="font-medium text-gray-900 flex items-center gap-1">
+                      <div className="font-medium text-base-content flex items-center gap-1">
                         {answer.user_name || answer.username}
                         {isAIUser({ user_id: answer.user_id }) && <AIBadge />}
                       </div>
-                      <div className="text-gray-500">
+                      <div className="text-base-content/50">
                         {moment(answer.created_at).fromNow()}
                       </div>
                     </div>
@@ -986,7 +986,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
               </div>
             ))
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-base-content/50">
               아직 답변이 없습니다. 첫 번째 답변을 작성해보세요!
             </div>
           )}
@@ -995,16 +995,16 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
       {/* 답변 작성 폼 */}
       {currentUser && question.question_status !== 'closed' ? (
-        <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+        <div className="bg-base-100 rounded-lg border shadow-sm overflow-hidden">
           {/* 클릭 영역 - 항상 표시 */}
           <button
             type="button"
             onClick={() => setIsAnswerFormOpen(!isAnswerFormOpen)}
-            className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            className="w-full p-4 flex items-center justify-between hover:bg-base-200 transition-colors"
           >
-            <span className="font-medium text-gray-900">답변 작성</span>
+            <span className="font-medium text-base-content">답변 작성</span>
             <svg
-              className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${isAnswerFormOpen ? 'rotate-180' : ''}`}
+              className={`w-5 h-5 text-base-content/50 transition-transform duration-200 ${isAnswerFormOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1057,7 +1057,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
               {/* 업로드 진행률 */}
               {uploadProgress && (
-                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
                   <div className="text-sm text-blue-700">파일 업로드 중...</div>
                 </div>
               )}
@@ -1065,7 +1065,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
               <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-2">
                   {/* 이미지 업로드 버튼 */}
-                  <label className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer transition-all">
+                  <label className="w-8 h-8 flex items-center justify-center rounded-full bg-base-200 text-base-content/60 hover:bg-base-300 cursor-pointer transition-all">
                     <FontAwesomeIcon icon={faImage} className="w-4 h-4" />
                     <input
                       type="file"
@@ -1085,7 +1085,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                       className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
                         isListening
                           ? 'bg-red-500 text-white animate-pulse'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                       }`}
                       disabled={isSubmitting}
                       title={isListening ? '음성 입력 중지' : '음성 입력'}
@@ -1107,8 +1107,8 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
           )}
         </div>
       ) : !currentUser ? (
-        <div className="bg-gray-50 rounded-lg p-6 border text-center">
-          <p className="text-gray-600 mb-4">답변을 작성하려면 로그인이 필요합니다.</p>
+        <div className="bg-base-200 rounded-lg p-6 border text-center">
+          <p className="text-base-content/60 mb-4">답변을 작성하려면 로그인이 필요합니다.</p>
           <button
             onClick={() => navigate('/login')}
             className="px-4 py-2 bg-market-600 text-white rounded-lg hover:bg-market-700 transition-colors"
@@ -1117,8 +1117,8 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
           </button>
         </div>
       ) : (
-        <div className="bg-gray-50 rounded-lg p-6 border text-center">
-          <p className="text-gray-600">이 질문은 마감되어 더 이상 답변할 수 없습니다.</p>
+        <div className="bg-base-200 rounded-lg p-6 border text-center">
+          <p className="text-base-content/60">이 질문은 마감되어 더 이상 답변할 수 없습니다.</p>
         </div>
       )}
 
@@ -1132,12 +1132,12 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       {/* 질문 수정 모달 */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-base-100 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-gray-900">질문 수정</h2>
+              <h2 className="text-xl font-bold text-base-content">질문 수정</h2>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-base-content/50 hover:text-base-content/70"
               >
                 ✕
               </button>
@@ -1145,7 +1145,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
             
             <form onSubmit={handleSubmitEdit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-base-content/70 mb-2">
                   제목
                 </label>
                 <input
@@ -1157,11 +1157,11 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                   maxLength={20}
                   required
                 />
-                <div className="text-sm text-gray-500 mt-1">{editTitle.length}/20자</div>
+                <div className="text-sm text-base-content/50 mt-1">{editTitle.length}/20자</div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-base-content/70 mb-2">
                   내용
                 </label>
                 <textarea
@@ -1175,14 +1175,14 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-base-content/70 mb-2">
                   이미지
                 </label>
                 
                 {/* 기존 이미지 */}
                 {editImages.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">기존 이미지</p>
+                    <p className="text-sm text-base-content/60 mb-2">기존 이미지</p>
                     <div className="grid grid-cols-3 gap-2">
                       {editImages.map((imageUrl, index) => (
                         <div key={index} className="relative">
@@ -1207,7 +1207,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 {/* 새 이미지 */}
                 {newImages.length > 0 && (
                   <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-2">새로 추가할 이미지</p>
+                    <p className="text-sm text-base-content/60 mb-2">새로 추가할 이미지</p>
                     <div className="grid grid-cols-3 gap-2">
                       {newImages.map((file, index) => (
                         <div key={index} className="relative">
@@ -1231,7 +1231,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 
                 {/* 이미지 추가 버튼 */}
                 <div>
-                  <label htmlFor="editImageInput" className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                  <label htmlFor="editImageInput" className="inline-flex items-center px-4 py-2 border border-base-300 rounded-lg shadow-sm text-sm font-medium text-base-content/70 bg-base-100 hover:bg-base-200 cursor-pointer">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
@@ -1245,7 +1245,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                     className="hidden"
                     onChange={handleImageChange}
                   />
-                  <p className="text-xs text-gray-500 mt-2">
+                  <p className="text-xs text-base-content/50 mt-2">
                     이미지 또는 동영상 파일 (최대 50MB)
                   </p>
                 </div>
@@ -1255,7 +1255,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-base-content/60 border border-base-300 rounded-lg hover:bg-base-200 transition-colors"
                 >
                   취소
                 </button>

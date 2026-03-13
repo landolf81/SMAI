@@ -145,23 +145,23 @@ const AdminYouTube = () => {
 
   return (
     <AdminOnly>
-      <div className="min-h-screen bg-cloud-dancer pt-16 pb-24">
+      <div className="min-h-screen bg-base-200 pt-16 pb-24">
         <div className="max-w-6xl mx-auto px-4 py-6">
           {/* 헤더 */}
-          <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-6 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <YouTubeIcon className="text-red-600" fontSize="large" />
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-800">YouTube 영상 관리</h1>
-                  <p className="text-sm text-gray-500">참외 관련 YouTube 영상 수집 및 승인</p>
+                  <h1 className="text-2xl font-bold text-base-content">YouTube 영상 관리</h1>
+                  <p className="text-sm text-base-content/60">참외 관련 YouTube 영상 수집 및 승인</p>
                 </div>
               </div>
               <button
                 onClick={handleCollect}
                 disabled={collecting}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg text-white ${
-                  collecting ? 'bg-gray-400' : 'bg-red-600 hover:bg-red-700'
+                  collecting ? 'bg-base-content/30' : 'bg-red-600 hover:bg-red-700'
                 }`}
               >
                 <RefreshIcon className={collecting ? 'animate-spin' : ''} />
@@ -179,13 +179,13 @@ const AdminYouTube = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'bg-red-600 text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                    : 'bg-base-100 text-base-content hover:bg-base-200'
                 }`}
               >
                 {tab.icon}
                 {tab.label}
                 {tab.count !== undefined && tab.count > 0 && (
-                  <span className="bg-white text-red-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                  <span className="bg-base-100 text-red-600 text-xs px-2 py-0.5 rounded-full font-bold">
                     {tab.count}
                   </span>
                 )}
@@ -195,7 +195,7 @@ const AdminYouTube = () => {
 
           {/* 채널 관리 탭 */}
           {activeTab === 'channels' && (
-            <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">구독 채널 목록</h2>
                 <button
@@ -209,46 +209,46 @@ const AdminYouTube = () => {
 
               {/* 채널 추가 폼 */}
               {showAddChannel && (
-                <form onSubmit={handleAddChannel} className="bg-gray-50 rounded-lg p-4 mb-4">
+                <form onSubmit={handleAddChannel} className="bg-base-200 rounded-lg p-4 mb-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">채널 ID *</label>
+                      <label className="block text-sm font-medium text-base-content mb-1">채널 ID *</label>
                       <input
                         type="text"
                         placeholder="UC..."
                         value={newChannel.channelId}
                         onChange={(e) => setNewChannel({ ...newChannel, channelId: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg"
+                        className="w-full px-3 py-2 border border-base-300 rounded-lg bg-base-100 text-base-content"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">채널명 *</label>
+                      <label className="block text-sm font-medium text-base-content mb-1">채널명 *</label>
                       <input
                         type="text"
                         placeholder="채널 이름"
                         value={newChannel.channelName}
                         onChange={(e) => setNewChannel({ ...newChannel, channelName: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg"
+                        className="w-full px-3 py-2 border border-base-300 rounded-lg bg-base-100 text-base-content"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">핸들</label>
+                      <label className="block text-sm font-medium text-base-content mb-1">핸들</label>
                       <input
                         type="text"
                         placeholder="@handle"
                         value={newChannel.channelHandle}
                         onChange={(e) => setNewChannel({ ...newChannel, channelHandle: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg"
+                        className="w-full px-3 py-2 border border-base-300 rounded-lg bg-base-100 text-base-content"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">필터 키워드 (쉼표 구분)</label>
+                      <label className="block text-sm font-medium text-base-content mb-1">필터 키워드 (쉼표 구분)</label>
                       <input
                         type="text"
                         placeholder="참외, 멜론, 재배"
                         value={newChannel.filterKeywords}
                         onChange={(e) => setNewChannel({ ...newChannel, filterKeywords: e.target.value })}
-                        className="w-full px-3 py-2 border rounded-lg"
+                        className="w-full px-3 py-2 border border-base-300 rounded-lg bg-base-100 text-base-content"
                       />
                     </div>
                   </div>
@@ -263,7 +263,7 @@ const AdminYouTube = () => {
                     <button
                       type="button"
                       onClick={() => setShowAddChannel(false)}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      className="px-4 py-2 bg-base-200 text-base-content rounded-lg hover:bg-base-300"
                     >
                       취소
                     </button>
@@ -273,18 +273,18 @@ const AdminYouTube = () => {
 
               {/* 채널 목록 */}
               {channelsLoading ? (
-                <div className="text-center py-8 text-gray-500">로딩 중...</div>
+                <div className="text-center py-8 text-base-content/60">로딩 중...</div>
               ) : channels.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">등록된 채널이 없습니다.</div>
+                <div className="text-center py-8 text-base-content/60">등록된 채널이 없습니다.</div>
               ) : (
                 <div className="space-y-3">
                   {channels.map(channel => (
-                    <div key={channel.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={channel.id} className="flex items-center justify-between p-4 bg-base-200 rounded-lg">
                       <div className="flex items-center gap-3">
                         <YouTubeIcon className="text-red-600" />
                         <div>
                           <p className="font-medium">{channel.channel_name}</p>
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-base-content/60">
                             {channel.channel_handle || channel.channel_id}
                           </p>
                           {channel.filter_keywords && (
@@ -304,7 +304,7 @@ const AdminYouTube = () => {
                           className={`px-3 py-1 rounded text-sm ${
                             channel.is_active
                               ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-500'
+                              : 'bg-base-300 text-base-content/60'
                           }`}
                         >
                           {channel.is_active ? '활성' : '비활성'}
@@ -329,11 +329,11 @@ const AdminYouTube = () => {
 
           {/* 영상 목록 */}
           {activeTab !== 'channels' && (
-            <div className="bg-white rounded-xl shadow-sm border p-6">
+            <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-6">
               {videosLoading ? (
-                <div className="text-center py-8 text-gray-500">로딩 중...</div>
+                <div className="text-center py-8 text-base-content/60">로딩 중...</div>
               ) : videos.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-base-content/60">
                   {activeTab === 'pending' && '대기 중인 영상이 없습니다.'}
                   {activeTab === 'approved' && '승인된 영상이 없습니다.'}
                   {activeTab === 'rejected' && '거절된 영상이 없습니다.'}
@@ -347,7 +347,7 @@ const AdminYouTube = () => {
                       onClick={() => setSelectedVideo(video)}
                     >
                       {/* 썸네일 */}
-                      <div className="relative aspect-video bg-gray-100">
+                      <div className="relative aspect-video bg-base-200">
                         <img
                           src={video.thumbnail_url || youtubeService.getThumbnailUrl(video.video_id)}
                           alt={video.title}
@@ -374,7 +374,7 @@ const AdminYouTube = () => {
                       {/* 정보 */}
                       <div className="p-3">
                         <h3 className="font-medium text-sm line-clamp-2 mb-2">{video.title}</h3>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-base-content/60">
                           {new Date(video.published_at).toLocaleDateString('ko-KR')}
                         </p>
                       </div>
@@ -392,7 +392,7 @@ const AdminYouTube = () => {
               onClick={() => setSelectedVideo(null)}
             >
               <div
-                className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+                className="bg-base-100 rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* 영상 플레이어 */}
@@ -407,14 +407,14 @@ const AdminYouTube = () => {
                 {/* 정보 */}
                 <div className="p-6">
                   <h2 className="text-xl font-bold mb-2">{selectedVideo.title}</h2>
-                  <p className="text-sm text-gray-500 mb-4">
+                  <p className="text-sm text-base-content/60 mb-4">
                     업로드: {new Date(selectedVideo.published_at).toLocaleDateString('ko-KR')} |
                     수집: {new Date(selectedVideo.collected_at).toLocaleDateString('ko-KR')} |
                     소스: {selectedVideo.source === 'rss' ? 'RSS 구독' : '키워드 검색'}
                   </p>
 
                   {selectedVideo.description && (
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                    <p className="text-base-content/60 text-sm mb-4 line-clamp-3">
                       {selectedVideo.description}
                     </p>
                   )}
@@ -449,7 +449,7 @@ const AdminYouTube = () => {
                             setSelectedVideo(null);
                           }
                         }}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-base-300 text-base-content rounded-lg hover:bg-base-content/20"
                       >
                         <DeleteIcon />
                         삭제

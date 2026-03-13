@@ -233,7 +233,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
       case 'closed':
         return <CheckCircleIcon className="text-green-500" fontSize="small" />;
       default:
-        return <QuestionMarkIcon className="text-gray-400" fontSize="small" />;
+        return <QuestionMarkIcon className="text-base-content/40" fontSize="small" />;
     }
   };
 
@@ -253,13 +253,13 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'open':
-        return 'text-blue-600 bg-blue-50';
+        return 'text-blue-600 bg-blue-500/10';
       case 'answered':
-        return 'text-yellow-600 bg-yellow-50';
+        return 'text-yellow-600 bg-yellow-500/10';
       case 'closed':
-        return 'text-green-600 bg-green-50';
+        return 'text-green-600 bg-green-500/10';
       default:
-        return 'text-gray-600 bg-gray-50';
+        return 'text-base-content/60 bg-base-200';
     }
   };
 
@@ -276,7 +276,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
     return (
       <div className="text-center py-12">
         <p className="text-red-500">질문을 불러오는데 실패했습니다.</p>
-        <p className="text-gray-500 text-sm mt-2">{error.message}</p>
+        <p className="text-base-content/50 text-sm mt-2">{error.message}</p>
       </div>
     );
   }
@@ -286,25 +286,25 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
       <div className="p-4">
         {/* 검색 결과 개수 (검색 모드일 때만) */}
         {isSearchMode && searchTerm && data && (
-          <div className="mb-4 text-sm text-gray-600">
+          <div className="mb-4 text-sm text-base-content/60">
             "{searchTerm}" 검색 결과: {pagination.total || 0}개
           </div>
         )}
 
       {/* 인기 질문 (최상단) - 검색 모드가 아닐 때만 표시 */}
       {!isSearchMode && trending && trending.length > 0 && (
-        <div className="bg-gradient-to-r from-[#fefce8] to-[#f6ebc8] rounded-lg p-4 mb-6 border border-yellow-200">
-          <p className="flex items-center gap-2 text-base font-bold text-gray-900 mb-2">
-            <span>🔥</span> 인기 질문 <span className="text-xs text-gray-500 font-normal">(최근 7일)</span>
+        <div className="bg-warning/10 rounded-lg p-4 mb-6 border border-warning/30">
+          <p className="flex items-center gap-2 text-base font-bold text-base-content mb-2">
+            <span>🔥</span> 인기 질문 <span className="text-xs text-base-content/50 font-normal">(최근 7일)</span>
           </p>
           {trending.map((question, index) => (
             <p
               key={question.id}
-              className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-white/50 rounded px-2 -mx-2"
+              className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-base-100/50 rounded px-2 -mx-2"
               onClick={() => setSelectedQuestionId(question.id)}
             >
               <span className="w-5 h-5 rounded-full bg-yellow-500 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">{index + 1}</span>
-              <span className="text-base text-gray-800 line-clamp-1">{question.title}</span>
+              <span className="text-base text-base-content line-clamp-1">{question.title}</span>
             </p>
           ))}
         </div>
@@ -316,8 +316,8 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
           {/* 검색 결과 없음 UI */}
           {isSearchMode && searchTerm && !isLoading && questionsWithAds.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12">
-              <SearchIcon className="text-gray-300" style={{ fontSize: 64 }} />
-              <p className="text-gray-500 mt-4 text-lg">
+              <SearchIcon className="text-base-content/30" style={{ fontSize: 64 }} />
+              <p className="text-base-content/50 mt-4 text-lg">
                 "{searchTerm}"에 대한 검색 결과가 없습니다.
               </p>
               <button
@@ -356,12 +356,12 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                 return (
                   <div
                     key={item.key}
-                    className={`rounded-xl p-6 border cursor-pointer transition-all duration-200 bg-white`}
+                    className={`rounded-xl p-6 border cursor-pointer transition-all duration-200 bg-base-100`}
                     style={{
                       animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none',
                       animationDelay: navigationType !== 'POP' ? `${index * 30}ms` : '0ms',
                       opacity: navigationType !== 'POP' ? 0 : 1,
-                      boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.15), 0 2px 8px -2px rgba(147, 51, 234, 0.1)'
+                      boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.1), 0 2px 8px -2px rgba(147, 51, 234, 0.08)'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.boxShadow = '0 8px 25px -3px rgba(59, 130, 246, 0.25), 0 4px 12px -2px rgba(147, 51, 234, 0.15)';
@@ -405,7 +405,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                               e.target.src = '/default/default_profile.png';
                             }}
                           />
-                          <span className="text-sm font-medium text-gray-700">{question.user_name || question.username}</span>
+                          <span className="text-sm font-medium text-base-content/80">{question.user_name || question.username}</span>
                         </div>
 
                         {/* 상태 배지 (답변대기 제외) */}
@@ -417,12 +417,12 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                       </div>
 
                       {/* 제목 */}
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 mb-2">
+                      <h3 className="text-lg font-semibold text-base-content line-clamp-2 mb-2">
                         {question.title}
                       </h3>
 
                       {/* 질문 내용 미리보기 */}
-                      <p className="text-gray-600 line-clamp-2 mb-3">
+                      <p className="text-base-content/60 line-clamp-2 mb-3">
                         {question.desc}
                       </p>
 
@@ -466,7 +466,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
 
                       {/* 메타 정보 */}
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                        <div className="flex items-center gap-4 text-sm text-base-content/50">
                           <span className="flex items-center gap-1">
                             <ChatBubbleOutlineIcon fontSize="small" />
                             {question.answers_count}
@@ -486,7 +486,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
                         </div>
 
                         {/* 시간 정보만 */}
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-base-content/50">
                           <span>{moment(question.created_at).fromNow()}</span>
                         </div>
                       </div>
@@ -529,17 +529,17 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
 
       {/* QnA 상세보기 모달 - Portal로 body에 직접 렌더링 */}
       {selectedQuestionId && createPortal(
-        <div ref={modalRef} className="fixed inset-0 z-[9999] bg-white overflow-y-auto">
+        <div ref={modalRef} className="fixed inset-0 z-[9999] bg-base-100 overflow-y-auto">
           {/* 헤더 - 닫기 버튼 */}
-          <div className="sticky top-0 z-[10000] bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">Q&A 상세</h2>
+          <div className="sticky top-0 z-[10000] bg-base-100 border-b border-base-300 px-4 py-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-base-content">Q&A 상세</h2>
             <button
               onClick={() => setSelectedQuestionId(null)}
-              className="w-10 h-10 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              className="w-10 h-10 rounded-full hover:bg-base-300 flex items-center justify-center transition-colors"
               title="닫기"
             >
               <svg
-                className="w-5 h-5 text-gray-600"
+                className="w-5 h-5 text-base-content/60"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -560,7 +560,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
           <div className="px-4 pb-4 pt-2">
             <button
               onClick={() => setSelectedQuestionId(null)}
-              className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 bg-base-300 hover:bg-base-300 text-base-content/80 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />

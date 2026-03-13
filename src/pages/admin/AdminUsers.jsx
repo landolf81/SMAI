@@ -192,7 +192,7 @@ const AdminUsers = () => {
       case 'active': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'banned': return 'bg-red-100 text-red-700 border-red-200';
       case 'inactive': return 'bg-amber-100 text-amber-700 border-amber-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      default: return 'bg-base-200 text-base-content border-base-300';
     }
   };
 
@@ -208,10 +208,10 @@ const AdminUsers = () => {
   if (loading && users.length === 0) {
     return (
       <AdminOnly>
-        <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
+        <div className="flex items-center justify-center min-h-screen bg-base-200">
           <div className="text-center">
             <div className="loading loading-spinner loading-lg text-[#004225]"></div>
-            <p className="mt-4 text-gray-600">사용자 목록을 불러오는 중...</p>
+            <p className="mt-4 text-base-content/60">사용자 목록을 불러오는 중...</p>
           </div>
         </div>
       </AdminOnly>
@@ -229,8 +229,8 @@ const AdminUsers = () => {
               <PeopleIcon className="text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">사용자 관리</h1>
-              <p className="text-gray-500 text-sm">전체 사용자 목록 및 권한 관리</p>
+              <h1 className="text-2xl font-bold text-base-content">사용자 관리</h1>
+              <p className="text-base-content/60 text-sm">전체 사용자 목록 및 권한 관리</p>
             </div>
           </div>
 
@@ -319,50 +319,50 @@ const UserListContent = ({
     <div>
       {/* 통계 카드 - 전체 기준 */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">전체 사용자</p>
+              <p className="text-xs text-base-content/60 uppercase tracking-wide">전체 사용자</p>
               <p className="text-2xl font-bold text-blue-600 mt-1">{globalStats.total ?? pagination?.total ?? 0}</p>
             </div>
             <PeopleIcon className="text-blue-600" fontSize="small" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Super Admin</p>
+              <p className="text-xs text-base-content/60 uppercase tracking-wide">Super Admin</p>
               <p className="text-2xl font-bold text-purple-600 mt-1">{globalStats.superAdmins ?? 0}</p>
             </div>
             <SecurityIcon className="text-purple-600" fontSize="small" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">Admins</p>
+              <p className="text-xs text-base-content/60 uppercase tracking-wide">Admins</p>
               <p className="text-2xl font-bold text-[#004225] mt-1">{globalStats.admins ?? 0}</p>
             </div>
             <EditIcon className="text-[#004225]" fontSize="small" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">활성</p>
+              <p className="text-xs text-base-content/60 uppercase tracking-wide">활성</p>
               <p className="text-2xl font-bold text-emerald-600 mt-1">{globalStats.active ?? 0}</p>
             </div>
             <CheckCircleIcon className="text-emerald-600" fontSize="small" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-500 uppercase tracking-wide">차단</p>
+              <p className="text-xs text-base-content/60 uppercase tracking-wide">차단</p>
               <p className="text-2xl font-bold text-red-600 mt-1">{globalStats.banned ?? 0}</p>
             </div>
             <BlockIcon className="text-red-600" fontSize="small" />
@@ -372,8 +372,8 @@ const UserListContent = ({
 
       {/* 환영 DM 일괄 발송 */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-gray-500">
-          현재 목록 활성 회원 <span className="font-semibold text-gray-700">{users.filter(u => u.status === 'active').length}</span>명
+        <p className="text-sm text-base-content/60">
+          현재 목록 활성 회원 <span className="font-semibold text-base-content">{users.filter(u => u.status === 'active').length}</span>명
         </p>
         <button
           onClick={handleBulkWelcomeDM}
@@ -389,18 +389,18 @@ const UserListContent = ({
       </div>
 
       {/* 검색 및 필터 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+      <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 mb-6">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 flex gap-2">
             <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
               <input
                 type="text"
                 placeholder="사용자명 또는 이메일로 검색..."
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-base-100 text-base-content"
               />
             </div>
             <button
@@ -415,7 +415,7 @@ const UserListContent = ({
             <select
               value={filterRole}
               onChange={(e) => setFilterRole(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="px-4 py-2.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-base-100 text-base-content"
             >
               <option value="all">All Roles</option>
               <option value="member">member</option>
@@ -428,7 +428,7 @@ const UserListContent = ({
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="px-4 py-2.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-base-100 text-base-content"
             >
               <option value="all">모든 상태</option>
               <option value="active">활성</option>
@@ -440,26 +440,26 @@ const UserListContent = ({
       </div>
 
       {/* 사용자 목록 */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-base-200 border-b border-base-300">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">사용자</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">역할</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">상태</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">가입일</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">활동</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">환영 DM</th>
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">작업</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">사용자</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">역할</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">상태</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">가입일</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-base-content/60 uppercase tracking-wider">활동</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-base-content/60 uppercase tracking-wider">환영 DM</th>
+                <th className="px-6 py-4 text-center text-xs font-semibold text-base-content/60 uppercase tracking-wider">작업</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-base-300">
               {users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <tr key={user.id} className="hover:bg-base-200 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-base-300">
                         <img
                           src={getProfilePic(user)}
                           alt="프로필"
@@ -471,11 +471,11 @@ const UserListContent = ({
                         />
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900">{user.username || user.name}</div>
+                        <div className="font-medium text-base-content">{user.username || user.name}</div>
                         {user.name && user.name !== user.username && (
                           <div className="text-sm text-blue-600">{user.name}</div>
                         )}
-                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm text-base-content/60">{user.email}</div>
                       </div>
                     </div>
                   </td>
@@ -483,7 +483,7 @@ const UserListContent = ({
                     <select
                       value={user.role}
                       onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                      className="text-sm px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="text-sm px-3 py-1.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-base-100 text-base-content"
                     >
                       <option value="member">member</option>
                       <option value="advertiser">advertiser</option>
@@ -510,17 +510,17 @@ const UserListContent = ({
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-base-content/60">
                       {user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm">
-                      <span className="text-gray-600">게시물</span>
-                      <span className="font-medium text-gray-900 ml-1">{user.posts_count || 0}</span>
-                      <span className="text-gray-400 mx-2">|</span>
-                      <span className="text-gray-600">댓글</span>
-                      <span className="font-medium text-gray-900 ml-1">{user.comments_count || 0}</span>
+                      <span className="text-base-content/60">게시물</span>
+                      <span className="font-medium text-base-content ml-1">{user.posts_count || 0}</span>
+                      <span className="text-base-content/40 mx-2">|</span>
+                      <span className="text-base-content/60">댓글</span>
+                      <span className="font-medium text-base-content ml-1">{user.comments_count || 0}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -571,19 +571,19 @@ const UserListContent = ({
       </div>
 
       {users.length === 0 && !loading && (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-100 mt-6">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <PeopleIcon className="text-gray-400 text-3xl" />
+        <div className="text-center py-16 bg-base-100 rounded-xl border border-base-300 mt-6">
+          <div className="w-16 h-16 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <PeopleIcon className="text-base-content/40 text-3xl" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">사용자가 없습니다</h3>
-          <p className="text-gray-500">검색 조건을 확인하거나 필터를 변경해보세요.</p>
+          <h3 className="text-lg font-medium text-base-content mb-2">사용자가 없습니다</h3>
+          <p className="text-base-content/60">검색 조건을 확인하거나 필터를 변경해보세요.</p>
         </div>
       )}
 
       {/* 페이지네이션 */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex flex-col items-center gap-4 mt-6">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-base-content/60">
             전체 <span className="font-medium">{pagination.total}</span>명 중{' '}
             <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span>-
             <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span>명 표시
@@ -591,14 +591,14 @@ const UserListContent = ({
 
           <div className="flex items-center gap-1">
             <button
-              className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={pagination.page === 1 || loading}
               onClick={() => fetchUsers(1, searchTerm, filterRole, filterStatus)}
             >
               ««
             </button>
             <button
-              className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={pagination.page === 1 || loading}
               onClick={() => fetchUsers(pagination.page - 1, searchTerm, filterRole, filterStatus)}
             >
@@ -624,7 +624,7 @@ const UserListContent = ({
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                       i === currentPage
                         ? 'bg-[#004225] text-white'
-                        : 'border border-gray-200 bg-white hover:bg-gray-50'
+                        : 'border border-base-300 bg-base-100 hover:bg-base-200'
                     }`}
                     onClick={() => fetchUsers(i, searchTerm, filterRole, filterStatus)}
                     disabled={loading}
@@ -638,14 +638,14 @@ const UserListContent = ({
             })()}
 
             <button
-              className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={pagination.page >= pagination.totalPages || loading}
               onClick={() => fetchUsers(pagination.page + 1, searchTerm, filterRole, filterStatus)}
             >
               »
             </button>
             <button
-              className="px-3 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 rounded-lg border border-base-300 bg-base-100 hover:bg-base-200 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={pagination.page >= pagination.totalPages || loading}
               onClick={() => fetchUsers(pagination.totalPages, searchTerm, filterRole, filterStatus)}
             >
@@ -653,7 +653,7 @@ const UserListContent = ({
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-2 text-sm text-base-content/60">
             <span>페이지당</span>
             <select
               value={pagination.limit}
@@ -662,7 +662,7 @@ const UserListContent = ({
                 setPagination(prev => ({ ...prev, limit: newLimit }));
                 fetchUsers(1, searchTerm, filterRole, filterStatus);
               }}
-              className="px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              className="px-3 py-1.5 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-base-100 text-base-content"
               disabled={loading}
             >
               <option value={10}>10개</option>

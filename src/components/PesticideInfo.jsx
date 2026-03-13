@@ -20,31 +20,31 @@ const PURPOSE_FILTERS = [
 
 /** 용도별 뱃지 색상 */
 const purposeColor = (purpose) => {
-  if (purpose?.includes('살균')) return 'bg-red-100 text-red-700';
-  if (purpose?.includes('살충')) return 'bg-blue-100 text-blue-700';
-  return 'bg-gray-100 text-gray-600';
+  if (purpose?.includes('살균')) return 'bg-red-500/15 text-red-600 dark:text-red-400';
+  if (purpose?.includes('살충')) return 'bg-blue-500/15 text-blue-600 dark:text-blue-400';
+  return 'bg-base-300 text-base-content/60';
 };
 
 /** 독성 뱃지 색상 */
 const toxicityColor = (toxicity) => {
   if (toxicity?.includes('맹독성') || toxicity?.includes('고독성')) return 'bg-red-500 text-white';
-  if (toxicity?.includes('보통독성')) return 'bg-orange-100 text-orange-700';
-  if (toxicity?.includes('저독성')) return 'bg-green-100 text-green-700';
-  return 'bg-gray-100 text-gray-600';
+  if (toxicity?.includes('보통독성')) return 'bg-orange-500/15 text-orange-600 dark:text-orange-400';
+  if (toxicity?.includes('저독성')) return 'bg-green-500/15 text-green-600 dark:text-green-400';
+  return 'bg-base-300 text-base-content/60';
 };
 
 /** 농약 카드 (아코디언) */
 const PesticideCard = ({ item, isOpen, onToggle }) => (
-  <div className="border border-gray-200 rounded-xl overflow-hidden">
+  <div className="border border-base-300 rounded-xl overflow-hidden">
     <button
       className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-        isOpen ? 'bg-teal-50/40' : 'bg-white hover:bg-gray-50'
+        isOpen ? 'bg-teal-500/10' : 'bg-base-100 hover:bg-base-200'
       }`}
       onClick={onToggle}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-semibold text-gray-800 truncate">
+          <span className="text-sm font-semibold text-base-content truncate">
             {item.brand_name || item.pesticide_name}
           </span>
           <span className={`px-1.5 py-0.5 text-xs rounded-full font-medium ${purposeColor(item.purpose)}`}>
@@ -54,18 +54,18 @@ const PesticideCard = ({ item, isOpen, onToggle }) => (
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs text-teal-600 font-medium">{item.pest_disease}</span>
           {item.brand_name && item.brand_name !== item.pesticide_name && (
-            <span className="text-xs text-gray-400">({item.pesticide_name})</span>
+            <span className="text-xs text-base-content/40">({item.pesticide_name})</span>
           )}
         </div>
       </div>
       <ExpandMoreIcon
-        className={`text-gray-400 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+        className={`text-base-content/40 transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
         fontSize="small"
       />
     </button>
 
     {isOpen && (
-      <div className="border-t border-gray-100 bg-gray-50/50 px-4 py-3">
+      <div className="border-t border-base-200 bg-base-200/50 px-4 py-3">
         <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
           <DetailItem label="희석배수" value={item.dilution ? (item.dilution.includes('배') ? item.dilution : `${item.dilution}배`) : '-'} />
           <DetailItem label="사용시기" value={item.usage_timing || '-'} />
@@ -74,19 +74,19 @@ const PesticideCard = ({ item, isOpen, onToggle }) => (
           <DetailItem label="제제형태" value={item.formulation || '-'} />
           <DetailItem label="회사" value={item.company || '-'} />
         </div>
-        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-gray-200">
+        <div className="flex flex-wrap gap-1.5 mt-3 pt-2.5 border-t border-base-300">
           {item.toxicity && (
             <span className={`px-2 py-0.5 text-xs rounded-full font-medium ${toxicityColor(item.toxicity)}`}>
               {item.toxicity}
             </span>
           )}
           {item.eco_toxicity && (
-            <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-sky-100 text-sky-700">
+            <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-sky-500/15 text-sky-600 dark:text-sky-400">
               어독성 {item.eco_toxicity}
             </span>
           )}
           {item.reg_status && (
-            <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-gray-100 text-gray-600">
+            <span className="px-2 py-0.5 text-xs rounded-full font-medium bg-base-300 text-base-content/60">
               {item.reg_status}
             </span>
           )}
@@ -99,8 +99,8 @@ const PesticideCard = ({ item, isOpen, onToggle }) => (
 /** 상세 항목 행 */
 const DetailItem = ({ label, value }) => (
   <div>
-    <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-    <p className="text-sm text-gray-700">{value}</p>
+    <p className="text-xs text-base-content/40 mb-0.5">{label}</p>
+    <p className="text-sm text-base-content/80">{value}</p>
   </div>
 );
 
@@ -192,11 +192,11 @@ const PesticideInfo = () => {
     return (
       <div className="max-w-3xl mx-auto p-4">
         <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="w-16 h-16 rounded-full bg-teal-50 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-teal-500/10 flex items-center justify-center mb-4">
             <span className="text-3xl">🧪</span>
           </div>
-          <p className="text-gray-600 font-medium mb-1">데이터 동기화가 필요합니다</p>
-          <p className="text-sm text-gray-400">관리자에게 농약 데이터 동기화를 요청하세요.</p>
+          <p className="text-base-content/60 font-medium mb-1">데이터 동기화가 필요합니다</p>
+          <p className="text-sm text-base-content/40">관리자에게 농약 데이터 동기화를 요청하세요.</p>
         </div>
       </div>
     );
@@ -206,12 +206,12 @@ const PesticideInfo = () => {
     <div className="max-w-3xl mx-auto p-4 space-y-4">
       {/* 헤더 */}
       <div>
-        <h2 className="text-lg font-bold text-gray-800 mb-0.5">참외 등록 농약 정보</h2>
-        <p className="text-xs text-gray-400">출처: 농촌진흥청 농약안전정보시스템 | 총 {allData.length}건</p>
+        <h2 className="text-lg font-bold text-base-content mb-0.5">참외 등록 농약 정보</h2>
+        <p className="text-xs text-base-content/40">출처: 농촌진흥청 농약안전정보시스템 | 총 {allData.length}건</p>
       </div>
 
       {/* 검색바 - flex 레이아웃 */}
-      <div className="flex items-center gap-2 rounded-xl border border-gray-300 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-200 px-3 py-2.5 bg-white">
+      <div className="flex items-center gap-2 rounded-xl border border-base-300 focus-within:border-teal-500 focus-within:ring-2 focus-within:ring-teal-200 px-3 py-2.5 bg-base-100">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
           <circle cx="11" cy="11" r="8" />
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -226,7 +226,7 @@ const PesticideInfo = () => {
         {searchTerm && (
           <button
             onClick={() => setSearchTerm('')}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+            className="flex-shrink-0 text-base-content/40 hover:text-base-content/60"
           >
             <CloseIcon fontSize="small" />
           </button>
@@ -242,7 +242,7 @@ const PesticideInfo = () => {
             className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
               purposeFilter === f.key
                 ? 'bg-teal-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-base-300 text-base-content/60 hover:bg-base-300'
             }`}
           >
             {f.label}
@@ -254,7 +254,7 @@ const PesticideInfo = () => {
       <select
         value={pestFilter}
         onChange={(e) => setPestFilter(e.target.value)}
-        className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
+        className="w-full border border-base-300 rounded-xl px-3 py-2 text-sm bg-base-100 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none"
       >
         <option value="all">병해충 전체</option>
         {pestList.map((p) => (
@@ -264,7 +264,7 @@ const PesticideInfo = () => {
 
       {/* 결과 카운트 + 초기화 */}
       <div className="flex items-center justify-between">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-base-content/50">
           {filtered.length}건 {filtered.length !== allData.length && `(전체 ${allData.length}건)`}
         </p>
         {(searchTerm || purposeFilter !== 'all' || pestFilter !== 'all') && (
@@ -280,16 +280,16 @@ const PesticideInfo = () => {
       {/* 결과 목록 (병해충별 그룹) */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
-          <p className="text-gray-500 font-medium mb-1">검색 결과가 없습니다</p>
-          <p className="text-sm text-gray-400">다른 검색어나 필터를 시도해 보세요.</p>
+          <p className="text-base-content/50 font-medium mb-1">검색 결과가 없습니다</p>
+          <p className="text-sm text-base-content/40">다른 검색어나 필터를 시도해 보세요.</p>
         </div>
       ) : (
         <div className="space-y-5">
           {Object.entries(grouped).map(([pestName, items]) => (
             <div key={pestName}>
-              <h3 className="text-sm font-bold text-gray-700 border-l-4 border-teal-500 pl-2 mb-2">
+              <h3 className="text-sm font-bold text-base-content/80 border-l-4 border-teal-500 pl-2 mb-2">
                 {pestName}
-                <span className="text-xs text-gray-400 font-normal ml-2">{items.length}건</span>
+                <span className="text-xs text-base-content/40 font-normal ml-2">{items.length}건</span>
               </h3>
               <div className="space-y-2">
                 {items.map((item) => (
@@ -307,14 +307,14 @@ const PesticideInfo = () => {
       )}
 
       {/* 공공누리 제3유형 출처표시 */}
-      <div className="mt-6 pt-4 border-t border-gray-200">
+      <div className="mt-6 pt-4 border-t border-base-300">
         <div className="flex items-start gap-2">
           <img
             src="/images/img_opentype01.jpg"
             alt="공공누리 제1유형"
             className="w-16 h-auto flex-shrink-0"
           />
-          <p className="text-[10px] text-gray-400 leading-relaxed">
+          <p className="text-[10px] text-base-content/40 leading-relaxed">
             본 저작물은 '농촌진흥청 농약안전정보시스템'에서 작성하여 공공누리 제1유형으로 개방한 '농약등록정보'를 이용하였으며,
             해당 저작물은{' '}
             <a href="https://psis.rda.go.kr" target="_blank" rel="noopener noreferrer" className="text-teal-500 underline">

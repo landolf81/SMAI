@@ -28,6 +28,7 @@ import EmailIcon from "@mui/icons-material/Email";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import LogoutIcon from "@mui/icons-material/Logout";
 import MailOutlineIcon from "@mui/icons-material/MailOutline";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 const Profile = () => {
   const [openUpdate, setOpenUpdate] = useState(false);
@@ -115,9 +116,9 @@ const Profile = () => {
 
   if (isPending) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-cloud-dancer">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-base-200">
         <LoadingSpinner size="lg" />
-        <p className="mt-4 text-gray-600 text-lg">프로필을 불러오는 중...</p>
+        <p className="mt-4 text-base-content/60 text-lg">프로필을 불러오는 중...</p>
       </div>
     );
   }
@@ -125,8 +126,8 @@ const Profile = () => {
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">사용자를 찾을 수 없습니다</h2>
-        <p className="text-gray-600">존재하지 않는 사용자이거나 삭제된 계정입니다.</p>
+        <h2 className="text-2xl font-bold text-base-content mb-2">사용자를 찾을 수 없습니다</h2>
+        <p className="text-base-content/60">존재하지 않는 사용자이거나 삭제된 계정입니다.</p>
       </div>
     );
   }
@@ -134,7 +135,7 @@ const Profile = () => {
   const isOwnProfile = data.id === currentUser.id;
 
   return (
-    <div className="bg-cloud-dancer min-h-screen pt-14">
+    <div className="bg-base-200 min-h-screen pt-14">
       {/* 업데이트 알림 */}
       {updateNotification && (
         <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce">
@@ -146,7 +147,7 @@ const Profile = () => {
       )}
       
       {/* 프로필 헤더 */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-base-100 shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-4 py-6">
           {/* 커버 이미지 및 프로필 사진 */}
           <div className="relative mb-6">
@@ -195,11 +196,11 @@ const Profile = () => {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between pt-12 gap-4">
             <div className="flex-1 transition-all duration-300">
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-2xl font-bold text-gray-800 transition-all duration-300">
+                <h1 className="text-2xl font-bold text-base-content transition-all duration-300">
                   {data.username || data.name}
                 </h1>
                 {data.name && data.name !== data.username && (
-                  <span className="text-gray-600">({data.name})</span>
+                  <span className="text-base-content/60">({data.name})</span>
                 )}
                 
                 {/* 뱃지 표시 */}
@@ -216,12 +217,12 @@ const Profile = () => {
               </div>
               
               {data.bio && (
-                <p className="text-gray-700 mb-3 max-w-2xl transition-all duration-300">
+                <p className="text-base-content/70 mb-3 max-w-2xl transition-all duration-300">
                   {data.bio}
                 </p>
               )}
               
-              <div className="flex items-center gap-6 text-sm text-gray-600">
+              <div className="flex items-center gap-6 text-sm text-base-content/60">
                 {data.location && (
                   <div className="flex items-center gap-1">
                     <LocationOnIcon fontSize="small" />
@@ -254,6 +255,13 @@ const Profile = () => {
                   >
                     <EditIcon className="w-5 h-5" />
                     <span className="font-semibold text-base">{isUpdating ? '업데이트 중...' : '프로필 편집'}</span>
+                  </button>
+                  <button
+                    onClick={() => navigate('/settings')}
+                    className="flex items-center justify-center gap-2 px-8 py-3 bg-base-100 text-base-content border border-base-300 rounded-2xl hover:bg-base-200 transform hover:scale-[1.02] transition-all duration-200 shadow-md hover:shadow-lg"
+                  >
+                    <SettingsIcon className="w-5 h-5" />
+                    <span className="font-semibold text-base">설정</span>
                   </button>
                   <button
                     onClick={logout}
@@ -291,12 +299,12 @@ const Profile = () => {
           {/* 통계 */}
           <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
             <div className="text-center">
-              <div className="text-xl font-bold text-gray-800">{userStats.posts || 0}</div>
-              <div className="text-sm text-gray-600">게시물</div>
+              <div className="text-xl font-bold text-base-content">{userStats.posts || 0}</div>
+              <div className="text-sm text-base-content/60">게시물</div>
             </div>
             <div className="text-center">
-              <div className="text-xl font-bold text-gray-800">{userStats.comments || 0}</div>
-              <div className="text-sm text-gray-600">댓글</div>
+              <div className="text-xl font-bold text-base-content">{userStats.comments || 0}</div>
+              <div className="text-sm text-base-content/60">댓글</div>
             </div>
           </div>
         </div>
@@ -305,15 +313,15 @@ const Profile = () => {
       {/* 콘텐츠 영역 */}
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* 탭 네비게이션 */}
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-          <div className="border-b border-gray-200">
+        <div className="bg-base-100 rounded-lg shadow-sm border mb-6">
+          <div className="border-b border-base-300">
             <nav className="flex">
               <button
                 onClick={() => setActiveTab('posts')}
                 className={`flex items-center justify-center px-4 py-3 font-medium ${
                   activeTab === 'posts'
                     ? 'text-market-600 border-b-2 border-market-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-base-content/50 hover:text-base-content/70'
                 }`}
                 title="게시물"
               >
@@ -324,7 +332,7 @@ const Profile = () => {
                 className={`flex items-center justify-center px-4 py-3 font-medium ${
                   activeTab === 'likes'
                     ? 'text-market-600 border-b-2 border-market-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-base-content/50 hover:text-base-content/70'
                 }`}
                 title="좋아요"
               >
@@ -335,7 +343,7 @@ const Profile = () => {
                 className={`flex items-center justify-center px-4 py-3 font-medium ${
                   activeTab === 'comments'
                     ? 'text-market-600 border-b-2 border-market-600'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-base-content/50 hover:text-base-content/70'
                 }`}
                 title="댓글"
               >
@@ -349,7 +357,7 @@ const Profile = () => {
                   className={`flex items-center justify-center px-4 py-3 font-medium ${
                     activeTab === 'saved'
                       ? 'text-market-600 border-b-2 border-market-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      : 'text-base-content/50 hover:text-base-content/70'
                   }`}
                   title="저장"
                 >
@@ -364,7 +372,7 @@ const Profile = () => {
                   className={`flex items-center justify-center px-4 py-3 font-medium relative ${
                     activeTab === 'messages'
                       ? 'text-market-600 border-b-2 border-market-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      : 'text-base-content/50 hover:text-base-content/70'
                   }`}
                   title="메시지"
                 >

@@ -292,21 +292,21 @@ const MarketTrend = () => {
     const data = payload[0]?.payload;
 
     return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-        <p className="font-bold text-gray-800 mb-2">{data?.fullDate}</p>
+      <div className="bg-base-100 p-3 rounded-lg shadow-lg border border-base-300">
+        <p className="font-bold text-base-content mb-2">{data?.fullDate}</p>
         <div className="space-y-1 text-sm">
           <p className="text-red-600">
             최고가: {formatPrice(data?.maxPrice)}원
             {data?.lastYearMax && (
-              <span className="text-gray-400 ml-2">
+              <span className="text-base-content/40 ml-2">
                 (작년 {formatPrice(data?.lastYearMax)})
               </span>
             )}
           </p>
-          <p className="text-gray-800">
+          <p className="text-base-content">
             평균가: {formatPrice(data?.avgPrice)}원
             {data?.lastYearAvg && (
-              <span className="text-gray-400 ml-2">
+              <span className="text-base-content/40 ml-2">
                 (작년 {formatPrice(data?.lastYearAvg)})
               </span>
             )}
@@ -314,7 +314,7 @@ const MarketTrend = () => {
           <p className="text-blue-600">
             최저가: {formatPrice(data?.minPrice)}원
             {data?.lastYearMin && (
-              <span className="text-gray-400 ml-2">
+              <span className="text-base-content/40 ml-2">
                 (작년 {formatPrice(data?.lastYearMin)})
               </span>
             )}
@@ -325,24 +325,24 @@ const MarketTrend = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cloud-dancer pt-14 pb-20">
+    <div className="min-h-screen bg-base-200 pt-14 pb-20">
       {/* 서브 헤더 (뒤로가기 + 제목) */}
-      <div className="bg-white border-b border-gray-200 sticky top-14 z-10">
+      <div className="bg-base-100 border-b border-base-300 sticky top-14 z-10">
         <div className="flex items-center px-4 py-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="p-2 -ml-2 hover:bg-base-200 rounded-full transition-colors"
           >
             <ArrowBackIcon />
           </button>
-          <h1 className="ml-2 text-lg font-bold text-gray-800">
+          <h1 className="ml-2 text-lg font-bold text-base-content">
             {marketName} 경락가 추세
           </h1>
         </div>
       </div>
 
       {/* 기간 선택 탭 */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="bg-base-100 border-b border-base-300 px-4 py-3">
         <div className="flex gap-2 overflow-x-auto">
           {[
             { days: 7, label: '7일' },
@@ -355,7 +355,7 @@ const MarketTrend = () => {
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 !isCustomPeriod && periodDays === days
                   ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-base-200 text-base-content/70 hover:bg-base-300'
               }`}
             >
               {label}
@@ -370,7 +370,7 @@ const MarketTrend = () => {
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
               isCustomPeriod
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-base-200 text-base-content/70 hover:bg-base-300'
             }`}
           >
             <CalendarMonthIcon style={{ fontSize: 18 }} />
@@ -380,7 +380,7 @@ const MarketTrend = () => {
 
         {/* 선택된 기간 표시 */}
         {isCustomPeriod && customStartDate && customEndDate && (
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm text-base-content/60 mt-2">
             {customStartDate} ~ {customEndDate}
           </p>
         )}
@@ -393,18 +393,18 @@ const MarketTrend = () => {
             <LoadingSpinner size="lg" />
           </div>
         ) : chartData.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+          <div className="flex flex-col items-center justify-center h-64 text-base-content/50">
             <div className="text-4xl mb-4">📊</div>
             <p>해당 기간의 경락가 데이터가 없습니다</p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <div className="bg-base-100 rounded-2xl shadow-sm border border-base-200 p-4">
             {/* 차트 제목 - 공판장명 */}
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-800">
+              <h2 className="text-lg font-bold text-base-content">
                 📈 {marketName}
               </h2>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-base-content/50">
                 {chartData.length > 0 && `${chartData[0]?.fullDate} ~ ${chartData[chartData.length - 1]?.fullDate}`}
               </span>
             </div>
@@ -512,7 +512,7 @@ const MarketTrend = () => {
             </ResponsiveContainer>
 
             {/* 범례 설명 */}
-            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600 space-y-2">
+            <div className="mt-4 pt-4 border-t border-base-200 text-xs text-base-content/60 space-y-2">
               {/* 올해 */}
               <div className="flex items-center justify-center gap-4">
                 <span className="font-medium">올해</span>
@@ -551,9 +551,9 @@ const MarketTrend = () => {
 
         {/* 물량 차트 */}
         {!loading && chartData.length > 0 && (
-          <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+          <div className="mt-4 bg-base-100 rounded-2xl shadow-sm border border-base-200 p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-800">
+              <h2 className="text-lg font-bold text-base-content">
                 📦 물량 추이
               </h2>
             </div>
@@ -580,14 +580,14 @@ const MarketTrend = () => {
                     if (!active || !payload || !payload.length) return null;
                     const data = payload[0]?.payload;
                     return (
-                      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-                        <p className="font-bold text-gray-800 mb-2">{data?.fullDate}</p>
+                      <div className="bg-base-100 p-3 rounded-lg shadow-lg border border-base-300">
+                        <p className="font-bold text-base-content mb-2">{data?.fullDate}</p>
                         <div className="space-y-1 text-sm">
                           <p className="text-emerald-600">
                             올해 물량: {data?.totalBoxes?.toLocaleString() || '-'}박스
                           </p>
                           {data?.lastYearBoxes && (
-                            <p className="text-gray-500">
+                            <p className="text-base-content/50">
                               작년 물량: {data?.lastYearBoxes?.toLocaleString()}박스
                             </p>
                           )}
@@ -641,7 +641,7 @@ const MarketTrend = () => {
             </ResponsiveContainer>
 
             {/* 범례 */}
-            <div className="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-600">
+            <div className="mt-4 pt-4 border-t border-base-200 text-xs text-base-content/60">
               <div className="flex items-center justify-center gap-6">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-1 bg-emerald-500 rounded"></div>
@@ -687,9 +687,9 @@ const MarketTrend = () => {
             : 0;
 
           return (
-            <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+            <div className="mt-4 bg-base-100 rounded-2xl shadow-sm border border-base-200 p-4">
               {/* 올해 요약 */}
-              <h3 className="font-bold text-gray-800 mb-3">기간 요약 (올해)</h3>
+              <h3 className="font-bold text-base-content mb-3">기간 요약 (올해)</h3>
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="bg-red-50 rounded-xl p-3">
                   <p className="text-xs text-red-600 mb-1">최고가</p>
@@ -697,9 +697,9 @@ const MarketTrend = () => {
                     {formatPrice(maxPrice)}
                   </p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-600 mb-1">평균가</p>
-                  <p className="text-lg font-bold text-gray-800">
+                <div className="bg-base-200 rounded-xl p-3">
+                  <p className="text-xs text-base-content/60 mb-1">평균가</p>
+                  <p className="text-lg font-bold text-base-content">
                     {formatPrice(avgPrice)}
                   </p>
                 </div>
@@ -714,7 +714,7 @@ const MarketTrend = () => {
               {/* 작년 동기 요약 */}
               {lastYearMaxPrice > 0 && (
                 <>
-                  <h3 className="font-bold text-gray-600 mb-3 mt-4 pt-4 border-t border-gray-100">작년 동기</h3>
+                  <h3 className="font-bold text-base-content/60 mb-3 mt-4 pt-4 border-t border-base-200">작년 동기</h3>
                   <div className="grid grid-cols-3 gap-3 text-center">
                     <div className="bg-orange-50 rounded-xl p-3">
                       <p className="text-xs text-orange-600 mb-1">최고가</p>
@@ -722,9 +722,9 @@ const MarketTrend = () => {
                         {formatPrice(lastYearMaxPrice)}
                       </p>
                     </div>
-                    <div className="bg-gray-100 rounded-xl p-3">
-                      <p className="text-xs text-gray-600 mb-1">평균가</p>
-                      <p className="text-lg font-bold text-gray-600">
+                    <div className="bg-base-300 rounded-xl p-3">
+                      <p className="text-xs text-base-content/60 mb-1">평균가</p>
+                      <p className="text-lg font-bold text-base-content/60">
                         {formatPrice(lastYearAvgPrice)}
                       </p>
                     </div>
@@ -763,23 +763,23 @@ const MarketTrend = () => {
           return (
             <>
               {/* 누적 출하량 */}
-              <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <h3 className="font-bold text-gray-800 mb-3">연간 누적 출하량</h3>
-                <p className="text-xs text-gray-400 -mt-2 mb-3">{year}.01.01 ~ 오늘</p>
+              <div className="mt-4 bg-base-100 rounded-2xl shadow-sm border border-base-200 p-4">
+                <h3 className="font-bold text-base-content mb-3">연간 누적 출하량</h3>
+                <p className="text-xs text-base-content/40 -mt-2 mb-3">{year}.01.01 ~ 오늘</p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-sm text-gray-600">{year}년</span>
-                    <span className="text-base font-bold text-gray-900">{thisYear.boxes.toLocaleString()}상자</span>
+                    <span className="text-sm text-base-content/60">{year}년</span>
+                    <span className="text-base font-bold text-base-content">{thisYear.boxes.toLocaleString()}상자</span>
                   </div>
-                  <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                    <span className="text-sm text-gray-500">{year - 1}년 동기</span>
-                    <span className="text-base font-bold text-gray-500">{lastYear.boxes.toLocaleString()}상자</span>
+                  <div className="flex items-center justify-between py-2 border-t border-base-200">
+                    <span className="text-sm text-base-content/50">{year - 1}년 동기</span>
+                    <span className="text-base font-bold text-base-content/50">{lastYear.boxes.toLocaleString()}상자</span>
                   </div>
                   {lastYear.boxes > 0 && (
-                    <div className="flex items-center justify-between py-2 border-t border-gray-200">
-                      <span className="text-sm text-gray-600">전년 대비</span>
+                    <div className="flex items-center justify-between py-2 border-t border-base-300">
+                      <span className="text-sm text-base-content/60">전년 대비</span>
                       <span className={`text-base font-bold ${
-                        boxDiff > 0 ? 'text-red-600' : boxDiff < 0 ? 'text-blue-600' : 'text-gray-600'
+                        boxDiff > 0 ? 'text-red-600' : boxDiff < 0 ? 'text-blue-600' : 'text-base-content/60'
                       }`}>
                         {boxDiff > 0 ? '+' : ''}{boxDiff.toLocaleString()}상자
                         {boxDiffPct && ` (${boxDiff > 0 ? '+' : ''}${boxDiffPct}%)`}
@@ -791,23 +791,23 @@ const MarketTrend = () => {
 
               {/* 누적 출하금액 */}
               {(thisYear.amount > 0 || lastYear.amount > 0) && (
-                <div className="mt-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                  <h3 className="font-bold text-gray-800 mb-3">연간 누적 출하금액</h3>
-                  <p className="text-xs text-gray-400 -mt-2 mb-3">{year}.01.01 ~ 오늘</p>
+                <div className="mt-4 bg-base-100 rounded-2xl shadow-sm border border-base-200 p-4">
+                  <h3 className="font-bold text-base-content mb-3">연간 누적 출하금액</h3>
+                  <p className="text-xs text-base-content/40 -mt-2 mb-3">{year}.01.01 ~ 오늘</p>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between py-2">
-                      <span className="text-sm text-gray-600">{year}년</span>
-                      <span className="text-base font-bold text-gray-900">{formatMillion(thisYear.amount)}원</span>
+                      <span className="text-sm text-base-content/60">{year}년</span>
+                      <span className="text-base font-bold text-base-content">{formatMillion(thisYear.amount)}원</span>
                     </div>
-                    <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                      <span className="text-sm text-gray-500">{year - 1}년 동기</span>
-                      <span className="text-base font-bold text-gray-500">{formatMillion(lastYear.amount)}원</span>
+                    <div className="flex items-center justify-between py-2 border-t border-base-200">
+                      <span className="text-sm text-base-content/50">{year - 1}년 동기</span>
+                      <span className="text-base font-bold text-base-content/50">{formatMillion(lastYear.amount)}원</span>
                     </div>
                     {lastYear.amount > 0 && (
-                      <div className="flex items-center justify-between py-2 border-t border-gray-200">
-                        <span className="text-sm text-gray-600">전년 대비</span>
+                      <div className="flex items-center justify-between py-2 border-t border-base-300">
+                        <span className="text-sm text-base-content/60">전년 대비</span>
                         <span className={`text-base font-bold ${
-                          amtDiff > 0 ? 'text-red-600' : amtDiff < 0 ? 'text-blue-600' : 'text-gray-600'
+                          amtDiff > 0 ? 'text-red-600' : amtDiff < 0 ? 'text-blue-600' : 'text-base-content/60'
                         }`}>
                           {amtDiff > 0 ? '+' : ''}{formatMillion(amtDiff)}원
                           {amtDiffPct && ` (${amtDiff > 0 ? '+' : ''}${amtDiffPct}%)`}

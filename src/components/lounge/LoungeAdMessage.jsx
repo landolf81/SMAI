@@ -123,7 +123,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
   return (
     <div
       ref={containerRef}
-      className="flex items-start gap-2.5 px-4 py-2 border-b border-gray-200/60 bg-orange-50/30 border-l-2 border-l-orange-300"
+      className="flex items-start gap-2.5 px-4 py-2 border-b border-base-300/60 bg-orange-50/30 border-l-2 border-l-orange-300"
     >
       {/* AD 아바타 */}
       <div className="w-9 h-9 rounded-full flex-shrink-0 mt-0.5 bg-gradient-to-br from-orange-400 to-pink-500 flex items-center justify-center">
@@ -133,7 +133,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
       <div className="flex-1 min-w-0">
         {/* 헤더: 광고 뱃지 + 타이틀 */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[15px] font-semibold text-gray-800 truncate">
+          <span className="text-[15px] font-semibold text-base-content truncate">
             {ad.title || '광고'}
           </span>
           <span
@@ -146,7 +146,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
 
         {/* 본문 텍스트 */}
         {content && (
-          <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5 line-clamp-3">
+          <p className="text-[16px] text-base-content leading-relaxed whitespace-pre-wrap break-words mt-0.5 line-clamp-3">
             {content}
           </p>
         )}
@@ -155,7 +155,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
         {displayMedia && (
           <div className="mt-1.5 max-w-[280px]">
             {displayMedia.type === 'stream' && (
-              <div className="rounded-xl overflow-hidden border border-gray-200">
+              <div className="rounded-xl overflow-hidden border border-base-300">
                 <CloudflareStreamPlayer
                   uid={displayMedia.uid}
                   autoplay={isVisible}
@@ -169,7 +169,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
             {displayMedia.type === 'video' && (
               <video
                 src={displayMedia.url}
-                className="rounded-xl max-w-full max-h-[240px] object-cover border border-gray-200"
+                className="rounded-xl max-w-full max-h-[240px] object-cover border border-base-300"
                 autoPlay={isVisible}
                 muted
                 loop
@@ -181,7 +181,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
               <img
                 src={displayMedia.url}
                 alt={ad.title || '광고 이미지'}
-                className="rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-gray-200"
+                className="rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-base-300"
                 loading="lazy"
                 onClick={handleImageClick}
               />

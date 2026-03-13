@@ -601,11 +601,11 @@ const PostEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cloud-dancer">
+    <div className="min-h-screen bg-base-200">
       {/* 에러 모달 */}
       {showErrorModal && error && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+          <div className="bg-base-100 rounded-2xl shadow-xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
             <div className="flex flex-col items-center text-center">
               {/* 에러 아이콘 */}
               <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
@@ -614,8 +614,8 @@ const PostEditor = () => {
                 </svg>
               </div>
               {/* 에러 메시지 */}
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">알림</h3>
-              <p className="text-gray-600 mb-6">{error}</p>
+              <h3 className="text-lg font-semibold text-base-content mb-2">알림</h3>
+              <p className="text-base-content/60 mb-6">{error}</p>
               {/* 확인 버튼 */}
               <button
                 type="button"
@@ -631,7 +631,7 @@ const PostEditor = () => {
 
       {/* 메인 컨텐츠 */}
       <div className="max-w-2xl mx-auto px-4 pt-20 pb-24">
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6">
+        <form onSubmit={handleSubmit} className="bg-base-100 rounded-xl shadow-sm p-6">
           {/* 사용자 정보 */}
           <div className="flex items-center space-x-3 mb-6">
             <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-white p-0.5">
@@ -642,14 +642,14 @@ const PostEditor = () => {
               />
             </div>
             <div>
-              <p className="font-semibold text-gray-800">{currentUser.name}</p>
-              <p className="text-sm text-gray-500">{isEditMode ? '게시물 수정 중' : '게시물 작성 중'}</p>
+              <p className="font-semibold text-base-content">{currentUser.name}</p>
+              <p className="text-sm text-base-content/50">{isEditMode ? '게시물 수정 중' : '게시물 작성 중'}</p>
             </div>
           </div>
 
           {/* 파일 업로드 */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-base-content/70 mb-3">
               <FontAwesomeIcon icon={faImage} className="mr-2 text-orange-500" />
               이미지 또는 동영상
               {!linkPreview && <span className="text-red-500 ml-1">*</span>}
@@ -657,11 +657,11 @@ const PostEditor = () => {
 
             <label
               htmlFor="imageInput"
-              className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-50 transition-all"
+              className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-base-300 rounded-xl cursor-pointer hover:border-orange-400 hover:bg-orange-500/5 transition-all"
             >
-              <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-gray-400" />
-              <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 파일 업로드</span></p>
-              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
+              <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-base-content/40" />
+              <p className="text-sm text-base-content/50"><span className="font-semibold">클릭하여 파일 업로드</span></p>
+              <p className="text-xs text-base-content/50">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
             </label>
 
             {/* 개인정보 노출 경고 */}
@@ -704,15 +704,15 @@ const PostEditor = () => {
               <div className="mt-4 space-y-3">
                 {/* 미리보기 모드 토글 */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">미리보기</span>
-                  <div className="flex bg-gray-100 rounded-lg p-0.5">
+                  <span className="text-sm text-base-content/60">미리보기</span>
+                  <div className="flex bg-base-200 rounded-lg p-0.5">
                     <button
                       type="button"
                       onClick={() => setPreviewMode('feed')}
                       className={`px-3 py-1 text-xs rounded-md transition-all ${
                         previewMode === 'feed'
                           ? 'bg-orange-500 text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
+                          : 'text-base-content/60 hover:text-base-content'
                       }`}
                     >
                       피드 (4:5)
@@ -723,7 +723,7 @@ const PostEditor = () => {
                       className={`px-3 py-1 text-xs rounded-md transition-all ${
                         previewMode === 'fullscreen'
                           ? 'bg-orange-500 text-white shadow-sm'
-                          : 'text-gray-600 hover:text-gray-800'
+                          : 'text-base-content/60 hover:text-base-content'
                       }`}
                     >
                       전체보기 (9:16)
@@ -737,7 +737,7 @@ const PostEditor = () => {
                   const preview = previewImages[safeIndex];
                   const isStream = preview?.type === 'video/stream';
                   const previewUrl = typeof preview === 'string' ? preview : preview?.url;
-                  const aspectClass = previewMode === 'feed' ? 'aspect-[4/5] bg-gray-100' : 'aspect-[9/16] bg-black';
+                  const aspectClass = previewMode === 'feed' ? 'aspect-[4/5] bg-base-200' : 'aspect-[9/16] bg-black';
 
                   return (
                     <div className={`relative w-full ${aspectClass} rounded-xl overflow-hidden`}>
@@ -828,7 +828,7 @@ const PostEditor = () => {
           {/* 내용 입력 */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-base-content/70">
                 내용 <span className="text-red-500">*</span>
               </label>
               {speechSupported && (
@@ -838,7 +838,7 @@ const PostEditor = () => {
                   className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
                     isListening
                       ? 'bg-red-500 text-white animate-pulse'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                   }`}
                   title={isListening ? '음성 입력 중지' : '음성 입력'}
                 >
@@ -850,7 +850,7 @@ const PostEditor = () => {
               <textarea
                 placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
                 className={`w-full h-[180px] p-4 pb-6 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 ${
-                  isListening ? 'border-red-400 bg-red-50' : 'border-gray-200'
+                  isListening ? 'border-red-400 bg-red-50' : 'border-base-300'
                 }`}
                 value={desc}
                 onChange={(e) => {
@@ -868,7 +868,7 @@ const PostEditor = () => {
                 </div>
               )}
               {/* 글자 수 표시 */}
-              <div className="absolute bottom-2 right-3 text-xs text-gray-400">
+              <div className="absolute bottom-2 right-3 text-xs text-base-content/40">
                 {desc.length}/1000
               </div>
             </div>
@@ -885,7 +885,7 @@ const PostEditor = () => {
           {/* 링크 미리보기 */}
           {linkPreview && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-base-content/70 mb-3">
                 <FontAwesomeIcon icon={faLink} className="mr-2 text-blue-500" />링크 미리보기
               </label>
               {linkPreview.type === 'youtube' ? (
@@ -901,7 +901,7 @@ const PostEditor = () => {
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium transition-all hover:bg-gray-300"
+              className="flex-1 py-3 bg-base-300 text-base-content/70 rounded-xl font-medium transition-all hover:bg-base-content/20"
             >
               취소
             </button>

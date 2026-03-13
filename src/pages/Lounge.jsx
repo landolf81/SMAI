@@ -1,9 +1,10 @@
 /**
  * Lounge.jsx
- * 역할: 광장 - 회원들이 짧은 텍스트 글을 나누는 단체 채팅방
+ * 역할: 광장 - 회원들이 짧은 텍스트 글을 나누는 피드
  * 특징:
- *   - 실시간 수신 (Supabase Realtime)
- *   - 위로 스크롤 시 이전 메시지 로드 (IntersectionObserver)
+ *   - 최신글이 최상단에 표시 (피드형)
+ *   - 실시간 수신 (Supabase Realtime) → 상단에 새 글 삽입
+ *   - 아래로 스크롤 시 이전 메시지 로드 (IntersectionObserver)
  *   - 텍스트 전용, 도배 방지 15초 쿨다운
  *   - 메시지 롱프레스 → TTS (Web Speech API, ko-KR)
  *   - 닉네임 롱프레스 → @멘션 입력창 열기
@@ -16,7 +17,7 @@ import loungePollService from '../services/loungePollService';
 import { storageService } from '../services';
 import { generateDiceBearAvatar } from '../utils/userHelper';
 import SendIcon from '@mui/icons-material/Send';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import AIBadge from '../components/AIBadge';
 import { AI_USER_ID } from '../config/aiUser';
 import PollBadge from '../components/lounge/PollBadge';
@@ -153,9 +154,9 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
 
   return (
     <div
-      className={`flex items-start gap-2.5 px-4 py-2 group border-b border-gray-200/60 ${
-        isMe ? 'bg-orange-50 border-l-2 border-orange-400' : ''
-      } ${isSpeaking ? 'bg-blue-50' : ''} ${isHidden ? 'opacity-40' : ''}`}
+      className={`flex items-start gap-2.5 px-4 py-2 group border-b border-base-300/60 ${
+        isMe ? 'bg-warning/10 border-l-2 border-orange-400' : ''
+      } ${isSpeaking ? 'bg-info/10' : ''} ${isHidden ? 'opacity-40' : ''}`}
     >
       <img
         src={profileUrl}
@@ -170,7 +171,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
         <div className="flex items-center gap-1.5">
           {/* 닉네임 — 롱프레스 시 @멘션 */}
           <span
-            className="text-[15px] font-semibold text-gray-800 select-none"
+            className="text-[15px] font-semibold text-base-content select-none"
             style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
             onTouchStart={handleNameTouchStart}
             onTouchMove={handleNameTouchMove}
@@ -182,11 +183,11 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
           {isAI && <AIBadge />}
           {msg.poll_id && <PollBadge />}
           {isHidden && <span className="text-[10px] text-red-400 font-medium">숨김</span>}
-          <span className="text-[12px] text-gray-400">{formatTime(msg.created_at)}</span>
+          <span className="text-[12px] text-base-content/40">{formatTime(msg.created_at)}</span>
           {/* TTS 버튼 */}
           <button
             onClick={() => onTTS?.(msg.content, msg.id)}
-            className={`p-0.5 rounded transition-colors ${isSpeaking ? 'text-blue-500' : 'text-gray-400 active:text-blue-400'}`}
+            className={`p-0.5 rounded transition-colors ${isSpeaking ? 'text-blue-500' : 'text-base-content/40 active:text-blue-400'}`}
             aria-label={isSpeaking ? 'TTS 정지' : '읽어주기'}
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -200,7 +201,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
           {isMe && (
             <button
               onClick={() => onDelete(msg.id)}
-              className="text-[11px] text-gray-500 ml-auto"
+              className="text-[11px] text-base-content/50 ml-auto"
             >
               삭제
             </button>
@@ -215,7 +216,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
           )}
         </div>
         {msg.content && (
-          <p className="text-[16px] text-gray-800 leading-relaxed whitespace-pre-wrap break-words mt-0.5">
+          <p className="text-[16px] text-base-content leading-relaxed whitespace-pre-wrap break-words mt-0.5">
             {renderContent(msg.content, knownNames)}
           </p>
         )}
@@ -223,7 +224,7 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
           <img
             src={msg.image_url}
             alt="첨부 이미지"
-            className="mt-1.5 rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-gray-200"
+            className="mt-1.5 rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-base-300"
             loading="lazy"
             onClick={() => onImageClick?.(msg.image_url)}
           />
@@ -255,7 +256,7 @@ const Lounge = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [showScrollUp, setShowScrollUp] = useState(false);  // 새 메시지 알림 (상단)
 
   const [isComposing, setIsComposing] = useState(false);
   const [isPollMode, setIsPollMode] = useState(false);          // 투표 생성 모드
@@ -286,22 +287,59 @@ const Lounge = () => {
   const speakingMsgIdRef = useRef(null);
 
   const scrollAreaRef = useRef(null);
-  const topSentinelRef = useRef(null);
-  const bottomRef = useRef(null);
+  const bottomSentinelRef = useRef(null);   // 이전 메시지 로드 센티넬 (하단)
   const subscriptionRef = useRef(null);
-  const isAtBottomRef = useRef(true);
+  const isAtTopRef = useRef(true);
   const textareaRef = useRef(null);
+  const lastScrollTopRef = useRef(0);
 
-  // ── 하단 여부 체크 ──
-  const checkIsAtBottom = useCallback(() => {
+  // ── 내부 스크롤 → 상하단 바 숨김/표시 (홈과 동일 매커니즘) ──
+  useEffect(() => {
     const el = scrollAreaRef.current;
-    if (!el) return true;
-    return el.scrollHeight - el.scrollTop - el.clientHeight < 120;
+    if (!el) return;
+
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollTop = el.scrollTop;
+        const last = lastScrollTopRef.current;
+
+        // 상단 근처면 항상 바 표시
+        if (scrollTop < 50) {
+          window.dispatchEvent(new CustomEvent('scroll-direction-override', { detail: { direction: 'up' } }));
+        } else if (scrollTop !== last) {
+          const dir = scrollTop > last ? 'down' : 'up';
+          window.dispatchEvent(new CustomEvent('scroll-direction-override', { detail: { direction: dir } }));
+        }
+
+        lastScrollTopRef.current = scrollTop;
+        ticking = false;
+      });
+    };
+
+    el.addEventListener('scroll', handleScroll, { passive: true });
+
+    // 언마운트 시 바 다시 표시
+    return () => {
+      el.removeEventListener('scroll', handleScroll);
+      window.dispatchEvent(new CustomEvent('scroll-direction-override', { detail: { direction: 'up' } }));
+    };
   }, []);
 
-  // ── 하단으로 스크롤 ──
-  const scrollToBottom = useCallback((behavior = 'smooth') => {
-    bottomRef.current?.scrollIntoView({ behavior });
+  // ── 상단 여부 체크 ──
+  const checkIsAtTop = useCallback(() => {
+    const el = scrollAreaRef.current;
+    if (!el) return true;
+    return el.scrollTop < 120;
+  }, []);
+
+  // ── 상단으로 스크롤 ──
+  const scrollToTop = useCallback((behavior = 'smooth') => {
+    const el = scrollAreaRef.current;
+    if (el) el.scrollTo({ top: 0, behavior });
   }, []);
 
   // ── 도배 방지 쿨다운 카운트다운 (1초씩 감소) ──
@@ -333,7 +371,7 @@ const Lounge = () => {
     return () => { cancelled = true; };
   }, []);
 
-  // ── 초기 메시지 로드 ──
+  // ── 초기 메시지 로드 (최신순) ──
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -349,35 +387,39 @@ const Lounge = () => {
               if (!cancelled) setMyPollVotes(votes);
             }).catch(() => {});
           }
-          // 초기 로드 후 즉시 하단으로
-          requestAnimationFrame(() => scrollToBottom('auto'));
         }
       } catch (e) {
         console.error('[Lounge] 메시지 로드 실패:', e);
       }
     })();
     return () => { cancelled = true; };
-  }, [scrollToBottom]);
+  }, []);
 
-  // ── Realtime 구독 ──
+  // ── Realtime 구독 (새 메시지 → 상단에 삽입) ──
   useEffect(() => {
     subscriptionRef.current = loungeService.subscribeToNewMessages((newMsg) => {
+      const el = scrollAreaRef.current;
+      const prevScrollHeight = el?.scrollHeight || 0;
+
       setMessages((prev) => {
-        // 중복 방지
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
+        return [newMsg, ...prev];  // 최신순: 상단에 삽입
       });
 
-      // 하단에 있으면 자동 스크롤, 아니면 버튼 표시
-      if (isAtBottomRef.current) {
-        requestAnimationFrame(() => scrollToBottom());
+      // 상단에 있으면 새 메시지 자동 표시, 아니면 알림 버튼
+      if (isAtTopRef.current) {
+        requestAnimationFrame(() => scrollToTop());
       } else {
-        setShowScrollDown(true);
+        // 스크롤 위치 보정 (상단에 콘텐츠 추가되면 뷰포트가 밀리므로)
+        requestAnimationFrame(() => {
+          if (el) el.scrollTop += el.scrollHeight - prevScrollHeight;
+        });
+        setShowScrollUp(true);
       }
     });
 
     return () => subscriptionRef.current?.unsubscribe();
-  }, [scrollToBottom]);
+  }, [scrollToTop]);
 
   // ── 투표 Realtime 구독 (투표 변경 시 메시지 내 poll 데이터 갱신) ──
   useEffect(() => {
@@ -398,47 +440,39 @@ const Lounge = () => {
     return () => pollVoteSubRef.current?.unsubscribe();
   }, []);
 
-  // ── 스크롤 이벤트: 하단 여부 추적 ──
+  // ── 스크롤 이벤트: 상단 여부 추적 ──
   useEffect(() => {
     const el = scrollAreaRef.current;
     if (!el) return;
     const onScroll = () => {
-      isAtBottomRef.current = checkIsAtBottom();
-      if (isAtBottomRef.current) setShowScrollDown(false);
+      isAtTopRef.current = checkIsAtTop();
+      if (isAtTopRef.current) setShowScrollUp(false);
     };
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
-  }, [checkIsAtBottom]);
+  }, [checkIsAtTop]);
 
-  // ── 위 센티넬 IntersectionObserver (이전 메시지 로드) ──
+  // ── 하단 센티넬 IntersectionObserver (이전 메시지 로드) ──
   useEffect(() => {
-    if (!topSentinelRef.current) return;
+    if (!bottomSentinelRef.current) return;
 
     const observer = new IntersectionObserver(
       async ([entry]) => {
         if (!entry.isIntersecting || isLoadingMore || !hasMore) return;
 
-        const el = scrollAreaRef.current;
-        const prevScrollHeight = el?.scrollHeight || 0;
-
         setIsLoadingMore(true);
         try {
-          const oldest = messages[0]?.created_at;
+          // 최신순이므로 마지막 항목이 가장 오래된 메시지
+          const oldest = messages[messages.length - 1]?.created_at;
           if (!oldest) return;
           const older = await loungeService.getMessages({ beforeTime: oldest, limit: 30 });
           if (older.length === 0) {
             setHasMore(false);
             return;
           }
-          setMessages((prev) => [...older, ...prev]);
+          // 하단에 추가 (스크롤 위치 보정 불필요 — 뷰포트 아래에 삽입)
+          setMessages((prev) => [...prev, ...older]);
           setHasMore(older.length === 30);
-
-          // 스크롤 위치 보정
-          requestAnimationFrame(() => {
-            if (el) {
-              el.scrollTop += el.scrollHeight - prevScrollHeight;
-            }
-          });
         } catch (e) {
           console.error('[Lounge] 이전 메시지 로드 실패:', e);
         } finally {
@@ -448,7 +482,7 @@ const Lounge = () => {
       { threshold: 0 }
     );
 
-    observer.observe(topSentinelRef.current);
+    observer.observe(bottomSentinelRef.current);
     return () => observer.disconnect();
   }, [messages, isLoadingMore, hasMore]);
 
@@ -581,19 +615,19 @@ const Lounge = () => {
       const newMsg = await loungePollService.createPoll(pollData);
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
+        return [newMsg, ...prev];  // 최신순: 상단에 삽입
       });
       setCooldownLeft(15);
       setIsComposing(false);
       setIsPollMode(false);
-      requestAnimationFrame(() => scrollToBottom());
+      requestAnimationFrame(() => scrollToTop());
     } catch (e) {
       console.error('[Lounge] 투표 생성 실패:', e);
       alert('투표 생성에 실패했습니다.');
     } finally {
       setIsSending(false);
     }
-  }, [isSending, cooldownLeft, currentUser, scrollToBottom]);
+  }, [isSending, cooldownLeft, currentUser, scrollToTop]);
 
   // ── 메시지 전송 ──
   const handleSend = useCallback(async (e) => {
@@ -631,12 +665,12 @@ const Lounge = () => {
       // Realtime으로도 오겠지만 중복 방지 로직이 있으므로 미리 추가
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
+        return [newMsg, ...prev];  // 최신순: 상단에 삽입
       });
       setCooldownLeft(15); // 15초 쿨다운 시작
       setIsComposing(false);
       clearImage();
-      requestAnimationFrame(() => scrollToBottom());
+      requestAnimationFrame(() => scrollToTop());
     } catch (e) {
       console.error('[Lounge] 전송 실패:', e);
       setText(trimmed); // 실패 시 복원
@@ -644,7 +678,7 @@ const Lounge = () => {
     } finally {
       setIsSending(false);
     }
-  }, [text, selectedImage, isSending, cooldownLeft, currentUser, navigate, scrollToBottom, clearImage]);
+  }, [text, selectedImage, isSending, cooldownLeft, currentUser, navigate, scrollToTop, clearImage]);
 
   // ── Enter(shift+enter는 줄바꿈)로 전송 ──
   const handleKeyDown = useCallback((e) => {
@@ -704,51 +738,42 @@ const Lounge = () => {
   return (
     <>
     <div
-      className="flex flex-col bg-gradient-to-b from-orange-50/50 via-white to-orange-50/30"
+      className="flex flex-col bg-base-100"
       style={{ height: '100dvh', paddingTop: '56px' }}
     >
-      {/* 컨텍스트 바 */}
-      <div className="flex-shrink-0 bg-gradient-to-r from-orange-400 to-yellow-400 py-2.5 px-4 flex items-center justify-center gap-2 shadow-sm">
-        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.97 5.97 0 00-.75-2.906A3.005 3.005 0 0119 17v1h-3zM4.75 14.094A5.97 5.97 0 004 17v1H1v-1a3 3 0 013.75-2.906z"/>
-        </svg>
-        <span className="text-[13px] font-bold text-white">광장</span>
-        <span className="text-[12px] text-white/80">회원들의 이야기</span>
-      </div>
-
       {/* 메시지 목록 */}
       <main
         ref={scrollAreaRef}
         className="flex-1 overflow-y-auto overscroll-contain relative"
-        style={{ paddingBottom: '160px' }}
+        style={{ paddingBottom: '100px' }}
       >
-        {/* 이전 메시지 로딩 센티넬 */}
-        <div ref={topSentinelRef} className="h-1" />
-
-        {isLoadingMore && (
-          <div className="flex justify-center py-3">
-            <span className="loading loading-spinner loading-sm text-orange-400" />
+        {/* 새 메시지 알림 버튼 - 스크롤 영역 상단에 sticky */}
+        {showScrollUp && (
+          <div className="sticky top-2 z-10 flex justify-center pointer-events-none">
+            <button
+              onClick={() => { scrollToTop(); setShowScrollUp(false); }}
+              className="pointer-events-auto flex items-center gap-1 bg-orange-500 text-white text-[12px] font-medium px-3 py-1.5 rounded-full shadow-lg"
+            >
+              <KeyboardArrowUpIcon style={{ fontSize: 16 }} />
+              새 글
+            </button>
           </div>
         )}
 
-        {!hasMore && messages.length > 0 && (
-          <p className="text-center text-[12px] text-gray-400 py-4">처음부터 보고 있어요</p>
-        )}
-
         {messages.length === 0 && !isLoadingMore && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-2">
+          <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-2">
             <p className="text-[15px]">아직 아무도 이야기하지 않았어요</p>
             <p className="text-[13px]">첫 번째 글을 남겨보세요!</p>
           </div>
         )}
 
-        {/* 날짜 구분선 + 메시지 */}
+        {/* 날짜 구분선 + 메시지 (최신순) */}
         <div className="py-2">
           {renderedItems.map((item) => {
             if (item.type === 'date') {
               return (
                 <div key={item.key} className="flex justify-center py-3">
-                  <span className="text-[11px] font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full shadow-sm">
+                  <span className="text-[11px] font-semibold text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/30 px-3 py-1 rounded-full shadow-sm">
                     {item.label}
                   </span>
                 </div>
@@ -785,44 +810,34 @@ const Lounge = () => {
           })}
         </div>
 
-        {/* 새 메시지 버튼 - 스크롤 영역 하단에 sticky */}
-        {showScrollDown && (
-          <div className="sticky bottom-2 flex justify-center pointer-events-none">
-            <button
-              onClick={() => { scrollToBottom(); setShowScrollDown(false); }}
-              className="pointer-events-auto flex items-center gap-1 bg-orange-500 text-white text-[12px] font-medium px-3 py-1.5 rounded-full shadow-lg"
-            >
-              <KeyboardArrowDownIcon style={{ fontSize: 16 }} />
-              새 메시지
-            </button>
+        {/* 이전 메시지 로딩 */}
+        {isLoadingMore && (
+          <div className="flex justify-center py-3">
+            <span className="loading loading-spinner loading-sm text-orange-400" />
           </div>
         )}
 
-        <div ref={bottomRef} />
+        {!hasMore && messages.length > 0 && (
+          <p className="text-center text-[12px] text-base-content/40 py-4">모든 메시지를 불러왔어요</p>
+        )}
+
+        {/* 이전 메시지 로드 센티넬 (하단) */}
+        <div ref={bottomSentinelRef} className="h-1" />
       </main>
 
     </div>
 
     {/* 플로팅 글쓰기 버튼 */}
     {!isComposing && (
-      <div className="fixed right-4 z-40 flex flex-col gap-2" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
-        {/* 투표 만들기 버튼 */}
-        <button
-          onClick={() => { setIsComposing(true); setIsPollMode(true); }}
-          className="bg-gradient-to-r from-purple-400 to-purple-500 text-white rounded-full shadow-lg p-3 transition-all duration-300 hover:shadow-xl active:scale-95"
-          aria-label="투표 만들기"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-            <path d="M3 3a1 1 0 011-1h1a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3zM7 7a1 1 0 011-1h1a1 1 0 011 1v6a1 1 0 01-1 1H8a1 1 0 01-1-1V7zM12 5a1 1 0 00-1 1v7a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1h-1z" />
-          </svg>
-        </button>
-        {/* 글쓰기 버튼 */}
+      <div className="fixed right-4 z-40" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
         <button
           onClick={() => { setIsComposing(true); setIsPollMode(false); }}
-          className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3 transition-all duration-300 hover:shadow-xl active:scale-95"
+          className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3.5 transition-all duration-300 hover:shadow-xl active:scale-95"
           aria-label="광장에 글쓰기"
         >
-          <SendIcon style={{ fontSize: 22 }} />
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
+          </svg>
         </button>
       </div>
     )}
@@ -834,23 +849,46 @@ const Lounge = () => {
         <div
           className="absolute inset-0 bg-black/40"
           onClick={() => {
-            if (isPollMode) { setIsComposing(false); setIsPollMode(false); return; }
-            if (!text.trim() && !selectedImage) { setIsComposing(false); clearImage(); }
+            if (!text.trim() && !selectedImage) {
+              setIsComposing(false);
+              setIsPollMode(false);
+              clearImage();
+            }
           }}
         />
         {/* 카드 */}
-        <div className={`relative w-[calc(100%-32px)] bg-white rounded-2xl shadow-xl border-2 overflow-hidden ${isPollMode ? 'border-purple-400' : 'border-blue-400'}`}>
-          {/* 헤더 */}
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${isPollMode ? 'from-purple-400 to-purple-500' : 'from-yellow-400 to-yellow-500'}`} />
-              <span className="text-[18px] font-bold text-gray-800">
-                {isPollMode ? '투표 만들기' : '광장에 한마디'}
-              </span>
+        <div className="relative w-[calc(100%-32px)] bg-base-100 rounded-2xl shadow-xl border border-base-300 overflow-hidden">
+          {/* 헤더: 탭 전환 + 닫기 */}
+          <div className="px-4 py-3 border-b border-base-200 flex items-center justify-between">
+            <div className="flex bg-base-200 rounded-xl p-1 gap-1">
+              <button
+                onClick={() => setIsPollMode(false)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
+                  !isPollMode
+                    ? 'bg-base-100 text-base-content shadow-sm'
+                    : 'text-base-content/50 hover:text-base-content/70'
+                }`}
+              >
+                <SendIcon style={{ fontSize: 14 }} />
+                글쓰기
+              </button>
+              <button
+                onClick={() => setIsPollMode(true)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
+                  isPollMode
+                    ? 'bg-base-100 text-base-content shadow-sm'
+                    : 'text-base-content/50 hover:text-base-content/70'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+                  <path d="M3 3a1 1 0 011-1h1a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3zM7 7a1 1 0 011-1h1a1 1 0 011 1v6a1 1 0 01-1 1H8a1 1 0 01-1-1V7zM12 5a1 1 0 00-1 1v7a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1h-1z" />
+                </svg>
+                투표
+              </button>
             </div>
             <button
               onClick={() => { setText(''); clearImage(); setIsComposing(false); setIsPollMode(false); }}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 text-[16px] hover:bg-gray-200 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-base-200 text-base-content/50 text-[16px] hover:bg-base-300 transition-colors"
             >
               ×
             </button>
@@ -860,7 +898,7 @@ const Lounge = () => {
             <div className="px-5 py-5">
               <button
                 onClick={() => navigate('/login')}
-                className="w-full py-3 text-[14px] font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors"
+                className="w-full py-3 text-[14px] font-medium text-base-content/60 bg-base-200 border border-base-300 rounded-xl hover:bg-base-200 transition-colors"
               >
                 로그인하고 이야기 나누기
               </button>
@@ -868,7 +906,7 @@ const Lounge = () => {
           ) : isPollMode ? (
             <PollCreateForm
               onSubmit={handlePollSubmit}
-              onCancel={() => setIsPollMode(false)}
+              onCancel={() => { setIsComposing(false); setIsPollMode(false); }}
               isSubmitting={isSending}
               cooldownLeft={cooldownLeft}
             />
@@ -881,7 +919,7 @@ const Lounge = () => {
                     <img
                       src={imagePreview}
                       alt="미리보기"
-                      className="w-24 h-24 rounded-xl object-cover border border-gray-200"
+                      className="w-24 h-24 rounded-xl object-cover border border-base-300"
                     />
                     <button
                       onClick={clearImage}
@@ -904,18 +942,18 @@ const Lounge = () => {
                   maxLength={300}
                   rows={6}
                   autoFocus
-                  className="w-full px-4 py-3 border-2 border-blue-400 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-500 text-[15px] resize-none leading-relaxed text-gray-800 placeholder-gray-400 bg-gray-50 outline-none transition-all duration-200"
+                  className="w-full px-4 py-3 border-2 border-blue-400 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-500 text-[15px] resize-none leading-relaxed text-base-content placeholder-base-content/40 bg-base-200 outline-none transition-all duration-200"
                   style={{ fontSize: '16px', minHeight: '150px', maxHeight: '200px', overflowY: 'auto' }}
                 />
               </div>
               {/* 푸터 */}
-              <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <div className="px-5 py-3 bg-base-200 border-t border-base-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {/* 사진 첨부 버튼 */}
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={!!selectedImage || isSending}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 disabled:opacity-40 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-base-200 text-base-content/50 hover:bg-base-300 disabled:opacity-40 transition-colors"
                     aria-label="사진 첨부"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -929,14 +967,14 @@ const Lounge = () => {
                     onChange={handleImageSelect}
                     className="hidden"
                   />
-                  <span className={`text-[12px] transition-colors ${cooldownLeft > 0 ? 'text-orange-400 font-medium' : text.length > 0 ? 'text-gray-400' : 'text-transparent'}`}>
+                  <span className={`text-[12px] transition-colors ${cooldownLeft > 0 ? 'text-orange-400 font-medium' : text.length > 0 ? 'text-base-content/40' : 'text-transparent'}`}>
                     {cooldownLeft > 0 ? `${cooldownLeft}초 후 전송 가능` : `${text.length}/300`}
                   </span>
                 </div>
                 <button
                   onClick={handleSend}
                   disabled={(!text.trim() && !selectedImage) || isSending || cooldownLeft > 0}
-                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
+                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-base-content/20 disabled:to-base-content/20 disabled:text-base-content/40 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
                 >
                   {isUploading ? '업로드 중...' : isSending ? '전송 중...' : '전송'}
                 </button>

@@ -19,6 +19,7 @@ import OnboardingTooltip from './components/OnboardingTooltip';
 import MarketTrendTooltip from './components/MarketTrendTooltip';
 import LoadingSpinner from './components/LoadingSpinner';
 import { AuthContext } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { isMobileDevice, isTabletDevice } from './utils/deviceDetector';
 import { useScrollDirection } from './hooks/useScrollDirection';
 import {
@@ -214,7 +215,7 @@ const Layout = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-base-200">
       {/* 상단 Navbar - 반투명 레이어 */}
       <div className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-150 will-change-transform ${
         scrollDirection === 'down' ? '-translate-y-full' : 'translate-y-0'
@@ -265,10 +266,10 @@ const Layout = () => {
                         closeWriteMenu();
                         navigate('/qna/ask');
                       }}
-                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-base-100 rounded-full shadow-lg border border-base-300 hover:scale-105 transition-transform animate-fade-in-up"
                       style={{ animationDelay: '0.1s' }}
                     >
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">질문하기</span>
+                      <span className="text-sm font-medium text-base-content whitespace-nowrap">질문하기</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
                         <EditIcon className="text-white" fontSize="small" />
                       </div>
@@ -280,10 +281,10 @@ const Layout = () => {
                         closeWriteMenu();
                         navigate('/faq');
                       }}
-                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-base-100 rounded-full shadow-lg border border-base-300 hover:scale-105 transition-transform animate-fade-in-up"
                       style={{ animationDelay: '0.05s' }}
                     >
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">FAQ</span>
+                      <span className="text-sm font-medium text-base-content whitespace-nowrap">FAQ</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-yellow-200 flex items-center justify-center">
                         <HelpOutlineIcon className="text-amber-600" fontSize="small" />
                       </div>
@@ -295,9 +296,9 @@ const Layout = () => {
                         // QnAList로 검색 모드 진입 이벤트 발송 (메뉴는 검색창 확장 후 자동으로 닫힘)
                         window.dispatchEvent(new CustomEvent('qna-search-open'));
                       }}
-                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-base-100 rounded-full shadow-lg border border-base-300 hover:scale-105 transition-transform animate-fade-in-up"
                     >
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">검색</span>
+                      <span className="text-sm font-medium text-base-content whitespace-nowrap">검색</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-200 flex items-center justify-center">
                         <SearchIcon className="text-blue-600" fontSize="small" />
                       </div>
@@ -315,10 +316,10 @@ const Layout = () => {
                           alert('인증된 사용자만 사고팔고 게시글을 작성할 수 있습니다.');
                         }
                       }}
-                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-base-100 rounded-full shadow-lg border border-base-300 hover:scale-105 transition-transform animate-fade-in-up"
                       style={{ animationDelay: '0.1s' }}
                     >
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">글쓰기</span>
+                      <span className="text-sm font-medium text-base-content whitespace-nowrap">글쓰기</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
                         <EditIcon className="text-white" fontSize="small" />
                       </div>
@@ -330,10 +331,10 @@ const Layout = () => {
                         // SecondHand 페이지로 검색 모드 진입 이벤트 발송 (메뉴는 검색창 확장 후 자동으로 닫힘)
                         window.dispatchEvent(new CustomEvent('secondhand-search-open'));
                       }}
-                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-base-100 rounded-full shadow-lg border border-base-300 hover:scale-105 transition-transform animate-fade-in-up"
                       style={{ animationDelay: '0.05s' }}
                     >
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">검색</span>
+                      <span className="text-sm font-medium text-base-content whitespace-nowrap">검색</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-200 flex items-center justify-center">
                         <SearchIcon className="text-blue-600" fontSize="small" />
                       </div>
@@ -345,9 +346,9 @@ const Layout = () => {
                         closeWriteMenu();
                         navigate('/trading-policy');
                       }}
-                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-white rounded-full shadow-lg border border-gray-100 hover:scale-105 transition-transform animate-fade-in-up"
+                      className="flex items-center gap-3 pl-4 pr-2 py-2 bg-base-100 rounded-full shadow-lg border border-base-300 hover:scale-105 transition-transform animate-fade-in-up"
                     >
-                      <span className="text-sm font-medium text-gray-700 whitespace-nowrap">거래 정책</span>
+                      <span className="text-sm font-medium text-base-content whitespace-nowrap">거래 정책</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-violet-200 flex items-center justify-center">
                         <PolicyIcon className="text-purple-600" fontSize="small" />
                       </div>
@@ -660,10 +661,12 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <Analytics />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <Analytics />
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

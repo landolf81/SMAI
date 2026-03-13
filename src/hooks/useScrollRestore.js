@@ -61,14 +61,11 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
 
-    console.log(`[스크롤 복원] 초기화 시작 - boardType: ${boardType}, navigationType: ${navigationType}`);
-
     // 캐시가 유효하면 저장된 스크롤 위치 복원 (뒤로가기 + 일반 페이지 이동 모두)
     const savedScrollTop = scrollManager.restoreScrollPosition(boardType, tag, search, userId);
 
     if (savedScrollTop > 0 && isCacheValid) {
       isRestoringRef.current = true;
-      console.log(`[스크롤 복원] 복원 시작: ${savedScrollTop}px로 이동 예정`);
 
       // 콘텐츠 렌더링 완료를 기다리며 반복 시도
       let attempts = 0;
@@ -79,12 +76,9 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
         const pageHeight = document.documentElement.scrollHeight;
         const canScroll = pageHeight >= savedScrollTop;
 
-        console.log(`[스크롤 복원] 시도 ${attempts}: 페이지 높이=${pageHeight}px, 목표=${savedScrollTop}px, 가능=${canScroll}`);
-
         window.scrollTo({ top: savedScrollTop, behavior: 'instant' });
 
         if (canScroll || attempts >= maxAttempts) {
-          console.log(`[스크롤 복원] 완료: 실제 위치=${window.scrollY}px (목표: ${savedScrollTop}px)`);
           lastScrollPositionRef.current = window.scrollY;
           setTimeout(() => {
             isRestoringRef.current = false;
@@ -99,7 +93,6 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
       setTimeout(tryScroll, 50);
     } else {
       // 캐시 무효 또는 저장된 위치가 없으면 최상단
-      console.log(`[스크롤 복원] 최상단으로 이동 (저장된 위치: ${savedScrollTop}, 캐시 유효: ${isCacheValid})`);
       isRestoringRef.current = true;
       setTimeout(() => {
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -132,14 +125,9 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
       // currentScrollY > 0이면 현재 위치 사용, 아니면 마지막으로 기록된 ref 사용
       const posToSave = currentScrollY > 0 ? currentScrollY : lastScrollPositionRef.current;
 
-      console.log(`[스크롤] 언마운트 체크: isRestoring=${isRestoringRef.current}, enabled=${enabled}, lastPos=${lastScrollPositionRef.current}, windowScrollY=${currentScrollY}, 저장값=${posToSave}`);
-
       if (!isRestoringRef.current && enabled) {
         // 0이어도 저장 (사용자가 상단에 있는 경우)
-        console.log(`[스크롤] 언마운트 저장: ${boardType} = ${posToSave}px`);
         scrollManager.saveScrollPosition(boardType, posToSave, tag, search, userId);
-      } else {
-        console.log(`[스크롤] 언마운트 저장 스킵: isRestoring=${isRestoringRef.current}, enabled=${enabled}`);
       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -162,9 +150,6 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
 
           // 현재 스크롤 위치를 즉시 ref에 저장 (언마운트 시 사용)
           const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-          if (Math.abs(scrollTop - lastScrollPositionRef.current) > 50) {
-            console.log(`[스크롤] ref 업데이트: ${lastScrollPositionRef.current} → ${scrollTop}`);
-          }
           lastScrollPositionRef.current = scrollTop;
 
           // localStorage 저장은 디바운스 처리

@@ -314,9 +314,9 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="text-center">
-          <ShoppingBagIcon className="text-6xl text-gray-400 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-700 mb-2">게시물을 찾을 수 없습니다</h2>
-          <p className="text-gray-500 mb-4">삭제되었거나 존재하지 않는 게시물입니다.</p>
+          <ShoppingBagIcon className="text-6xl text-base-content/40 mb-4" />
+          <h2 className="text-xl font-semibold text-base-content/70 mb-2">게시물을 찾을 수 없습니다</h2>
+          <p className="text-base-content/50 mb-4">삭제되었거나 존재하지 않는 게시물입니다.</p>
           <button
             onClick={handleBack}
             className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
@@ -364,10 +364,10 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
   const imageUrls = getImageUrls();
 
   return (
-    <div className={`min-h-screen bg-cloud-dancer ${isModal ? 'pb-0' : 'pb-20'}`}>
+    <div className={`min-h-screen bg-base-200 ${isModal ? 'pb-0' : 'pb-20'}`}>
       <div className="max-w-4xl mx-auto">
         {/* 게시물 내용 */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-base-100 border-b border-base-300">
           {/* 작성자 정보 */}
           <div className="px-4 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -403,9 +403,9 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                     });
                     setShowProfileModal(true);
                   }}
-                  className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
+                  className="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center cursor-pointer hover:bg-base-content/20 transition-colors"
                 >
-                  <PersonIcon className="text-gray-500" />
+                  <PersonIcon className="text-base-content/50" />
                 </div>
               )}
               <div>
@@ -422,11 +422,11 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                     });
                     setShowProfileModal(true);
                   }}
-                  className="font-semibold text-gray-900 cursor-pointer hover:underline"
+                  className="font-semibold text-base-content cursor-pointer hover:underline"
                 >
                   {post.user_name || post.username}
                 </div>
-                <div className="text-sm text-gray-500">{moment(post.created_at || post.createdAt).fromNow()}</div>
+                <div className="text-sm text-base-content/50">{moment(post.created_at || post.createdAt).fromNow()}</div>
               </div>
             </div>
 
@@ -502,12 +502,12 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                   </span>
                 )}
               </div>
-              <h2 className="text-xl font-bold text-gray-900">{post.title}</h2>
+              <h2 className="text-xl font-bold text-base-content">{post.title}</h2>
               {price && (
                 <div className="text-2xl font-bold text-orange-600 mt-2">{price}</div>
               )}
               {postLocation && (
-                <div className="flex items-center gap-1 text-gray-600 mt-2">
+                <div className="flex items-center gap-1 text-base-content/60 mt-2">
                   <LocationOnIcon fontSize="small" />
                   <span>{location}</span>
                 </div>
@@ -517,7 +517,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
           {/* 이미지 슬라이더 */}
           {imageUrls.length > 0 && (
-            <div className="w-full bg-gray-100">
+            <div className="w-full bg-base-200">
               {imageUrls.length === 1 ? (
                 // 단일 이미지
                 <img
@@ -540,7 +540,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                       <img
                         src={url}
                         alt={`${post.title || post.name || '게시물 이미지'} ${index + 1}`}
-                        className="w-full h-auto max-h-[600px] object-contain bg-gray-100"
+                        className="w-full h-auto max-h-[600px] object-contain bg-base-200"
                         onClick={() => window.open(url, '_blank')}
                       />
                     </SwiperSlide>
@@ -552,13 +552,13 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
           {/* 내용 */}
           <div className="px-4 py-4">
-            <p className="text-gray-700 whitespace-pre-wrap">
+            <p className="text-base-content/70 whitespace-pre-wrap">
               {post.content || post.description || post.desc}
             </p>
           </div>
 
           {/* 통계 정보 */}
-          <div className="px-4 py-3 border-t border-gray-100 flex items-center gap-4 text-sm text-gray-500">
+          <div className="px-4 py-3 border-t border-base-200 flex items-center gap-4 text-sm text-base-content/50">
             <span className="flex items-center gap-1">
               <VisibilityIcon fontSize="small" />
               {post.views_count || post.views || 0}
@@ -578,17 +578,17 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
           {/* 좋아요 버튼 (중고거래가 아닌 경우에만) */}
           {!isSecondHand && (
-            <div className="px-4 py-3 border-t border-gray-100 flex gap-2">
+            <div className="px-4 py-3 border-t border-base-200 flex gap-2">
               <button
                 onClick={handleLike}
-                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-base-200 transition-colors"
               >
                 {post.user_liked ? (
                   <ThumbUpIcon className="text-blue-600" fontSize="small" />
                 ) : (
                   <ThumbUpOutlinedIcon fontSize="small" />
                 )}
-                <span className={post.user_liked ? 'text-blue-600 font-medium' : 'text-gray-700'}>
+                <span className={post.user_liked ? 'text-blue-600 font-medium' : 'text-base-content/70'}>
                   좋아요
                 </span>
               </button>
@@ -597,12 +597,12 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
         </div>
 
         {/* 댓글 섹션 */}
-        <div className="bg-white mt-2">
+        <div className="bg-base-100 mt-2">
           {/* 댓글 로딩 상태 */}
           {commentsLoading && (
             <div className="px-4 py-8 flex flex-col items-center">
               <LoadingSpinner size="md" />
-              <p className="text-gray-500 mt-2">댓글을 불러오는 중...</p>
+              <p className="text-base-content/50 mt-2">댓글을 불러오는 중...</p>
             </div>
           )}
 
@@ -621,7 +621,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
           {/* 댓글 목록 */}
           {!commentsLoading && !commentsError && (
-            <div className="divide-y divide-gray-100">
+            <div className="divide-y divide-base-200">
               {comments.map((comment) => (
               <div key={comment.id} className="px-4 py-3">
                 <div className="flex items-start gap-2">
@@ -641,9 +641,9 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                         setSelectedUser(comment);
                         setShowProfileModal(true);
                       }}
-                      className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-gray-300 transition-colors"
+                      className="w-8 h-8 rounded-full bg-base-200 flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-base-content/20 transition-colors"
                     >
-                      <PersonIcon className="text-gray-500" sx={{ fontSize: 18 }} />
+                      <PersonIcon className="text-base-content/50" sx={{ fontSize: 18 }} />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
@@ -653,23 +653,23 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                           setSelectedUser(comment);
                           setShowProfileModal(true);
                         }}
-                        className="font-medium text-sm text-gray-900 cursor-pointer hover:underline"
+                        className="font-medium text-sm text-base-content cursor-pointer hover:underline"
                       >
                         {comment.user_name || comment.username}
                       </span>
                       {isAIUser(comment) && <AIBadge />}
                       {comment.is_secret && (
-                        <span className="inline-flex items-center gap-0.5 text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-0.5 text-xs bg-base-200 text-base-content/60 px-1.5 py-0.5 rounded">
                           <LockIcon sx={{ fontSize: 12 }} />
                           비밀
                         </span>
                       )}
-                      <span className="text-xs text-gray-500">{moment(comment.created_at || comment.createdAt).fromNow()}</span>
+                      <span className="text-xs text-base-content/50">{moment(comment.created_at || comment.createdAt).fromNow()}</span>
                     </div>
                     {canViewSecretComment(comment) ? (
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap mt-0.5">{comment.description || comment.desc}</p>
+                      <p className="text-sm text-base-content/70 whitespace-pre-wrap mt-0.5">{comment.description || comment.desc}</p>
                     ) : (
-                      <p className="text-sm text-gray-400 italic mt-0.5">비밀 댓글입니다.</p>
+                      <p className="text-sm text-base-content/40 italic mt-0.5">비밀 댓글입니다.</p>
                     )}
                   </div>
                 </div>
@@ -677,7 +677,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
             ))}
 
               {comments.length === 0 && (
-                <div className="px-4 py-8 text-center text-gray-500">
+                <div className="px-4 py-8 text-center text-base-content/50">
                   첫 번째 댓글을 작성해보세요!
                 </div>
               )}
@@ -686,21 +686,21 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
           {/* 댓글 입력 */}
           {currentUser && (
-            <div className="border-t border-gray-200 bg-white">
+            <div className="border-t border-base-300 bg-base-100">
               <form onSubmit={handleCommentSubmit} className="p-3">
                 {/* 중고거래일 때만 비밀댓글 옵션 표시 */}
                 {isSecondHand && (
                   <div className="mb-2">
-                    <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <label className="flex items-center gap-2 text-sm text-base-content/60 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isSecretComment}
                         onChange={(e) => setIsSecretComment(e.target.checked)}
-                        className="rounded border-gray-300 text-orange-500 focus:ring-orange-400"
+                        className="rounded border-base-300 text-orange-500 focus:ring-orange-400"
                       />
                       <LockIcon sx={{ fontSize: 16 }} />
                       <span>비밀 댓글</span>
-                      <span className="text-xs text-gray-400">(판매자와 본인만 볼 수 있음)</span>
+                      <span className="text-xs text-base-content/40">(판매자와 본인만 볼 수 있음)</span>
                     </label>
                   </div>
                 )}
@@ -713,7 +713,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                       className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full transition-all ${
                         isListening
                           ? 'bg-red-500 text-white animate-pulse'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          : 'bg-base-200 text-base-content/60 hover:bg-base-200'
                       }`}
                       disabled={isSubmitting}
                       title={isListening ? '음성 입력 중지' : '음성 입력'}
@@ -728,14 +728,14 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
                     onChange={(e) => setCommentContent(e.target.value)}
                     placeholder={isSecretComment ? "비밀 댓글을 입력하세요..." : "댓글을 입력하세요..."}
                     className={`flex-1 px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent ${
-                      isSecretComment ? 'border-orange-300 bg-orange-50' : 'border-gray-300'
+                      isSecretComment ? 'border-orange-300 bg-orange-50' : 'border-base-300'
                     }`}
                     disabled={isSubmitting}
                   />
                   <button
                     type="submit"
                     disabled={isSubmitting || !commentContent.trim()}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-1 text-sm flex-shrink-0"
+                    className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:bg-base-content/20 disabled:cursor-not-allowed transition-colors flex items-center gap-1 text-sm flex-shrink-0"
                   >
                     {isSecretComment && <LockIcon sx={{ fontSize: 14 }} />}
                     <SendIcon sx={{ fontSize: 18 }} />
@@ -748,7 +748,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
           {/* 광고 영역 */}
           {ads.length > 0 && (
-            <div className="border-t border-gray-200 py-4">
+            <div className="border-t border-base-300 py-4">
               <MobileAdDisplay ad={ads[0]} />
             </div>
           )}

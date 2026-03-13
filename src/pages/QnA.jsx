@@ -62,9 +62,9 @@ const QnA = () => {
   };
 
   return (
-    <div className="qna-page min-h-screen bg-cloud-dancer pt-14">
+    <div className="qna-page min-h-screen bg-base-200 pt-14">
       {/* 탭 바 */}
-      <div className="sticky top-14 z-30 bg-white/90 backdrop-blur-md border-b border-gray-200">
+      <div className="sticky top-14 z-30 bg-base-100/90 backdrop-blur-md border-b border-base-300">
         <div className="max-w-3xl mx-auto px-4 py-2 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
           {TABS.map((tab) => (
             <button
@@ -79,7 +79,7 @@ const QnA = () => {
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors flex-shrink-0 ${
                 activeTab === tab.key
                   ? 'bg-teal-500 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-base-200 text-base-content/60 hover:bg-base-300'
               }`}
             >
               {tab.label}
@@ -92,22 +92,22 @@ const QnA = () => {
       {activeTab === 'qna' && (
         <>
           {isSearchMode && (
-            <div className="sticky top-[6.5rem] z-20 bg-white/90 backdrop-blur-md border-b border-gray-200 p-4 shadow-sm animate-slide-down">
+            <div className="sticky top-[6.5rem] z-20 bg-base-100/90 backdrop-blur-md border-b border-base-300 p-4 shadow-sm animate-slide-down">
               <div className="max-w-3xl mx-auto flex items-center gap-2">
                 <div className="flex-1 relative">
-                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
                   <input
                     ref={searchInputRef}
                     type="text"
                     placeholder="질문 제목 검색..."
-                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-base-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
                 <button
                   onClick={handleCloseSearch}
-                  className="p-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="p-2 text-base-content/60 hover:text-base-content/70 transition-colors"
                 >
                   <CloseIcon />
                 </button>

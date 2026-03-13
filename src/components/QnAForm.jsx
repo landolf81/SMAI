@@ -136,10 +136,10 @@ const QnAForm = () => {
   if (!currentUser) {
     return (
       <div className="max-w-2xl mx-auto p-4">
-        <div className="bg-white rounded-lg p-8 border shadow-sm text-center">
-          <HelpOutlineIcon className="mx-auto text-gray-300 mb-4" style={{ fontSize: '3rem' }} />
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">로그인이 필요합니다</h2>
-          <p className="text-gray-600 mb-6">질문을 작성하려면 먼저 로그인해주세요.</p>
+        <div className="bg-base-100 rounded-lg p-8 border shadow-sm text-center">
+          <HelpOutlineIcon className="mx-auto text-base-content/20 mb-4" style={{ fontSize: '3rem' }} />
+          <h2 className="text-xl font-semibold text-base-content mb-4">로그인이 필요합니다</h2>
+          <p className="text-base-content/60 mb-6">질문을 작성하려면 먼저 로그인해주세요.</p>
           <div className="flex gap-4 justify-center">
             <button
               onClick={() => navigate('/login')}
@@ -149,7 +149,7 @@ const QnAForm = () => {
             </button>
             <button
               onClick={() => navigate('/qna')}
-              className="px-6 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 text-base-content/60 border border-base-300 rounded-lg hover:bg-base-200 transition-colors"
             >
               Q&A로
             </button>
@@ -254,23 +254,23 @@ const QnAForm = () => {
   return (
     <div className="max-w-3xl mx-auto px-4 pt-20 pb-24">
       {/* 질문 작성 폼 */}
-      <div className="bg-white rounded-lg border shadow-sm">
+      <div className="bg-base-100 rounded-lg border shadow-sm">
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* 최상단: 프로필 + 새 질문 작성 */}
-          <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100">
+          <div className="flex items-center gap-3 pb-4 border-b border-base-200">
+            <div className="w-10 h-10 rounded-full overflow-hidden bg-base-200">
               <img
                 src={storageService.getProfileImageUrl(currentUser.profilePic || currentUser.profile_pic, currentUser.id)}
                 alt="프로필"
                 className="w-full h-full object-cover"
               />
             </div>
-            <h1 className="text-lg font-semibold text-gray-900">새 질문 작성</h1>
+            <h1 className="text-lg font-semibold text-base-content">새 질문 작성</h1>
           </div>
 
           {/* 질문 제목 */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-medium text-base-content/70 mb-2">
               질문 제목 <span className="text-red-500">*</span>
             </label>
             <input
@@ -281,18 +281,18 @@ const QnAForm = () => {
               onChange={handleInputChange}
               placeholder="예: 참외 물주기 방법 문의"
               maxLength={20}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
+              className="w-full p-3 border border-base-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
               disabled={isSubmitting}
               required
             />
-            <div className="text-sm text-gray-500 mt-1">
+            <div className="text-sm text-base-content/50 mt-1">
               {formData.title.length}/20자
             </div>
           </div>
 
           {/* 질문 내용 */}
           <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="content" className="block text-sm font-medium text-base-content/70 mb-2">
               질문 내용 <span className="text-red-500">*</span>
             </label>
             <textarea
@@ -302,12 +302,12 @@ const QnAForm = () => {
               onChange={handleInputChange}
               placeholder="질문에 대해 자세히 설명해주세요. 상황, 문제점, 궁금한 점 등을 구체적으로 작성하시면 더 정확한 답변을 받을 수 있습니다."
               rows="10"
-              className="w-full p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
+              className="w-full p-4 border border-base-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-market-500 focus:border-transparent"
               disabled={isSubmitting}
               required
             />
             <div className="flex items-center justify-between mt-1">
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-base-content/50">
                 최소 20자 이상 작성해주세요. 현재: {formData.content.length}자
               </div>
               {speechSupported && (
@@ -317,7 +317,7 @@ const QnAForm = () => {
                   className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${
                     isListening
                       ? 'bg-red-500 text-white animate-pulse'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-base-200 text-base-content/60 hover:bg-base-300'
                   }`}
                   disabled={isSubmitting}
                   title={isListening ? '음성 입력 중지' : '음성 입력'}
@@ -330,18 +330,18 @@ const QnAForm = () => {
 
           {/* 이미지/동영상 업로드 (선택) */}
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-base-content/70 mb-2">
               <FontAwesomeIcon icon={faImage} className="mr-2 text-market-500" />
-              이미지 또는 동영상 <span className="text-gray-400">(선택)</span>
+              이미지 또는 동영상 <span className="text-base-content/40">(선택)</span>
             </label>
 
             <label
               htmlFor="imageInput"
-              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-market-400 hover:bg-market-50 transition-all"
+              className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-base-300 rounded-xl cursor-pointer hover:border-market-400 hover:bg-market-500/10 transition-all"
             >
-              <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-gray-400" />
-              <p className="text-sm text-gray-500"><span className="font-semibold">클릭하여 파일 업로드</span></p>
-              <p className="text-xs text-gray-500">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
+              <FontAwesomeIcon icon={faImage} className="w-8 h-8 mb-2 text-base-content/40" />
+              <p className="text-sm text-base-content/50"><span className="font-semibold">클릭하여 파일 업로드</span></p>
+              <p className="text-xs text-base-content/50">PNG, JPG, HEIC, MP4, MOV (최대 50MB, 동영상 3분, 1개)</p>
             </label>
 
             <input
@@ -356,7 +356,7 @@ const QnAForm = () => {
 
             {files.length > 0 && (
               <div className="mt-4">
-                <div className="text-sm text-gray-600 mb-2">
+                <div className="text-sm text-base-content/60 mb-2">
                   선택된 파일: {files.length}개
                   ({files.filter(f => getMediaType(f).isImage).length}개 이미지, {files.filter(f => getMediaType(f).isVideo).length}개 동영상)
                 </div>
@@ -399,7 +399,7 @@ const QnAForm = () => {
 
           {/* 에러 메시지 */}
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
@@ -409,7 +409,7 @@ const QnAForm = () => {
             <button
               type="button"
               onClick={() => navigate('/qna')}
-              className="px-6 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 text-base-content/60 border border-base-300 rounded-lg hover:bg-base-200 transition-colors"
               disabled={isSubmitting}
             >
               취소
