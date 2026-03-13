@@ -1,7 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import toast from 'react-hot-toast';
@@ -36,6 +38,9 @@ const Prices = () => {
   const [selectedDate, setSelectedDate] = useState(
     urlDate || new Date().toISOString().split('T')[0]
   );
+
+  // 날짜 선택 input ref
+  const dateInputRef = useRef(null);
 
   // 설정 로드 상태
   const [settingsLoaded, setSettingsLoaded] = useState(false);
@@ -156,12 +161,36 @@ const Prices = () => {
   const handleDateChange = (e) => {
     const newDate = e.target.value;
     setSelectedDate(newDate);
-    
-    // URL 파라미터 업데이트
+
+    // URL 파라미터 업데이트 (replace: true로 history 쌓이지 않게)
     const newParams = new URLSearchParams(searchParams);
     newParams.set('date', newDate);
-    setSearchParams(newParams);
+    setSearchParams(newParams, { replace: true });
   };
+
+  const handlePrevDate = () => {
+    const prev = new Date(selectedDate);
+    prev.setDate(prev.getDate() - 1);
+    const newDate = prev.toISOString().split('T')[0];
+    setSelectedDate(newDate);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('date', newDate);
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const handleNextDate = () => {
+    const next = new Date(selectedDate);
+    next.setDate(next.getDate() + 1);
+    const today = new Date().toISOString().split('T')[0];
+    const newDate = next.toISOString().split('T')[0];
+    if (newDate > today) return;
+    setSelectedDate(newDate);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('date', newDate);
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const isToday = selectedDate >= new Date().toISOString().split('T')[0];
 
   const handleRefresh = () => {
     if (marketName) {
@@ -229,6 +258,16 @@ const Prices = () => {
     });
   };
 
+  // 헤더용 짧은 날짜 포맷 (예: 3월 13일 (금))
+  const formatDateShort = (dateStr) => {
+    const date = new Date(dateStr);
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+    const weekday = weekdays[date.getDay()];
+    return `${month}월 ${day}일 (${weekday})`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-cloud-dancer">
@@ -289,26 +328,64 @@ const Prices = () => {
       {/* 헤더 */}
       <div className="bg-cloud-dancer shadow-sm border-b sticky top-14 z-10">
         <div className="w-full max-w-screen-xl mx-auto p-4">
-          <div className="flex items-center justify-center relative">
+          <div className="flex items-center justify-between">
             {/* 뒤로가기 버튼 */}
             <button
               onClick={() => navigate(-1)}
-              className="absolute left-0 text-[#004225] text-2xl font-bold hover:opacity-70 transition-opacity"
+              className="text-[#004225] text-2xl font-bold hover:opacity-70 transition-opacity shrink-0 w-8"
               title="뒤로가기"
             >
               &lt;
             </button>
 
-            {/* 날짜 중앙 정렬 */}
-            <div className="flex items-center gap-2">
-              <CalendarTodayIcon fontSize="small" className="text-[#004225]" />
-              <span className="text-base font-medium text-gray-800">
-                {formatDate(selectedDate)}
-              </span>
+            {/* 날짜 네비게이션 중앙 */}
+            <div className="flex items-center gap-0.5 relative">
+              {/* 이전 날짜 */}
+              <button
+                onClick={handlePrevDate}
+                className="p-1 text-[#004225] hover:bg-gray-100 rounded-full transition-colors active:scale-90"
+                title="이전 날짜"
+              >
+                <ChevronLeftIcon fontSize="small" />
+              </button>
+
+              {/* 날짜 텍스트 (클릭 시 datepicker) */}
+              <button
+                onClick={() => dateInputRef.current?.showPicker?.()}
+                className="flex items-center gap-1 px-1 py-1 rounded-lg hover:bg-gray-100 transition-colors active:scale-95"
+              >
+                <CalendarTodayIcon style={{ fontSize: 14 }} className="text-[#004225]" />
+                <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
+                  {formatDateShort(selectedDate)}
+                </span>
+              </button>
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={selectedDate}
+                onChange={handleDateChange}
+                max={new Date().toISOString().split('T')[0]}
+                className="absolute opacity-0 w-0 h-0 pointer-events-none"
+                tabIndex={-1}
+              />
+
+              {/* 다음 날짜 */}
+              <button
+                onClick={handleNextDate}
+                disabled={isToday}
+                className={`p-1 rounded-full transition-colors active:scale-90 ${
+                  isToday
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : 'text-[#004225] hover:bg-gray-100'
+                }`}
+                title="다음 날짜"
+              >
+                <ChevronRightIcon fontSize="small" />
+              </button>
             </div>
 
             {/* 단위 표시 */}
-            <span className="absolute right-0 text-xs text-gray-500">
+            <span className="text-xs text-gray-500 shrink-0 whitespace-nowrap">
               단위 : 원
             </span>
           </div>
@@ -358,7 +435,7 @@ const Prices = () => {
                       setSelectedDate(newDate);
                       const newParams = new URLSearchParams(searchParams);
                       newParams.set('date', newDate);
-                      setSearchParams(newParams);
+                      setSearchParams(newParams, { replace: true });
                     }}
                     className="btn btn-sm btn-outline border-[#004225] text-[#004225] hover:bg-[#004225] hover:text-white"
                   >
@@ -372,7 +449,7 @@ const Prices = () => {
                       setSelectedDate(newDate);
                       const newParams = new URLSearchParams(searchParams);
                       newParams.set('date', newDate);
-                      setSearchParams(newParams);
+                      setSearchParams(newParams, { replace: true });
                     }}
                     className="btn btn-sm bg-[#004225] text-white hover:bg-[#003018] border-none"
                   >
