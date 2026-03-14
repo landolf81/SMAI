@@ -95,8 +95,14 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
                     <span className="mx-1.5">·</span>
                     <span>{item.shipper_name}</span>
                   </div>
-                  {/* 2줄: 평균가 | 최고가 | 최저가 */}
-                  <div className="grid grid-cols-3 gap-1 text-center">
+                  {/* 2줄: 수량 | 평균가 | 최고가 | 최저가 */}
+                  <div className="grid grid-cols-4 gap-1 text-center">
+                    <div className="bg-base-100 rounded-lg py-2 px-1">
+                      <div className="text-sm text-base-content/50 mb-0.5">수량</div>
+                      <div className="text-base font-bold text-base-content whitespace-nowrap">
+                        {formatPrice(item.boxes)}
+                      </div>
+                    </div>
                     <div className="bg-base-100 rounded-lg py-2 px-1">
                       <div className="text-sm text-base-content/50 mb-0.5">평균가</div>
                       <div className="text-base font-bold text-base-content whitespace-nowrap">
