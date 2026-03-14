@@ -5,6 +5,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import SearchIcon from '@mui/icons-material/Search';
 import { marketService, weatherBriefingService, postService } from '../services';
 import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
@@ -17,6 +18,7 @@ import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/device
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useAdminPermissions } from '../hooks/usePermissions';
 import PushNotificationBanner from '../components/PushNotificationBanner';
+import MarketSearchModal from '../components/MarketSearchModal';
 
 
 // 색상 정의
@@ -106,6 +108,7 @@ const Home = () => {
   };
 
   const [selectedDate, setSelectedDate] = useState(getSavedDate());
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // 날짜 포맷 함수 (타임존 안전)
   const formatDateForDisplay = (dateStr) => {
@@ -770,6 +773,24 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* 플로팅 검색 버튼 - 도매시장 법인 검색 */}
+      <button
+        onClick={() => setSearchModalOpen(true)}
+        className={`fixed bottom-24 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 active:scale-95 ${
+          adminPermissions.isAdmin ? 'right-20' : 'right-4'
+        }`}
+        title="도매시장 법인 검색"
+      >
+        <SearchIcon className="text-white" />
+      </button>
+
+      {/* 도매시장 검색 모달 */}
+      <MarketSearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        marketDate={selectedDate}
+      />
 
       {/* 관리자 전용 플로팅 버튼 - 날씨 브리핑 재생성 */}
       {adminPermissions.isAdmin && (

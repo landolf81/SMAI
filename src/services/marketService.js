@@ -685,6 +685,92 @@ export const marketService = {
   },
 
   /**
+   * 특정 시장+등급의 전일 비교 데이터 경량 조회 (2 쿼리 병렬)
+   * @param {string} marketName - 시장명
+   * @param {string} date - 날짜 (YYYY-MM-DD)
+   * @param {string} grade - 등급/법인명
+   * @param {string} weight - 규격
+   * @returns {Object|null} 비교 데이터
+   */
+  async getGradeComparison(marketName, date, grade, weight) {
+    try {
+      marketName = nfc(marketName);
+
+      // 전 경매일 + 현재 데이터 병렬 조회
+      const [prevDateRes, currentRes] = await Promise.all([
+        supabase
+          .from('market_data')
+          .select('boxes, avg_price, max_price, min_price, market_date')
+          .eq('market_name', marketName)
+          .eq('grade', grade)
+          .eq('weight', weight)
+          .lt('market_date', date)
+          .order('market_date', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('market_data')
+          .select('boxes, avg_price, max_price, min_price')
+          .eq('market_name', marketName)
+          .eq('market_date', date)
+          .eq('grade', grade)
+          .eq('weight', weight)
+          .maybeSingle()
+      ]);
+
+      const prev = prevDateRes.data;
+      const curr = currentRes.data;
+      if (!curr) return null;
+
+      const calc = (cur, pre) => {
+        const c = parseInt(cur) || 0;
+        const p = parseInt(pre) || 0;
+        const change = p > 0 ? c - p : 0;
+        const pct = p > 0 ? Math.round((change / p) * 1000) / 10 : 0;
+        return { comparison_available: p > 0, previousValue: p, change, changePercent: pct };
+      };
+
+      return {
+        price_comparison: { ...calc(curr.avg_price, prev?.avg_price), previousPrice: parseInt(prev?.avg_price) || 0 },
+        max_price_comparison: calc(curr.max_price, prev?.max_price),
+        min_price_comparison: calc(curr.min_price, prev?.min_price),
+        boxes_comparison: { ...calc(curr.boxes, prev?.boxes), previousBoxes: parseInt(prev?.boxes) || 0 },
+      };
+    } catch (error) {
+      console.error('등급 비교 데이터 조회 오류:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 도매시장 법인명 검색용 데이터 조회 (제외 시장 필터링)
+   * @param {string} date - 날짜 (YYYY-MM-DD)
+   * @param {string[]} excludeMarkets - 제외할 시장 목록
+   * @returns {Array} [{ market_name, grade, weight, boxes, avg_price, min_price, max_price }]
+   */
+  async searchMarketGrades(date, excludeMarkets = []) {
+    try {
+      const normalizedExclude = excludeMarkets.map(nfc);
+      const { data, error } = await supabase
+        .from('market_data')
+        .select('market_name, grade, weight, boxes, avg_price, min_price, max_price')
+        .eq('market_date', date)
+        .order('market_name')
+        .order('grade');
+
+      if (error) throw error;
+
+      // 제외 시장 필터링 (클라이언트 사이드)
+      return (data || []).filter(item =>
+        !normalizedExclude.includes(nfc(item.market_name))
+      );
+    } catch (error) {
+      console.error('도매시장 검색 데이터 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
    * 도매시장 법인별 상세 데이터 조회 (규격+출하지명별)
    * @param {string} marketName - 시장명
    * @param {string} date - 날짜 (YYYY-MM-DD)
