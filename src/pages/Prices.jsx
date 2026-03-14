@@ -508,7 +508,7 @@ const Prices = () => {
                     {/* 총 출하량 */}
                     <div className="bg-base-200 rounded-lg py-3 px-1">
                       <div className="text-sm text-base-content/50 mb-1">총 출하량</div>
-                      <div className="text-base font-bold text-base-content whitespace-nowrap">
+                      <div className="text-lg font-bold text-base-content whitespace-nowrap">
                         {formatPrice(marketData.summary.total_boxes)}상자
                       </div>
                     </div>
@@ -516,7 +516,7 @@ const Prices = () => {
                     {/* 전체 평균가 */}
                     <div className="bg-base-200 rounded-lg py-3 px-1">
                       <div className="text-sm text-base-content/50 mb-1">전체 평균가</div>
-                      <div className="text-base font-bold text-base-content whitespace-nowrap">
+                      <div className="text-lg font-bold text-base-content whitespace-nowrap">
                         {formatPrice(marketData.summary.overall_avg_price)}
                       </div>
                     </div>
@@ -524,7 +524,7 @@ const Prices = () => {
                     {/* 전일대비 */}
                     <div className="bg-base-200 rounded-lg py-3 px-1">
                       <div className="text-sm text-base-content/50 mb-1">전일대비</div>
-                      <div className={`text-base font-bold whitespace-nowrap ${
+                      <div className={`text-lg font-bold whitespace-nowrap ${
                         !marketData.overall_comparison?.comparison_available ? 'text-base-content/40' :
                         Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-base-content/60' :
                         marketData.overall_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'
@@ -542,13 +542,13 @@ const Prices = () => {
                     <div className="grid grid-cols-2 gap-1 text-center mt-1">
                       <div className="bg-base-200 rounded-lg py-3 px-1">
                         <div className="text-sm text-base-content/50 mb-1">전체 최고가</div>
-                        <div className="text-base font-bold text-red-500 whitespace-nowrap">
+                        <div className="text-lg font-bold text-red-500 whitespace-nowrap">
                           {formatPrice(Math.max(...marketData.details.map(d => d.max_price || 0)))}
                         </div>
                       </div>
                       <div className="bg-base-200 rounded-lg py-3 px-1">
                         <div className="text-sm text-base-content/50 mb-1">전체 최저가</div>
-                        <div className="text-base font-bold text-blue-500 whitespace-nowrap">
+                        <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
                           {formatPrice(Math.min(...marketData.details.map(d => d.min_price || 0).filter(p => p > 0)))}
                         </div>
                       </div>
@@ -610,7 +610,7 @@ const Prices = () => {
                         {/* 평균가 */}
                         <div className="bg-base-200 rounded-lg py-3 px-1">
                           <div className="text-sm text-base-content/50 mb-1">평균가</div>
-                          <div className="text-base font-bold text-base-content whitespace-nowrap">
+                          <div className="text-lg font-bold text-base-content whitespace-nowrap">
                             {formatPrice(item.avg_price)}
                           </div>
                         </div>
@@ -618,7 +618,7 @@ const Prices = () => {
                         {/* 전일대비 */}
                         <div className="bg-base-200 rounded-lg py-3 px-1">
                           <div className="text-sm text-base-content/50 mb-1">전일대비</div>
-                          <div className={`text-base font-bold whitespace-nowrap ${
+                          <div className={`text-lg font-bold whitespace-nowrap ${
                             !priceComparison.comparison_available ? 'text-base-content/40' :
                             Math.abs(priceComparison.changePercent) < 0.1 ? 'text-base-content/60' :
                             priceComparison.change > 0 ? 'text-red-500' : 'text-blue-500'
@@ -633,7 +633,7 @@ const Prices = () => {
                         {/* 최고가 */}
                         <div className="bg-base-200 rounded-lg py-3 px-1">
                           <div className="text-sm text-base-content/50 mb-1">최고가</div>
-                          <div className="text-base font-bold text-red-500 whitespace-nowrap">
+                          <div className="text-lg font-bold text-red-500 whitespace-nowrap">
                             {formatPrice(item.max_price)}
                           </div>
                         </div>
@@ -641,7 +641,7 @@ const Prices = () => {
                         {/* 최저가 */}
                         <div className="bg-base-200 rounded-lg py-3 px-1">
                           <div className="text-sm text-base-content/50 mb-1">최저가</div>
-                          <div className="text-base font-bold text-blue-500 whitespace-nowrap">
+                          <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
                             {formatPrice(item.min_price)}
                           </div>
                         </div>
