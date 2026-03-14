@@ -16,14 +16,14 @@ import loungeService from '../services/loungeService';
 import loungePollService from '../services/loungePollService';
 import { storageService } from '../services';
 import { generateDiceBearAvatar } from '../utils/userHelper';
-import SendIcon from '@mui/icons-material/Send';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import AIBadge from '../components/AIBadge';
 import { AI_USER_ID } from '../config/aiUser';
 import PollBadge from '../components/lounge/PollBadge';
 import PollCard from '../components/lounge/PollCard';
-import PollCreateForm from '../components/lounge/PollCreateForm';
 import LoungeAdMessage from '../components/lounge/LoungeAdMessage';
+import LoungeComposeModal from '../components/lounge/LoungeComposeModal';
+import LoungeImageScroll from '../components/lounge/LoungeImageScroll';
 import { adService } from '../services';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 
@@ -220,13 +220,11 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             {renderContent(msg.content, knownNames)}
           </p>
         )}
-        {msg.image_url && (
-          <img
-            src={msg.image_url}
-            alt="첨부 이미지"
-            className="mt-1.5 rounded-xl max-w-[240px] max-h-[240px] object-cover cursor-pointer border border-base-300"
-            loading="lazy"
-            onClick={() => onImageClick?.(msg.image_url)}
+        {(msg.image_url || (msg.image_urls && msg.image_urls.length > 0)) && (
+          <LoungeImageScroll
+            imageUrl={msg.image_url}
+            imageUrls={msg.image_urls}
+            onImageClick={onImageClick}
           />
         )}
         {msg.lounge_polls && (
@@ -252,23 +250,19 @@ const Lounge = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
-  const [text, setText] = useState('');
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showScrollUp, setShowScrollUp] = useState(false);  // 새 메시지 알림 (상단)
 
   const [isComposing, setIsComposing] = useState(false);
-  const [isPollMode, setIsPollMode] = useState(false);          // 투표 생성 모드
   const [cooldownLeft, setCooldownLeft] = useState(0);
-  const [selectedImage, setSelectedImage] = useState(null);     // 첨부할 이미지 File
-  const [imagePreview, setImagePreview] = useState(null);       // 미리보기 data URL
   const [isUploading, setIsUploading] = useState(false);        // 업로드 중 여부
   const [viewingImage, setViewingImage] = useState(null);       // 전체화면 보기 URL
   const [myPollVotes, setMyPollVotes] = useState({});           // { pollId: [optionId, ...] }
   const [votingPollId, setVotingPollId] = useState(null);       // 투표 처리 중인 pollId
   const [loungeAds, setLoungeAds] = useState([]);               // 광장 피드 광고
-  const fileInputRef = useRef(null);
+  const [mentionText, setMentionText] = useState('');           // @멘션 초기 텍스트
   const pollVoteSubRef = useRef(null);
 
   // 로드된 메시지의 닉네임 목록 (멘션 하이라이트용)
@@ -290,7 +284,6 @@ const Lounge = () => {
   const bottomSentinelRef = useRef(null);   // 이전 메시지 로드 센티넬 (하단)
   const subscriptionRef = useRef(null);
   const isAtTopRef = useRef(true);
-  const textareaRef = useRef(null);
   const lastScrollTopRef = useRef(0);
 
   // ── 내부 스크롤 → 상하단 바 숨김/표시 (홈과 동일 매커니즘) ──
@@ -524,9 +517,8 @@ const Lounge = () => {
 
   // ── @멘션 핸들러 (닉네임 롱프레스) ──
   const handleMention = useCallback((name) => {
-    setText(`@${name} `);
+    setMentionText(`@${name} `);
     setIsComposing(true);
-    setIsPollMode(false);
   }, []);
 
   // ── 투표 핸들러 ──
@@ -583,31 +575,7 @@ const Lounge = () => {
     }
   }, []);
 
-  // ── 이미지 선택 핸들러 ──
-  const handleImageSelect = useCallback((e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      alert('이미지 파일만 첨부할 수 있어요.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      alert('10MB 이하 이미지만 첨부할 수 있어요.');
-      return;
-    }
-    setSelectedImage(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setImagePreview(ev.target.result);
-    reader.readAsDataURL(file);
-  }, []);
-
-  const clearImage = useCallback(() => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
-
-  // ── 투표 생성 제출 ──
+  // ── 투표 생성 제출 (LoungeComposeModal에서 호출) ──
   const handlePollSubmit = useCallback(async (pollData) => {
     if (isSending || cooldownLeft > 0 || !currentUser) return;
     setIsSending(true);
@@ -615,11 +583,10 @@ const Lounge = () => {
       const newMsg = await loungePollService.createPoll(pollData);
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [newMsg, ...prev];  // 최신순: 상단에 삽입
+        return [newMsg, ...prev];
       });
       setCooldownLeft(15);
       setIsComposing(false);
-      setIsPollMode(false);
       requestAnimationFrame(() => scrollToTop());
     } catch (e) {
       console.error('[Lounge] 투표 생성 실패:', e);
@@ -629,64 +596,58 @@ const Lounge = () => {
     }
   }, [isSending, cooldownLeft, currentUser, scrollToTop]);
 
-  // ── 메시지 전송 ──
-  const handleSend = useCallback(async (e) => {
-    e?.preventDefault();
-    const trimmed = text.trim();
-    const hasImage = !!selectedImage;
-    if ((!trimmed && !hasImage) || isSending) return;
-
+  // ── 메시지 전송 (LoungeComposeModal에서 호출) ──
+  const handleSend = useCallback(async (content, images) => {
     if (!currentUser) {
       navigate('/login');
       return;
     }
-
-    // 도배 방지: 쿨다운 중이면 차단
     if (cooldownLeft > 0) return;
 
-    if (trimmed) {
-      const filterError = validateMessage(trimmed);
+    if (content) {
+      const filterError = validateMessage(content);
       if (filterError) {
         alert(filterError);
         return;
       }
     }
 
-    setText('');
     setIsSending(true);
-    setIsUploading(hasImage);
+    const hasImages = images && images.length > 0;
+    setIsUploading(hasImages);
+
     try {
       let imageUrl = null;
-      if (hasImage) {
-        imageUrl = await loungeService.uploadLoungeImage(selectedImage);
+      let imageUrls = null;
+
+      if (hasImages) {
+        if (images.length === 1) {
+          // 단일 이미지 → image_url (하위 호환)
+          imageUrl = await loungeService.uploadLoungeImage(images[0]);
+        } else {
+          // 다중 이미지 → image_urls[]
+          imageUrls = await loungeService.uploadLoungeImages(images);
+        }
         setIsUploading(false);
       }
-      const newMsg = await loungeService.sendMessage(trimmed || null, imageUrl);
-      // Realtime으로도 오겠지만 중복 방지 로직이 있으므로 미리 추가
+
+      const newMsg = await loungeService.sendMessage(content, imageUrl, imageUrls);
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [newMsg, ...prev];  // 최신순: 상단에 삽입
+        return [newMsg, ...prev];
       });
-      setCooldownLeft(15); // 15초 쿨다운 시작
+      setCooldownLeft(15);
       setIsComposing(false);
-      clearImage();
+      setMentionText('');
       requestAnimationFrame(() => scrollToTop());
     } catch (e) {
       console.error('[Lounge] 전송 실패:', e);
-      setText(trimmed); // 실패 시 복원
       setIsUploading(false);
+      throw e; // 모달에서 에러 처리 가능하도록
     } finally {
       setIsSending(false);
     }
-  }, [text, selectedImage, isSending, cooldownLeft, currentUser, navigate, scrollToTop, clearImage]);
-
-  // ── Enter(shift+enter는 줄바꿈)로 전송 ──
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  }, [handleSend]);
+  }, [cooldownLeft, currentUser, navigate, scrollToTop]);
 
   // ── 메시지 삭제 ──
   const handleDelete = useCallback(async (id) => {
@@ -831,7 +792,7 @@ const Lounge = () => {
     {!isComposing && (
       <div className="fixed right-4 z-40" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
         <button
-          onClick={() => { setIsComposing(true); setIsPollMode(false); }}
+          onClick={() => { setMentionText(''); setIsComposing(true); }}
           className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3.5 transition-all duration-300 hover:shadow-xl active:scale-95"
           aria-label="광장에 글쓰기"
         >
@@ -842,148 +803,18 @@ const Lounge = () => {
       </div>
     )}
 
-    {/* 글쓰기 모달 - 화면 상단에 띄워 키보드와 충돌 방지 */}
-    {isComposing && (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-start pt-20">
-        {/* 배경 */}
-        <div
-          className="absolute inset-0 bg-black/40"
-          onClick={() => {
-            if (!text.trim() && !selectedImage) {
-              setIsComposing(false);
-              setIsPollMode(false);
-              clearImage();
-            }
-          }}
-        />
-        {/* 카드 */}
-        <div className="relative w-[calc(100%-32px)] bg-base-100 rounded-2xl shadow-xl border border-base-300 overflow-hidden">
-          {/* 헤더: 탭 전환 + 닫기 */}
-          <div className="px-4 py-3 border-b border-base-200 flex items-center justify-between">
-            <div className="flex bg-base-200 rounded-xl p-1 gap-1">
-              <button
-                onClick={() => setIsPollMode(false)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
-                  !isPollMode
-                    ? 'bg-base-100 text-base-content shadow-sm'
-                    : 'text-base-content/50 hover:text-base-content/70'
-                }`}
-              >
-                <SendIcon style={{ fontSize: 14 }} />
-                글쓰기
-              </button>
-              <button
-                onClick={() => setIsPollMode(true)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200 ${
-                  isPollMode
-                    ? 'bg-base-100 text-base-content shadow-sm'
-                    : 'text-base-content/50 hover:text-base-content/70'
-                }`}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
-                  <path d="M3 3a1 1 0 011-1h1a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V3zM7 7a1 1 0 011-1h1a1 1 0 011 1v6a1 1 0 01-1 1H8a1 1 0 01-1-1V7zM12 5a1 1 0 00-1 1v7a1 1 0 001 1h1a1 1 0 001-1V6a1 1 0 00-1-1h-1z" />
-                </svg>
-                투표
-              </button>
-            </div>
-            <button
-              onClick={() => { setText(''); clearImage(); setIsComposing(false); setIsPollMode(false); }}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-base-200 text-base-content/50 text-[16px] hover:bg-base-300 transition-colors"
-            >
-              ×
-            </button>
-          </div>
-
-          {!currentUser ? (
-            <div className="px-5 py-5">
-              <button
-                onClick={() => navigate('/login')}
-                className="w-full py-3 text-[14px] font-medium text-base-content/60 bg-base-200 border border-base-300 rounded-xl hover:bg-base-200 transition-colors"
-              >
-                로그인하고 이야기 나누기
-              </button>
-            </div>
-          ) : isPollMode ? (
-            <PollCreateForm
-              onSubmit={handlePollSubmit}
-              onCancel={() => { setIsComposing(false); setIsPollMode(false); }}
-              isSubmitting={isSending}
-              cooldownLeft={cooldownLeft}
-            />
-          ) : (
-            <>
-              {/* 이미지 미리보기 */}
-              {imagePreview && (
-                <div className="px-5 pt-4 pb-0 relative inline-block">
-                  <div className="relative inline-block">
-                    <img
-                      src={imagePreview}
-                      alt="미리보기"
-                      className="w-24 h-24 rounded-xl object-cover border border-base-300"
-                    />
-                    <button
-                      onClick={clearImage}
-                      className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full text-[12px] flex items-center justify-center shadow-md"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 입력창 */}
-              <div className="px-5 pt-4 pb-3">
-                <textarea
-                  ref={textareaRef}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="이야기를 남겨보세요... (최대 300자)"
-                  maxLength={300}
-                  rows={6}
-                  autoFocus
-                  className="w-full px-4 py-3 border-2 border-blue-400 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-500 text-[15px] resize-none leading-relaxed text-base-content placeholder-base-content/40 bg-base-200 outline-none transition-all duration-200"
-                  style={{ fontSize: '16px', minHeight: '150px', maxHeight: '200px', overflowY: 'auto' }}
-                />
-              </div>
-              {/* 푸터 */}
-              <div className="px-5 py-3 bg-base-200 border-t border-base-200 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {/* 사진 첨부 버튼 */}
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={!!selectedImage || isSending}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl bg-base-200 text-base-content/50 hover:bg-base-300 disabled:opacity-40 transition-colors"
-                    aria-label="사진 첨부"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                      <path fillRule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06V18c0 .414.336.75.75.75h16.5A.75.75 0 0021 18v-1.94l-2.69-2.689a1.5 1.5 0 00-2.12 0l-.88.879.97.97a.75.75 0 11-1.06 1.06l-5.16-5.159a1.5 1.5 0 00-2.12 0L3 16.061zm10.125-7.81a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0z" clipRule="evenodd" />
-                    </svg>
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                  <span className={`text-[12px] transition-colors ${cooldownLeft > 0 ? 'text-orange-400 font-medium' : text.length > 0 ? 'text-base-content/40' : 'text-transparent'}`}>
-                    {cooldownLeft > 0 ? `${cooldownLeft}초 후 전송 가능` : `${text.length}/300`}
-                  </span>
-                </div>
-                <button
-                  onClick={handleSend}
-                  disabled={(!text.trim() && !selectedImage) || isSending || cooldownLeft > 0}
-                  className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-base-content/20 disabled:to-base-content/20 disabled:text-base-content/40 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
-                >
-                  {isUploading ? '업로드 중...' : isSending ? '전송 중...' : '전송'}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-    )}
+    {/* 글쓰기 모달 (음성입력 + 다중 이미지 지원) */}
+    <LoungeComposeModal
+      isOpen={isComposing}
+      onClose={() => { setIsComposing(false); setMentionText(''); }}
+      currentUser={currentUser}
+      onSendMessage={handleSend}
+      onSendPoll={handlePollSubmit}
+      isSending={isSending}
+      cooldownLeft={cooldownLeft}
+      isUploading={isUploading}
+      initialText={mentionText}
+    />
     {/* 이미지 전체화면 뷰어 */}
     {viewingImage && (
       <div

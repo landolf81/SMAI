@@ -10,7 +10,7 @@ import { POLL_SELECT } from './loungePollService.js';
 
 /** 메시지 조회 시 poll 데이터 포함한 select 문 */
 const MSG_SELECT = `
-  id, content, image_url, created_at, user_id, is_hidden, poll_id,
+  id, content, image_url, image_urls, created_at, user_id, is_hidden, poll_id,
   users:user_id (id, name, username, profile_pic),
   lounge_polls:poll_id ( ${POLL_SELECT} )
 `;
@@ -46,13 +46,14 @@ const loungeService = {
    * @param {string} content - 메시지 내용 (최대 300자)
    * @returns {Promise<Object>} 삽입된 메시지
    */
-  async sendMessage(content, imageUrl = null) {
+  async sendMessage(content, imageUrl = null, imageUrls = null) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('로그인이 필요합니다.');
 
     const row = { user_id: user.id };
     if (content?.trim()) row.content = content.trim();
     if (imageUrl) row.image_url = imageUrl;
+    if (imageUrls && imageUrls.length > 0) row.image_urls = imageUrls;
 
     const { data, error } = await supabase
       .from('lounge_messages')
@@ -161,7 +162,7 @@ const loungeService = {
   },
 
   /**
-   * 광장 이미지 업로드 (CF Images)
+   * 광장 이미지 업로드 (CF Images) — 단일
    * @param {File} file - 이미지 파일
    * @returns {Promise<string>} 업로드된 이미지 URL
    */
@@ -170,6 +171,22 @@ const loungeService = {
     const filename = `${uuidv4()}.${ext}`;
     const result = await storageService.uploadFile('lounge', `images/${filename}`, file);
     return result.url;
+  },
+
+  /**
+   * 광장 이미지 다중 업로드 (CF Images) — 순차 업로드
+   * @param {File[]} files - 이미지 파일 배열 (최대 5개)
+   * @returns {Promise<string[]>} 업로드된 이미지 URL 배열
+   */
+  async uploadLoungeImages(files) {
+    const urls = [];
+    for (const file of files) {
+      const ext = file.name.split('.').pop();
+      const filename = `${uuidv4()}.${ext}`;
+      const result = await storageService.uploadFile('lounge', `images/${filename}`, file);
+      urls.push(result.url);
+    }
+    return urls;
   },
 };
 
