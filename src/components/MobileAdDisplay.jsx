@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
@@ -18,6 +19,7 @@ const toSmallVariant = (url) => {
 };
 
 const MobileAdDisplay = ({ ad }) => {
+  const navigate = useNavigate();
   const [adMedia, setAdMedia] = useState([]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -402,12 +404,39 @@ const MobileAdDisplay = ({ ad }) => {
     setShowLandingModal(true);
   };
 
-  // 모달 미디어 클릭 핸들러 (링크로 이동)
-  const handleModalMediaClick = () => {
-    if (isPWAInstallAd) return; // iOS 안내 모달에서는 링크 이동 불필요
-    if (ad?.link_url) {
+  // 컴포넌트 언마운트 시 body 스타일 복원 (내부 링크 이동 등으로 모달이 열린 채 언마운트될 때)
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+    };
+  }, []);
+
+  // 광고 링크 이동 (내부 경로는 SPA 라우팅, 외부 URL은 새 탭)
+  const openAdLink = useCallback(() => {
+    if (!ad?.link_url) return;
+    // 모달이 열린 상태에서 링크 이동 시 body 스타일 먼저 복원
+    if (showLandingModal) {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.top = '';
+      window.scrollTo(0, scrollYRef.current);
+      setShowLandingModal(false);
+    }
+    if (ad.link_url.startsWith('/')) {
+      navigate(ad.link_url);
+    } else {
       window.open(ad.link_url, '_blank');
     }
+  }, [ad?.link_url, navigate, showLandingModal]);
+
+  // 모달 미디어 클릭 핸들러 (링크로 이동)
+  const handleModalMediaClick = () => {
+    if (isPWAInstallAd) return;
+    openAdLink();
   };
 
   // 모달 닫기
@@ -725,7 +754,7 @@ const MobileAdDisplay = ({ ad }) => {
                   <div className="p-3">
                     <p className="text-sm text-base-content/50 mb-2 break-all">{ad.link_url}</p>
                     <button
-                      onClick={() => window.open(ad.link_url, '_blank')}
+                      onClick={openAdLink}
                       className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200"
                     >
                       상세보기

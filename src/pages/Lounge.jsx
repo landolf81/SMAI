@@ -24,6 +24,7 @@ import PollCard from '../components/lounge/PollCard';
 import LoungeAdMessage from '../components/lounge/LoungeAdMessage';
 import LoungeComposeModal from '../components/lounge/LoungeComposeModal';
 import LoungeImageScroll from '../components/lounge/LoungeImageScroll';
+import ProfileModal from '../components/ProfileModal';
 import { adService } from '../services';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 
@@ -108,7 +109,7 @@ const renderContent = (content, knownNames) => {
 // LoungeMessage
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, knownNames
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, onProfileClick, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -148,6 +149,14 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
     nameFiredRef.current = false;
   }, [displayName, onMention]);
 
+  // 닉네임 클릭 → 프로필 모달 (롱프레스가 아닐 때만)
+  const handleNameClick = useCallback(() => {
+    // 롱프레스 직후가 아닌 일반 클릭일 때만 프로필 열기
+    if (!nameFiredRef.current) {
+      onProfileClick?.(user);
+    }
+  }, [user, onProfileClick]);
+
   useEffect(() => () => clearTimeout(nameTimerRef.current), []);
 
   const isHidden = msg.is_hidden;
@@ -161,7 +170,8 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
       <img
         src={profileUrl}
         alt={displayName}
-        className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5"
+        className="w-9 h-9 rounded-full object-cover flex-shrink-0 mt-0.5 cursor-pointer"
+        onClick={() => onProfileClick?.(user)}
         onError={(e) => {
           e.target.onerror = null;
           e.target.src = generateDiceBearAvatar(user.id || 'default');
@@ -171,8 +181,9 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
         <div className="flex items-center gap-1.5">
           {/* 닉네임 — 롱프레스 시 @멘션 */}
           <span
-            className="text-[15px] font-semibold text-base-content select-none"
+            className="text-[15px] font-semibold text-base-content select-none cursor-pointer"
             style={{ WebkitTouchCallout: 'none', WebkitUserSelect: 'none' }}
+            onClick={handleNameClick}
             onTouchStart={handleNameTouchStart}
             onTouchMove={handleNameTouchMove}
             onTouchEnd={handleNameTouchEnd}
@@ -263,6 +274,8 @@ const Lounge = () => {
   const [votingPollId, setVotingPollId] = useState(null);       // 투표 처리 중인 pollId
   const [loungeAds, setLoungeAds] = useState([]);               // 광장 피드 광고
   const [mentionText, setMentionText] = useState('');           // @멘션 초기 텍스트
+  const [profileUser, setProfileUser] = useState(null);         // 프로필 모달 대상 유저
+  const [showProfileModal, setShowProfileModal] = useState(false); // 프로필 모달 열림 여부
   const pollVoteSubRef = useRef(null);
 
   // 로드된 메시지의 닉네임 목록 (멘션 하이라이트용)
@@ -521,6 +534,13 @@ const Lounge = () => {
     setIsComposing(true);
   }, []);
 
+  // ── 프로필 모달 핸들러 (프로필 이미지 / 닉네임 클릭) ──
+  const handleProfileClick = useCallback((user) => {
+    if (!user?.id) return;
+    setProfileUser(user);
+    setShowProfileModal(true);
+  }, []);
+
   // ── 투표 핸들러 ──
   const handleVote = useCallback(async (pollId, optionId) => {
     if (votingPollId || !currentUser) return;
@@ -757,6 +777,7 @@ const Lounge = () => {
                 onDelete={handleDelete}
                 onTTS={handleTTS}
                 onMention={handleMention}
+                onProfileClick={handleProfileClick}
                 isSpeaking={speakingMsgId === item.msg.id}
                 isAdmin={isAdmin}
                 onHide={handleHide}
@@ -814,6 +835,12 @@ const Lounge = () => {
       cooldownLeft={cooldownLeft}
       isUploading={isUploading}
       initialText={mentionText}
+    />
+    {/* 프로필 모달 */}
+    <ProfileModal
+      isOpen={showProfileModal}
+      onClose={() => { setShowProfileModal(false); setProfileUser(null); }}
+      user={profileUser}
     />
     {/* 이미지 전체화면 뷰어 */}
     {viewingImage && (

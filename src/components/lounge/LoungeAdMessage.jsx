@@ -6,6 +6,7 @@
  * 사용 위치: Lounge.jsx (15개 메시지마다 1개 삽입)
  */
 import React, { useRef, useEffect, useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { adService } from '../../services';
 import { getImageUrl } from '../../config/api';
 import { isCloudflareStreamUrl, getCloudflareStreamUid, isVideoFile } from '../../utils/mediaUtils';
@@ -35,6 +36,7 @@ const getMediaInfo = (media) => {
 };
 
 const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
+  const navigate = useNavigate();
   const containerRef = useRef(null);
   const hasTrackedRef = useRef(false);
   const timerRef = useRef(null);
@@ -101,12 +103,17 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
     };
   }, [ad.id]);
 
-  // ── 클릭 핸들러 ──
+  // ── 클릭 핸들러 (내부 링크는 SPA 라우팅, 외부 링크는 새 탭) ──
   const handleLinkClick = useCallback(() => {
     if (!ad.link_url) return;
     adService.trackAdClick(ad.id);
-    window.open(ad.link_url, '_blank');
-  }, [ad.id, ad.link_url]);
+    // '/'로 시작하는 내부 경로면 SPA 네비게이션
+    if (ad.link_url.startsWith('/')) {
+      navigate(ad.link_url);
+    } else {
+      window.open(ad.link_url, '_blank');
+    }
+  }, [ad.id, ad.link_url, navigate]);
 
   const handleImageClick = useCallback(() => {
     adService.trackAdClick(ad.id);
