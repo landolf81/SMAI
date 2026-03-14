@@ -659,6 +659,33 @@ export const marketService = {
   },
 
   /**
+   * 도매시장 법인별 상세 데이터 조회 (규격+출하지명별)
+   * @param {string} marketName - 시장명
+   * @param {string} date - 날짜 (YYYY-MM-DD)
+   * @param {string} grade - 등급/법인명
+   * @returns {Array} 상세 데이터 배열
+   */
+  async getMarketDetail(marketName, date, grade) {
+    try {
+      marketName = nfc(marketName);
+      const { data, error } = await supabase
+        .from('market_detail')
+        .select('*')
+        .eq('market_name', marketName)
+        .eq('market_date', date)
+        .eq('grade', grade)
+        .order('weight')
+        .order('shipper_name');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('상세 데이터 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
    * 시장 설정 조회 (공판장 순서, 등급 순서)
    * @returns {Object|null} { market_order: [], grade_orders: {} }
    */
@@ -896,7 +923,7 @@ export const marketService = {
         .or(`effective_to.is.null,effective_to.gte.${date}`)
         .order('effective_from', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) return null;
       return data?.auction_time || null;

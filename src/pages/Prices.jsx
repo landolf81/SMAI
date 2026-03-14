@@ -14,6 +14,14 @@ import MobileAdDisplay from '../components/MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
+import PriceDetailModal from '../components/PriceDetailModal';
+
+// 산지 목록 — 이 외에는 모두 모달 지원 (도매시장)
+const LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협'];
+const isWholesaleMarket = (name) => {
+  if (!name) return false;
+  return !LOCAL_MARKETS.includes(name);
+};
 
 // 뱃지 색상 - 파랑으로 통일
 const getMarketBadgeColor = () => {
@@ -30,6 +38,7 @@ const Prices = () => {
   const [briefing, setBriefing] = useState(null); // AI 브리핑
   const [briefingGenerating, setBriefingGenerating] = useState(false); // 브리핑 생성 중
   const [auctionTime, setAuctionTime] = useState(null); // 경매시간
+  const [selectedGrade, setSelectedGrade] = useState(null); // 모달용 선택된 등급/법인명
   const adminPermissions = useAdminPermissions();
 
   // URL 파라미터에서 시장명과 날짜 가져오기
@@ -549,7 +558,7 @@ const Prices = () => {
               </div>
             )}
 
-            {/* 상세 가격 정보 - 카드 형태 */}
+            {/* 상세 가격 정보 - 카드 형태 (10kg 필터) */}
             <div className="space-y-6">
               {marketData.details.map((item, index) => {
                 const priceComparison = item.price_comparison || {
@@ -562,11 +571,16 @@ const Prices = () => {
                   changePercent: 0,
                   comparison_available: false
                 };
+                const isWholesale = isWholesaleMarket(marketName);
 
                 return (
-                  <div key={index} className="relative pt-4">
-                    {/* 등급 뱃지 - 카드 위에 걸쳐있는 형태 (공판장별 색상 적용) */}
-                    <div className="absolute -top-0 left-4 z-10">
+                  <div
+                    key={index}
+                    className={`relative pt-4 ${isWholesale ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
+                    onClick={() => isWholesale && setSelectedGrade(item.grade)}
+                  >
+                    {/* 등급 뱃지 - 카드 위에 걸쳐있는 형태 */}
+                    <div className="absolute -top-0 left-4 z-10 flex items-center gap-2">
                       <span
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-base font-bold rounded-full shadow-md"
                         style={{ backgroundColor: getMarketBadgeColor() }}
@@ -574,6 +588,9 @@ const Prices = () => {
                         <span className="w-2 h-2 bg-white rounded-full"></span>
                         {item.grade}
                       </span>
+                      {isWholesale && (
+                        <span className="text-sm text-base-content/40">상세 보기 &gt;</span>
+                      )}
                     </div>
 
                     {/* 카드 본체 */}
@@ -645,6 +662,15 @@ const Prices = () => {
           <MobileAdDisplay ad={sortedAds[0]} />
         </div>
       )}
+
+      {/* 도매시장 상세 모달 */}
+      <PriceDetailModal
+        isOpen={!!selectedGrade}
+        onClose={() => setSelectedGrade(null)}
+        marketName={marketName}
+        marketDate={selectedDate}
+        gradeName={selectedGrade}
+      />
 
       {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 (모든 공판장) */}
       {adminPermissions.isAdmin && (
