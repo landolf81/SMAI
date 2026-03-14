@@ -341,7 +341,7 @@ const Prices = () => {
             {/* 뒤로가기 버튼 */}
             <button
               onClick={() => navigate(-1)}
-              className="text-[#004225] text-2xl font-bold hover:opacity-70 transition-opacity shrink-0 w-8"
+              className="text-base-content text-2xl font-bold hover:opacity-70 transition-opacity shrink-0 w-8"
               title="뒤로가기"
             >
               &lt;
@@ -352,7 +352,7 @@ const Prices = () => {
               {/* 이전 날짜 */}
               <button
                 onClick={handlePrevDate}
-                className="p-1 text-[#004225] hover:bg-base-200 rounded-full transition-colors active:scale-90"
+                className="p-1 text-base-content hover:bg-base-200 rounded-full transition-colors active:scale-90"
                 title="이전 날짜"
               >
                 <ChevronLeftIcon fontSize="small" />
@@ -363,7 +363,7 @@ const Prices = () => {
                 onClick={() => dateInputRef.current?.showPicker?.()}
                 className="flex items-center gap-1 px-1 py-1 rounded-lg hover:bg-base-200 transition-colors active:scale-95"
               >
-                <CalendarTodayIcon style={{ fontSize: 14 }} className="text-[#004225]" />
+                <CalendarTodayIcon style={{ fontSize: 14 }} className="text-base-content" />
                 <span className="text-base font-medium text-base-content whitespace-nowrap">
                   {formatDateShort(selectedDate)}
                 </span>
@@ -385,7 +385,7 @@ const Prices = () => {
                 className={`p-1 rounded-full transition-colors active:scale-90 ${
                   isToday
                     ? 'text-base-content/30 cursor-not-allowed'
-                    : 'text-[#004225] hover:bg-base-200'
+                    : 'text-base-content hover:bg-base-200'
                 }`}
                 title="다음 날짜"
               >
@@ -530,7 +530,7 @@ const Prices = () => {
                         marketData.overall_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'
                       }`}>
                         {!marketData.overall_comparison?.comparison_available ? '-' :
-                         Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? '0' :
+                         Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? '보합' :
                          `${marketData.overall_comparison.change > 0 ? '▲' : '▼'} ${Math.abs(marketData.overall_comparison.change).toLocaleString()}`
                         }
                       </div>
@@ -605,26 +605,21 @@ const Prices = () => {
                         )}
                       </div>
 
-                      {/* 가격 정보 그리드 */}
-                      <div className="grid grid-cols-4 gap-1 text-center">
+                      {/* 가격 정보 그리드 - 3컬럼 + 각 변동폭 */}
+                      <div className="grid grid-cols-3 gap-1 text-center">
                         {/* 평균가 */}
                         <div className="bg-base-200 rounded-lg py-3 px-1">
                           <div className="text-sm text-base-content/50 mb-1">평균가</div>
                           <div className="text-lg font-bold text-base-content whitespace-nowrap">
                             {formatPrice(item.avg_price)}
                           </div>
-                        </div>
-
-                        {/* 전일대비 */}
-                        <div className="bg-base-200 rounded-lg py-3 px-1">
-                          <div className="text-sm text-base-content/50 mb-1">전일대비</div>
-                          <div className={`text-lg font-bold whitespace-nowrap ${
-                            !priceComparison.comparison_available ? 'text-base-content/40' :
-                            Math.abs(priceComparison.changePercent) < 0.1 ? 'text-base-content/60' :
+                          <div className={`text-sm font-medium whitespace-nowrap mt-1 ${
+                            !priceComparison.comparison_available ? 'text-base-content/30' :
+                            Math.abs(priceComparison.changePercent) < 0.1 ? 'text-base-content/40' :
                             priceComparison.change > 0 ? 'text-red-500' : 'text-blue-500'
                           }`}>
                             {!priceComparison.comparison_available ? '-' :
-                             Math.abs(priceComparison.changePercent) < 0.1 ? '0' :
+                             Math.abs(priceComparison.changePercent) < 0.1 ? '보합' :
                              `${priceComparison.change > 0 ? '▲' : '▼'} ${Math.abs(priceComparison.change).toLocaleString()}`
                             }
                           </div>
@@ -636,6 +631,21 @@ const Prices = () => {
                           <div className="text-lg font-bold text-red-500 whitespace-nowrap">
                             {formatPrice(item.max_price)}
                           </div>
+                          {(() => {
+                            const mc = item.max_price_comparison || { comparison_available: false, change: 0, changePercent: 0 };
+                            return (
+                              <div className={`text-sm font-medium whitespace-nowrap mt-1 ${
+                                !mc.comparison_available ? 'text-base-content/30' :
+                                Math.abs(mc.changePercent) < 0.1 ? 'text-base-content/40' :
+                                mc.change > 0 ? 'text-red-500' : 'text-blue-500'
+                              }`}>
+                                {!mc.comparison_available ? '-' :
+                                 Math.abs(mc.changePercent) < 0.1 ? '보합' :
+                                 `${mc.change > 0 ? '▲' : '▼'} ${Math.abs(mc.change).toLocaleString()}`
+                                }
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         {/* 최저가 */}
@@ -644,6 +654,21 @@ const Prices = () => {
                           <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
                             {formatPrice(item.min_price)}
                           </div>
+                          {(() => {
+                            const mc = item.min_price_comparison || { comparison_available: false, change: 0, changePercent: 0 };
+                            return (
+                              <div className={`text-sm font-medium whitespace-nowrap mt-1 ${
+                                !mc.comparison_available ? 'text-base-content/30' :
+                                Math.abs(mc.changePercent) < 0.1 ? 'text-base-content/40' :
+                                mc.change > 0 ? 'text-red-500' : 'text-blue-500'
+                              }`}>
+                                {!mc.comparison_available ? '-' :
+                                 Math.abs(mc.changePercent) < 0.1 ? '보합' :
+                                 `${mc.change > 0 ? '▲' : '▼'} ${Math.abs(mc.change).toLocaleString()}`
+                                }
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>

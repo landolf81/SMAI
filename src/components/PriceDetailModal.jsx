@@ -99,25 +99,25 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
                   <div className="grid grid-cols-4 gap-1 text-center">
                     <div className="bg-base-100 rounded-lg py-2 px-1">
                       <div className="text-sm text-base-content/50 mb-0.5">수량</div>
-                      <div className="text-base font-bold text-base-content whitespace-nowrap">
+                      <div className="text-lg font-bold text-base-content whitespace-nowrap">
                         {formatPrice(item.boxes)}
                       </div>
                     </div>
                     <div className="bg-base-100 rounded-lg py-2 px-1">
                       <div className="text-sm text-base-content/50 mb-0.5">평균가</div>
-                      <div className="text-base font-bold text-base-content whitespace-nowrap">
+                      <div className="text-lg font-bold text-base-content whitespace-nowrap">
                         {formatPrice(item.avg_price)}
                       </div>
                     </div>
                     <div className="bg-base-100 rounded-lg py-2 px-1">
                       <div className="text-sm text-base-content/50 mb-0.5">최고가</div>
-                      <div className="text-base font-bold text-red-500 whitespace-nowrap">
+                      <div className="text-lg font-bold text-red-500 whitespace-nowrap">
                         {formatPrice(item.max_price)}
                       </div>
                     </div>
                     <div className="bg-base-100 rounded-lg py-2 px-1">
                       <div className="text-sm text-base-content/50 mb-0.5">최저가</div>
-                      <div className="text-base font-bold text-blue-500 whitespace-nowrap">
+                      <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
                         {formatPrice(item.min_price)}
                       </div>
                     </div>

@@ -489,12 +489,26 @@ export const marketService = {
 
         const currentAvgPrice = parseInt(row.avg_price) || 0;
         const previousAvgPrice = prevItem ? (parseInt(prevItem.avg_price) || 0) : 0;
+        const currentMaxPrice = parseInt(row.max_price) || 0;
+        const previousMaxPrice = prevItem ? (parseInt(prevItem.max_price) || 0) : 0;
+        const currentMinPrice = parseInt(row.min_price) || 0;
+        const previousMinPrice = prevItem ? (parseInt(prevItem.min_price) || 0) : 0;
         const currentBoxes = parseInt(row.boxes) || 0;
         const previousBoxes = prevItem ? (parseInt(prevItem.boxes) || 0) : 0;
 
         const change = previousAvgPrice > 0 ? currentAvgPrice - previousAvgPrice : 0;
         const changePercent = previousAvgPrice > 0
           ? Math.round((change / previousAvgPrice) * 1000) / 10
+          : 0;
+
+        const maxChange = previousMaxPrice > 0 ? currentMaxPrice - previousMaxPrice : 0;
+        const maxChangePercent = previousMaxPrice > 0
+          ? Math.round((maxChange / previousMaxPrice) * 1000) / 10
+          : 0;
+
+        const minChange = previousMinPrice > 0 ? currentMinPrice - previousMinPrice : 0;
+        const minChangePercent = previousMinPrice > 0
+          ? Math.round((minChange / previousMinPrice) * 1000) / 10
           : 0;
 
         const boxesChange = previousBoxes > 0 ? currentBoxes - previousBoxes : 0;
@@ -507,17 +521,29 @@ export const marketService = {
           grade: row.grade || '특품',
           boxes: currentBoxes,
           avg_price: currentAvgPrice,
-          min_price: parseInt(row.min_price) || 0,
-          max_price: parseInt(row.max_price) || 0,
+          min_price: currentMinPrice,
+          max_price: currentMaxPrice,
           record_count: parseInt(row.record_count) || 0,
-          // 전일 비교 정보
+          // 평균가 비교
           price_comparison: {
             comparison_available: previousAvgPrice > 0,
             previousPrice: previousAvgPrice,
             change: change,
             changePercent: changePercent
           },
-          // 수량 비교 정보
+          // 최고가 비교
+          max_price_comparison: {
+            comparison_available: previousMaxPrice > 0,
+            change: maxChange,
+            changePercent: maxChangePercent
+          },
+          // 최저가 비교
+          min_price_comparison: {
+            comparison_available: previousMinPrice > 0,
+            change: minChange,
+            changePercent: minChangePercent
+          },
+          // 수량 비교
           boxes_comparison: {
             comparison_available: previousBoxes > 0,
             previousBoxes: previousBoxes,
