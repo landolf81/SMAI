@@ -140,6 +140,26 @@ const loungeService = {
   },
 
   /**
+   * 특정 시각 이후 새 메시지가 있는지 확인 (head-only 경량 쿼리)
+   * @param {string} sinceTime - ISO 8601 timestamp
+   * @returns {Promise<boolean>}
+   */
+  async hasNewMessagesSince(sinceTime) {
+    try {
+      const { count, error } = await supabase
+        .from('lounge_messages')
+        .select('*', { count: 'exact', head: true })
+        .gt('created_at', sinceTime)
+        .eq('is_hidden', false)
+        .limit(1);
+      if (error) return false;
+      return (count || 0) > 0;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
    * 새 메시지 실시간 구독
    * @param {Function} onNewMessage - 새 메시지 수신 시 콜백 (메시지 객체 전달)
    * @returns {{ unsubscribe: Function }}

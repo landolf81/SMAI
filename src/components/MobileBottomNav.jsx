@@ -1,8 +1,9 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthContext } from '../context/AuthContext';
-import { dmService } from '../services';
+import { dmService, postService } from '../services';
+import loungeService from '../services/loungeService';
 
 // Material UI Icons
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -45,6 +46,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const [isDMOpen, setIsDMOpen] = useState(false);
 
   // 읽지 않은 DM 수 조회
@@ -54,6 +56,43 @@ const MobileBottomNav = ({ scrollDirection }) => {
     enabled: !!currentUser,
     refetchInterval: 10000, // 10초마다 새로고침
   });
+
+  // 광장 새 글 여부 (30초 폴링)
+  const { data: hasNewLounge = false } = useQuery({
+    queryKey: ['loungeBadge'],
+    queryFn: () => {
+      const lastVisited = localStorage.getItem('lounge_last_visited');
+      if (!lastVisited) return false;
+      return loungeService.hasNewMessagesSince(lastVisited);
+    },
+    enabled: !!currentUser,
+    refetchInterval: 30000,
+    staleTime: 25000,
+  });
+
+  // 커뮤 새 글 여부 (30초 폴링)
+  const { data: hasNewCommunity = false } = useQuery({
+    queryKey: ['communityBadge'],
+    queryFn: () => {
+      const lastVisited = localStorage.getItem('community_last_visited');
+      if (!lastVisited) return false;
+      return postService.hasNewPostsSince(lastVisited);
+    },
+    enabled: !!currentUser,
+    refetchInterval: 30000,
+    staleTime: 25000,
+  });
+
+  // 첫 접속 사용자: 방문 시각 초기화 (뱃지 안 뜨게)
+  useEffect(() => {
+    if (!currentUser) return;
+    if (!localStorage.getItem('lounge_last_visited')) {
+      localStorage.setItem('lounge_last_visited', new Date().toISOString());
+    }
+    if (!localStorage.getItem('community_last_visited')) {
+      localStorage.setItem('community_last_visited', new Date().toISOString());
+    }
+  }, [currentUser]);
 
   // DM 창 열림 상태 감지
   useEffect(() => {
@@ -88,7 +127,9 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: '광장',
       icon: GroupsIcon,
       showLabel: true,
-      activeColor: 'text-[#FF7043]' // 주황
+      activeColor: 'text-[#FF7043]', // 주황
+      hasNewContent: hasNewLounge,
+      hideIndicator: true
     },
     {
       id: 'community',
@@ -96,7 +137,8 @@ const MobileBottomNav = ({ scrollDirection }) => {
       label: '커뮤',
       icon: ForumIcon,
       showLabel: true,
-      activeColor: 'text-[#26A69A]' // 청록
+      activeColor: 'text-[#26A69A]', // 청록
+      hasNewContent: hasNewCommunity
     },
     {
       id: 'qna',
@@ -130,6 +172,14 @@ const MobileBottomNav = ({ scrollDirection }) => {
 
   // 버튼 클릭 핸들러
   const handleButtonClick = (button) => {
+    // 광장/커뮤 탭 클릭 시 방문 시각 갱신 + 뱃지 즉시 제거
+    if (button.id === 'lounge') {
+      localStorage.setItem('lounge_last_visited', new Date().toISOString());
+      queryClient.setQueryData(['loungeBadge'], false);
+    } else if (button.id === 'community') {
+      localStorage.setItem('community_last_visited', new Date().toISOString());
+      queryClient.setQueryData(['communityBadge'], false);
+    }
     navigate(button.path);
   };
 
@@ -199,6 +249,11 @@ const MobileBottomNav = ({ scrollDirection }) => {
                     <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </div>
+                  )}
+
+                  {/* 광장/커뮤 새 콘텐츠 점 뱃지 */}
+                  {button.hasNewContent && !isActive && (
+                    <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full" />
                   )}
                 </div>
 

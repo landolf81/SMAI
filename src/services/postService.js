@@ -1674,6 +1674,26 @@ export const postService = {
   },
 
   /**
+   * 특정 시각 이후 새 게시물이 있는지 확인 (head-only 경량 쿼리)
+   * @param {string} sinceTime - ISO 8601 timestamp
+   * @returns {Promise<boolean>}
+   */
+  async hasNewPostsSince(sinceTime) {
+    try {
+      const { count, error } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .gt('created_at', sinceTime)
+        .eq('is_hidden', false)
+        .limit(1);
+      if (error) return false;
+      return (count || 0) > 0;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
    * hot_score 최고점 게시물 조회 (홈 화면용) - 캐시 테이블 사용
    * @returns {Object|null} 가장 인기있는 게시물
    */

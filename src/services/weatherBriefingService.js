@@ -17,7 +17,7 @@ function getSkyText(sky) {
     3: '구름많음',
     4: '흐림'
   };
-  return skyMap[sky] || '맑음';
+  return skyMap[sky] || '정보없음';
 }
 
 /**
@@ -200,14 +200,14 @@ export const weatherBriefingService = {
 - 강수확률: ${today?.pop ?? 0}%
 - 예상 강수량: ${today?.maxPcp ?? '강수없음'}
 - 풍속: ${current?.windSpeed ?? '정보없음'} m/s
-- 하늘 상태: ${getSkyText(current?.sky)}
-- 강수형태: ${getPtyText(current?.pty)}
+- 하늘 상태: ${getSkyText(today?.sky ?? current?.sky)}
+- 강수형태: ${getPtyText(current?.pty ?? today?.pty)}
 
 [내일 날씨]
 - 내일 최저/최고: ${tomorrow?.minTemp ?? '?'}°C / ${tomorrow?.maxTemp ?? '?'}°C
 - 강수확률: ${tomorrow?.pop ?? 0}%
 - 예상 강수량: ${tomorrow?.maxPcp ?? '강수없음'}
-- 하늘 상태: ${tomorrow?.weather ?? '정보없음'}
+- 하늘 상태: ${getSkyText(tomorrow?.sky)}
 - 강수형태: ${getPtyText(tomorrow?.pty)}
 
 [성주군 월별 평균 기온 참고]
@@ -310,6 +310,7 @@ export const weatherBriefingService = {
 
     const todayPty = current?.pty || today?.pty || 0;
     const tomorrowPty = tomorrow?.pty || 0;
+    const todaySky = today?.sky;
 
     // 오늘 날씨 판단 (비닐하우스 관점)
     if (todayPty === 3) {
@@ -324,6 +325,10 @@ export const weatherBriefingService = {
       todayMsg = '오늘 습도 높아요, 환기하세요';
     } else if (todayPop !== undefined && todayPop >= 60) {
       todayMsg = '오늘 비 와요, 측창 확인하세요';
+    } else if (todaySky === 4) {
+      todayMsg = '오늘 흐려요, 일조량 부족할 수 있어요';
+    } else if (todaySky === 3) {
+      todayMsg = '오늘 구름 많아요, 하우스 관리 무난해요';
     }
 
     // 내일 날씨 판단 (비닐하우스 관점)
