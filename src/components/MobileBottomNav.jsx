@@ -94,6 +94,18 @@ const MobileBottomNav = ({ scrollDirection }) => {
     }
   }, [currentUser]);
 
+  // 현재 해당 페이지에 있으면 방문 시각 자동 갱신 + 뱃지 제거
+  useEffect(() => {
+    if (!currentUser) return;
+    if (location.pathname === '/lounge') {
+      localStorage.setItem('lounge_last_visited', new Date().toISOString());
+      queryClient.setQueryData(['loungeBadge'], false);
+    } else if (location.pathname === '/community') {
+      localStorage.setItem('community_last_visited', new Date().toISOString());
+      queryClient.setQueryData(['communityBadge'], false);
+    }
+  }, [location.pathname, currentUser, queryClient]);
+
   // DM 창 열림 상태 감지
   useEffect(() => {
     const checkDMOpen = () => {
