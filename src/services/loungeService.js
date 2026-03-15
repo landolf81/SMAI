@@ -59,7 +59,7 @@ const loungeService = {
    * @param {string} content - 메시지 내용 (최대 300자)
    * @returns {Promise<Object>} 삽입된 메시지
    */
-  async sendMessage(content, imageUrl = null, imageUrls = null) {
+  async sendMessage(content, imageUrl = null, imageUrls = null, videoUrl = null) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('로그인이 필요합니다.');
 
@@ -67,6 +67,7 @@ const loungeService = {
     if (content?.trim()) row.content = content.trim();
     if (imageUrl) row.image_url = imageUrl;
     if (imageUrls && imageUrls.length > 0) row.image_urls = imageUrls;
+    if (videoUrl) row.video_url = videoUrl;
 
     const { data, error } = await supabase
       .from('lounge_messages')

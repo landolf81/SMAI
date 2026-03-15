@@ -15,6 +15,7 @@ import { AuthContext } from '../context/AuthContext';
 import loungeService from '../services/loungeService';
 import loungePollService from '../services/loungePollService';
 import { storageService } from '../services';
+import { uploadVideo } from '../services/videoUploadService';
 import { generateDiceBearAvatar } from '../utils/userHelper';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import AIBadge from '../components/AIBadge';
@@ -238,15 +239,38 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             onImageClick={onImageClick}
           />
         )}
-        {msg.video_url && (
-          <video
-            src={msg.video_url}
-            controls
-            playsInline
-            preload="metadata"
-            className="mt-1.5 rounded-xl max-w-[280px] max-h-[240px] border border-base-300"
-          />
-        )}
+        {msg.video_url && (() => {
+          // Cloudflare Stream → HLS URL로 변환하여 <video>로 재생 (비율 자동 맞춤)
+          const streamMatch = msg.video_url.match(/cloudflarestream\.com\/([a-zA-Z0-9]+)/);
+          if (streamMatch) {
+            const uid = streamMatch[1];
+            const hlsUrl = `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/manifest/video.m3u8`;
+            const thumbUrl = `https://customer-xi3tfx9anf8ild8c.cloudflarestream.com/${uid}/thumbnails/thumbnail.jpg?width=280`;
+            return (
+              <div className="mt-1.5 w-[280px] rounded-xl border border-base-300 overflow-hidden bg-black">
+                <video
+                  src={hlsUrl}
+                  poster={thumbUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full block"
+                />
+              </div>
+            );
+          }
+          return (
+            <div className="mt-1.5 w-[280px] rounded-xl border border-base-300 overflow-hidden bg-black">
+              <video
+                src={msg.video_url}
+                controls
+                playsInline
+                preload="metadata"
+                className="w-full block"
+              />
+            </div>
+          );
+        })()}
         {msg.lounge_polls && (
           <PollCard
             poll={msg.lounge_polls}
@@ -626,7 +650,7 @@ const Lounge = () => {
   }, [isSending, cooldownLeft, currentUser, scrollToTop]);
 
   // ── 메시지 전송 (LoungeComposeModal에서 호출) ──
-  const handleSend = useCallback(async (content, images) => {
+  const handleSend = useCallback(async (content, images, video) => {
     if (!currentUser) {
       navigate('/login');
       return;
@@ -643,11 +667,13 @@ const Lounge = () => {
 
     setIsSending(true);
     const hasImages = images && images.length > 0;
-    setIsUploading(hasImages);
+    const hasVideo = !!video;
+    setIsUploading(hasImages || hasVideo);
 
     try {
       let imageUrl = null;
       let imageUrls = null;
+      let videoUrl = null;
 
       if (hasImages) {
         if (images.length === 1) {
@@ -657,10 +683,16 @@ const Lounge = () => {
           // 다중 이미지 → image_urls[]
           imageUrls = await loungeService.uploadLoungeImages(images);
         }
-        setIsUploading(false);
       }
 
-      const newMsg = await loungeService.sendMessage(content, imageUrl, imageUrls);
+      if (hasVideo) {
+        const result = await uploadVideo(video, () => {});
+        videoUrl = result.iframeUrl;
+      }
+
+      setIsUploading(false);
+
+      const newMsg = await loungeService.sendMessage(content, imageUrl, imageUrls, videoUrl);
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
         return [newMsg, ...prev];

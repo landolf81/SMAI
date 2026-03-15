@@ -225,24 +225,24 @@ const PostEditor = () => {
     }
   }, [postData, isEditMode]);
 
-  // 텍스트 입력 시 링크 감지
+  // 텍스트 입력 시 링크 감지 → 미리보기 생성 + 본문에서 URL 자동 제거
   useEffect(() => {
-    if (!desc || !showLinkPreview) {
-      setLinkPreview(null);
-      return;
-    }
+    // 이미 링크 미리보기가 있으면 추가 감지 안함
+    if (linkPreview) return;
+    if (!desc || !showLinkPreview) return;
 
     const timer = setTimeout(() => {
       const linkInfo = getFirstLinkInfo(desc);
       if (linkInfo) {
         setLinkPreview(linkInfo);
-      } else {
-        setLinkPreview(null);
+        // 본문에서 URL 자동 제거 (사용자가 직접 지울 필요 없음)
+        const cleaned = desc.replace(linkInfo.url, '').replace(/ {2,}/g, ' ').trim();
+        setDesc(cleaned);
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [desc, showLinkPreview]);
+  }, [desc, showLinkPreview, linkPreview]);
 
   // 게시물 생성 mutation
   const createMutation = useMutation({
@@ -513,7 +513,7 @@ const PostEditor = () => {
 
   const removeLinkPreview = () => {
     setLinkPreview(null);
-    setShowLinkPreview(false);
+    // showLinkPreview는 유지 → 새 링크 붙여넣기 시 다시 감지 가능
   };
 
   const removeImage = (index) => {

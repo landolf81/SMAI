@@ -17,6 +17,8 @@ import PollCreateForm from './PollCreateForm';
 
 const MAX_IMAGES = 5;
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+const SUPPORTED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'];
 
 const LoungeComposeModal = ({
   isOpen,
@@ -34,6 +36,8 @@ const LoungeComposeModal = ({
   const [isPollMode, setIsPollMode] = useState(false);
   const [selectedImages, setSelectedImages] = useState([]);     // File[]
   const [imagePreviews, setImagePreviews] = useState([]);       // dataURL[]
+  const [selectedVideo, setSelectedVideo] = useState(null);     // File | null
+  const [videoPreview, setVideoPreview] = useState(null);       // objectURL
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -100,47 +104,62 @@ const LoungeComposeModal = ({
     }
   }, [isListening]);
 
-  // ── 이미지 선택 (다중) ──
-  const handleImageSelect = useCallback((e) => {
+  // ── 파일 선택 (이미지 다중 + 동영상 1개) ──
+  const handleFileSelect = useCallback((e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const remaining = MAX_IMAGES - selectedImages.length;
-    if (remaining <= 0) {
-      alert(`최대 ${MAX_IMAGES}장까지 첨부할 수 있어요.`);
-      return;
-    }
-
-    const validFiles = [];
-    for (const file of files.slice(0, remaining)) {
-      if (!file.type.startsWith('image/')) {
-        alert('이미지 파일만 첨부할 수 있어요.');
-        continue;
+    for (const file of files) {
+      // 동영상 파일 처리
+      if (file.type.startsWith('video/')) {
+        if (selectedVideo) {
+          alert('동영상은 1개만 첨부할 수 있어요.');
+          break;
+        }
+        if (selectedImages.length > 0) {
+          alert('이미지와 동영상을 함께 첨부할 수 없어요.');
+          break;
+        }
+        if (!SUPPORTED_VIDEO_TYPES.includes(file.type)) {
+          alert('MP4, WebM, MOV 형식의 동영상만 첨부할 수 있어요.');
+          continue;
+        }
+        if (file.size > MAX_VIDEO_SIZE) {
+          alert('50MB 이하 동영상만 첨부할 수 있어요.');
+          continue;
+        }
+        setSelectedVideo(file);
+        setVideoPreview(URL.createObjectURL(file));
+        break; // 동영상 1개만
       }
-      if (file.size > MAX_IMAGE_SIZE) {
-        alert('10MB 이하 이미지만 첨부할 수 있어요.');
-        continue;
+
+      // 이미지 파일 처리
+      if (file.type.startsWith('image/')) {
+        if (selectedVideo) {
+          alert('동영상과 이미지를 함께 첨부할 수 없어요.');
+          break;
+        }
+        const remaining = MAX_IMAGES - selectedImages.length;
+        if (remaining <= 0) {
+          alert(`최대 ${MAX_IMAGES}장까지 첨부할 수 있어요.`);
+          break;
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+          alert('10MB 이하 이미지만 첨부할 수 있어요.');
+          continue;
+        }
+        setSelectedImages((prev) => [...prev, file]);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          setImagePreviews((prev) => [...prev, ev.target.result]);
+        };
+        reader.readAsDataURL(file);
       }
-      validFiles.push(file);
     }
-
-    if (validFiles.length === 0) return;
-
-    // File 배열에 추가
-    setSelectedImages((prev) => [...prev, ...validFiles]);
-
-    // 미리보기 생성
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setImagePreviews((prev) => [...prev, ev.target.result]);
-      };
-      reader.readAsDataURL(file);
-    });
 
     // input 초기화 (같은 파일 재선택 가능)
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, [selectedImages.length]);
+  }, [selectedImages.length, selectedVideo]);
 
   // ── 이미지 개별 삭제 ──
   const removeImage = useCallback((index) => {
@@ -148,24 +167,27 @@ const LoungeComposeModal = ({
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
-  // ── 이미지 전체 초기화 ──
-  const clearImages = useCallback(() => {
+  // ── 미디어 전체 초기화 ──
+  const clearMedia = useCallback(() => {
     setSelectedImages([]);
     setImagePreviews([]);
+    if (videoPreview) URL.revokeObjectURL(videoPreview);
+    setSelectedVideo(null);
+    setVideoPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-  }, []);
+  }, [videoPreview]);
 
   // ── 메시지 전송 ──
   const handleSend = useCallback(async (e) => {
     e?.preventDefault();
     const trimmed = text.trim();
-    if (!trimmed && selectedImages.length === 0) return;
+    if (!trimmed && selectedImages.length === 0 && !selectedVideo) return;
     if (isSending || cooldownLeft > 0) return;
 
-    await onSendMessage(trimmed || null, selectedImages);
+    await onSendMessage(trimmed || null, selectedImages, selectedVideo);
     setText('');
-    clearImages();
-  }, [text, selectedImages, isSending, cooldownLeft, onSendMessage, clearImages]);
+    clearMedia();
+  }, [text, selectedImages, selectedVideo, isSending, cooldownLeft, onSendMessage, clearMedia]);
 
   // ── 투표 전송 ──
   const handlePollSubmit = useCallback(async (pollData) => {
@@ -182,24 +204,24 @@ const LoungeComposeModal = ({
 
   // ── 닫기 ──
   const handleClose = useCallback(() => {
-    if (!text.trim() && selectedImages.length === 0) {
+    if (!text.trim() && selectedImages.length === 0 && !selectedVideo) {
       setText('');
-      clearImages();
+      clearMedia();
       setIsPollMode(false);
       onClose();
     }
-  }, [text, selectedImages, clearImages, onClose]);
+  }, [text, selectedImages, selectedVideo, clearMedia, onClose]);
 
   const handleForceClose = useCallback(() => {
     setText('');
-    clearImages();
+    clearMedia();
     setIsPollMode(false);
     if (isListening) {
       try { recognitionRef.current?.stop(); } catch { /* ignore */ }
       setIsListening(false);
     }
     onClose();
-  }, [clearImages, onClose, isListening]);
+  }, [clearMedia, onClose, isListening]);
 
   if (!isOpen) return null;
 
@@ -304,6 +326,37 @@ const LoungeComposeModal = ({
               </div>
             )}
 
+            {/* 동영상 미리보기 */}
+            {videoPreview && (
+              <div className="px-5 pt-4 pb-0">
+                <div className="relative inline-block">
+                  <video
+                    src={videoPreview}
+                    className="w-40 h-28 rounded-xl object-cover border border-base-300"
+                    muted
+                    playsInline
+                    preload="metadata"
+                  />
+                  <button
+                    onClick={() => { if (videoPreview) URL.revokeObjectURL(videoPreview); setSelectedVideo(null); setVideoPreview(null); }}
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] flex items-center justify-center shadow-md"
+                  >
+                    ×
+                  </button>
+                  {/* 동영상 아이콘 오버레이 */}
+                  <div className="absolute bottom-1.5 left-1.5 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                      <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h7.5A2.25 2.25 0 0013 13.75v-7.5A2.25 2.25 0 0010.75 4h-7.5zM19 4.75a.75.75 0 00-1.28-.53l-3 3a.75.75 0 00-.22.53v4.5c0 .199.079.39.22.53l3 3a.75.75 0 001.28-.53V4.75z" />
+                    </svg>
+                    동영상
+                  </div>
+                </div>
+                <p className="text-[11px] text-base-content/40 mt-1">
+                  {(selectedVideo.size / 1024 / 1024).toFixed(1)}MB
+                </p>
+              </div>
+            )}
+
             {/* 입력창 */}
             <div className="px-5 pt-4 pb-3">
               <textarea
@@ -326,7 +379,7 @@ const LoungeComposeModal = ({
                 {/* 사진 첨부 버튼 */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={selectedImages.length >= MAX_IMAGES || isSending}
+                  disabled={selectedImages.length >= MAX_IMAGES || !!selectedVideo || isSending}
                   className="w-9 h-9 flex items-center justify-center rounded-xl bg-base-200 text-base-content/50 hover:bg-base-300 disabled:opacity-40 transition-colors"
                   aria-label="사진 첨부"
                 >
@@ -337,9 +390,9 @@ const LoungeComposeModal = ({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/*,video/*"
                   multiple
-                  onChange={handleImageSelect}
+                  onChange={handleFileSelect}
                   className="hidden"
                 />
 
@@ -369,7 +422,7 @@ const LoungeComposeModal = ({
               </div>
               <button
                 onClick={handleSend}
-                disabled={(!text.trim() && selectedImages.length === 0) || isSending || cooldownLeft > 0}
+                disabled={(!text.trim() && selectedImages.length === 0 && !selectedVideo) || isSending || cooldownLeft > 0}
                 className="px-6 py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-base-content/20 disabled:to-base-content/20 disabled:text-base-content/40 disabled:shadow-none disabled:cursor-not-allowed transition-all duration-300"
               >
                 {isUploading ? '업로드 중...' : isSending ? '전송 중...' : '전송'}
