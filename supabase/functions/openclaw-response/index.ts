@@ -14,6 +14,21 @@ const AI_USER_ID = Deno.env.get('AI_USER_ID') ?? ''
 // 미설정 시 검증 스킵 (디버깅 단계에서 사용)
 const OPENCLAW_RESPONSE_TOKEN = Deno.env.get('OPENCLAW_RESPONSE_TOKEN') ?? ''
 
+// 미디어 URL 자동 감지용 확장자
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.heic']
+const VIDEO_EXTENSIONS = ['.mp4', '.mov', '.webm', '.avi', '.mkv', '.m4v', '.3gp']
+
+function classifyMediaUrl(url: string): 'image' | 'video' | 'unknown' {
+  const lower = new URL(url, 'https://placeholder.com').pathname.toLowerCase()
+  if (IMAGE_EXTENSIONS.some(ext => lower.endsWith(ext))) return 'image'
+  if (VIDEO_EXTENSIONS.some(ext => lower.endsWith(ext))) return 'video'
+  // Cloudflare Images URL 패턴
+  if (lower.includes('/cdn-cgi/imagedelivery/') || lower.includes('imagedelivery.net')) return 'image'
+  // Cloudflare Stream URL 패턴
+  if (lower.includes('videodelivery.net') || lower.includes('customer-') && lower.includes('.cloudflarestream.com')) return 'video'
+  return 'unknown'
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST',
@@ -70,7 +85,7 @@ Deno.serve(async (req: Request) => {
 
     let query = supabase
       .from('lounge_messages')
-      .select(`id, content, created_at, user_id, poll_id,
+      .select(`id, content, image_url, image_urls, video_url, created_at, user_id, poll_id,
         users:user_id (id, name, username),
         lounge_polls:poll_id (
           id, question, is_anonymous, is_multiple, is_closed, expires_at, total_votes,
@@ -108,6 +123,14 @@ Deno.serve(async (req: Request) => {
         is_ai:      m.user_id === AI_USER_ID,
       }
 
+      // 미디어 URL 포함
+      const imageUrl = (m as Record<string, unknown>).image_url as string | null
+      const imageUrlsArr = (m as Record<string, unknown>).image_urls as string[] | null
+      const videoUrlVal = (m as Record<string, unknown>).video_url as string | null
+      if (imageUrl) base.image_url = imageUrl
+      if (imageUrlsArr && imageUrlsArr.length > 0) base.image_urls = imageUrlsArr
+      if (videoUrlVal) base.video_url = videoUrlVal
+
       // 투표 데이터가 있으면 포함
       if (poll) {
         const sortedOptions = [...(poll.lounge_poll_options ?? [])].sort((a, b) => a.sort_order - b.sort_order)
@@ -132,11 +155,51 @@ Deno.serve(async (req: Request) => {
   }
 
   // ─── action: post_lounge → 광장 메시지 삽입 (전기수) ───
+  // 지원 필드:
+  //   message/content (string) - 텍스트 (미디어만 보낼 경우 생략 가능)
+  //   media_urls (string[])   - 이미지/동영상 URL 배열 (자동 감지)
+  //   image_url (string)      - 단일 이미지 URL (직접 지정)
+  //   image_urls (string[])   - 다중 이미지 URL (직접 지정)
+  //   video_url (string)      - 동영상 URL (직접 지정)
   if (action === 'post_lounge') {
     const message = ((body.message ?? body.content ?? '') as string).trim()
 
-    if (!message) {
-      return jsonResponse({ error: 'message is required' }, 400)
+    // 미디어 URL 처리: media_urls 자동 감지 또는 직접 지정
+    let imageUrls: string[] = []
+    let videoUrl: string | null = null
+
+    // 1) media_urls 자동 감지 (우선)
+    const rawMediaUrls = body.media_urls as string[] | undefined
+    if (Array.isArray(rawMediaUrls) && rawMediaUrls.length > 0) {
+      for (const url of rawMediaUrls) {
+        if (typeof url !== 'string' || !url.trim()) continue
+        const type = classifyMediaUrl(url.trim())
+        if (type === 'video' && !videoUrl) {
+          videoUrl = url.trim()
+        } else {
+          // image, unknown → 이미지로 처리 (unknown도 이미지 fallback)
+          imageUrls.push(url.trim())
+        }
+      }
+    }
+
+    // 2) 직접 지정 필드 (media_urls가 없을 때 fallback)
+    if (imageUrls.length === 0 && !videoUrl) {
+      if (Array.isArray(body.image_urls) && body.image_urls.length > 0) {
+        imageUrls = (body.image_urls as string[]).filter(u => typeof u === 'string' && u.trim()).map(u => (u as string).trim())
+      }
+      if (typeof body.image_url === 'string' && body.image_url.trim()) {
+        imageUrls = [body.image_url.trim(), ...imageUrls]
+      }
+      if (typeof body.video_url === 'string' && body.video_url.trim()) {
+        videoUrl = (body.video_url as string).trim()
+      }
+    }
+
+    const hasMedia = imageUrls.length > 0 || !!videoUrl
+
+    if (!message && !hasMedia) {
+      return jsonResponse({ error: 'message or media_urls is required' }, 400)
     }
     if (!AI_USER_ID) {
       console.error('[openclaw-response] AI_USER_ID 시크릿 미설정')
@@ -145,9 +208,27 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+    // insert 데이터 구성
+    const insertData: Record<string, unknown> = {
+      user_id: AI_USER_ID,
+      content: message || null,
+    }
+
+    if (imageUrls.length === 1) {
+      insertData.image_url = imageUrls[0]
+    } else if (imageUrls.length > 1) {
+      insertData.image_urls = imageUrls
+    }
+
+    if (videoUrl) {
+      insertData.video_url = videoUrl
+    }
+
+    console.log(`[openclaw-response] post_lounge 삽입 데이터:`, JSON.stringify(insertData))
+
     const { data: inserted, error: insertError } = await supabase
       .from('lounge_messages')
-      .insert([{ user_id: AI_USER_ID, content: message }])
+      .insert([insertData])
       .select('id')
       .single()
 
@@ -156,19 +237,19 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: insertError.message }, 500)
     }
 
-    console.log(`[openclaw-response] 전기수 광장 글 삽입 완료: id=${inserted.id}`)
+    console.log(`[openclaw-response] 전기수 광장 글 삽입 완료: id=${inserted.id} (이미지: ${imageUrls.length}장, 동영상: ${videoUrl ? '있음' : '없음'})`)
 
     const runId = ((body.run_id ?? '') as string).trim()
     if (runId) {
       await supabase.from('agent_logs').update({
         status:       'done',
         responded_at: new Date().toISOString(),
-        response:     message,
-        metadata:     { action: 'post_lounge', lounge_message_id: inserted.id },
+        response:     message || '[미디어 첨부]',
+        metadata:     { action: 'post_lounge', lounge_message_id: inserted.id, image_count: imageUrls.length, has_video: !!videoUrl },
       }).eq('run_id', runId)
     }
 
-    return jsonResponse({ ok: true, lounge_message_id: inserted.id })
+    return jsonResponse({ ok: true, lounge_message_id: inserted.id, images: imageUrls.length, video: !!videoUrl })
   }
 
   // ─── action: post_comment → AI 댓글 삽입 (전기수) ───

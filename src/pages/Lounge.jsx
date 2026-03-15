@@ -238,6 +238,15 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             onImageClick={onImageClick}
           />
         )}
+        {msg.video_url && (
+          <video
+            src={msg.video_url}
+            controls
+            playsInline
+            preload="metadata"
+            className="mt-1.5 rounded-xl max-w-[280px] max-h-[240px] border border-base-300"
+          />
+        )}
         {msg.lounge_polls && (
           <PollCard
             poll={msg.lounge_polls}

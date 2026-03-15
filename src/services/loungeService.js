@@ -8,12 +8,27 @@ import { storageService } from './storageService.js';
 import { v4 as uuidv4 } from 'uuid';
 import { POLL_SELECT } from './loungePollService.js';
 
-/** 메시지 조회 시 poll 데이터 포함한 select 문 */
-const MSG_SELECT = `
+/** 기본 select (video_url 없이) */
+const MSG_SELECT_BASE = `
   id, content, image_url, image_urls, created_at, user_id, is_hidden, poll_id,
   users:user_id (id, name, username, profile_pic),
   lounge_polls:poll_id ( ${POLL_SELECT} )
 `;
+
+/** video_url 포함 select */
+const MSG_SELECT_WITH_VIDEO = `
+  id, content, image_url, image_urls, video_url, created_at, user_id, is_hidden, poll_id,
+  users:user_id (id, name, username, profile_pic),
+  lounge_polls:poll_id ( ${POLL_SELECT} )
+`;
+
+/** video_url 컬럼 존재 여부 — 모듈 로드 시 백그라운드 체크 (요청 차단 없음) */
+let hasVideoColumn = false;
+(() => {
+  supabase.from('lounge_messages').select('video_url').limit(0)
+    .then(({ error }) => { hasVideoColumn = !error; });
+})();
+const getMsgSelect = () => hasVideoColumn ? MSG_SELECT_WITH_VIDEO : MSG_SELECT_BASE;
 
 const loungeService = {
   /**
@@ -26,7 +41,7 @@ const loungeService = {
   async getMessages({ beforeTime = null, limit = 30 } = {}) {
     let query = supabase
       .from('lounge_messages')
-      .select(MSG_SELECT)
+      .select(getMsgSelect())
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -36,8 +51,6 @@ const loungeService = {
 
     const { data, error } = await query;
     if (error) throw error;
-
-    // 최신순(내림차순) 그대로 반환
     return data || [];
   },
 
@@ -58,7 +71,7 @@ const loungeService = {
     const { data, error } = await supabase
       .from('lounge_messages')
       .insert(row)
-      .select(MSG_SELECT)
+      .select(getMsgSelect())
       .single();
 
     if (error) throw error;
@@ -143,7 +156,7 @@ const loungeService = {
           // users + poll 정보 포함해서 조회
           const { data } = await supabase
             .from('lounge_messages')
-            .select(MSG_SELECT)
+            .select(getMsgSelect())
             .eq('id', payload.new.id)
             .single();
 
