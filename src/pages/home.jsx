@@ -41,6 +41,7 @@ const Home = () => {
   const [seongjuTotal, setSeongjuTotal] = useState(null); // 성주군 합계
   const [wholesaleTotal, setWholesaleTotal] = useState(null); // 도매시장 합계
   const [availableMarkets, setAvailableMarkets] = useState([]);
+  const [marketInfoMap, setMarketInfoMap] = useState(new Map()); // market_name → info 객체
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [marketSettings, setMarketSettings] = useState(null); // DB에서 가져온 시장 설정
@@ -145,13 +146,20 @@ const Home = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // 병렬 실행: 시장 설정, 날씨, 인기 게시물 (LCP 개선: 인기 게시물 선제 로드)
-        const [settings, weather] = await Promise.all([
+        // 병렬 실행: 시장 설정, 날씨, 공판장 정보 (LCP 개선: 병렬 로드)
+        const [settings, weather, marketInfoList] = await Promise.all([
           marketService.getMarketSettings(),
           weatherService.getWeatherData(),
+          marketService.getMarketInfo().catch(() => []), // 오류 시 빈 배열 fallback
         ]);
 
         setMarketSettings(settings);
+
+        // 공판장 정보를 market_name 기준 Map으로 변환 (O(1) 조회)
+        if (marketInfoList.length > 0) {
+          const infoMap = new Map(marketInfoList.map((info) => [info.market_name, info]));
+          setMarketInfoMap(infoMap);
+        }
 
         // 날씨 브리핑: Gemini 사용
         if (weather) {
@@ -754,6 +762,7 @@ const Home = () => {
           formatPrice={formatPrice}
           formatDateForDisplay={formatDateForDisplay}
           handleRefresh={handleRefresh}
+          marketInfoMap={marketInfoMap}
         />
 
         {/* 인기 게시물 섹션 - 스크롤 시 지연 로딩 */}

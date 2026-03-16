@@ -1326,6 +1326,36 @@ export const marketService = {
       return { today: null, previous: null };
     }
   },
+
+  /**
+   * 공판장 정보 전체 조회 (홈 카드 ℹ️ 버튼용)
+   * market_info 테이블에서 모든 공판장 기본 정보 조회
+   * @returns {Array} 공판장 정보 배열
+   */
+  async getMarketInfo() {
+    const { data, error } = await supabase
+      .from('market_info')
+      .select('*')
+      .order('market_name');
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
+   * 공판장 정보 등록/수정 (어드민 전용)
+   * market_name을 기준으로 upsert 처리
+   * @param {Object} infoData - 공판장 정보 객체
+   * @returns {Object} 저장된 공판장 정보
+   */
+  async upsertMarketInfo(infoData) {
+    const { data, error } = await supabase
+      .from('market_info')
+      .upsert(infoData, { onConflict: 'market_name' })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  },
 };
 
 export default marketService;

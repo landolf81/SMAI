@@ -64,9 +64,35 @@ const WHOLESALE_EXCLUDE_NAMES = [
 // 도매시장 합계 카드가 삽입될 기준점: 이 시장 카드 바로 뒤에 삽입
 const WHOLESALE_TOTAL_INSERT_AFTER = '광주공판장';
 
-const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
+const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh, marketInfoMap }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
+
+  // 공판장 정보 바텀시트 상태
+  const [infoSheet, setInfoSheet] = useState(null); // null | 공판장 info 객체
+  const [revealedPhones, setRevealedPhones] = useState({}); // { index: true } 수송팀 번호 공개 여부
+
+  // vCard 다운로드 (연락처 등록)
+  const downloadVCard = (name, phone) => {
+    const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL:${phone}\nEND:VCARD`;
+    const blob = new Blob([vcard], { type: 'text/vcard;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${name}.vcf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 전화번호 마스킹 (010-1234-5678 → 010-****-5678)
+  const maskPhone = (phone) => {
+    if (!phone) return '';
+    const digits = phone.replace(/[^0-9]/g, '');
+    if (digits.length >= 8) {
+      return phone.replace(/(\d{2,4})[-\s]?(\d{3,4})[-\s]?(\d{4})/, '$1-****-$3');
+    }
+    return '****';
+  };
 
   // 스크롤 페이드 인 효과
   const { visibleItems, observe, unobserve } = useScrollFadeIn();
@@ -418,16 +444,34 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                 transform: `scale(${cardScale}) translateY(${cardTranslateY}px)`
               }}
             >
-              {/* 공판장명 뱃지 - 파랑 (터치 시 공유) + 추세 차트 아이콘 */}
+              {/* 공판장명 뱃지 - 파랑 (터치 시 공유) + 정보 아이콘 + 추세 차트 아이콘 */}
               <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
-                <span
-                  className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md cursor-pointer active:scale-95 transition-transform"
-                  style={{ backgroundColor: theme.badgeColor }}
-                  onClick={(e) => handleShareMarket(market, e)}
-                >
-                  <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
-                  {market.name}
-                </span>
+                {/* 왼쪽: 공판장명 뱃지 + ℹ️ 버튼 */}
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md cursor-pointer active:scale-95 transition-transform"
+                    style={{ backgroundColor: theme.badgeColor }}
+                    onClick={(e) => handleShareMarket(market, e)}
+                  >
+                    <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
+                    {market.name}
+                  </span>
+                  {/* 공판장 정보 버튼 - marketInfoMap에 해당 시장 정보가 있을 때만 표시 */}
+                  {marketInfoMap?.has(market.name) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfoSheet(marketInfoMap.get(market.name));
+                      }}
+                      className="bg-base-100/90 rounded-full shadow-md hover:bg-base-200 active:scale-95 transition-all"
+                      title="공판장 정보 보기"
+                    >
+                      <svg className="w-8 h-8" style={{ color: theme.badgeColor }} fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 {/* 추세 차트 아이콘 */}
                 <button
                   onClick={(e) => {
@@ -572,6 +616,167 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
           />
         )}
       </div>
+
+      {/* 공판장 정보 모달 (중앙) */}
+      {infoSheet && (
+        <>
+          {/* 배경 오버레이 */}
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => { setInfoSheet(null); setRevealedPhones({}); }}
+          />
+          {/* 중앙 모달 */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-5">
+            <div className="bg-base-100 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto w-full max-w-sm animate-scale-in">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between px-6 py-4 border-b border-base-200">
+                <h3 className="text-lg font-bold text-base-content">{infoSheet.market_name}</h3>
+                <button
+                  onClick={() => { setInfoSheet(null); setRevealedPhones({}); }}
+                  className="p-1.5 rounded-full hover:bg-base-200 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              {/* 정보 목록 */}
+              <div className="px-6 py-5 space-y-5">
+                {/* 경매시간 */}
+                {infoSheet.auction_hours && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm text-base-content/50 mb-0.5">경매시간</p>
+                      <p className="text-base font-medium text-base-content">{infoSheet.auction_hours}</p>
+                    </div>
+                  </div>
+                )}
+                {/* 주소 */}
+                {infoSheet.address && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm text-base-content/50 mb-0.5">주소</p>
+                      <p className="text-base font-medium text-base-content">{infoSheet.address}</p>
+                    </div>
+                  </div>
+                )}
+                {/* 공판장 연락처 (바로 표시) */}
+                {infoSheet.phone && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm text-base-content/50 mb-0.5">공판장 연락처</p>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`tel:${infoSheet.phone}`}
+                          className="text-base font-medium text-blue-600 underline underline-offset-2"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {infoSheet.phone}
+                        </a>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); downloadVCard(`${infoSheet.market_name}`, infoSheet.phone); }}
+                          className="text-base-content/40 hover:text-base-content/70 transition-colors"
+                          title="연락처 저장"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              {/* 수송팀 연락처 (여러 팀, 기본 숨김 → 터치 시 공개) */}
+              {infoSheet.transport_teams && infoSheet.transport_teams.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-base-content/50">수송팀 연락처</p>
+                  </div>
+                  <div className="ml-[52px] space-y-2">
+                    {infoSheet.transport_teams.map((team, idx) => (
+                      <div key={idx} className="flex items-center justify-between bg-base-200/50 rounded-lg px-3 py-2.5">
+                        <div>
+                          <p className="text-sm text-base-content/50">{team.name || `수송팀 ${idx + 1}`}</p>
+                          {revealedPhones[idx] ? (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <a
+                                href={`tel:${team.phone}`}
+                                className="text-base font-medium text-blue-600 underline underline-offset-2"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {team.phone}
+                              </a>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  downloadVCard(`${infoSheet.market_name} ${team.name || '수송팀'}`, team.phone);
+                                }}
+                                className="text-base-content/40 hover:text-base-content/70 transition-colors"
+                                title="연락처 저장"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRevealedPhones(prev => ({ ...prev, [idx]: true }));
+                              }}
+                              className="text-base text-base-content/40 mt-0.5 flex items-center gap-1"
+                            >
+                              <span>{maskPhone(team.phone)}</span>
+                              <span className="text-sm text-blue-500">보기</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {/* 메모 */}
+              {infoSheet.memo && (
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-base-content/50 mb-0.5">메모</p>
+                    <p className="text-base text-base-content/80 whitespace-pre-wrap">{infoSheet.memo}</p>
+                  </div>
+                </div>
+              )}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };
