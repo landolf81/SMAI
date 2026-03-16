@@ -249,6 +249,17 @@ Deno.serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
     const results: Record<string, unknown> = {}
 
+    // 과거 날짜의 미완료 데이터를 모두 finalize 처리 (하루 지나면 집계중 해제)
+    const kstToday = formatDateKST(getKSTNow())
+    const { error: finalizeErr } = await supabase
+      .from('market_summary')
+      .update({ is_finalized: true })
+      .lt('market_date', kstToday)
+      .eq('is_finalized', false)
+    if (finalizeErr) {
+      console.error('  과거 데이터 finalize 오류:', finalizeErr)
+    }
+
     for (const corp of TARGET_CORPS) {
       console.log(`  ${corp.name} (${corp.corpCd}) 조회 중...`)
 
