@@ -312,6 +312,18 @@ export const marketService = {
         }
       }
 
+      // is_finalized 조회 시도 (컬럼 미생성 시 빈 맵으로 폴백)
+      let finalizedMap = {};
+      const { data: fData, error: fError } = await supabase
+        .from('market_summary')
+        .select('market_name, is_finalized')
+        .eq('market_date', date);
+      if (!fError && fData) {
+        for (const row of fData) {
+          finalizedMap[nfc(row.market_name)] = row.is_finalized;
+        }
+      }
+
       const availableMarkets = Object.keys(currentByMarket).sort();
 
       const transformedMarkets = availableMarkets.map(name => {
@@ -335,6 +347,7 @@ export const marketService = {
         return {
           market_name: market.market_name,
           success: true,
+          is_finalized: finalizedMap[name] ?? false,
           data: {
             summary: {
               overall_avg_price: currentAvgPrice,
@@ -1038,6 +1051,17 @@ export const marketService = {
 
       const today = data?.find(d => d.market_date === date) || null;
       const previous = data?.find(d => d.market_date !== date) || null;
+
+      // is_finalized 조회 시도 (컬럼 미생성 시 무시)
+      if (today) {
+        const { data: fData, error: fErr } = await supabase
+          .from('market_aggregate_summary')
+          .select('is_finalized')
+          .eq('region_name', '성주군')
+          .eq('market_date', date)
+          .maybeSingle();
+        if (!fErr && fData) today.is_finalized = fData.is_finalized;
+      }
 
       return { today, previous };
     } catch (error) {

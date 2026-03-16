@@ -291,7 +291,8 @@ const Home = () => {
             previousTotalQuantity: previousData?.totalQuantity,
             previousAveragePrice: previousData?.averagePrice,
             previousMinPrice: previousData?.minPrice,
-            previousMaxPrice: previousData?.maxPrice
+            previousMaxPrice: previousData?.maxPrice,
+            isFinalized: market.is_finalized ?? false
           };
         } else {
           return {
@@ -336,10 +337,6 @@ const Home = () => {
       if (seongjuAggregate?.today) {
         const todayData = seongjuAggregate.today;
         const prev = seongjuAggregate.previous;
-        const koreanToday = getKoreanToday();
-        const isViewingToday = date === koreanToday;
-        const isBefore5pm = new Date().getHours() < 17;
-        const hidePrevious = isViewingToday && isBefore5pm;
 
         setSeongjuTotal({
           id: 'seongju-total',
@@ -351,11 +348,12 @@ const Home = () => {
           minPrice: todayData.min_price || 0,
           unit: '상자',
           priceUnit: '원',
-          previousTotalQuantity: (!hidePrevious && prev) ? prev.total_boxes : null,
-          previousAveragePrice: (!hidePrevious && prev) ? prev.avg_price : null,
-          previousMaxPrice: (!hidePrevious && prev) ? prev.max_price : null,
-          previousMinPrice: (!hidePrevious && prev) ? prev.min_price : null,
-          isTotal: true
+          previousTotalQuantity: prev ? prev.total_boxes : null,
+          previousAveragePrice: prev ? prev.avg_price : null,
+          previousMaxPrice: prev ? prev.max_price : null,
+          previousMinPrice: prev ? prev.min_price : null,
+          isTotal: true,
+          isFinalized: todayData.is_finalized ?? false
         });
       } else {
         setSeongjuTotal(null);

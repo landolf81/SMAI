@@ -279,17 +279,34 @@ Deno.serve(async (req) => {
         }
       }
 
-      // 4. market_summary upsert
+      // 4. market_summary upsert (기존 값과 비교하여 is_finalized 판정)
       const summary = buildSummary(aggregated, corp.name, targetDate)
       if (summary) {
+        // 기존 데이터 조회 → 값이 동일하면 집계 완료(is_finalized = true)
+        const { data: existing } = await supabase
+          .from('market_summary')
+          .select('avg_price, min_price, max_price, total_boxes, total_amount')
+          .eq('market_name', summary.market_name)
+          .eq('market_date', summary.market_date)
+          .maybeSingle()
+
+        const isFinalized = existing != null
+          && existing.avg_price === summary.avg_price
+          && existing.min_price === summary.min_price
+          && existing.max_price === summary.max_price
+          && existing.total_boxes === summary.total_boxes
+          && existing.total_amount === summary.total_amount
+
         const { error: sumErr } = await supabase
           .from('market_summary')
-          .upsert(summary, {
+          .upsert({ ...summary, is_finalized: isFinalized }, {
             onConflict: 'market_name,market_date',
           })
 
         if (sumErr) {
           console.error(`  market_summary upsert 오류:`, sumErr)
+        } else if (isFinalized) {
+          console.log(`  → ${corp.name} 집계 완료 (변동 없음)`)
         }
       }
 

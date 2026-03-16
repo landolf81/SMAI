@@ -299,16 +299,16 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               <span>총 출하량</span>
               <span className="font-bold text-base-content text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
               <span className="text-sm text-base-content/50 ml-1">{seongjuTotal.unit}</span>
-              {/* 수량 변동폭: 당일+17시 전이면 '집계중', 과거 날짜는 항상 표시 */}
+              {/* 전일 대비 변동폭 */}
+              {seongjuTotal.previousTotalQuantity ? (
+                <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>
+              ) : null}
+              {/* is_finalized가 false이면 '집계중' 표시 (당일만) */}
               {(() => {
                 const koreanToday = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
                 const isToday = selectedDate === koreanToday;
-                const isBefore5pm = new Date().getHours() < 17;
-                if (isToday && isBefore5pm) {
+                if (isToday && !seongjuTotal.isFinalized) {
                   return <span className="ml-2 text-xs text-base-content/40">집계중</span>;
-                }
-                if (seongjuTotal.previousTotalQuantity) {
-                  return <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>;
                 }
                 return null;
               })()}
@@ -322,7 +322,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
             <div className="grid grid-cols-3 gap-1 text-center">
               {/* 평균가 */}
               <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
-                <div className="text-xs text-base-content/50 mb-0.5">평균가</div>
+                <div className="text-xs text-base-content/50 mb-0.5">전체 평균가</div>
                 <div className="text-xl font-bold text-base-content">
                   {formatPrice(seongjuTotal.averagePrice)}
                 </div>
@@ -337,7 +337,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
 
               {/* 최고가 */}
               <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
-                <div className="text-xs text-base-content/50 mb-0.5">최고가</div>
+                <div className="text-xs text-base-content/50 mb-0.5">전체 최고가</div>
                 <div className="text-xl font-bold text-red-600">
                   {formatPrice(seongjuTotal.maxPrice)}
                 </div>
@@ -352,7 +352,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
 
               {/* 최저가 */}
               <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
-                <div className="text-xs text-base-content/50 mb-0.5">최저가</div>
+                <div className="text-xs text-base-content/50 mb-0.5">전체 최저가</div>
                 <div className="text-xl font-bold text-blue-600">
                   {formatPrice(seongjuTotal.minPrice)}
                 </div>
@@ -442,9 +442,19 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                     <span>총 출하량</span>
                     <span className="font-bold text-base-content text-lg ml-1">{formatPrice(market.totalQuantity)}</span>
                     <span className="text-sm text-base-content/50 ml-1">{market.unit}</span>
+                    {/* 수량 변동폭 */}
                     {market.previousTotalQuantity ? (
                       <span className="ml-2">{renderPriceChange(market.totalQuantity, market.previousTotalQuantity)}</span>
                     ) : null}
+                    {/* is_finalized가 false이면 '집계중' 표시 (당일만) */}
+                    {(() => {
+                      const koreanToday = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+                      const isToday = selectedDate === koreanToday;
+                      if (isToday && !market.isFinalized) {
+                        return <span className="ml-2 text-xs text-base-content/40">집계중</span>;
+                      }
+                      return null;
+                    })()}
                   </div>
                   {/* 총 출하금액 정보 (DB에서 제공하는 실제 거래금액) */}
                   <div className="text-base text-base-content/60 mb-4">
@@ -455,7 +465,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
                   <div className="grid grid-cols-3 gap-1 text-center">
                     {/* 평균가 */}
                     <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="text-xs text-base-content/50 mb-0.5">평균가</div>
+                      <div className="text-xs text-base-content/50 mb-0.5">전체 평균가</div>
                       <div className="text-xl font-bold text-base-content">
                         {formatPrice(market.averagePrice)}
                       </div>
@@ -470,7 +480,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
 
                     {/* 최고가 */}
                     <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="text-xs text-base-content/50 mb-0.5">최고가</div>
+                      <div className="text-xs text-base-content/50 mb-0.5">전체 최고가</div>
                       <div className="text-xl font-bold text-red-600">
                         {formatPrice(market.maxPrice)}
                       </div>
@@ -485,7 +495,7 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
 
                     {/* 최저가 */}
                     <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
-                      <div className="text-xs text-base-content/50 mb-0.5">최저가</div>
+                      <div className="text-xs text-base-content/50 mb-0.5">전체 최저가</div>
                       <div className="text-xl font-bold text-blue-600">
                         {formatPrice(market.minPrice)}
                       </div>
