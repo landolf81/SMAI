@@ -463,7 +463,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                         e.stopPropagation();
                         setInfoSheet(marketInfoMap.get(market.name));
                       }}
-                      className="bg-base-100/90 rounded-full shadow-md hover:bg-base-200 active:scale-95 transition-all"
+                      className="active:scale-95 transition-all"
                       title="공판장 정보 보기"
                     >
                       <svg className="w-8 h-8" style={{ color: theme.badgeColor }} fill="currentColor" viewBox="0 0 20 20">
@@ -619,23 +619,22 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
 
       {/* 공판장 정보 모달 (중앙) */}
       {infoSheet && (
-        <>
-          {/* 배경 오버레이 */}
           <div
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-5"
             onClick={() => { setInfoSheet(null); setRevealedPhones({}); }}
-          />
-          {/* 중앙 모달 */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-5">
-            <div className="bg-base-100 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto w-full max-w-sm animate-scale-in">
-              {/* 헤더 */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-base-200">
-                <h3 className="text-lg font-bold text-base-content">{infoSheet.market_name}</h3>
+          >
+            <div
+              className="bg-base-100 rounded-2xl shadow-2xl max-h-[80vh] overflow-y-auto w-full max-w-sm animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* 헤더 - 그라데이션 배경 */}
+              <div className="flex items-center justify-between px-6 py-4 rounded-t-2xl bg-gradient-to-r from-[#1D4ED8] to-[#16A34A]">
+                <h3 className="text-xl font-bold text-white">{infoSheet.market_name}</h3>
                 <button
                   onClick={() => { setInfoSheet(null); setRevealedPhones({}); }}
-                  className="p-1.5 rounded-full hover:bg-base-200 transition-colors"
+                  className="p-1.5 rounded-full hover:bg-white/20 transition-colors"
                 >
-                  <svg className="w-5 h-5 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -645,46 +644,40 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                 {/* 경매시간 */}
                 {infoSheet.auction_hours && (
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
+                    <svg className="w-7 h-7 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
                     <div>
                       <p className="text-sm text-base-content/50 mb-0.5">경매시간</p>
-                      <p className="text-base font-medium text-base-content">{infoSheet.auction_hours}</p>
+                      <p className="text-lg font-semibold text-base-content">{infoSheet.auction_hours}</p>
                     </div>
                   </div>
                 )}
                 {/* 주소 */}
                 {infoSheet.address && (
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
+                    <svg className="w-7 h-7 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
                     <div>
                       <p className="text-sm text-base-content/50 mb-0.5">주소</p>
-                      <p className="text-base font-medium text-base-content">{infoSheet.address}</p>
+                      <p className="text-lg font-semibold text-base-content">{infoSheet.address}</p>
                     </div>
                   </div>
                 )}
                 {/* 공판장 연락처 (바로 표시) */}
                 {infoSheet.phone && (
                   <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                    </div>
+                    <svg className="w-7 h-7 text-indigo-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
                     <div>
                       <p className="text-sm text-base-content/50 mb-0.5">공판장 연락처</p>
                       <div className="flex items-center gap-2">
                         <a
                           href={`tel:${infoSheet.phone}`}
-                          className="text-base font-medium text-blue-600 underline underline-offset-2"
+                          className="text-lg font-semibold text-blue-600 underline underline-offset-2"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {infoSheet.phone}
@@ -706,23 +699,21 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
               {infoSheet.transport_teams && infoSheet.transport_teams.length > 0 && (
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                      </svg>
-                    </div>
+                    <svg className="w-7 h-7 text-orange-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                    </svg>
                     <p className="text-sm text-base-content/50">수송팀 연락처</p>
                   </div>
-                  <div className="ml-[52px] space-y-2">
+                  <div className="ml-10 space-y-2">
                     {infoSheet.transport_teams.map((team, idx) => (
                       <div key={idx} className="flex items-center justify-between bg-base-200/50 rounded-lg px-3 py-2.5">
                         <div>
-                          <p className="text-sm text-base-content/50">{team.name || `수송팀 ${idx + 1}`}</p>
+                          <p className="text-base text-base-content/50">{team.name || `수송팀 ${idx + 1}`}</p>
                           {revealedPhones[idx] ? (
                             <div className="flex items-center gap-2 mt-0.5">
                               <a
                                 href={`tel:${team.phone}`}
-                                className="text-base font-medium text-blue-600 underline underline-offset-2"
+                                className="text-lg font-semibold text-blue-600 underline underline-offset-2"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {team.phone}
@@ -746,7 +737,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                                 e.stopPropagation();
                                 setRevealedPhones(prev => ({ ...prev, [idx]: true }));
                               }}
-                              className="text-base text-base-content/40 mt-0.5 flex items-center gap-1"
+                              className="text-lg text-base-content/40 mt-0.5 flex items-center gap-1"
                             >
                               <span>{maskPhone(team.phone)}</span>
                               <span className="text-sm text-blue-500">보기</span>
@@ -761,21 +752,18 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
               {/* 메모 */}
               {infoSheet.memo && (
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-base-content/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  </div>
+                  <svg className="w-7 h-7 text-base-content/50 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                   <div>
                     <p className="text-sm text-base-content/50 mb-0.5">메모</p>
-                    <p className="text-base text-base-content/80 whitespace-pre-wrap">{infoSheet.memo}</p>
+                    <p className="text-lg text-base-content/80 whitespace-pre-wrap">{infoSheet.memo}</p>
                   </div>
                 </div>
               )}
               </div>
             </div>
           </div>
-        </>
       )}
     </>
   );
