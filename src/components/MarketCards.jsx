@@ -61,8 +61,8 @@ const WHOLESALE_EXCLUDE_NAMES = [
   '가락공판장', '대전공판장', '광주공판장'
 ];
 
-// 도매시장 합계 카드가 삽입될 기준점: 이 시장 카드 바로 뒤에 삽입
-const WHOLESALE_TOTAL_INSERT_AFTER = '광주공판장';
+// 도매시장 합계 카드가 삽입될 기준점: 이 시장 카드 바로 앞에 삽입
+const WHOLESALE_TOTAL_INSERT_BEFORE = '서울가락';
 
 const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh, marketInfoMap }) => {
   const navigate = useNavigate();
@@ -429,11 +429,13 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
           const cardTranslateY = getCardTranslateY(cardId, index);
           const cardScale = getCardScale(cardId, index);
 
-          // 광주공판장 카드 바로 뒤에 도매시장 합계 카드 삽입 여부 결정
-          const insertWholesaleAfter = market.name === WHOLESALE_TOTAL_INSERT_AFTER && wholesaleTotal;
+          // 서울가락 카드 바로 앞에 도매시장 합계 카드 삽입
+          const insertWholesaleBefore = market.name === WHOLESALE_TOTAL_INSERT_BEFORE && wholesaleTotal;
 
           return (
           <React.Fragment key={market.id}>
+            {/* 서울가락 앞에 도매시장 합계 카드 삽입 */}
+            {insertWholesaleBefore && renderWholesaleTotalCard(index)}
             {/* 카드 컨테이너 - 뱃지를 위한 상대 위치 */}
             <div
               ref={(el) => setCardRef(el, cardId)}
@@ -592,8 +594,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
               </div>
             </div>
             </div>
-            {/* 광주공판장 뒤에 도매시장 합계 카드 삽입 */}
-            {insertWholesaleAfter && renderWholesaleTotalCard(index + 1)}
+            {/* (도매 합계는 서울가락 앞에 삽입됨) */}
             {/* 4개마다 광고 삽입 (4, 8, 12번째 카드 뒤) */}
             {shouldShowAds() && ((index + 1) % 4 === 0) && sortedAds.length > 0 && (
               <MobileAdDisplay
@@ -604,8 +605,8 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
           );
         })}
 
-        {/* 광주공판장이 목록에 없을 때 도매시장 합계 카드 fallback: 목록 맨 끝에 표시 */}
-        {wholesaleTotal && !marketData.some((m) => m.name === WHOLESALE_TOTAL_INSERT_AFTER) && (
+        {/* 서울가락이 목록에 없을 때 도매시장 합계 카드 fallback: 목록 맨 끝에 표시 */}
+        {wholesaleTotal && !marketData.some((m) => m.name === WHOLESALE_TOTAL_INSERT_BEFORE) && (
           renderWholesaleTotalCard(marketData.length)
         )}
 
