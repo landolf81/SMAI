@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>광장 광고 이미지</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #f0f0f0;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  .card {
+    width: 600px;
+    height: 600px;
+    background: linear-gradient(145deg, #FFF7ED 0%, #FEF3C7 30%, #FFFBEB 60%, #FFF7ED 100%);
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+  }
+
+  /* 배경 장식 원 */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    background: rgba(251, 191, 36, 0.15);
+    border-radius: 50%;
+  }
+  .card::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: -40px;
+    width: 160px;
+    height: 160px;
+    background: rgba(245, 158, 11, 0.1);
+    border-radius: 50%;
+  }
+
+  .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-icon img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+  }
+
+  .logo-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #92400E;
+    letter-spacing: -0.5px;
+  }
+
+  .main-title {
+    font-size: 42px;
+    font-weight: 900;
+    color: #1C1917;
+    text-align: center;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+    letter-spacing: -1px;
+  }
+
+  .main-title .highlight {
+    color: #D97706;
+    position: relative;
+  }
+
+  .sub-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: #78716C;
+    text-align: center;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+    line-height: 1.5;
+  }
+
+  .features {
+    display: flex;
+    gap: 16px;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 36px;
+  }
+
+  .feature {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100px;
+  }
+
+  .feature-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .feature-icon.mic { background: linear-gradient(135deg, #EF4444, #F87171); }
+  .feature-icon.photo { background: linear-gradient(135deg, #3B82F6, #60A5FA); }
+  .feature-icon.poll { background: linear-gradient(135deg, #8B5CF6, #A78BFA); }
+  .feature-icon.chat { background: linear-gradient(135deg, #10B981, #34D399); }
+
+  .feature-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #57534E;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .cta {
+    background: linear-gradient(135deg, #F59E0B, #EAB308);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    padding: 14px 40px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.35);
+    position: relative;
+    z-index: 1;
+    letter-spacing: -0.3px;
+  }
+
+  .badge {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: #EF4444;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+    z-index: 2;
+    letter-spacing: -0.3px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="badge">NEW</div>
+
+  <div class="logo-area">
+    <div class="logo-icon"><img src="/logo.svg" alt="참외이야기 로고"></div>
+    <span class="logo-text">참외이야기</span>
+  </div>
+
+  <h1 class="main-title">
+    편하게 나누는<br>
+    <span class="highlight">우리들의 광장</span>
+  </h1>
+
+  <p class="sub-title">
+    말하면 글이 되고, 사진도 투표도 한곳에서
+  </p>
+
+  <div class="features">
+    <div class="feature">
+      <div class="feature-icon mic">&#127908;</div>
+      <span class="feature-label">음성으로<br>글쓰기</span>
+    </div>
+    <div class="feature">
+      <div class="feature-icon photo">&#128247;</div>
+      <span class="feature-label">사진 여러장<br>한번에</span>
+    </div>
+    <div class="feature">
+      <div class="feature-icon poll">&#128202;</div>
+      <span class="feature-label">투표로<br>의견 나누기</span>
+    </div>
+    <div class="feature">
+      <div class="feature-icon chat">&#128172;</div>
+      <span class="feature-label">실시간<br>소통</span>
+    </div>
+  </div>
+
+  <div class="cta">광장 둘러보기 &rarr;</div>
+</div>
+
+</body>
+</html>

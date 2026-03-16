@@ -76,23 +76,23 @@ const Notifications = () => {
   return (
     <div className="max-w-md mx-auto">
       {/* 헤더 */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-200">
-        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-base-200">
+        <svg className="w-5 h-5 text-base-content/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
         </svg>
-        <h1 className="text-lg font-bold text-gray-800">알림</h1>
+        <h1 className="text-lg font-bold text-base-content">알림</h1>
       </div>
 
       {/* 로딩 */}
       {isLoading && (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-base-300 border-t-base-content rounded-full animate-spin" />
         </div>
       )}
 
       {/* 빈 상태 */}
       {!isLoading && notifications.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-20 text-base-content/40">
           <svg className="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
@@ -104,39 +104,39 @@ const Notifications = () => {
       {!isLoading && groups.map((group) => (
         <div key={group.label}>
           {/* 날짜 구분 */}
-          <div className="px-4 py-2 bg-gray-50 border-b border-gray-100">
-            <span className="text-xs font-semibold text-gray-500">{group.label}</span>
+          <div className="px-4 py-2 bg-base-200/50 border-b border-base-200">
+            <span className="text-xs font-semibold text-base-content/50">{group.label}</span>
           </div>
 
           {group.items.map((n) => (
             <button
               key={n.id}
               onClick={() => handleClick(n.url)}
-              className={`w-full text-left px-4 py-3 border-b border-gray-100 transition-colors ${
-                n.url ? 'hover:bg-gray-50 active:bg-gray-100 cursor-pointer' : 'cursor-default'
+              className={`w-full text-left px-4 py-3 border-b border-base-200 transition-colors ${
+                n.url ? 'hover:bg-base-200/50 active:bg-base-200 cursor-pointer' : 'cursor-default'
               }`}
             >
               <div className="flex items-start gap-3">
                 {/* 아이콘 */}
-                <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{n.title}</p>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">{formatRelativeTime(n.created_at)}</span>
+                    <p className="text-sm font-semibold text-base-content truncate">{n.title}</p>
+                    <span className="text-[11px] text-base-content/40 flex-shrink-0">{formatRelativeTime(n.created_at)}</span>
                   </div>
                   {n.body && (
-                    <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{n.body}</p>
+                    <p className="text-sm text-base-content/60 mt-0.5 line-clamp-2">{n.body}</p>
                   )}
                 </div>
 
                 {/* 링크 화살표 */}
                 {n.url && (
-                  <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-base-content/30 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
                 )}

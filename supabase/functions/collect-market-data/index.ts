@@ -302,11 +302,25 @@ Deno.serve(async (req) => {
           .maybeSingle()
 
         const isFinalized = existing != null
-          && existing.avg_price === summary.avg_price
-          && existing.min_price === summary.min_price
-          && existing.max_price === summary.max_price
-          && existing.total_boxes === summary.total_boxes
-          && existing.total_amount === summary.total_amount
+          && Number(existing.avg_price) === Number(summary.avg_price)
+          && Number(existing.min_price) === Number(summary.min_price)
+          && Number(existing.max_price) === Number(summary.max_price)
+          && Number(existing.total_boxes) === Number(summary.total_boxes)
+          && Number(existing.total_amount) === Number(summary.total_amount)
+
+        if (existing) {
+          console.log(`  [finalize-debug] ${corp.name} existing:`, JSON.stringify(existing))
+          console.log(`  [finalize-debug] ${corp.name} new:`, JSON.stringify({
+            avg_price: summary.avg_price,
+            min_price: summary.min_price,
+            max_price: summary.max_price,
+            total_boxes: summary.total_boxes,
+            total_amount: summary.total_amount,
+          }))
+          console.log(`  [finalize-debug] isFinalized=${isFinalized}`)
+        } else {
+          console.log(`  [finalize-debug] ${corp.name} no existing record → isFinalized=false`)
+        }
 
         const { error: sumErr } = await supabase
           .from('market_summary')

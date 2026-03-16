@@ -39,6 +39,7 @@ const Home = () => {
   const navigate = useNavigate();
   const [marketData, setMarketData] = useState([]);
   const [seongjuTotal, setSeongjuTotal] = useState(null); // 성주군 합계
+  const [wholesaleTotal, setWholesaleTotal] = useState(null); // 도매시장 합계
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
@@ -241,10 +242,11 @@ const Home = () => {
         setLoading(true);
       }
 
-      // 경락가 + 성주군 합계를 병렬 조회 (네트워크 왕복 1회)
-      const [response, seongjuAggregate] = await Promise.all([
+      // 경락가 + 성주군 합계 + 도매시장 합계를 병렬 조회 (네트워크 왕복 1회)
+      const [response, seongjuAggregate, wholesaleAggregate] = await Promise.all([
         marketService.getMarketsSummary(date),
-        marketService.getSeongjuAggregateForCard(date)
+        marketService.getSeongjuAggregateForCard(date),
+        marketService.getWholesaleAggregateForCard(date),
       ]);
 
       // 시장 목록 업데이트
@@ -254,10 +256,12 @@ const Home = () => {
       if (!response.markets || response.markets.length === 0) {
         setMarketData([]);
         setSeongjuTotal(null);
+        setWholesaleTotal(null);
         sessionStorage.removeItem('home_market_data');
         sessionStorage.removeItem('home_selected_date');
         sessionStorage.removeItem('home_cache_time');
         sessionStorage.removeItem('home_seongju_total');
+        sessionStorage.removeItem('home_wholesale_total');
         return;
       }
 
@@ -333,6 +337,33 @@ const Home = () => {
 
       setMarketData(sortedData);
 
+      // 도매시장 합계 처리 (market_aggregate_summary에서 DB 조회 - 성주군과 동일 패턴)
+      if (wholesaleAggregate?.today) {
+        const wToday = wholesaleAggregate.today;
+        const wPrev = wholesaleAggregate.previous;
+
+        setWholesaleTotal({
+          id: 'wholesale-total',
+          name: '도매시장 합계',
+          totalQuantity: wToday.total_boxes || 0,
+          totalAmount: wToday.total_amount || 0,
+          averagePrice: wToday.avg_price || 0,
+          maxPrice: wToday.max_price || 0,
+          minPrice: wToday.min_price || 0,
+          unit: '상자',
+          priceUnit: '원',
+          previousTotalQuantity: wPrev ? wPrev.total_boxes : null,
+          previousAveragePrice: wPrev ? wPrev.avg_price : null,
+          previousMaxPrice: wPrev ? wPrev.max_price : null,
+          previousMinPrice: wPrev ? wPrev.min_price : null,
+          isTotal: true,
+          isWholesaleTotal: true, // 도매시장 합계 구분 플래그
+          isFinalized: wToday.is_finalized ?? false,
+        });
+      } else {
+        setWholesaleTotal(null);
+      }
+
       // 성주군 합계 처리 (이미 병렬로 가져옴)
       if (seongjuAggregate?.today) {
         const todayData = seongjuAggregate.today;
@@ -387,6 +418,7 @@ const Home = () => {
         sessionStorage.removeItem('home_selected_date');
         sessionStorage.removeItem('home_cache_time');
         sessionStorage.removeItem('home_seongju_total');
+        sessionStorage.removeItem('home_wholesale_total');
         sessionStorage.removeItem('home_cache_invalidate');
       }
 
@@ -394,6 +426,7 @@ const Home = () => {
       try {
         const cachedData = sessionStorage.getItem('home_market_data');
         const cachedSeongjuTotal = sessionStorage.getItem('home_seongju_total');
+        const cachedWholesaleTotal = sessionStorage.getItem('home_wholesale_total');
         const cachedDate = sessionStorage.getItem('home_selected_date');
         const cacheTime = sessionStorage.getItem('home_cache_time');
 
@@ -408,6 +441,11 @@ const Home = () => {
               setSeongjuTotal(JSON.parse(cachedSeongjuTotal));
             } else {
               setSeongjuTotal(null);
+            }
+            if (cachedWholesaleTotal) {
+              setWholesaleTotal(JSON.parse(cachedWholesaleTotal));
+            } else {
+              setWholesaleTotal(null);
             }
             setLoading(false);
             return; // 캐시 사용, API 호출 안함
@@ -467,11 +505,16 @@ const Home = () => {
         } else {
           sessionStorage.removeItem('home_seongju_total');
         }
+        if (wholesaleTotal) {
+          sessionStorage.setItem('home_wholesale_total', JSON.stringify(wholesaleTotal));
+        } else {
+          sessionStorage.removeItem('home_wholesale_total');
+        }
       } catch (error) {
         console.warn('캐시 저장 실패:', error);
       }
     }
-  }, [marketData, seongjuTotal, selectedDate, loading]);
+  }, [marketData, seongjuTotal, wholesaleTotal, selectedDate, loading]);
 
   const formatPrice = (price) => {
     return price.toLocaleString('ko-KR');
@@ -705,6 +748,7 @@ const Home = () => {
         <MarketCards
           marketData={marketData}
           seongjuTotal={seongjuTotal}
+          wholesaleTotal={wholesaleTotal}
           loading={loading}
           selectedDate={selectedDate}
           formatPrice={formatPrice}

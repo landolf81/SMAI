@@ -20,7 +20,17 @@
       "Bash(brew list:*)",
       "Bash(npx --yes sharp-cli:*)",
       "Bash(node -e:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git config --list --show-origin)",
+      "Bash(grep -l \"bg-white\\\\|bg-gray\\\\|bg-cloud\\\\|text-gray\\\\|border-gray\" src/components/*.jsx)",
+      "Bash(grep -l \"backgroundColor\\\\|borderColor\\\\|color:\" src/components/*.jsx src/pages/*.jsx)",
+      "Bash(grep -r \"CREATE TABLE\" /Users/jeongbyeong-geun/Documents/SMAI/supabase/migrations/*.sql)",
+      "Bash(npx supabase db push)",
+      "Bash(npx supabase db push --include-all)",
+      "Bash(npx supabase db execute --file supabase/migrations/20260315_lounge_video.sql)",
+      "Bash(npx supabase db push --include-all --dry-run)",
+      "Bash(npx supabase sql 'ALTER TABLE lounge_messages ADD COLUMN IF NOT EXISTS video_url TEXT DEFAULT NULL;')"
     ],
     "deny": [],
     "ask": []

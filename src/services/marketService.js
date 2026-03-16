@@ -1218,7 +1218,114 @@ export const marketService = {
       .delete()
       .eq('id', id);
     if (error) throw error;
-  }
+  },
+
+  /**
+   * 도매시장 합계 추세 데이터 조회 (DB 집계)
+   * market_aggregate_summary 테이블에서 region_name = '도매시장'으로 조회
+   * (트리거에 의해 market_summary INSERT/UPDATE 시 자동 갱신됨)
+   * @param {string} startDate - 시작 날짜 (YYYY-MM-DD)
+   * @param {string} endDate - 종료 날짜 (YYYY-MM-DD)
+   * @returns {Array} 날짜별 집계 데이터 ({ market_date, avg_price, min_price, max_price, total_boxes, total_amount })
+   */
+  async getWholesaleTrendData(startDate, endDate) {
+    try {
+      const { data, error } = await supabase
+        .from('market_aggregate_summary')
+        .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
+        .eq('region_name', '도매시장')
+        .gte('market_date', startDate)
+        .lte('market_date', endDate)
+        .order('market_date', { ascending: true });
+
+      if (error) throw error;
+
+      // MarketTrend 차트 형식으로 변환 (성주군 합계와 동일한 구조)
+      return (data || []).map((row) => ({
+        market_date: row.market_date,
+        avg_price: row.avg_price,
+        min_price: row.min_price,
+        max_price: row.max_price,
+        total_boxes: row.total_boxes,
+        total_amount: row.total_amount,
+      }));
+    } catch (error) {
+      console.error('도매시장 합계 추세 데이터 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
+   * 도매시장 합계 연간 누적 출하량/금액 조회 (1월1일~오늘, 작년 동기)
+   * market_aggregate_summary 테이블에서 region_name = '도매시장'으로 조회
+   * @param {string} todayDate - 오늘 날짜 (YYYY-MM-DD)
+   * @returns {Object} { thisYear: {boxes, amount}, lastYear: {boxes, amount} }
+   */
+  async getWholesaleYearlyCumulative(todayDate) {
+    try {
+      const year = parseInt(todayDate.slice(0, 4));
+      const thisYearStart = `${year}-01-01`;
+      const lastYearStart = `${year - 1}-01-01`;
+      const lastYearEnd = `${year - 1}${todayDate.slice(4)}`; // 작년 동일 월일
+
+      // 올해 + 작년 데이터 병렬 조회 (성주군 합계와 동일한 패턴)
+      const [thisYearRes, lastYearRes] = await Promise.all([
+        supabase
+          .from('market_aggregate_summary')
+          .select('total_boxes, total_amount')
+          .eq('region_name', '도매시장')
+          .gte('market_date', thisYearStart)
+          .lte('market_date', todayDate),
+        supabase
+          .from('market_aggregate_summary')
+          .select('total_boxes, total_amount')
+          .eq('region_name', '도매시장')
+          .gte('market_date', lastYearStart)
+          .lte('market_date', lastYearEnd),
+      ]);
+
+      const sum = (rows) => ({
+        boxes: (rows || []).reduce((s, r) => s + (parseInt(r.total_boxes) || 0), 0),
+        amount: (rows || []).reduce((s, r) => s + (parseInt(r.total_amount) || 0), 0),
+      });
+
+      return {
+        thisYear: sum(thisYearRes.data),
+        lastYear: sum(lastYearRes.data),
+      };
+    } catch (error) {
+      console.error('도매시장 합계 연간 누적 조회 오류:', error);
+      return { thisYear: { boxes: 0, amount: 0 }, lastYear: { boxes: 0, amount: 0 } };
+    }
+  },
+
+  /**
+   * 도매시장 합계 당일+전일 데이터 조회 (홈 카드용)
+   * market_aggregate_summary 테이블에서 region_name = '도매시장'으로 조회
+   * @param {string} date - 조회 날짜 (YYYY-MM-DD)
+   * @returns {Object} { today, previous } 당일/전일 데이터
+   */
+  async getWholesaleAggregateForCard(date) {
+    try {
+      const { data, error } = await supabase
+        .from('market_aggregate_summary')
+        .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price, is_finalized')
+        .eq('region_name', '도매시장')
+        .lte('market_date', date)
+        .order('market_date', { ascending: false })
+        .limit(2);
+
+      if (error) throw error;
+
+      const today = data?.find((d) => d.market_date === date) || null;
+      const previous = data?.find((d) => d.market_date !== date) || null;
+
+      return { today, previous };
+    } catch (error) {
+      console.error('도매시장 합계 카드 데이터 조회 오류:', error);
+      return { today: null, previous: null };
+    }
+  },
 };
 
 export default marketService;

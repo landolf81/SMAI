@@ -115,8 +115,11 @@ const MarketTrend = () => {
     return { startDate: formatDate(start), endDate: formatDate(end) };
   };
 
-  // 성주군 합계 여부 확인
+  // 성주군 합계 / 도매시장 합계 여부 확인
   const isSeongjuTotal = marketName === '성주군 합계';
+  const isWholesaleTotal = marketName === '도매시장 합계';
+  // aggregate 테이블 사용 여부 (성주군 합계 / 도매시장 합계 모두 DB 사전 집계 사용)
+  const isAggregateSource = isSeongjuTotal || isWholesaleTotal;
 
   // 데이터 로드
   useEffect(() => {
@@ -136,10 +139,14 @@ const MarketTrend = () => {
       // 올해 데이터: 시작일 ~ 오늘 (미래 데이터 없음)
       const currentEndDate = endDate > today ? today : endDate;
 
-      // 성주군 합계인 경우 별도 테이블에서 조회
+      // 성주군 합계 / 도매시장 합계 / 일반 공판장에 따라 데이터 소스 분기
+      // 도매시장 합계는 market_aggregate_summary(region_name='도매시장')에서 DB 조회
+      // (기존 프론트엔드 집계 방식 → DB 트리거 사전 집계 방식으로 변경)
       let currentData;
       if (isSeongjuTotal) {
         currentData = await marketService.getSeongjuAggregateTrend(startDate, currentEndDate);
+      } else if (isWholesaleTotal) {
+        currentData = await marketService.getWholesaleTrendData(startDate, currentEndDate);
       } else {
         currentData = await marketService.getMarketTrendData(marketName, startDate, currentEndDate);
       }
@@ -149,12 +156,20 @@ const MarketTrend = () => {
       let lastYear;
       if (isSeongjuTotal) {
         lastYear = await marketService.getSeongjuAggregateTrend(lastYearRange.startDate, lastYearRange.endDate);
+      } else if (isWholesaleTotal) {
+        lastYear = await marketService.getWholesaleTrendData(lastYearRange.startDate, lastYearRange.endDate);
       } else {
         lastYear = await marketService.getMarketTrendData(marketName, lastYearRange.startDate, lastYearRange.endDate);
       }
 
       // 연간 누적 (1월1일~오늘, 작년 동기)
-      const cumulative = await marketService.getYearlyCumulative(marketName, today);
+      // 도매시장 합계도 aggregate 테이블에서 직접 조회 (성주군과 동일한 getYearlyCumulative 사용 불가 - 별도 함수)
+      let cumulative;
+      if (isWholesaleTotal) {
+        cumulative = await marketService.getWholesaleYearlyCumulative(today);
+      } else {
+        cumulative = await marketService.getYearlyCumulative(marketName, today);
+      }
 
       setTrendData(currentData);
       setLastYearData(lastYear);
@@ -163,7 +178,7 @@ const MarketTrend = () => {
     };
 
     loadData();
-  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today, isSeongjuTotal]);
+  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today, isSeongjuTotal, isWholesaleTotal]);
 
   // 기간 범위 계산 (chartData용)
   const dateRange = useMemo(() => {

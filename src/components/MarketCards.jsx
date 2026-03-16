@@ -55,7 +55,16 @@ const useScrollFadeIn = () => {
   return { visibleItems, observe, unobserve };
 };
 
-const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
+// 도매시장 합계 카드에서 제외된 시장명 목록 (성주 내부 + 3대 외부 공판장)
+const WHOLESALE_EXCLUDE_NAMES = [
+  '선남농협', '성주원예', '성주조공', '용암농협', '초전농협',
+  '가락공판장', '대전공판장', '광주공판장'
+];
+
+// 도매시장 합계 카드가 삽입될 기준점: 이 시장 카드 바로 뒤에 삽입
+const WHOLESALE_TOTAL_INSERT_AFTER = '광주공판장';
+
+const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
 
@@ -116,7 +125,15 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
   };
 
   // 공판장 카드 통일 테마 (파랑 뱃지 + 파랑-녹색 그라데이션 버튼)
-  const getMarketTheme = (isTotal = false) => {
+  const getMarketTheme = (isTotal = false, isWholesaleTotal = false) => {
+    if (isWholesaleTotal) {
+      // 도매시장 합계 카드는 보라-파랑 그라데이션 뱃지
+      return {
+        badgeGradient: 'linear-gradient(to right, #7C3AED, #1D4ED8)', // 보라 → 파랑 그라데이션
+        text: 'text-[#7C3AED]',
+        buttonGradient: 'from-[#7C3AED] to-[#1D4ED8]'
+      };
+    }
     if (isTotal) {
       // 성주군 합계 카드는 청록 그라데이션 뱃지
       return {
@@ -136,7 +153,9 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
   const renderPriceChange = (currentPrice, previousPrice) => {
     if (!previousPrice || previousPrice === 0) return null;
 
-    const change = currentPrice - previousPrice;
+    const rawChange = currentPrice - previousPrice;
+    // 원단위 이하 절사 (10원 단위로 내림)
+    const change = Math.sign(rawChange) * Math.floor(Math.abs(rawChange) / 10) * 10;
     const isPositive = change > 0;
 
     if (change === 0) return <span className="text-base-content/50 text-sm">보합</span>;
@@ -249,12 +268,14 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
     return 0.96 + (ratio * 0.04);
   };
 
-  // 성주군 합계 카드 렌더링 함수
-  const renderSeongjuTotalCard = () => {
-    if (!seongjuTotal) return null;
+  // 합계 카드 공통 렌더링 함수 (성주군 합계 / 도매시장 합계 모두 사용)
+  const renderTotalCard = (totalData, cardId, animationDelay = '0ms') => {
+    if (!totalData) return null;
 
-    const theme = getMarketTheme(true);
-    const cardId = 'card-seongju-total';
+    const isWholesale = totalData.isWholesaleTotal === true;
+    const theme = getMarketTheme(!isWholesale, isWholesale);
+    // 성주군 합계: '성주군 합계', 도매시장 합계: '도매시장 합계' (URL 파라미터)
+    const trendMarketParam = isWholesale ? '도매시장 합계' : '성주군 합계';
 
     return (
       <div
@@ -262,103 +283,94 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
         data-card-id={cardId}
         className="w-full mx-auto relative pt-4 transition-all duration-300 ease-out"
         style={{
-          animation: navigationType !== 'POP' ? 'fadeInUp 0.3s ease-out forwards' : 'none'
+          animation: navigationType !== 'POP' ? `fadeInUp 0.3s ease-out ${animationDelay} forwards` : 'none'
         }}
       >
-        {/* 성주군 합계 뱃지 - 청록 그라데이션 + 추세 차트 아이콘 */}
+        {/* 합계 뱃지 - 그라데이션 + 추세 차트 아이콘 */}
         <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
           <span
             className="inline-flex items-center gap-2 px-4 py-2 text-white text-base font-bold rounded-full shadow-md"
             style={{ background: theme.badgeGradient }}
           >
             <span className="w-2.5 h-2.5 bg-white rounded-full"></span>
-            {seongjuTotal.name}
+            {totalData.name}
           </span>
-          {/* 추세 차트 아이콘 */}
+          {/* 추세 차트 아이콘 (성주군 합계 및 도매시장 합계 모두 표시) */}
           <button
-            data-onboarding="market-trend"
+            data-onboarding={isWholesale ? undefined : 'market-trend'}
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/market-trend?market=${encodeURIComponent('성주군 합계')}`);
+              navigate(`/market-trend?market=${encodeURIComponent(trendMarketParam)}`);
             }}
             className="p-2 bg-base-100 rounded-full shadow-md hover:bg-base-200 active:scale-95 transition-all"
-            title="성주군 합계 추세 보기"
+            title={`${totalData.name} 추세 보기`}
           >
-            <ShowChartIcon style={{ fontSize: 20, color: '#1D4ED8' }} />
+            <ShowChartIcon style={{ fontSize: 20, color: isWholesale ? '#7C3AED' : '#1D4ED8' }} />
           </button>
         </div>
 
-        {/* 카드 본체 - base-100 배경 (개별 공판장과 동일) */}
-        <div
-          className="rounded-2xl overflow-hidden shadow-md border border-base-200 bg-base-100 transition-all duration-300"
-        >
-          {/* 가격 정보 영역 - 개별 공판장과 동일한 패딩 */}
+        {/* 카드 본체 */}
+        <div className="rounded-2xl overflow-hidden shadow-md border border-base-200 bg-base-100 transition-all duration-300">
           <div className="px-4 py-4 pt-8">
-            {/* 총 출하량 정보 */}
+            {/* 총 출하량 */}
             <div className="flex items-center text-base text-base-content/60 mb-2">
               <span>총 출하량</span>
-              <span className="font-bold text-base-content text-lg ml-1">{formatPrice(seongjuTotal.totalQuantity)}</span>
-              <span className="text-sm text-base-content/50 ml-1">{seongjuTotal.unit}</span>
-              {/* 전일 대비 변동폭 */}
-              {seongjuTotal.previousTotalQuantity ? (
-                <span className="ml-2">{renderPriceChange(seongjuTotal.totalQuantity, seongjuTotal.previousTotalQuantity)}</span>
+              <span className="font-bold text-base-content text-lg ml-1">{formatPrice(totalData.totalQuantity)}</span>
+              <span className="text-sm text-base-content/50 ml-1">{totalData.unit}</span>
+              {totalData.previousTotalQuantity ? (
+                <span className="ml-2">{renderPriceChange(totalData.totalQuantity, totalData.previousTotalQuantity)}</span>
               ) : null}
               {/* is_finalized가 false이면 '집계중' 표시 (당일만) */}
               {(() => {
                 const koreanToday = new Date(new Date().getTime() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
                 const isToday = selectedDate === koreanToday;
-                if (isToday && !seongjuTotal.isFinalized) {
+                if (isToday && !totalData.isFinalized) {
                   return <span className="ml-2 text-xs text-base-content/40">집계중</span>;
                 }
                 return null;
               })()}
             </div>
-            {/* 총 출하금액 정보 */}
+            {/* 총 출하금액 */}
             <div className="text-base text-base-content/60 mb-4">
-              총 출하금액 <span className="font-bold text-base-content">{formatPrice(seongjuTotal.totalAmount)}</span> <span className="text-base-content/60">원</span>
+              총 출하금액 <span className="font-bold text-base-content">{formatPrice(totalData.totalAmount)}</span> <span className="text-base-content/60">원</span>
             </div>
 
             {/* 가격 정보 그리드 - 3열 */}
             <div className="grid grid-cols-3 gap-1 text-center">
-              {/* 평균가 */}
               <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
                 <div className="text-xs text-base-content/50 mb-0.5">전체 평균가</div>
                 <div className="text-xl font-bold text-base-content">
-                  {formatPrice(seongjuTotal.averagePrice)}
+                  {formatPrice(totalData.averagePrice)}
                 </div>
                 <div className="mt-0.5 min-h-[20px]">
-                  {seongjuTotal.previousAveragePrice ? (
-                    renderPriceChange(seongjuTotal.averagePrice, seongjuTotal.previousAveragePrice)
+                  {totalData.previousAveragePrice ? (
+                    renderPriceChange(totalData.averagePrice, totalData.previousAveragePrice)
                   ) : (
                     <span className="text-xs text-base-content/40">-</span>
                   )}
                 </div>
               </div>
-
-              {/* 최고가 */}
               <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
                 <div className="text-xs text-base-content/50 mb-0.5">전체 최고가</div>
                 <div className="text-xl font-bold text-red-600">
-                  {formatPrice(seongjuTotal.maxPrice)}
+                  {formatPrice(totalData.maxPrice)}
                 </div>
                 <div className="mt-0.5 min-h-[20px]">
-                  {seongjuTotal.previousMaxPrice ? (
-                    renderPriceChange(seongjuTotal.maxPrice, seongjuTotal.previousMaxPrice)
+                  {totalData.previousMaxPrice ? (
+                    renderPriceChange(totalData.maxPrice, totalData.previousMaxPrice)
                   ) : (
                     <span className="text-xs text-base-content/40">-</span>
                   )}
                 </div>
               </div>
-
-              {/* 최저가 */}
               <div className="bg-base-100 rounded-lg py-2 px-0.5 shadow-sm">
                 <div className="text-xs text-base-content/50 mb-0.5">전체 최저가</div>
                 <div className="text-xl font-bold text-blue-600">
-                  {formatPrice(seongjuTotal.minPrice)}
+                  {formatPrice(totalData.minPrice)}
                 </div>
                 <div className="mt-0.5 min-h-[20px]">
-                  {seongjuTotal.previousMinPrice ? (
-                    renderPriceChange(seongjuTotal.minPrice, seongjuTotal.previousMinPrice)
+                  {totalData.previousMinPrice ? (
+                    renderPriceChange(totalData.minPrice, totalData.previousMinPrice)
                   ) : (
                     <span className="text-xs text-base-content/40">-</span>
                   )}
@@ -370,6 +382,13 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
       </div>
     );
   };
+
+  // 성주군 합계 카드 렌더링 (renderTotalCard 위임)
+  const renderSeongjuTotalCard = () => renderTotalCard(seongjuTotal, 'card-seongju-total');
+
+  // 도매시장 합계 카드 렌더링 (renderTotalCard 위임)
+  const renderWholesaleTotalCard = (animIndex) =>
+    renderTotalCard(wholesaleTotal, 'card-wholesale-total', `${animIndex * 50}ms`);
 
   return (
     <>
@@ -383,6 +402,9 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
           const cardId = `card-${market.id}`;
           const cardTranslateY = getCardTranslateY(cardId, index);
           const cardScale = getCardScale(cardId, index);
+
+          // 광주공판장 카드 바로 뒤에 도매시장 합계 카드 삽입 여부 결정
+          const insertWholesaleAfter = market.name === WHOLESALE_TOTAL_INSERT_AFTER && wholesaleTotal;
 
           return (
           <React.Fragment key={market.id}>
@@ -526,6 +548,8 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
               </div>
             </div>
             </div>
+            {/* 광주공판장 뒤에 도매시장 합계 카드 삽입 */}
+            {insertWholesaleAfter && renderWholesaleTotalCard(index + 1)}
             {/* 4개마다 광고 삽입 (4, 8, 12번째 카드 뒤) */}
             {shouldShowAds() && ((index + 1) % 4 === 0) && sortedAds.length > 0 && (
               <MobileAdDisplay
@@ -535,6 +559,11 @@ const MarketCards = ({ marketData, seongjuTotal, loading, selectedDate, formatPr
           </React.Fragment>
           );
         })}
+
+        {/* 광주공판장이 목록에 없을 때 도매시장 합계 카드 fallback: 목록 맨 끝에 표시 */}
+        {wholesaleTotal && !marketData.some((m) => m.name === WHOLESALE_TOTAL_INSERT_AFTER) && (
+          renderWholesaleTotalCard(marketData.length)
+        )}
 
         {/* 최하단 광고 (경락 정보가 4개 미만일 때만 표시) */}
         {shouldShowAds() && sortedAds.length > 0 && marketData.length > 0 && marketData.length < 4 && (
