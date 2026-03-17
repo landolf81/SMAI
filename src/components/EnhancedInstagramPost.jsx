@@ -30,7 +30,7 @@ import DeleteConfirmModal from './DeleteConfirmModal';
 import ReportModal from './ReportModal';
 import ReportDetailsModal from './ReportDetailsModal';
 import { isVideoFile, normalizeMediaUrl, getMediaType, isCloudflareStreamUrl, isR2VideoUrl } from '../utils/mediaUtils';
-import CloudflareStreamPlayer from './CloudflareStreamPlayer';
+import LazyStreamPlayer from './LazyStreamPlayer';
 import YouTubeEmbed from './YouTubeEmbed';
 import LinkPreview from './LinkPreview';
 import BadgeDisplay from './BadgeDisplay';
@@ -1157,7 +1157,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
               // 단일 미디어
               isCloudflareStream ? (
                 // Cloudflare Stream 동영상
-                <CloudflareStreamPlayer
+                <LazyStreamPlayer
                   url={mediaFiles[0]}
                   autoplay={!disableAutoplay && isVisible}
                   muted={true}

@@ -41,14 +41,13 @@ export default defineConfig(({ mode }) => ({
       },
       output: {
         manualChunks: {
-          // 핵심 라이브러리
+          // 핵심 라이브러리 (초기 로드 필수)
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          // UI 라이브러리
-          'vendor-ui': ['@mui/material', '@mui/icons-material', '@emotion/react', '@emotion/styled'],
-          // 데이터 라이브러리
+          // 데이터 라이브러리 (초기 로드 필수)
           'vendor-data': ['@tanstack/react-query', '@supabase/supabase-js'],
           // 유틸리티
           'vendor-utils': ['moment', 'axios'],
+          // MUI/emotion은 manualChunks에서 제거 → lazy 컴포넌트에서만 자동 분리
         }
       }
     }

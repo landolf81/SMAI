@@ -8,8 +8,7 @@ window.addEventListener('vite:preloadError', () => {
 import App from './App.jsx'
 import './index.css'
 import './enhanced-instagram.css'
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+// slick-carousel CSS 제거: react-slick 미사용 확인 (FCP 개선)
 import { AuthContextProvider } from './context/AuthContext.jsx'
 import './utils/logger.js' // console.log 제어
 

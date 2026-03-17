@@ -28,11 +28,27 @@ import {
   QueryClientProvider,
 } from '@tanstack/react-query';
 
-// 아이콘
-import SearchIcon from '@mui/icons-material/Search';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import EditIcon from '@mui/icons-material/Edit';
-import PolicyIcon from '@mui/icons-material/Policy';
+// 인라인 SVG 아이콘 (MUI vendor-ui 청크 초기 로드 방지)
+const SearchIconSvg = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+  </svg>
+);
+const HelpOutlineIconSvg = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+  </svg>
+);
+const EditIconSvg = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+  </svg>
+);
+const PolicyIconSvg = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+    <path d="M21 5l-9-4-9 4v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm-9 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H8v-1c0-1.33 2.67-2 4-2s4 .67 4 2v1z"/>
+  </svg>
+);
 
 // 로딩 컴포넌트
 const PageLoader = () => (
@@ -110,16 +126,34 @@ const queryClient = new QueryClient({
  * Layout - 모듈 스코프에 정의하여 App 리렌더 시 재생성 방지
  * AuthContext는 useContext로 직접 접근
  */
+// 앱 셸 스켈레톤 (Auth 로딩 중 빠른 FCP 제공)
+const AppSkeleton = () => (
+  <div className="min-h-screen bg-base-200">
+    {/* Navbar skeleton */}
+    <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-base-100 border-b border-base-300">
+      <div className="flex items-center justify-between h-full px-4 max-w-screen-xl mx-auto">
+        <div className="w-8 h-8 bg-base-300 rounded-full animate-pulse" />
+        <div className="w-24 h-6 bg-base-300 rounded animate-pulse" />
+        <div className="w-8 h-8 bg-base-300 rounded-full animate-pulse" />
+      </div>
+    </div>
+    {/* Content skeleton */}
+    <div className="pt-20 px-4 max-w-2xl mx-auto space-y-4">
+      <div className="h-40 bg-base-300 rounded-2xl animate-pulse" />
+      <div className="h-32 bg-base-300 rounded-2xl animate-pulse" />
+      <div className="h-32 bg-base-300 rounded-2xl animate-pulse" />
+    </div>
+  </div>
+);
+
 const Layout = () => {
-  const { currentUser, isBanned } = useContext(AuthContext);
+  const { currentUser, loading, isBanned } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isAdminPage = location.pathname.startsWith('/admin');
-  const isDMPage = location.pathname.startsWith('/dm/');
   const scrollDirection = useScrollDirection();
 
-  // 글쓰기 버튼 상태
+  // 글쓰기 버튼 상태 (훅은 early return 전에 호출해야 함)
   const [isButtonSpinning, setIsButtonSpinning] = useState(false);
   const [showWriteMenu, setShowWriteMenu] = useState(false);
 
@@ -207,6 +241,16 @@ const Layout = () => {
     return () => document.removeEventListener('visibilitychange', clearBadge);
   }, []);
 
+  // --- 모든 훅 호출 완료 후 early return ---
+
+  // Auth 로딩 중에는 스켈레톤 표시 (빈 화면 방지)
+  if (loading) {
+    return <AppSkeleton />;
+  }
+
+  const isAdminPage = location.pathname.startsWith('/admin');
+  const isDMPage = location.pathname.startsWith('/dm/');
+
   // DM 페이지는 전체 화면으로 렌더링 (Navbar, Leftbar, BottomNav 숨김)
   if (isDMPage) {
     return (
@@ -273,7 +317,7 @@ const Layout = () => {
                     >
                       <span className="text-sm font-medium text-base-content whitespace-nowrap">질문하기</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 flex items-center justify-center">
-                        <EditIcon className="text-white" fontSize="small" />
+                        <EditIconSvg className="text-white w-5 h-5" />
                       </div>
                     </button>
 
@@ -288,7 +332,7 @@ const Layout = () => {
                     >
                       <span className="text-sm font-medium text-base-content whitespace-nowrap">FAQ</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-yellow-200 flex items-center justify-center">
-                        <HelpOutlineIcon className="text-amber-600" fontSize="small" />
+                        <HelpOutlineIconSvg className="text-amber-600 w-5 h-5" />
                       </div>
                     </button>
 
@@ -302,7 +346,7 @@ const Layout = () => {
                     >
                       <span className="text-sm font-medium text-base-content whitespace-nowrap">검색</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-200 flex items-center justify-center">
-                        <SearchIcon className="text-blue-600" fontSize="small" />
+                        <SearchIconSvg className="text-blue-600 w-5 h-5" />
                       </div>
                     </button>
                   </>
@@ -323,7 +367,7 @@ const Layout = () => {
                     >
                       <span className="text-sm font-medium text-base-content whitespace-nowrap">글쓰기</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                        <EditIcon className="text-white" fontSize="small" />
+                        <EditIconSvg className="text-white w-5 h-5" />
                       </div>
                     </button>
 
@@ -338,7 +382,7 @@ const Layout = () => {
                     >
                       <span className="text-sm font-medium text-base-content whitespace-nowrap">검색</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-cyan-200 flex items-center justify-center">
-                        <SearchIcon className="text-blue-600" fontSize="small" />
+                        <SearchIconSvg className="text-blue-600 w-5 h-5" />
                       </div>
                     </button>
 
@@ -352,7 +396,7 @@ const Layout = () => {
                     >
                       <span className="text-sm font-medium text-base-content whitespace-nowrap">거래 정책</span>
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-100 to-violet-200 flex items-center justify-center">
-                        <PolicyIcon className="text-purple-600" fontSize="small" />
+                        <PolicyIconSvg className="text-purple-600 w-5 h-5" />
                       </div>
                     </button>
                   </>
@@ -404,7 +448,8 @@ const Layout = () => {
  */
 // eslint-disable-next-line react/prop-types
 const ProtectedRoute = ({ children }) => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading } = useContext(AuthContext);
+  if (loading) return <PageLoader />;
   if (currentUser === null) {
     return <Navigate to="/login" />;
   }
@@ -417,7 +462,8 @@ const ProtectedRoute = ({ children }) => {
  */
 // eslint-disable-next-line react/prop-types
 const BannedRestrictedRoute = ({ children }) => {
-  const { currentUser, isBanned } = useContext(AuthContext);
+  const { currentUser, loading, isBanned } = useContext(AuthContext);
+  if (loading) return <PageLoader />;
   if (currentUser === null) {
     return <Navigate to="/login" />;
   }

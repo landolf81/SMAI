@@ -5,7 +5,7 @@ import { shouldShowAds } from '../utils/deviceDetector';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
-import CloudflareStreamPlayer from './CloudflareStreamPlayer';
+import LazyStreamPlayer from './LazyStreamPlayer';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { supabase } from '../config/supabase.js';
 import AdPollCard from './ad/AdPollCard';
@@ -492,7 +492,7 @@ const MobileAdDisplay = ({ ad }) => {
               {getCurrentMedia().type === 'stream' ? (
                 // Cloudflare Stream 동영상 - 피드에서는 무음, 터치 시 상세 모달로 이동
                 <div className="absolute inset-0">
-                  <CloudflareStreamPlayer
+                  <LazyStreamPlayer
                     uid={getCloudflareStreamUid(getCurrentMedia().path) || getCurrentMedia().path}
                     autoplay={isVisible}
                     muted={true}
@@ -632,7 +632,7 @@ const MobileAdDisplay = ({ ad }) => {
                     // Cloudflare Stream 동영상 - 모달에서는 오디오 토글 버튼만 클릭 가능
                     <div className="relative rounded-lg overflow-hidden">
                       <div onClick={(e) => ad.link_url && e.stopPropagation()}>
-                        <CloudflareStreamPlayer
+                        <LazyStreamPlayer
                           uid={getCloudflareStreamUid(getModalMedia(modalMediaIndex).path) || getModalMedia(modalMediaIndex).path}
                           autoplay={true}
                           muted={modalVideoMuted}

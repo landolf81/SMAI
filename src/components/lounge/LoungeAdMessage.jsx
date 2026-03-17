@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { adService } from '../../services';
 import { getImageUrl } from '../../config/api';
 import { isCloudflareStreamUrl, getCloudflareStreamUid, isVideoFile } from '../../utils/mediaUtils';
-import CloudflareStreamPlayer from '../CloudflareStreamPlayer';
+import LazyStreamPlayer from '../LazyStreamPlayer';
 import { changeVariant, IMAGE_VARIANTS } from '../../services/cfImagesService';
 
 /** HTML 태그 제거 */
@@ -163,7 +163,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
           <div className="mt-1.5 max-w-[280px]">
             {displayMedia.type === 'stream' && (
               <div className="rounded-xl overflow-hidden border border-base-300">
-                <CloudflareStreamPlayer
+                <LazyStreamPlayer
                   uid={displayMedia.uid}
                   autoplay={isVisible}
                   muted={true}

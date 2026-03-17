@@ -5,12 +5,32 @@ import { AuthContext } from '../context/AuthContext';
 import { dmService, postService } from '../services';
 import loungeService from '../services/loungeService';
 
-// Material UI Icons
-import GroupsIcon from '@mui/icons-material/Groups';
-import ForumIcon from '@mui/icons-material/Forum';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import PersonIcon from '@mui/icons-material/Person';
+// 인라인 SVG 아이콘 (MUI vendor-ui 청크 초기 로드 방지)
+const GroupsIcon = ({ fontSize, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
+    <path d="M12 12.75c1.63 0 3.07.39 4.24.9 1.08.48 1.76 1.56 1.76 2.73V18H6v-1.61c0-1.18.68-2.26 1.76-2.73 1.17-.52 2.61-.91 4.24-.91zM4 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm1.13 1.1c-.37-.06-.74-.1-1.13-.1-.99 0-1.93.21-2.78.58C.48 14.9 0 15.62 0 16.43V18h4.5v-1.61c0-.83.23-1.61.63-2.29zM20 13c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm4 3.43c0-.81-.48-1.53-1.22-1.85-.85-.37-1.79-.58-2.78-.58-.39 0-.76.04-1.13.1.4.68.63 1.46.63 2.29V18H24v-1.57zM12 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/>
+  </svg>
+);
+const ForumIcon = ({ fontSize, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
+    <path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/>
+  </svg>
+);
+const HelpOutlineIcon = ({ fontSize, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
+    <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+  </svg>
+);
+const ShoppingBagIcon = ({ fontSize, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
+    <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z"/>
+  </svg>
+);
+const PersonIcon = ({ fontSize, className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+  </svg>
+);
 
 // 커스텀 홈 아이콘 (참외이야기 로고)
 const HomeIcon = ({ className, isActive }) => (

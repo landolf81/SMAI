@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
-import CloudflareStreamPlayer from './CloudflareStreamPlayer';
+import LazyStreamPlayer from './LazyStreamPlayer';
 import AdPollResults from './ad/AdPollResults';
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -305,7 +305,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
           {getCurrentMedia() ? (
             <div className="absolute inset-0">
               {getCurrentMedia().type === 'stream' ? (
-                <CloudflareStreamPlayer
+                <LazyStreamPlayer
                   uid={getCloudflareStreamUid(getCurrentMedia().path) || getCurrentMedia().path}
                   autoplay={false}
                   muted={true}
@@ -407,7 +407,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
                 <div className="mb-4 relative">
                   {getModalMedia(modalMediaIndex).type === 'stream' ? (
                     <div className="rounded-lg overflow-hidden">
-                      <CloudflareStreamPlayer
+                      <LazyStreamPlayer
                         uid={getCloudflareStreamUid(getModalMedia(modalMediaIndex).path) || getModalMedia(modalMediaIndex).path}
                         autoplay={true}
                         muted={false}

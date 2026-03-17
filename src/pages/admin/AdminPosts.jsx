@@ -11,7 +11,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import BlockIcon from "@mui/icons-material/Block";
 import { AdminOnly } from '../../components/PermissionComponents';
 import { SUPABASE_URL } from '../../config/supabase';
-import CloudflareStreamPlayer from '../../components/CloudflareStreamPlayer';
+import LazyStreamPlayer from '../../components/LazyStreamPlayer';
 import { isCloudflareStreamUrl } from '../../utils/mediaUtils';
 
 const AdminPosts = () => {
@@ -364,7 +364,7 @@ const AdminPosts = () => {
                   <div className="relative w-full" style={{ paddingBottom: '100%' }}>
                     {isCloudflareStreamUrl(images[0]) ? (
                       <div className="absolute inset-0">
-                        <CloudflareStreamPlayer
+                        <LazyStreamPlayer
                           url={images[0]}
                           autoplay={false}
                           muted={true}
@@ -547,7 +547,7 @@ const AdminPosts = () => {
                         <div key={index} className="relative" style={{ paddingBottom: '100%' }}>
                           {isCloudflareStreamUrl(media) ? (
                             <div className="absolute inset-0">
-                              <CloudflareStreamPlayer
+                              <LazyStreamPlayer
                                 url={media}
                                 autoplay={false}
                                 muted={true}

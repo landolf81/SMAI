@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faXmark, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
 import { isVideoFile, isCloudflareStreamUrl } from '../utils/mediaUtils';
-import CloudflareStreamPlayer from './CloudflareStreamPlayer';
+import LazyStreamPlayer from './LazyStreamPlayer';
 
 const MediaModal = ({
   isOpen,
@@ -430,7 +430,7 @@ const MediaModal = ({
               height: 'min(100vh, calc(100vw * 16 / 9))'
             }}
           >
-            <CloudflareStreamPlayer
+            <LazyStreamPlayer
               url={currentMedia}
               autoplay={true}
               muted={false}
