@@ -3,22 +3,24 @@
  * 다크모드 토글(좌측) + 로고(중앙) + PWA설치 버튼 + 벨 아이콘(우측, 로그인 사용자만)
  * 미확인 알림 시 빨간 점 표시
  * PWA 설치 가능(Android)할 때만 설치 아이콘 노출
+ * 벨 아이콘 클릭 시 페이지 이동 대신 NotificationModal 표시
  */
 
 import { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../config/supabase';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import NotificationModal from './NotificationModal';
 
 const LAST_VIEW_KEY = 'last_notifications_view';
 
 const Navbar = () => {
   const { currentUser } = useContext(AuthContext);
   const { isDark, setTheme } = useTheme();
-  const navigate = useNavigate();
   const [hasUnseen, setHasUnseen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // PWA 설치 훅 (Android에서 beforeinstallprompt 캡처)
   const { canInstall, isInstalled, promptInstall } = usePWAInstall();
@@ -51,12 +53,12 @@ const Navbar = () => {
   }, [currentUser]);
 
   const handleBellClick = () => {
-    localStorage.setItem(LAST_VIEW_KEY, String(Date.now()));
     setHasUnseen(false);
-    navigate('/notifications');
+    setShowNotifications(true);
   };
 
   return (
+    <>
     <div className="bg-base-100/70 backdrop-blur-md border-b border-base-300/50 shadow-sm">
       <div className="max-w-md mx-auto px-4 py-2.5">
         <div className="flex items-center justify-between">
@@ -126,6 +128,13 @@ const Navbar = () => {
         </div>
       </div>
     </div>
+
+    {/* 알림 모달 */}
+    <NotificationModal
+      isOpen={showNotifications}
+      onClose={() => setShowNotifications(false)}
+    />
+    </>
   );
 };
 
