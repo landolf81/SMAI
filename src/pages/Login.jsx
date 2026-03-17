@@ -70,7 +70,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-50 via-white to-green-50 flex flex-col">
+    <div className="min-h-screen bg-[var(--surface-page)] flex flex-col">
       {/* 상단 헤더 */}
       <Navbar />
 
@@ -94,7 +94,7 @@ const Login = () => {
         <div className="w-full max-w-sm bg-base-100/80 backdrop-blur-lg rounded-3xl shadow-xl border border-base-300/50 p-6">
           {/* 에러 메시지 */}
           {err && (
-            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-r-xl text-sm mb-4">
+            <div className="bg-error/10 border-l-4 border-error text-error px-4 py-3 rounded-r-xl text-sm mb-4">
               {err}
             </div>
           )}
