@@ -92,7 +92,7 @@ const Navbar = () => {
             {/* PWA 설치 버튼 (Android에서 설치 가능할 때만 표시) */}
             {canInstall && !isInstalled && (
               <button
-                onClick={promptInstall}
+                onClick={(e) => { e.stopPropagation(); promptInstall(); }}
                 className="p-1.5 rounded-full text-base-content/60 hover:text-base-content hover:bg-base-200 transition-colors"
                 aria-label="앱 설치"
                 title="앱으로 설치하기"

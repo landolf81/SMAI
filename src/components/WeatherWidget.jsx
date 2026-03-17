@@ -96,7 +96,7 @@ const WeatherWidget = ({ onClick }) => {
     return (
       <div className="flex items-center gap-1" style={{ visibility: 'hidden' }}>
         <span className="text-xl">☀️</span>
-        <span className="text-gray-700 text-base font-bold">--°</span>
+        <span className="text-base-content text-base font-bold">--°</span>
       </div>
     );
   }
@@ -107,7 +107,7 @@ const WeatherWidget = ({ onClick }) => {
       className="flex items-center gap-1 active:scale-95"
     >
       <span className="text-xl">{getIcon()}</span>
-      <span className="text-gray-700 text-base font-bold">{currentTemp}°</span>
+      <span className="text-base-content text-base font-bold">{currentTemp}°</span>
     </button>
   );
 };

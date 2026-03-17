@@ -50,27 +50,23 @@ export const usePWAInstall = () => {
   }, []);
 
   /** Android 네이티브 설치 프롬프트 트리거 */
-  const promptInstall = useCallback(async () => {
+  const promptInstall = useCallback(() => {
     const prompt = deferredPrompt || savedPrompt;
-    if (!prompt) return false;
+    if (!prompt) return;
+
+    // prompt 먼저 정리 (1회성이므로 재사용 불가)
+    setDeferredPrompt(null);
+    savedPrompt = null;
 
     try {
       prompt.prompt();
-      const { outcome } = await prompt.userChoice;
-
-      if (outcome === 'accepted') {
-        setIsInstalled(true);
-      }
-      return outcome === 'accepted';
+      prompt.userChoice.then(({ outcome }) => {
+        if (outcome === 'accepted') {
+          setIsInstalled(true);
+        }
+      }).catch(() => {});
     } catch (error) {
-      // InvalidStateError: prompt already used or stale event
       console.warn('[PWA] Install prompt failed:', error);
-      return false;
-    } finally {
-      // 사용 후 항상 정리 — prompt는 1회성이므로 재사용 불가
-      // 앱이 여전히 설치 가능하면 브라우저가 새 beforeinstallprompt 이벤트 발생
-      setDeferredPrompt(null);
-      savedPrompt = null;
     }
   }, [deferredPrompt]);
 
