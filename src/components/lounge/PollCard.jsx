@@ -75,18 +75,18 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
   if (!poll || !sortedOptions.length) return null;
 
   return (
-    <div className="mt-2 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+    <div className="mt-2 bg-base-100 rounded-xl border border-base-300 overflow-hidden shadow-sm">
       {/* 질문 헤더 */}
       <div className="px-4 pt-3 pb-2">
-        <p className="text-[15px] font-bold text-gray-900 leading-snug">
+        <p className="text-[15px] font-bold text-base-content leading-snug">
           📊 {poll.question}
         </p>
         <div className="flex items-center gap-2 mt-1">
           {poll.is_multiple && (
-            <span className="text-[10px] text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded font-medium">복수선택</span>
+            <span className="text-[10px] text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-1.5 py-0.5 rounded font-medium">복수선택</span>
           )}
           {poll.is_anonymous && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded font-medium">
+            <span className="inline-flex items-center gap-0.5 text-[10px] text-base-content/60 bg-base-200 px-1.5 py-0.5 rounded font-medium">
               <LockIcon /> 익명
             </span>
           )}
@@ -94,7 +94,7 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
             <span className="text-[10px] text-orange-500 font-medium">⏱ {remainingText}</span>
           )}
           {isClosed && (
-            <span className="text-[10px] text-red-500 bg-red-50 px-1.5 py-0.5 rounded font-bold">투표 마감</span>
+            <span className="text-[10px] text-red-500 bg-red-50 dark:bg-red-900/30 px-1.5 py-0.5 rounded font-bold">투표 마감</span>
           )}
         </div>
       </div>
@@ -117,10 +117,10 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
                 onClick={() => !isClosed && handleVote(option.id)}
               >
                 {/* 프로그레스 바 배경 */}
-                <div className="absolute inset-0 bg-gray-100 rounded-lg" />
+                <div className="absolute inset-0 bg-base-200 rounded-lg" />
                 <div
                   className={`absolute inset-y-0 left-0 rounded-lg transition-all duration-500 ${
-                    isMyVote ? 'bg-orange-200/70' : 'bg-gray-200/60'
+                    isMyVote ? 'bg-orange-200/70 dark:bg-orange-700/40' : 'bg-base-300/60'
                   }`}
                   style={{ width: `${percentage}%` }}
                 />
@@ -130,13 +130,13 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
                     {isMyVote && (
                       <span className="text-orange-500 flex-shrink-0"><CheckIcon /></span>
                     )}
-                    <span className={`text-[14px] truncate ${isMyVote ? 'font-bold text-gray-900' : 'text-gray-700'}`}>
+                    <span className={`text-[14px] truncate ${isMyVote ? 'font-bold text-base-content' : 'text-base-content/70'}`}>
                       {option.label}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
-                    <span className="text-[12px] text-gray-500">{option.vote_count}표</span>
-                    <span className={`text-[13px] font-bold ${isMyVote ? 'text-orange-600' : 'text-gray-600'}`}>
+                    <span className="text-[12px] text-base-content/50">{option.vote_count}표</span>
+                    <span className={`text-[13px] font-bold ${isMyVote ? 'text-orange-600 dark:text-orange-400' : 'text-base-content/60'}`}>
                       {percentage}%
                     </span>
                   </div>
@@ -153,24 +153,24 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
               disabled={isVoting}
               className={`w-full text-left px-3 py-2.5 rounded-lg border-2 transition-all duration-200 ${
                 isSelected
-                  ? 'border-orange-400 bg-orange-50 scale-[0.98]'
-                  : 'border-gray-200 bg-white hover:border-orange-300 hover:bg-orange-50/30 active:scale-[0.98]'
+                  ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20 scale-[0.98]'
+                  : 'border-base-300 bg-base-100 hover:border-orange-300 hover:bg-orange-50/30 dark:hover:bg-orange-900/10 active:scale-[0.98]'
               } disabled:opacity-50`}
             >
-              <span className="text-[14px] text-gray-800">{option.label}</span>
+              <span className="text-[14px] text-base-content/80">{option.label}</span>
             </button>
           );
         })}
       </div>
 
       {/* 푸터 */}
-      <div className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-        <span className="text-[12px] text-gray-500">
+      <div className="px-4 py-2 bg-base-200/50 border-t border-base-300 flex items-center justify-between">
+        <span className="text-[12px] text-base-content/50">
           {totalVotes}명 참여
         </span>
         <div className="flex items-center gap-2">
           {hasVoted && !isClosed && (
-            <span className="text-[11px] text-gray-400">탭하여 변경</span>
+            <span className="text-[11px] text-base-content/40">탭하여 변경</span>
           )}
           {isCreator && !isClosed && (
             <button

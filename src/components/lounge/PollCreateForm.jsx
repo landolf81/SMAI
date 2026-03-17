@@ -75,7 +75,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
     <div className="flex flex-col">
       {/* 질문 입력 */}
       <div className="px-5 pt-4 pb-2">
-        <label className="text-[13px] font-semibold text-gray-600 mb-1 block">질문</label>
+        <label className="text-[13px] font-semibold text-base-content/60 mb-1 block">질문</label>
         <input
           type="text"
           value={question}
@@ -83,32 +83,32 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
           placeholder="무엇을 물어볼까요?"
           maxLength={100}
           autoFocus
-          className="w-full px-3 py-2.5 border-2 border-purple-300 rounded-xl text-[15px] text-gray-800 placeholder-gray-400 bg-gray-50 outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-all"
+          className="w-full px-3 py-2.5 border-2 border-purple-300 dark:border-purple-600 rounded-xl text-[15px] text-base-content placeholder-base-content/40 bg-base-200 outline-none focus:ring-2 focus:ring-purple-300 dark:focus:ring-purple-600 focus:border-purple-400 dark:focus:border-purple-500 transition-all"
           style={{ fontSize: '16px' }}
         />
-        <div className="text-right text-[11px] text-gray-400 mt-0.5">{question.length}/100</div>
+        <div className="text-right text-[11px] text-base-content/40 mt-0.5">{question.length}/100</div>
       </div>
 
       {/* 선택지 입력 */}
       <div className="px-5 pb-2">
-        <label className="text-[13px] font-semibold text-gray-600 mb-1.5 block">선택지</label>
+        <label className="text-[13px] font-semibold text-base-content/60 mb-1.5 block">선택지</label>
         <div className="space-y-2">
           {options.map((opt, idx) => (
             <div key={idx} className="flex items-center gap-2">
-              <span className="text-[13px] text-gray-400 w-5 text-center flex-shrink-0">{idx + 1}</span>
+              <span className="text-[13px] text-base-content/40 w-5 text-center flex-shrink-0">{idx + 1}</span>
               <input
                 type="text"
                 value={opt}
                 onChange={(e) => handleOptionChange(idx, e.target.value)}
                 placeholder={`선택지 ${idx + 1}`}
                 maxLength={50}
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-[14px] text-gray-800 placeholder-gray-300 bg-white outline-none focus:border-purple-300 focus:ring-1 focus:ring-purple-200 transition-all"
+                className="flex-1 px-3 py-2 border border-base-300 rounded-lg text-[14px] text-base-content placeholder-base-content/30 bg-base-100 outline-none focus:border-purple-300 dark:focus:border-purple-600 focus:ring-1 focus:ring-purple-200 dark:focus:ring-purple-700 transition-all"
                 style={{ fontSize: '16px' }}
               />
               {options.length > MIN_OPTIONS && (
                 <button
                   onClick={() => removeOption(idx)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-base-content/40 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors flex-shrink-0"
                   aria-label="선택지 삭제"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -122,7 +122,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
         {options.length < MAX_OPTIONS && (
           <button
             onClick={addOption}
-            className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-[13px] text-gray-400 font-medium hover:border-purple-300 hover:text-purple-500 transition-colors"
+            className="mt-2 w-full py-2 border-2 border-dashed border-base-300 rounded-lg text-[13px] text-base-content/40 font-medium hover:border-purple-300 dark:hover:border-purple-600 hover:text-purple-500 transition-colors"
           >
             + 선택지 추가
           </button>
@@ -133,7 +133,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
       <div className="px-5 py-2 space-y-2">
         {/* 복수 선택 */}
         <div className="flex items-center justify-between">
-          <span className="text-[13px] text-gray-700">복수 선택 허용</span>
+          <span className="text-[13px] text-base-content/70">복수 선택 허용</span>
           <input
             type="checkbox"
             checked={isMultiple}
@@ -143,7 +143,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
         </div>
         {/* 익명 투표 */}
         <div className="flex items-center justify-between">
-          <span className="text-[13px] text-gray-700">익명 투표</span>
+          <span className="text-[13px] text-base-content/70">익명 투표</span>
           <input
             type="checkbox"
             checked={isAnonymous}
@@ -155,7 +155,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
 
       {/* 만료 시간 */}
       <div className="px-5 py-2">
-        <label className="text-[13px] font-semibold text-gray-600 mb-1.5 block">투표 기간</label>
+        <label className="text-[13px] font-semibold text-base-content/60 mb-1.5 block">투표 기간</label>
         <div className="flex flex-wrap gap-1.5">
           {DURATION_OPTIONS.map((d) => (
             <button
@@ -164,7 +164,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
               className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
                 expiresInHours === d.value
                   ? 'bg-purple-500 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-base-200 text-base-content/60 hover:bg-base-300'
               }`}
             >
               {d.label}
@@ -174,10 +174,10 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
       </div>
 
       {/* 푸터 */}
-      <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between mt-2">
+      <div className="px-5 py-3 bg-base-200/50 border-t border-base-300 flex items-center justify-between mt-2">
         <button
           onClick={onCancel}
-          className="text-[13px] text-gray-500 hover:text-gray-700 font-medium"
+          className="text-[13px] text-base-content/50 hover:text-base-content/70 font-medium"
         >
           ← 일반 글쓰기
         </button>
@@ -188,7 +188,7 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
           <button
             onClick={handleSubmit}
             disabled={!isValid || isSubmitting || cooldownLeft > 0}
-            className="px-5 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-gray-200 disabled:to-gray-200 disabled:text-gray-400 disabled:shadow-none transition-all duration-300"
+            className="px-5 py-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white text-[14px] font-bold rounded-xl shadow-sm disabled:from-gray-300 disabled:to-gray-300 dark:disabled:from-gray-600 dark:disabled:to-gray-600 disabled:text-gray-400 dark:disabled:text-gray-500 disabled:shadow-none transition-all duration-300"
           >
             {isSubmitting ? '생성 중...' : '투표 만들기'}
           </button>

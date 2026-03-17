@@ -53,16 +53,16 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
   }, [options, update]);
 
   return (
-    <div className="space-y-4 bg-amber-50/50 border border-amber-200 rounded-xl p-4">
+    <div className="space-y-4 bg-amber-50/50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="text-lg">📊</span>
-          <span className="text-sm font-bold text-gray-800">광고 투표 설정</span>
+          <span className="text-sm font-bold text-base-content/80">광고 투표 설정</span>
         </div>
         <button
           onClick={onRemove}
-          className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
+          className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           투표 제거
         </button>
@@ -70,37 +70,37 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
 
       {/* 질문 입력 */}
       <div>
-        <label className="text-xs font-semibold text-gray-600 mb-1 block">질문</label>
+        <label className="text-xs font-semibold text-base-content/60 mb-1 block">질문</label>
         <input
           type="text"
           value={question}
           onChange={(e) => update('question', e.target.value)}
           placeholder="사용자에게 무엇을 물어볼까요?"
           maxLength={100}
-          className="w-full px-3 py-2.5 border-2 border-amber-300 rounded-xl text-sm text-gray-800 placeholder-gray-400 bg-white outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all"
+          className="w-full px-3 py-2.5 border-2 border-amber-300 dark:border-amber-700 rounded-xl text-sm text-base-content placeholder-base-content/40 bg-base-100 outline-none focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-600 focus:border-amber-400 dark:focus:border-amber-500 transition-all"
         />
-        <div className="text-right text-[11px] text-gray-400 mt-0.5">{question.length}/100</div>
+        <div className="text-right text-[11px] text-base-content/40 mt-0.5">{question.length}/100</div>
       </div>
 
       {/* 선택지 입력 */}
       <div>
-        <label className="text-xs font-semibold text-gray-600 mb-1.5 block">선택지</label>
+        <label className="text-xs font-semibold text-base-content/60 mb-1.5 block">선택지</label>
         <div className="space-y-2">
           {options.map((opt, idx) => (
             <div key={idx} className="flex items-center gap-2">
-              <span className="text-xs text-gray-400 w-5 text-center flex-shrink-0">{idx + 1}</span>
+              <span className="text-xs text-base-content/40 w-5 text-center flex-shrink-0">{idx + 1}</span>
               <input
                 type="text"
                 value={opt}
                 onChange={(e) => handleOptionChange(idx, e.target.value)}
                 placeholder={`선택지 ${idx + 1}`}
                 maxLength={50}
-                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-300 bg-white outline-none focus:border-amber-300 focus:ring-1 focus:ring-amber-200 transition-all"
+                className="flex-1 px-3 py-2 border border-base-300 rounded-lg text-sm text-base-content placeholder-base-content/30 bg-base-100 outline-none focus:border-amber-300 dark:focus:border-amber-600 focus:ring-1 focus:ring-amber-200 dark:focus:ring-amber-700 transition-all"
               />
               {options.length > MIN_OPTIONS && (
                 <button
                   onClick={() => removeOption(idx)}
-                  className="w-7 h-7 flex items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="w-7 h-7 flex items-center justify-center rounded-full text-base-content/40 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500 transition-colors flex-shrink-0"
                   aria-label="선택지 삭제"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
@@ -114,7 +114,7 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
         {options.length < MAX_OPTIONS && (
           <button
             onClick={addOption}
-            className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 rounded-lg text-xs text-gray-400 font-medium hover:border-amber-300 hover:text-amber-600 transition-colors"
+            className="mt-2 w-full py-2 border-2 border-dashed border-base-300 rounded-lg text-xs text-base-content/40 font-medium hover:border-amber-300 dark:hover:border-amber-600 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
           >
             + 선택지 추가
           </button>
@@ -124,7 +124,7 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
       {/* 옵션 토글 */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-700">복수 선택 허용</span>
+          <span className="text-xs text-base-content/70">복수 선택 허용</span>
           <input
             type="checkbox"
             checked={isMultiple}
@@ -133,7 +133,7 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
           />
         </div>
         <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-700">익명 투표</span>
+          <span className="text-xs text-base-content/70">익명 투표</span>
           <input
             type="checkbox"
             checked={isAnonymous}
@@ -145,7 +145,7 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
 
       {/* 만료 시간 */}
       <div>
-        <label className="text-xs font-semibold text-gray-600 mb-1.5 block">투표 기간</label>
+        <label className="text-xs font-semibold text-base-content/60 mb-1.5 block">투표 기간</label>
         <div className="flex flex-wrap gap-1.5">
           {DURATION_OPTIONS.map((d) => (
             <button
@@ -154,7 +154,7 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
               className={`px-3 py-1.5 rounded-full text-[12px] font-medium transition-all ${
                 expiresInHours === d.value
                   ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-base-200 text-base-content/60 hover:bg-base-300'
               }`}
             >
               {d.label}
