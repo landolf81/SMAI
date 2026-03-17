@@ -710,8 +710,8 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                       <div key={idx} className="flex items-center justify-between bg-base-200/50 rounded-lg px-3 py-2.5">
                         <div>
                           <p className="text-base text-base-content/50">{team.name || `수송팀 ${idx + 1}`}</p>
-                          {revealedPhones[idx] ? (
-                            <div className="flex items-center gap-2 mt-0.5">
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {revealedPhones[idx] ? (
                               <a
                                 href={`tel:${team.phone}`}
                                 className="text-lg font-semibold text-blue-600 underline underline-offset-2"
@@ -719,6 +719,19 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                               >
                                 {team.phone}
                               </a>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRevealedPhones(prev => ({ ...prev, [idx]: true }));
+                                }}
+                                className="text-lg font-semibold text-base-content select-none"
+                                style={{ filter: 'blur(6px)', WebkitFilter: 'blur(6px)' }}
+                              >
+                                {team.phone}
+                              </button>
+                            )}
+                            {revealedPhones[idx] && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -731,19 +744,8 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                               </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRevealedPhones(prev => ({ ...prev, [idx]: true }));
-                              }}
-                              className="text-lg text-base-content/40 mt-0.5 flex items-center gap-1"
-                            >
-                              <span>{maskPhone(team.phone)}</span>
-                              <span className="text-sm text-blue-500">보기</span>
-                            </button>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
