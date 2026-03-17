@@ -226,13 +226,13 @@ const MarketTrend = () => {
         isToday: isTodayDate,
         isFuture: fullDateStr > today,
         dayOfWeek, // 요일 정보 추가
-        // 올해 가격 데이터
-        maxPrice: currentItem ? (parseInt(currentItem.max_price) || 0) : null,
-        avgPrice: currentItem ? (parseInt(currentItem.avg_price) || 0) : null,
-        minPrice: currentItem ? (parseInt(currentItem.min_price) || 0) : null,
+        // 올해 가격 데이터 (0이면 null 처리 → connectNulls로 자연스럽게 이어짐)
+        maxPrice: currentItem ? (parseInt(currentItem.max_price) || null) : null,
+        avgPrice: currentItem ? (parseInt(currentItem.avg_price) || null) : null,
+        minPrice: currentItem ? (parseInt(currentItem.min_price) || null) : null,
         // 올해 물량 데이터
-        totalBoxes: currentItem ? (parseInt(currentItem.total_boxes) || 0) : null,
-        totalAmount: currentItem ? (parseInt(currentItem.total_amount) || 0) : null,
+        totalBoxes: currentItem ? (parseInt(currentItem.total_boxes) || null) : null,
+        totalAmount: currentItem ? (parseInt(currentItem.total_amount) || null) : null,
         // 작년 가격 데이터
         lastYearMax: lastYearItem ? (parseInt(lastYearItem.max_price) || null) : null,
         lastYearAvg: lastYearItem ? (parseInt(lastYearItem.avg_price) || null) : null,
