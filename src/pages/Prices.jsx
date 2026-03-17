@@ -51,8 +51,8 @@ const Prices = () => {
   // 날짜 선택 input ref
   const dateInputRef = useRef(null);
 
-  // 설정 로드 상태
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  // 설정 로드 ref (리렌더 방지)
+  const gradeSettingsRef = useRef(null);
 
   // 광고 데이터 (모바일만)
   const { data: adsData } = useQuery({
@@ -71,16 +71,9 @@ const Prices = () => {
     sessionStorage.setItem('home_cache_invalidate', 'true');
   }, []);
 
-  // 페이지 진입 시 스크롤 최상단으로 이동 및 설정 로드
+  // 페이지 진입 시 스크롤 최상단으로 이동
   useEffect(() => {
     window.scrollTo(0, 0);
-    // DB에서 등급 정렬 설정 가져오기
-    marketService.getMarketSettings().then(settings => {
-      setGradeSettings(settings);
-      setSettingsLoaded(true);
-    }).catch(() => {
-      setSettingsLoaded(true); // 에러가 나도 진행
-    });
   }, []);
 
   // 등급 정렬 순서 적용 (공판장별 - DB 설정 사용)
@@ -110,7 +103,7 @@ const Prices = () => {
     });
   };
 
-  // 경락가 데이터 가져오기
+  // 경락가 데이터 가져오기 (설정도 병렬 로드)
   const fetchMarketData = async (market, date) => {
     try {
       setLoading(true);
@@ -120,11 +113,23 @@ const Prices = () => {
         throw new Error('시장명이 지정되지 않았습니다.');
       }
 
-      const data = await marketService.getMarketDataWithComparison(market, date);
+      // 시세 데이터 + 등급 설정을 병렬로 가져오기
+      const [data, settings] = await Promise.all([
+        marketService.getMarketDataWithComparison(market, date),
+        gradeSettingsRef.current
+          ? Promise.resolve(gradeSettingsRef.current) // 이미 로드된 경우 재사용
+          : marketService.getMarketSettings().catch(() => null),
+      ]);
+
+      // 설정 캐싱
+      if (settings) {
+        gradeSettingsRef.current = settings;
+        setGradeSettings(settings);
+      }
 
       // 등급 정렬 순서 적용 (공판장별)
       if (data && data.details) {
-        data.details = sortDetailsByGradeOrder(data.details, market);
+        data.details = sortDetailsByGradeOrder(data.details, market, settings);
       }
 
       setMarketData(data);
@@ -139,9 +144,6 @@ const Prices = () => {
   };
 
   useEffect(() => {
-    // 설정이 로드된 후에만 데이터 가져오기
-    if (!settingsLoaded) return;
-
     if (marketName) {
       fetchMarketData(marketName, selectedDate);
 
@@ -164,7 +166,7 @@ const Prices = () => {
       setLoading(false);
       setError('시장을 선택해주세요.');
     }
-  }, [marketName, selectedDate, settingsLoaded]);
+  }, [marketName, selectedDate]);
 
 
   const handleDateChange = (e) => {

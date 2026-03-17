@@ -499,30 +499,28 @@ export const marketService = {
       marketName = nfc(marketName);
       console.log('🔍 상세 경락가 조회:', marketName, date);
 
-      // 1. market_summary에서 요약 정보 조회
-      const { data: summaryData, error: summaryError } = await supabase
-        .from('market_summary')
-        .select('*')
-        .eq('market_name', marketName)
-        .eq('market_date', date)
-        .maybeSingle();
+      // 요약 + 상세를 병렬 조회 (전일 비교는 DB 트리거가 미리 계산해둔 prev_* 컬럼 활용)
+      const [summaryResult, detailsResult] = await Promise.all([
+        supabase
+          .from('market_summary')
+          .select('*')
+          .eq('market_name', marketName)
+          .eq('market_date', date)
+          .maybeSingle(),
+        supabase
+          .from('market_data')
+          .select('*')
+          .eq('market_name', marketName)
+          .eq('market_date', date)
+          .order('grade')
+          .order('weight'),
+      ]);
 
-      if (summaryError && summaryError.code !== 'PGRST116') {
-        throw summaryError;
-      }
+      const { data: summaryData, error: summaryError } = summaryResult;
+      const { data: detailsData, error: detailsError } = detailsResult;
 
-      // 2. market_data에서 등급/무게별 상세 정보 조회
-      const { data: detailsData, error: detailsError } = await supabase
-        .from('market_data')
-        .select('*')
-        .eq('market_name', marketName)
-        .eq('market_date', date)
-        .order('grade')
-        .order('weight');
-
-      if (detailsError) {
-        throw detailsError;
-      }
+      if (summaryError && summaryError.code !== 'PGRST116') throw summaryError;
+      if (detailsError) throw detailsError;
 
       // 데이터가 없는 경우
       if (!summaryData && (!detailsData || detailsData.length === 0)) {
@@ -541,84 +539,29 @@ export const marketService = {
         };
       }
 
-      // 3. 전 경매일 찾기 (현재 날짜보다 이전 날짜 중 가장 최근)
-      const { data: previousDateData, error: previousDateError } = await supabase
-        .from('market_summary')
-        .select('market_date')
-        .eq('market_name', marketName)
-        .lt('market_date', date)
-        .order('market_date', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // 응답 데이터 구성 (DB prev_* 컬럼으로 비교 계산)
+      const calcChange = (current, previous) => {
+        const change = previous > 0 ? current - previous : 0;
+        const changePercent = previous > 0
+          ? Math.round((change / previous) * 1000) / 10
+          : 0;
+        return { change, changePercent, comparison_available: previous > 0 };
+      };
 
-      let previousMarketDate = null;
-      let previousSummaryData = null;
-      let previousDetailsData = [];
-
-      if (!previousDateError && previousDateData) {
-        previousMarketDate = previousDateData.market_date;
-        console.log('📅 전 경매일:', previousMarketDate);
-
-        // 4. 전 경매일 요약 정보 조회
-        const { data: prevSummary } = await supabase
-          .from('market_summary')
-          .select('*')
-          .eq('market_name', marketName)
-          .eq('market_date', previousMarketDate)
-          .maybeSingle();
-
-        previousSummaryData = prevSummary;
-
-        // 5. 전 경매일 상세 정보 조회
-        const { data: prevDetails } = await supabase
-          .from('market_data')
-          .select('*')
-          .eq('market_name', marketName)
-          .eq('market_date', previousMarketDate);
-
-        previousDetailsData = prevDetails || [];
-      }
-
-      // 6. 전일 데이터를 Map으로 변환 (weight + grade 키)
-      const previousDetailsMap = new Map();
-      previousDetailsData.forEach(item => {
-        const key = `${item.weight}_${item.grade}`;
-        previousDetailsMap.set(key, item);
-      });
-
-      // 7. 응답 데이터 구성 (전일 비교 포함)
       const details = (detailsData || []).map(row => {
-        const key = `${row.weight}_${row.grade}`;
-        const prevItem = previousDetailsMap.get(key);
-
         const currentAvgPrice = parseInt(row.avg_price) || 0;
-        const previousAvgPrice = prevItem ? (parseInt(prevItem.avg_price) || 0) : 0;
+        const previousAvgPrice = parseInt(row.prev_avg_price) || 0;
         const currentMaxPrice = parseInt(row.max_price) || 0;
-        const previousMaxPrice = prevItem ? (parseInt(prevItem.max_price) || 0) : 0;
+        const previousMaxPrice = parseInt(row.prev_max_price) || 0;
         const currentMinPrice = parseInt(row.min_price) || 0;
-        const previousMinPrice = prevItem ? (parseInt(prevItem.min_price) || 0) : 0;
+        const previousMinPrice = parseInt(row.prev_min_price) || 0;
         const currentBoxes = parseInt(row.boxes) || 0;
-        const previousBoxes = prevItem ? (parseInt(prevItem.boxes) || 0) : 0;
+        const previousBoxes = parseInt(row.prev_boxes) || 0;
 
-        const change = previousAvgPrice > 0 ? currentAvgPrice - previousAvgPrice : 0;
-        const changePercent = previousAvgPrice > 0
-          ? Math.round((change / previousAvgPrice) * 1000) / 10
-          : 0;
-
-        const maxChange = previousMaxPrice > 0 ? currentMaxPrice - previousMaxPrice : 0;
-        const maxChangePercent = previousMaxPrice > 0
-          ? Math.round((maxChange / previousMaxPrice) * 1000) / 10
-          : 0;
-
-        const minChange = previousMinPrice > 0 ? currentMinPrice - previousMinPrice : 0;
-        const minChangePercent = previousMinPrice > 0
-          ? Math.round((minChange / previousMinPrice) * 1000) / 10
-          : 0;
-
-        const boxesChange = previousBoxes > 0 ? currentBoxes - previousBoxes : 0;
-        const boxesChangePercent = previousBoxes > 0
-          ? Math.round((boxesChange / previousBoxes) * 1000) / 10
-          : 0;
+        const avgComp = calcChange(currentAvgPrice, previousAvgPrice);
+        const maxComp = calcChange(currentMaxPrice, previousMaxPrice);
+        const minComp = calcChange(currentMinPrice, previousMinPrice);
+        const boxesComp = calcChange(currentBoxes, previousBoxes);
 
         return {
           weight: row.weight || '5kg',
@@ -628,47 +571,28 @@ export const marketService = {
           min_price: currentMinPrice,
           max_price: currentMaxPrice,
           record_count: parseInt(row.record_count) || 0,
-          // 평균가 비교
           price_comparison: {
-            comparison_available: previousAvgPrice > 0,
+            ...avgComp,
             previousPrice: previousAvgPrice,
-            change: change,
-            changePercent: changePercent
           },
-          // 최고가 비교
-          max_price_comparison: {
-            comparison_available: previousMaxPrice > 0,
-            change: maxChange,
-            changePercent: maxChangePercent
-          },
-          // 최저가 비교
-          min_price_comparison: {
-            comparison_available: previousMinPrice > 0,
-            change: minChange,
-            changePercent: minChangePercent
-          },
-          // 수량 비교
+          max_price_comparison: maxComp,
+          min_price_comparison: minComp,
           boxes_comparison: {
-            comparison_available: previousBoxes > 0,
+            ...boxesComp,
             previousBoxes: previousBoxes,
-            change: boxesChange,
-            changePercent: boxesChangePercent
           }
         };
       });
 
-      // 8. 전체 평균가 비교
+      // 전체 평균가 비교 (summary의 prev_avg_price 컬럼)
       const currentOverallAvg = parseInt(summaryData?.avg_price) || 0;
-      const previousOverallAvg = previousSummaryData ? (parseInt(previousSummaryData.avg_price) || 0) : 0;
-      const overallChange = previousOverallAvg > 0 ? currentOverallAvg - previousOverallAvg : 0;
-      const overallChangePercent = previousOverallAvg > 0
-        ? Math.round((overallChange / previousOverallAvg) * 1000) / 10
-        : 0;
+      const previousOverallAvg = parseInt(summaryData?.prev_avg_price) || 0;
+      const overallComp = calcChange(currentOverallAvg, previousOverallAvg);
 
       const result = {
         market_name: marketName,
         market_date: date,
-        previous_market_date: previousMarketDate,
+        previous_market_date: summaryData?.prev_market_date || null,
         summary: {
           total_boxes: parseInt(summaryData?.total_boxes) || 0,
           total_amount: parseInt(summaryData?.total_amount) || 0,
@@ -677,12 +601,9 @@ export const marketService = {
           max_price: parseInt(summaryData?.max_price) || 0
         },
         details: details,
-        // 전체 평균가 비교
         overall_comparison: {
-          comparison_available: previousOverallAvg > 0,
+          ...overallComp,
           previousPrice: previousOverallAvg,
-          change: overallChange,
-          changePercent: overallChangePercent
         }
       };
 
