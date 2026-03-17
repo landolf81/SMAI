@@ -18,6 +18,7 @@ import { storageService } from '../services';
 import { uploadVideo } from '../services/videoUploadService';
 import { generateDiceBearAvatar } from '../utils/userHelper';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import LoadingSpinner from '../components/LoadingSpinner';
 import AIBadge from '../components/AIBadge';
 import { AI_USER_ID } from '../config/aiUser';
 import PollBadge from '../components/lounge/PollBadge';
@@ -294,6 +295,7 @@ const Lounge = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // 최초 로드 중
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -419,6 +421,7 @@ const Lounge = () => {
         if (!cancelled) {
           setMessages(data);
           setHasMore(data.length === 30);
+          setIsInitialLoading(false);
           // 투표가 포함된 메시지에서 내 투표 데이터 로드
           const pollIds = data.filter((m) => m.poll_id).map((m) => m.poll_id);
           if (pollIds.length > 0) {
@@ -429,6 +432,7 @@ const Lounge = () => {
         }
       } catch (e) {
         console.error('[Lounge] 메시지 로드 실패:', e);
+        if (!cancelled) setIsInitialLoading(false);
       }
     })();
     return () => { cancelled = true; };
@@ -782,12 +786,16 @@ const Lounge = () => {
           </div>
         )}
 
-        {messages.length === 0 && !isLoadingMore && (
+        {messages.length === 0 && (isInitialLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : !isLoadingMore && (
           <div className="flex flex-col items-center justify-center h-full text-base-content/40 gap-2">
             <p className="text-[15px]">아직 아무도 이야기하지 않았어요</p>
             <p className="text-[13px]">첫 번째 글을 남겨보세요!</p>
           </div>
-        )}
+        ))}
 
         {/* 날짜 구분선 + 메시지 (최신순) */}
         <div className="py-2">
