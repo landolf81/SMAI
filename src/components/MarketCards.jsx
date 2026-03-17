@@ -84,14 +84,22 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
     URL.revokeObjectURL(url);
   };
 
-  // 전화번호 마스킹 (010-1234-5678 → 010-****-5678)
-  const maskPhone = (phone) => {
-    if (!phone) return '';
-    const digits = phone.replace(/[^0-9]/g, '');
-    if (digits.length >= 8) {
-      return phone.replace(/(\d{2,4})[-\s]?(\d{3,4})[-\s]?(\d{4})/, '$1-****-$3');
+  // 전화번호 가운데 자리만 블러 처리 렌더링
+  const renderBlurredPhone = (phone) => {
+    if (!phone) return null;
+    // 010-1234-5678 패턴에서 가운데 부분만 블러
+    const match = phone.match(/^(\d{2,4}[-\s]?)(\d{3,4})([-\s]?\d{4})$/);
+    if (match) {
+      return (
+        <>
+          <span>{match[1]}</span>
+          <span className="select-none" style={{ filter: 'blur(5px)', WebkitFilter: 'blur(5px)' }}>{match[2]}</span>
+          <span>{match[3]}</span>
+        </>
+      );
     }
-    return '****';
+    // 패턴 불일치 시 전체 블러
+    return <span className="select-none" style={{ filter: 'blur(5px)', WebkitFilter: 'blur(5px)' }}>{phone}</span>;
   };
 
   // 스크롤 페이드 인 효과
@@ -725,10 +733,9 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                                   e.stopPropagation();
                                   setRevealedPhones(prev => ({ ...prev, [idx]: true }));
                                 }}
-                                className="text-lg font-semibold text-base-content select-none"
-                                style={{ filter: 'blur(6px)', WebkitFilter: 'blur(6px)' }}
+                                className="text-lg font-semibold text-blue-600"
                               >
-                                {team.phone}
+                                {renderBlurredPhone(team.phone)}
                               </button>
                             )}
                             {revealedPhones[idx] && (
