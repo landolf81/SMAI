@@ -46,7 +46,7 @@ body {
 
 /* 가격 표시 스타일 */
 .price-display {
-  font-family: 'Noto Sans KR', monospace;
+  font-family: inherit;
   font-weight: 700;
   letter-spacing: -0.5px;
 }

@@ -51,7 +51,7 @@ export default {
         }
       },
       fontFamily: {
-        'korean': ['Noto Sans KR', 'sans-serif'],
+        'korean': ['-apple-system', 'BlinkMacSystemFont', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
