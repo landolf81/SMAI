@@ -719,25 +719,21 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                         <div>
                           <p className="text-base text-base-content/50">{team.name || `수송팀 ${idx + 1}`}</p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            {revealedPhones[idx] ? (
-                              <a
-                                href={`tel:${team.phone}`}
-                                className="text-lg font-semibold text-blue-600 underline underline-offset-2"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {team.phone}
-                              </a>
-                            ) : (
-                              <button
-                                onClick={(e) => {
+                            <a
+                              href={revealedPhones[idx] ? `tel:${team.phone}` : undefined}
+                              onClick={(e) => {
+                                if (!revealedPhones[idx]) {
+                                  e.preventDefault();
                                   e.stopPropagation();
                                   setRevealedPhones(prev => ({ ...prev, [idx]: true }));
-                                }}
-                                className="text-lg font-semibold text-blue-600"
-                              >
-                                {renderBlurredPhone(team.phone)}
-                              </button>
-                            )}
+                                } else {
+                                  e.stopPropagation();
+                                }
+                              }}
+                              className={`text-lg font-semibold text-blue-600 ${revealedPhones[idx] ? 'underline underline-offset-2' : ''}`}
+                            >
+                              {revealedPhones[idx] ? team.phone : renderBlurredPhone(team.phone)}
+                            </a>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
