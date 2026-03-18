@@ -810,7 +810,7 @@ const Home = () => {
           }
           navigate('/favorite-prices');
         }}
-        className={`fixed bottom-[136px] z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95 ${
+        className={`fixed bottom-[160px] z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95 ${
           adminPermissions.isAdmin ? 'right-20' : 'right-4'
         }`}
         title="즐겨찾기 시세"

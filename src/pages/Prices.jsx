@@ -788,7 +788,7 @@ const Prices = () => {
           }
           navigate('/favorite-prices');
         }}
-        className={`fixed ${adminPermissions.isAdmin ? 'bottom-[136px]' : 'bottom-24'} right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95`}
+        className={`fixed ${adminPermissions.isAdmin ? 'bottom-[160px]' : 'bottom-24'} right-4 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95`}
         title="즐겨찾기 시세"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
