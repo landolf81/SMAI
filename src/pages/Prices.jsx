@@ -100,7 +100,7 @@ const Prices = () => {
   // 즐겨찾기 토글
   const handleToggleFavorite = useCallback(async (mName, weight, grade) => {
     if (!currentUser) {
-      toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.', { icon: '🔒' });
+      toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
       return;
     }
     const key = getFavKey(mName, weight, grade);
@@ -797,7 +797,7 @@ const Prices = () => {
       <button
         onClick={() => {
           if (!currentUser) {
-            toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.', { icon: '🔒' });
+            toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
             return;
           }
           navigate('/favorite-prices');

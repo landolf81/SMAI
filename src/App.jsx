@@ -722,7 +722,19 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
-        <Toaster position="bottom-center" toastOptions={{ duration: 2000 }} />
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 2000,
+            style: {
+              fontSize: '16px',
+              fontWeight: '600',
+              padding: '16px 24px',
+              borderRadius: '12px',
+              maxWidth: '90vw',
+            },
+          }}
+        />
         <Analytics />
         <SpeedInsights />
       </QueryClientProvider>

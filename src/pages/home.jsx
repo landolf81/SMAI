@@ -816,7 +816,7 @@ const Home = () => {
       <button
         onClick={() => {
           if (!currentUser) {
-            toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.', { icon: '🔒' });
+            toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
             return;
           }
           navigate('/favorite-prices');
