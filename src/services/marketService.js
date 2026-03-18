@@ -143,6 +143,102 @@ export const marketService = {
   },
 
   /**
+   * 즐겨찾기 시세 일괄 조회 (최신 날짜 기준)
+   * @param {Array} favorites - 즐겨찾기 목록 (getFavorites 결과)
+   * @returns {Array} 각 즐겨찾기의 최신 시세 데이터
+   */
+  async getFavoritePrices(favorites) {
+    if (!favorites || favorites.length === 0) return [];
+
+    try {
+      // 각 즐겨찾기별 최신 시세를 병렬로 조회
+      const results = await Promise.all(
+        favorites.map(async (fav) => {
+          try {
+            if (fav.grade === 'summary') {
+              // summary 즐겨찾기: market_summary에서 최신 데이터
+              const { data } = await supabase
+                .from('market_summary')
+                .select('*')
+                .eq('market_name', fav.market_name)
+                .order('market_date', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (!data) return { favorite: fav, type: 'summary', data: null };
+
+              // 전일 비교 계산
+              const calcChange = (cur, prev) => {
+                const change = prev > 0 ? cur - prev : 0;
+                const pct = prev > 0 ? Math.round((change / prev) * 1000) / 10 : 0;
+                return { change, changePercent: pct, comparison_available: prev > 0 };
+              };
+
+              return {
+                favorite: fav,
+                type: 'summary',
+                data: {
+                  market_date: data.market_date,
+                  total_boxes: parseInt(data.total_boxes) || 0,
+                  total_amount: parseInt(data.total_amount) || 0,
+                  overall_avg_price: parseInt(data.avg_price) || 0,
+                  max_price: parseInt(data.max_price) || 0,
+                  min_price: parseInt(data.min_price) || 0,
+                  overall_comparison: calcChange(parseInt(data.avg_price) || 0, parseInt(data.prev_avg_price) || 0),
+                },
+              };
+            } else {
+              // data 즐겨찾기: market_data에서 최신 데이터
+              const { data } = await supabase
+                .from('market_data')
+                .select('*')
+                .eq('market_name', fav.market_name)
+                .eq('grade', fav.grade)
+                .eq('weight', fav.weight)
+                .order('market_date', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+              if (!data) return { favorite: fav, type: 'detail', data: null };
+
+              const calcChange = (cur, prev) => {
+                const change = prev > 0 ? cur - prev : 0;
+                const pct = prev > 0 ? Math.round((change / prev) * 1000) / 10 : 0;
+                return { change, changePercent: pct, comparison_available: prev > 0 };
+              };
+
+              return {
+                favorite: fav,
+                type: 'detail',
+                data: {
+                  market_date: data.market_date,
+                  weight: data.weight,
+                  grade: data.grade,
+                  boxes: parseInt(data.boxes) || 0,
+                  avg_price: parseInt(data.avg_price) || 0,
+                  max_price: parseInt(data.max_price) || 0,
+                  min_price: parseInt(data.min_price) || 0,
+                  price_comparison: calcChange(parseInt(data.avg_price) || 0, parseInt(data.prev_avg_price) || 0),
+                  max_price_comparison: calcChange(parseInt(data.max_price) || 0, parseInt(data.prev_max_price) || 0),
+                  min_price_comparison: calcChange(parseInt(data.min_price) || 0, parseInt(data.prev_min_price) || 0),
+                  boxes_comparison: calcChange(parseInt(data.boxes) || 0, parseInt(data.prev_boxes) || 0),
+                },
+              };
+            }
+          } catch {
+            return { favorite: fav, type: fav.grade === 'summary' ? 'summary' : 'detail', data: null };
+          }
+        })
+      );
+
+      return results;
+    } catch (error) {
+      console.error('즐겨찾기 시세 일괄 조회 오류:', error);
+      throw error;
+    }
+  },
+
+  /**
    * 가격 알림 목록 조회
    */
   async getAlerts() {

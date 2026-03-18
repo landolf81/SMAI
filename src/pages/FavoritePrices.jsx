@@ -1,0 +1,308 @@
+/**
+ * FavoritePrices.jsx
+ * 즐겨찾기 시세 페이지 - 즐겨찾기한 공판장 카드(summary/data)를 최신 시세와 함께 표시
+ */
+import { useState, useEffect, useContext, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { marketService } from '../services';
+import { AuthContext } from '../context/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+
+// 가격 포맷
+const formatPrice = (price) => {
+  if (!price && price !== 0) return '-';
+  return Number(price).toLocaleString();
+};
+
+// 날짜 포맷
+const formatDate = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+};
+
+// 뱃지 색상
+const getMarketBadgeColor = () => '#1D4ED8';
+
+// 변동폭 렌더링 헬퍼
+const ChangeText = ({ comparison }) => {
+  if (!comparison?.comparison_available) return <span className="text-base-content/30">-</span>;
+  if (Math.abs(comparison.changePercent) < 0.1) return <span className="text-base-content/40">보합</span>;
+  const isUp = comparison.change > 0;
+  return (
+    <span className={isUp ? 'text-red-500' : 'text-blue-500'}>
+      {isUp ? '▲' : '▼'} {Math.abs(comparison.change).toLocaleString()}
+    </span>
+  );
+};
+
+const FavoritePrices = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useContext(AuthContext);
+  const [loading, setLoading] = useState(true);
+  const [favPrices, setFavPrices] = useState([]);
+
+  // 즐겨찾기 시세 로드
+  const loadFavoritePrices = useCallback(async () => {
+    try {
+      setLoading(true);
+      const favorites = await marketService.getFavorites();
+      if (favorites.length === 0) {
+        setFavPrices([]);
+        return;
+      }
+      const prices = await marketService.getFavoritePrices(favorites);
+      setFavPrices(prices);
+    } catch {
+      toast.error('즐겨찾기 시세를 불러오지 못했습니다');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) loadFavoritePrices();
+  }, [currentUser, loadFavoritePrices]);
+
+  // 즐겨찾기 해제
+  const handleRemove = async (favId) => {
+    try {
+      await marketService.removeFromFavorites(favId);
+      setFavPrices(prev => prev.filter(fp => fp.favorite.id !== favId));
+      toast('즐겨찾기가 해제되었습니다', { icon: '☆' });
+    } catch {
+      toast.error('처리 중 오류가 발생했습니다');
+    }
+  };
+
+  // 카드 클릭 → Prices 페이지
+  const handleCardClick = (marketName, date) => {
+    navigate(`/prices?market=${encodeURIComponent(marketName)}&date=${date}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-base-200 pt-16 pb-24">
+      {/* 헤더 */}
+      <div className="bg-base-100 border-b border-base-300 sticky top-14 z-10">
+        <div className="flex items-center px-4 py-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 hover:bg-base-300 rounded-full transition-colors active:scale-90"
+            title="뒤로가기"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+            </svg>
+          </button>
+          <h1 className="ml-2 text-lg font-bold text-base-content">즐겨찾기 시세</h1>
+        </div>
+      </div>
+
+      {/* 콘텐츠 */}
+      <div className="w-full max-w-screen-xl mx-auto p-4">
+        {loading ? (
+          <LoadingSpinner />
+        ) : favPrices.length === 0 ? (
+          <div className="text-center py-20">
+            <svg className="w-16 h-16 mx-auto mb-4 text-base-content/20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+            <p className="text-base-content/50 text-lg">즐겨찾기한 시세가 없습니다</p>
+            <p className="text-base-content/30 text-sm mt-2">시세 화면에서 ★ 버튼을 눌러 추가해보세요</p>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {favPrices.map((fp) => {
+              const { favorite: fav, type, data } = fp;
+
+              if (!data) {
+                return (
+                  <div key={fav.id} className="relative pt-4">
+                    <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-base font-bold rounded-full shadow-md"
+                        style={{ backgroundColor: getMarketBadgeColor() }}
+                      >
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                        {fav.market_name}
+                      </span>
+                      <button
+                        onClick={() => handleRemove(fav.id)}
+                        className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
+                      >
+                        <svg className="w-5 h-5 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="bg-base-100 rounded-2xl shadow-md border border-base-200 pt-6 pb-4 px-4">
+                      <p className="text-base-content/40 text-center py-4">데이터가 없습니다</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Summary 카드
+              if (type === 'summary') {
+                return (
+                  <div
+                    key={fav.id}
+                    className="relative pt-4 cursor-pointer active:scale-[0.98] transition-transform"
+                    onClick={() => handleCardClick(fav.market_name, data.market_date)}
+                  >
+                    <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-base font-bold rounded-full shadow-md"
+                        style={{ backgroundColor: getMarketBadgeColor() }}
+                      >
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                        {fav.market_name}
+                      </span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleRemove(fav.id); }}
+                        className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
+                      >
+                        <svg className="w-5 h-5 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div className="bg-base-100 rounded-2xl shadow-md border border-base-200 pt-6 pb-4 px-4">
+                      <div className="text-sm text-base-content/50 mb-3">
+                        {formatDate(data.market_date)} 거래 요약
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1 text-center">
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-sm text-base-content/50 mb-1">총 출하량</div>
+                          <div className="text-lg font-bold text-base-content whitespace-nowrap">
+                            {formatPrice(data.total_boxes)}상자
+                          </div>
+                        </div>
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-sm text-base-content/50 mb-1">전체 평균가</div>
+                          <div className="text-lg font-bold text-base-content whitespace-nowrap">
+                            {formatPrice(data.overall_avg_price)}
+                          </div>
+                        </div>
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-sm text-base-content/50 mb-1">전일대비</div>
+                          <div className="text-lg font-bold whitespace-nowrap">
+                            <ChangeText comparison={data.overall_comparison} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-1 text-center mt-1">
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-sm text-base-content/50 mb-1">전체 최고가</div>
+                          <div className="text-lg font-bold text-red-500 whitespace-nowrap">
+                            {formatPrice(data.max_price)}
+                          </div>
+                        </div>
+                        <div className="bg-base-200 rounded-lg py-3 px-1">
+                          <div className="text-sm text-base-content/50 mb-1">전체 최저가</div>
+                          <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
+                            {formatPrice(data.min_price)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Data (등급별) 카드
+              return (
+                <div
+                  key={fav.id}
+                  className="relative pt-4 cursor-pointer active:scale-[0.98] transition-transform"
+                  onClick={() => handleCardClick(fav.market_name, data.market_date)}
+                >
+                  <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-base font-bold rounded-full shadow-md"
+                        style={{ backgroundColor: getMarketBadgeColor() }}
+                      >
+                        <span className="w-2 h-2 bg-white rounded-full"></span>
+                        {fav.market_name}
+                      </span>
+                      <span
+                        className="inline-flex items-center px-2.5 py-1.5 text-white text-sm font-bold rounded-full shadow-md"
+                        style={{ backgroundColor: getMarketBadgeColor() }}
+                      >
+                        {data.grade}
+                      </span>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleRemove(fav.id); }}
+                      className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
+                    >
+                      <svg className="w-5 h-5 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="bg-base-100 rounded-2xl shadow-md border border-base-200 pt-6 pb-4 px-4">
+                    <div className="text-sm text-base-content/50 mb-1">
+                      {formatDate(data.market_date)}
+                    </div>
+                    <div className="text-base text-base-content/60 mb-3 flex items-center gap-2">
+                      <span>참외 {data.weight} · 수량 <span className="font-semibold text-base-content">{formatPrice(data.boxes)}상자</span></span>
+                      {data.boxes_comparison?.comparison_available && data.boxes_comparison.change !== 0 && (
+                        <span className={`text-base font-medium ${data.boxes_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'}`}>
+                          ({data.boxes_comparison.change > 0 ? '+' : ''}{formatPrice(data.boxes_comparison.change)})
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-1 text-center">
+                      {/* 평균가 */}
+                      <div className="bg-base-200 rounded-lg py-3 px-1">
+                        <div className="text-sm text-base-content/50 mb-1">평균가</div>
+                        <div className="text-lg font-bold text-base-content whitespace-nowrap">
+                          {formatPrice(data.avg_price)}
+                        </div>
+                        <div className="text-sm font-medium whitespace-nowrap mt-1">
+                          <ChangeText comparison={data.price_comparison} />
+                        </div>
+                      </div>
+
+                      {/* 최고가 */}
+                      <div className="bg-base-200 rounded-lg py-3 px-1">
+                        <div className="text-sm text-base-content/50 mb-1">최고가</div>
+                        <div className="text-lg font-bold text-red-500 whitespace-nowrap">
+                          {formatPrice(data.max_price)}
+                        </div>
+                        <div className="text-sm font-medium whitespace-nowrap mt-1">
+                          <ChangeText comparison={data.max_price_comparison} />
+                        </div>
+                      </div>
+
+                      {/* 최저가 */}
+                      <div className="bg-base-200 rounded-lg py-3 px-1">
+                        <div className="text-sm text-base-content/50 mb-1">최저가</div>
+                        <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
+                          {formatPrice(data.min_price)}
+                        </div>
+                        <div className="text-sm font-medium whitespace-nowrap mt-1">
+                          <ChangeText comparison={data.min_price_comparison} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default FavoritePrices;

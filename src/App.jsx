@@ -91,6 +91,7 @@ const AdminDM = lazy(() => import('./pages/admin/AdminDM'));
 
 // Other Pages - Lazy Loading
 const Prices = lazy(() => import('./pages/Prices'));
+const FavoritePrices = lazy(() => import('./pages/FavoritePrices'));
 const Community = lazy(() => import('./pages/Community'));
 const Favorites = lazy(() => import('./pages/Favorites'));
 const Alerts = lazy(() => import('./pages/Alerts'));
@@ -503,6 +504,10 @@ const router = createBrowserRouter(
       {
         path: '/prices',
         element: <Prices />,
+      },
+      {
+        path: '/favorite-prices',
+        element: <ProtectedRoute><FavoritePrices /></ProtectedRoute>,
       },
       {
         path: '/market-landing',

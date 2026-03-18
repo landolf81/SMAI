@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useContext, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -9,6 +9,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import toast from 'react-hot-toast';
 import { marketService, briefingService, adService } from '../services';
 import { useAdminPermissions } from '../hooks/usePermissions';
+import { AuthContext } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MobileAdDisplay from '../components/MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
@@ -39,7 +40,9 @@ const Prices = () => {
   const [briefingGenerating, setBriefingGenerating] = useState(false); // 브리핑 생성 중
   const [auctionTime, setAuctionTime] = useState(null); // 경매시간
   const [selectedGrade, setSelectedGrade] = useState(null); // 모달용 선택된 등급/법인명
+  const [favorites, setFavorites] = useState([]); // 즐겨찾기 목록
   const adminPermissions = useAdminPermissions();
+  const { currentUser } = useContext(AuthContext);
 
   // URL 파라미터에서 시장명과 날짜 가져오기
   const marketName = searchParams.get('market');
@@ -75,6 +78,51 @@ const Prices = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  // 즐겨찾기 목록 로드
+  useEffect(() => {
+    if (!currentUser) return;
+    marketService.getFavorites().then(setFavorites).catch(() => {});
+  }, [currentUser]);
+
+  // 즐겨찾기 key 생성
+  const getFavKey = useCallback((mName, weight, grade) => `${mName}__${weight}__${grade}`, []);
+
+  // 즐겨찾기 Set (빠른 조회용)
+  const favSet = useMemo(() => {
+    const s = new Set();
+    favorites.forEach(f => s.add(getFavKey(f.market_name, f.weight, f.grade)));
+    return s;
+  }, [favorites, getFavKey]);
+
+  // 즐겨찾기 토글
+  const handleToggleFavorite = useCallback(async (mName, weight, grade) => {
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    const key = getFavKey(mName, weight, grade);
+    const existing = favorites.find(f => getFavKey(f.market_name, f.weight, f.grade) === key);
+
+    try {
+      if (existing) {
+        await marketService.removeFromFavorites(existing.id);
+        setFavorites(prev => prev.filter(f => f.id !== existing.id));
+        toast('즐겨찾기가 해제되었습니다', { icon: '☆' });
+      } else {
+        const newFav = await marketService.addToFavorites({
+          marketName: mName,
+          itemName: '참외',
+          weight,
+          grade,
+        });
+        setFavorites(prev => [...prev, newFav]);
+        toast('즐겨찾기에 추가되었습니다', { icon: '⭐' });
+      }
+    } catch (err) {
+      toast.error('처리 중 오류가 발생했습니다');
+    }
+  }, [currentUser, favorites, getFavKey, navigate]);
 
   // 등급 정렬 순서 적용 (공판장별 - DB 설정 사용)
   const sortDetailsByGradeOrder = (details, currentMarket, settings) => {
@@ -492,12 +540,27 @@ const Prices = () => {
                     <span className="w-2 h-2 bg-white rounded-full"></span>
                     {marketName}
                   </span>
-                  {auctionTime && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-base-100 text-base-content/70 text-base font-semibold rounded-full shadow-md border border-base-300">
-                      <AccessTimeIcon style={{ fontSize: 16 }} />
-                      {auctionTime} 경매
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {auctionTime && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-base-100 text-base-content/70 text-base font-semibold rounded-full shadow-md border border-base-300">
+                        <AccessTimeIcon style={{ fontSize: 16 }} />
+                        {auctionTime} 경매
+                      </span>
+                    )}
+                    {/* 즐겨찾기 ★ 버튼 (summary) */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(marketName, 'all', 'summary');
+                      }}
+                      className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
+                      title="즐겨찾기"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill={favSet.has(getFavKey(marketName, 'all', 'summary')) ? '#f59e0b' : 'none'} stroke={favSet.has(getFavKey(marketName, 'all', 'summary')) ? '#f59e0b' : 'currentColor'} strokeWidth="2">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
 
                 {/* 카드 본체 */}
@@ -583,18 +646,33 @@ const Prices = () => {
                     className={`relative pt-4 ${isWholesale ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
                     onClick={() => isWholesale && setSelectedGrade(item.grade)}
                   >
-                    {/* 등급 뱃지 - 카드 위에 걸쳐있는 형태 */}
-                    <div className="absolute -top-0 left-4 z-10 flex items-center gap-2">
-                      <span
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-base font-bold rounded-full shadow-md"
-                        style={{ backgroundColor: getMarketBadgeColor() }}
+                    {/* 등급 뱃지 + 즐겨찾기 - 카드 위에 걸쳐있는 형태 */}
+                    <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-base font-bold rounded-full shadow-md"
+                          style={{ backgroundColor: getMarketBadgeColor() }}
+                        >
+                          <span className="w-2 h-2 bg-white rounded-full"></span>
+                          {item.grade}
+                        </span>
+                        {isWholesale && (
+                          <span className="text-sm text-base-content/40">상세 보기 &gt;</span>
+                        )}
+                      </div>
+                      {/* 즐겨찾기 ★ 버튼 (data) */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleFavorite(marketName, item.weight, item.grade);
+                        }}
+                        className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
+                        title="즐겨찾기"
                       >
-                        <span className="w-2 h-2 bg-white rounded-full"></span>
-                        {item.grade}
-                      </span>
-                      {isWholesale && (
-                        <span className="text-sm text-base-content/40">상세 보기 &gt;</span>
-                      )}
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill={favSet.has(getFavKey(marketName, item.weight, item.grade)) ? '#f59e0b' : 'none'} stroke={favSet.has(getFavKey(marketName, item.weight, item.grade)) ? '#f59e0b' : 'currentColor'} strokeWidth="2">
+                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                      </button>
                     </div>
 
                     {/* 카드 본체 */}
@@ -700,6 +778,23 @@ const Prices = () => {
         marketDate={selectedDate}
         gradeName={selectedGrade}
       />
+
+      {/* 즐겨찾기 플로팅 버튼 */}
+      <button
+        onClick={() => {
+          if (!currentUser) {
+            navigate('/login');
+            return;
+          }
+          navigate('/favorite-prices');
+        }}
+        className={`fixed ${adminPermissions.isAdmin ? 'bottom-[136px]' : 'bottom-24'} right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95`}
+        title="즐겨찾기 시세"
+      >
+        <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      </button>
 
       {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 (모든 공판장) */}
       {adminPermissions.isAdmin && (
