@@ -766,8 +766,8 @@ const Lounge = () => {
   return (
     <>
     <div
-      className="flex flex-col bg-base-100"
-      style={{ height: '100dvh', paddingTop: '56px' }}
+      className="flex flex-col bg-base-100 transition-[padding] duration-150"
+      style={{ height: '100dvh', paddingTop: scrollDirection === 'down' ? '0px' : '56px' }}
     >
       {/* 메시지 목록 */}
       <main
