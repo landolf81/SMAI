@@ -10,6 +10,7 @@ import {
 } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { Toaster } from 'react-hot-toast';
 import './App.css';
 
 // Components (항상 필요한 것들은 즉시 로드)
@@ -721,6 +722,7 @@ function App() {
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <Toaster position="bottom-center" toastOptions={{ duration: 2000 }} />
         <Analytics />
         <SpeedInsights />
       </QueryClientProvider>
