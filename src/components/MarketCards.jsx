@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
-import { adService } from '../services';
+import { adService, marketService } from '../services';
+import { AuthContext } from '../context/AuthContext';
 import MobileAdDisplay from './MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
 import { generateMarketShareText, shareContent } from '../utils/shareUtils';
@@ -67,10 +68,50 @@ const WHOLESALE_TOTAL_INSERT_BEFORE = '서울가락';
 const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh, marketInfoMap }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
+  const { currentUser } = useContext(AuthContext);
 
   // 공판장 정보 바텀시트 상태
   const [infoSheet, setInfoSheet] = useState(null); // null | 공판장 info 객체
   const [revealedPhones, setRevealedPhones] = useState({}); // { index: true } 수송팀 번호 공개 여부
+
+  // 즐겨찾기 상태
+  const [favorites, setFavorites] = useState([]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    marketService.getFavorites().then(setFavorites).catch(() => {});
+  }, [currentUser]);
+
+  const getFavKey = useCallback((mName, weight, grade) => `${mName}__${weight}__${grade}`, []);
+
+  const favSet = useMemo(() => {
+    const s = new Set();
+    favorites.forEach(f => s.add(getFavKey(f.market_name, f.weight, f.grade)));
+    return s;
+  }, [favorites, getFavKey]);
+
+  const handleToggleFavorite = useCallback(async (e, mName, weight, grade) => {
+    e.stopPropagation();
+    if (!currentUser) {
+      navigate('/login');
+      return;
+    }
+    const key = getFavKey(mName, weight, grade);
+    const existing = favorites.find(f => getFavKey(f.market_name, f.weight, f.grade) === key);
+    try {
+      if (existing) {
+        await marketService.removeFromFavorites(existing.id);
+        setFavorites(prev => prev.filter(f => f.id !== existing.id));
+        toast('즐겨찾기가 해제되었습니다', { icon: '☆' });
+      } else {
+        const newFav = await marketService.addToFavorites({ marketName: mName, itemName: '참외', weight, grade });
+        setFavorites(prev => [...prev, newFav]);
+        toast('즐겨찾기에 추가되었습니다', { icon: '⭐' });
+      }
+    } catch {
+      toast.error('처리 중 오류가 발생했습니다');
+    }
+  }, [currentUser, favorites, getFavKey, navigate]);
 
   // vCard 다운로드 (연락처 등록)
   const downloadVCard = (name, phone) => {
@@ -481,6 +522,16 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                       </svg>
                     </button>
                   )}
+                  {/* 즐겨찾기 ★ 버튼 */}
+                  <button
+                    onClick={(e) => handleToggleFavorite(e, market.name, 'all', 'summary')}
+                    className="active:scale-90 transition-transform"
+                    title="즐겨찾기"
+                  >
+                    <svg className="w-7 h-7" viewBox="0 0 24 24" fill={favSet.has(getFavKey(market.name, 'all', 'summary')) ? '#f59e0b' : 'none'} stroke={favSet.has(getFavKey(market.name, 'all', 'summary')) ? '#f59e0b' : '#9ca3af'} strokeWidth="2">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                    </svg>
+                  </button>
                 </div>
                 {/* 추세 차트 아이콘 */}
                 <button

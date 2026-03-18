@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -60,6 +61,7 @@ const Home = () => {
   const [weatherBriefing, setWeatherBriefing] = useState(null);
   const [briefingRegenerating, setBriefingRegenerating] = useState(false);
   const adminPermissions = useAdminPermissions();
+  const { currentUser } = useContext(AuthContext);
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -798,6 +800,25 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* 즐겨찾기 플로팅 버튼 */}
+      <button
+        onClick={() => {
+          if (!currentUser) {
+            navigate('/login');
+            return;
+          }
+          navigate('/favorite-prices');
+        }}
+        className={`fixed bottom-[136px] z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95 ${
+          adminPermissions.isAdmin ? 'right-20' : 'right-4'
+        }`}
+        title="즐겨찾기 시세"
+      >
+        <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+        </svg>
+      </button>
 
       {/* 플로팅 검색 버튼 - 도매시장 법인 검색 */}
       <button
