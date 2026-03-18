@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useContext } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -815,7 +816,7 @@ const Home = () => {
       <button
         onClick={() => {
           if (!currentUser) {
-            navigate('/login');
+            toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.', { icon: '🔒' });
             return;
           }
           navigate('/favorite-prices');
