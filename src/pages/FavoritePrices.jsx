@@ -397,14 +397,7 @@ const FavoritePrices = () => {
                         {data.grade}
                       </span>
                     </div>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleRemove(fav.id); }}
-                      className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
-                    >
-                      <svg className="w-5 h-5 text-base-content/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                      </svg>
-                    </button>
+                    <ActionButtons stopProp />
                   </div>
 
                   <div className="bg-base-100 rounded-2xl shadow-md border border-base-200 pt-6 pb-4 px-4">
