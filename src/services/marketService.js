@@ -38,7 +38,6 @@ export const marketService = {
    */
   async getFavorites() {
     try {
-      // 읽기 전용 - 캐시된 세션 사용
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
       if (!user) throw new Error('인증되지 않은 사용자입니다.');
@@ -48,6 +47,7 @@ export const marketService = {
         .select('*')
         .eq('user_id', user.id)
         .eq('is_active', true)
+        .order('sort_order', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -79,7 +79,6 @@ export const marketService = {
         .maybeSingle();
 
       if (existing) {
-        // 이미 있으면 is_active = true로 업데이트
         const { data, error } = await supabase
           .from('market_favorites')
           .update({
@@ -93,7 +92,6 @@ export const marketService = {
         if (error) throw error;
         return data;
       } else {
-        // 없으면 새로 추가
         const { data, error } = await supabase
           .from('market_favorites')
           .insert([{
@@ -143,36 +141,58 @@ export const marketService = {
   },
 
   /**
+   * 즐겨찾기 순서 업데이트
+   * @param {Array<{id, sort_order}>} orderUpdates
+   */
+  async updateFavoriteOrder(orderUpdates) {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
+      if (!user) throw new Error('인증되지 않은 사용자입니다.');
+
+      // 각 항목의 sort_order를 개별 업데이트
+      await Promise.all(
+        orderUpdates.map(({ id, sort_order }) =>
+          supabase
+            .from('market_favorites')
+            .update({ sort_order, updated_at: new Date().toISOString() })
+            .eq('id', id)
+            .eq('user_id', user.id)
+        )
+      );
+    } catch (error) {
+      console.error('즐겨찾기 순서 업데이트 오류:', error);
+      throw error;
+    }
+  },
+
+  /**
    * 즐겨찾기 시세 일괄 조회 (최신 날짜 기준)
    * @param {Array} favorites - 즐겨찾기 목록 (getFavorites 결과)
    * @returns {Array} 각 즐겨찾기의 최신 시세 데이터
    */
-  async getFavoritePrices(favorites) {
+  async getFavoritePrices(favorites, date) {
     if (!favorites || favorites.length === 0) return [];
 
+    const calcChange = (cur, prev) => {
+      const change = prev > 0 ? cur - prev : 0;
+      const pct = prev > 0 ? Math.round((change / prev) * 1000) / 10 : 0;
+      return { change, changePercent: pct, comparison_available: prev > 0 };
+    };
+
     try {
-      // 각 즐겨찾기별 최신 시세를 병렬로 조회
       const results = await Promise.all(
         favorites.map(async (fav) => {
           try {
             if (fav.grade === 'summary') {
-              // summary 즐겨찾기: market_summary에서 최신 데이터
               const { data } = await supabase
                 .from('market_summary')
                 .select('*')
                 .eq('market_name', fav.market_name)
-                .order('market_date', { ascending: false })
-                .limit(1)
+                .eq('market_date', date)
                 .maybeSingle();
 
               if (!data) return { favorite: fav, type: 'summary', data: null };
-
-              // 전일 비교 계산
-              const calcChange = (cur, prev) => {
-                const change = prev > 0 ? cur - prev : 0;
-                const pct = prev > 0 ? Math.round((change / prev) * 1000) / 10 : 0;
-                return { change, changePercent: pct, comparison_available: prev > 0 };
-              };
 
               return {
                 favorite: fav,
@@ -180,32 +200,32 @@ export const marketService = {
                 data: {
                   market_date: data.market_date,
                   total_boxes: parseInt(data.total_boxes) || 0,
+                  prev_total_boxes: parseInt(data.prev_total_boxes) || 0,
                   total_amount: parseInt(data.total_amount) || 0,
                   overall_avg_price: parseInt(data.avg_price) || 0,
+                  prev_avg_price: parseInt(data.prev_avg_price) || 0,
                   max_price: parseInt(data.max_price) || 0,
+                  prev_max_price: parseInt(data.prev_max_price) || 0,
                   min_price: parseInt(data.min_price) || 0,
+                  prev_min_price: parseInt(data.prev_min_price) || 0,
+                  is_finalized: data.is_finalized,
                   overall_comparison: calcChange(parseInt(data.avg_price) || 0, parseInt(data.prev_avg_price) || 0),
+                  max_comparison: calcChange(parseInt(data.max_price) || 0, parseInt(data.prev_max_price) || 0),
+                  min_comparison: calcChange(parseInt(data.min_price) || 0, parseInt(data.prev_min_price) || 0),
+                  boxes_comparison: calcChange(parseInt(data.total_boxes) || 0, parseInt(data.prev_total_boxes) || 0),
                 },
               };
             } else {
-              // data 즐겨찾기: market_data에서 최신 데이터
               const { data } = await supabase
                 .from('market_data')
                 .select('*')
                 .eq('market_name', fav.market_name)
                 .eq('grade', fav.grade)
                 .eq('weight', fav.weight)
-                .order('market_date', { ascending: false })
-                .limit(1)
+                .eq('market_date', date)
                 .maybeSingle();
 
               if (!data) return { favorite: fav, type: 'detail', data: null };
-
-              const calcChange = (cur, prev) => {
-                const change = prev > 0 ? cur - prev : 0;
-                const pct = prev > 0 ? Math.round((change / prev) * 1000) / 10 : 0;
-                return { change, changePercent: pct, comparison_available: prev > 0 };
-              };
 
               return {
                 favorite: fav,

@@ -16,6 +16,7 @@ import { shouldShowAds } from '../utils/deviceDetector';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 import PriceDetailModal from '../components/PriceDetailModal';
+import MarketSearchModal from '../components/MarketSearchModal';
 
 // 산지 목록 — 이 외에는 모두 모달 지원 (도매시장)
 const LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협', '가락공판장', '대전공판장', '광주공판장'];
@@ -41,6 +42,7 @@ const Prices = () => {
   const [auctionTime, setAuctionTime] = useState(null); // 경매시간
   const [selectedGrade, setSelectedGrade] = useState(null); // 모달용 선택된 등급/법인명
   const [favorites, setFavorites] = useState([]); // 즐겨찾기 목록
+  const [searchModalOpen, setSearchModalOpen] = useState(false); // 검색 모달
   const adminPermissions = useAdminPermissions();
   const { currentUser } = useContext(AuthContext);
 
@@ -779,7 +781,19 @@ const Prices = () => {
         gradeName={selectedGrade}
       />
 
-      {/* 즐겨찾기 플로팅 버튼 */}
+      {/* 플로팅 버튼: 오른쪽 세로 (검색 + 즐겨찾기), 왼쪽 (admin) */}
+      {/* 검색 버튼 (오른쪽 하단) */}
+      <button
+        onClick={() => setSearchModalOpen(true)}
+        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 active:scale-95"
+        title="도매시장 법인 검색"
+      >
+        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+
+      {/* 즐겨찾기 버튼 (검색 위) */}
       <button
         onClick={() => {
           if (!currentUser) {
@@ -788,7 +802,7 @@ const Prices = () => {
           }
           navigate('/favorite-prices');
         }}
-        className={`fixed ${adminPermissions.isAdmin ? 'bottom-[160px]' : 'bottom-24'} right-4 z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95`}
+        className="fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95"
         title="즐겨찾기 시세"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -796,12 +810,19 @@ const Prices = () => {
         </svg>
       </button>
 
-      {/* 관리자 전용 플로팅 버튼 - 브리핑 생성 (모든 공판장) */}
+      {/* 도매시장 검색 모달 */}
+      <MarketSearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        marketDate={selectedDate}
+      />
+
+      {/* 관리자 전용 플로팅 버튼 (왼쪽 하단) */}
       {adminPermissions.isAdmin && (
         <button
           onClick={handleGenerateBriefing}
           disabled={briefingGenerating}
-          className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
             briefingGenerating
               ? 'bg-base-300 cursor-not-allowed'
               : 'bg-[#004225] hover:bg-[#003018] active:scale-95'

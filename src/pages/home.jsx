@@ -801,7 +801,17 @@ const Home = () => {
         )}
       </div>
 
-      {/* 즐겨찾기 플로팅 버튼 */}
+      {/* 플로팅 버튼: 오른쪽 세로 (검색 + 즐겨찾기), 왼쪽 (admin) */}
+      {/* 검색 버튼 (오른쪽 하단) */}
+      <button
+        onClick={() => setSearchModalOpen(true)}
+        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 active:scale-95"
+        title="도매시장 법인 검색"
+      >
+        <SearchIcon className="text-white" />
+      </button>
+
+      {/* 즐겨찾기 버튼 (검색 위) */}
       <button
         onClick={() => {
           if (!currentUser) {
@@ -810,25 +820,12 @@ const Home = () => {
           }
           navigate('/favorite-prices');
         }}
-        className={`fixed bottom-[160px] z-50 w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95 ${
-          adminPermissions.isAdmin ? 'right-20' : 'right-4'
-        }`}
+        className="fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95"
         title="즐겨찾기 시세"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
         </svg>
-      </button>
-
-      {/* 플로팅 검색 버튼 - 도매시장 법인 검색 */}
-      <button
-        onClick={() => setSearchModalOpen(true)}
-        className={`fixed bottom-24 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 active:scale-95 ${
-          adminPermissions.isAdmin ? 'right-20' : 'right-4'
-        }`}
-        title="도매시장 법인 검색"
-      >
-        <SearchIcon className="text-white" />
       </button>
 
       {/* 도매시장 검색 모달 */}
@@ -838,12 +835,12 @@ const Home = () => {
         marketDate={selectedDate}
       />
 
-      {/* 관리자 전용 플로팅 버튼 - 날씨 브리핑 재생성 */}
+      {/* 관리자 전용 플로팅 버튼 (왼쪽 하단) */}
       {adminPermissions.isAdmin && (
         <button
           onClick={handleRegenerateBriefing}
           disabled={briefingRegenerating}
-          className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
             briefingRegenerating
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
