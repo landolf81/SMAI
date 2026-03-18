@@ -24,6 +24,7 @@ import { AI_USER_ID } from '../config/aiUser';
 import PollBadge from '../components/lounge/PollBadge';
 import PollCard from '../components/lounge/PollCard';
 import LoungeAdMessage from '../components/lounge/LoungeAdMessage';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import LoungeComposeModal from '../components/lounge/LoungeComposeModal';
 import LoungeImageScroll from '../components/lounge/LoungeImageScroll';
 import ProfileModal from '../components/ProfileModal';
@@ -294,6 +295,7 @@ LoungeMessage.displayName = 'LoungeMessage';
 const Lounge = () => {
   const { currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
+  const scrollDirection = useScrollDirection();
   const [messages, setMessages] = useState([]);
   const [isInitialLoading, setIsInitialLoading] = useState(true); // 최초 로드 중
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -860,7 +862,7 @@ const Lounge = () => {
 
     {/* 플로팅 글쓰기 버튼 */}
     {!isComposing && (
-      <div className="fixed right-4 z-40" style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
+      <div className={`fixed right-4 z-40 transition-all duration-300 ${scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'}`} style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
         <button
           onClick={() => { setMentionText(''); setIsComposing(true); }}
           className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3.5 transition-all duration-300 hover:shadow-xl active:scale-95"

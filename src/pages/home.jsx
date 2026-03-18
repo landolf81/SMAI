@@ -18,6 +18,7 @@ import WeatherModal from '../components/WeatherModal';
 import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useAdminPermissions } from '../hooks/usePermissions';
 import PushNotificationBanner from '../components/PushNotificationBanner';
 import MarketSearchModal from '../components/MarketSearchModal';
@@ -74,6 +75,7 @@ const Home = () => {
 
   // 홈페이지 스크롤 위치 복원
   const { resetScrollPosition, scrollToTop } = useScrollRestore('home', null, null, null, true);
+  const scrollDirection = useScrollDirection();
 
   // 한국 시간 기준으로 오늘 날짜 가져오기
   const getKoreanToday = () => {
@@ -806,7 +808,9 @@ const Home = () => {
       {/* 검색 버튼 (오른쪽 하단) */}
       <button
         onClick={() => setSearchModalOpen(true)}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 active:scale-95"
+        className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-blue-600 hover:bg-blue-700 active:scale-95 ${
+          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
+        }`}
         title="도매시장 법인 검색"
       >
         <SearchIcon className="text-white" />
@@ -821,7 +825,9 @@ const Home = () => {
           }
           navigate('/favorite-prices');
         }}
-        className="fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95"
+        className={`fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-amber-500 hover:bg-amber-600 active:scale-95 ${
+          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
+        }`}
         title="즐겨찾기 시세"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -841,11 +847,11 @@ const Home = () => {
         <button
           onClick={handleRegenerateBriefing}
           disabled={briefingRegenerating}
-          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
             briefingRegenerating
               ? 'bg-gray-400 cursor-not-allowed'
               : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
-          }`}
+          } ${scrollDirection === 'down' ? '-translate-x-20' : 'translate-x-0'}`}
           title="날씨 브리핑 재생성"
         >
           {briefingRegenerating ? (

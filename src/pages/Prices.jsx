@@ -13,6 +13,7 @@ import { AuthContext } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MobileAdDisplay from '../components/MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 import PriceDetailModal from '../components/PriceDetailModal';
@@ -45,6 +46,7 @@ const Prices = () => {
   const [searchModalOpen, setSearchModalOpen] = useState(false); // 검색 모달
   const adminPermissions = useAdminPermissions();
   const { currentUser } = useContext(AuthContext);
+  const scrollDirection = useScrollDirection();
 
   // URL 파라미터에서 시장명과 날짜 가져오기
   const marketName = searchParams.get('market');
@@ -785,7 +787,9 @@ const Prices = () => {
       {/* 검색 버튼 (오른쪽 하단) */}
       <button
         onClick={() => setSearchModalOpen(true)}
-        className="fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-blue-600 hover:bg-blue-700 active:scale-95"
+        className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-blue-600 hover:bg-blue-700 active:scale-95 ${
+          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
+        }`}
         title="도매시장 법인 검색"
       >
         <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -802,7 +806,9 @@ const Prices = () => {
           }
           navigate('/favorite-prices');
         }}
-        className="fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all bg-amber-500 hover:bg-amber-600 active:scale-95"
+        className={`fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-amber-500 hover:bg-amber-600 active:scale-95 ${
+          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
+        }`}
         title="즐겨찾기 시세"
       >
         <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -822,11 +828,11 @@ const Prices = () => {
         <button
           onClick={handleGenerateBriefing}
           disabled={briefingGenerating}
-          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all ${
+          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
             briefingGenerating
               ? 'bg-base-300 cursor-not-allowed'
               : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
-          }`}
+          } ${scrollDirection === 'down' ? '-translate-x-20' : 'translate-x-0'}`}
           title="AI 브리핑 생성"
         >
           {briefingGenerating ? (
