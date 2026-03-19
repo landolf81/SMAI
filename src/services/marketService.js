@@ -125,10 +125,7 @@ export const marketService = {
 
       const { error } = await supabase
         .from('market_favorites')
-        .update({
-          is_active: false,
-          updated_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', favoriteId)
         .eq('user_id', user.id);
 
