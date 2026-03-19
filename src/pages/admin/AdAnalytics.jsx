@@ -143,13 +143,13 @@ const AdAnalytics = () => {
           <div className="flex items-center gap-3">
             <TrendingUpIcon className="text-3xl text-red-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">광고 성과 분석</h1>
-              <p className="text-gray-600">광고 성과 및 수익 분석 대시보드</p>
+              <h1 className="text-2xl font-bold text-base-content">광고 성과 분석</h1>
+              <p className="text-base-content/60">광고 성과 및 수익 분석 대시보드</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
-            <DateRangeIcon className="text-gray-500" />
+            <DateRangeIcon className="text-base-content/60" />
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
@@ -164,7 +164,7 @@ const AdAnalytics = () => {
 
         {/* 주요 지표 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-blue-600">
               <VisibilityIcon />
             </div>
@@ -173,7 +173,7 @@ const AdAnalytics = () => {
             <div className="stat-desc">↗︎ 15% (전주 대비)</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-green-600">
               <MouseIcon />
             </div>
@@ -182,7 +182,7 @@ const AdAnalytics = () => {
             <div className="stat-desc">↗︎ 12% (전주 대비)</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-orange-600">
               <AttachMoneyIcon />
             </div>
@@ -191,13 +191,13 @@ const AdAnalytics = () => {
             <div className="stat-desc">↗︎ 22% (전주 대비)</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-title">평균 CTR</div>
             <div className="stat-value text-purple-600">{adStats.overview.avgCTR}%</div>
             <div className="stat-desc">업계 평균: 4.2%</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-red-600">
               <CampaignIcon />
             </div>
@@ -208,8 +208,8 @@ const AdAnalytics = () => {
         </div>
 
         {/* 일별 성과 차트 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-lg font-semibold mb-4">일별 광고 성과</h3>
+        <div className="bg-base-100 rounded-lg shadow p-6 mb-8">
+          <h3 className="text-lg font-semibold text-base-content mb-4">일별 광고 성과</h3>
           <div className="h-64 flex items-end justify-between gap-2">
             {adStats.dailyStats.map((day, index) => (
               <div key={index} className="flex flex-col items-center flex-1">
@@ -233,7 +233,7 @@ const AdAnalytics = () => {
                     title={`노출: ${day.impressions.toLocaleString()}`}
                   ></div>
                 </div>
-                <div className="text-xs text-gray-500">
+                <div className="text-xs text-base-content/60">
                   {new Date(day.date).getDate()}일
                 </div>
               </div>
@@ -257,8 +257,8 @@ const AdAnalytics = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* 광고별 성과 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">광고별 성과</h3>
+          <div className="bg-base-100 rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-base-content mb-4">광고별 성과</h3>
             <div className="overflow-x-auto">
               <table className="table table-compact w-full">
                 <thead>
@@ -275,13 +275,13 @@ const AdAnalytics = () => {
                   {adStats.adPerformance.map((ad) => (
                     <tr key={ad.id}>
                       <td>
-                        <div className="font-medium">{ad.title}</div>
-                        <div className="text-xs text-gray-500">{ad.period}</div>
+                        <div className="font-medium text-base-content">{ad.title}</div>
+                        <div className="text-xs text-base-content/60">{ad.period}</div>
                       </td>
                       <td>{ad.impressions.toLocaleString()}</td>
                       <td>{ad.clicks.toLocaleString()}</td>
                       <td>
-                        <span className={`font-medium ${ad.ctr > 6 ? 'text-green-600' : ad.ctr > 4 ? 'text-blue-600' : 'text-gray-600'}`}>
+                        <span className={`font-medium ${ad.ctr > 6 ? 'text-green-600' : ad.ctr > 4 ? 'text-blue-600' : 'text-base-content/60'}`}>
                           {ad.ctr}%
                         </span>
                       </td>
@@ -301,14 +301,14 @@ const AdAnalytics = () => {
           </div>
 
           {/* 최고 성과 광고 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">최고 성과 광고</h3>
+          <div className="bg-base-100 rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-base-content mb-4">최고 성과 광고</h3>
             <div className="space-y-4">
               {adStats.topPerformers.map((performer, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                   <div>
-                    <div className="font-medium">{performer.title}</div>
-                    <div className="text-sm text-gray-500">{performer.metric} 기준</div>
+                    <div className="font-medium text-base-content">{performer.title}</div>
+                    <div className="text-sm text-base-content/60">{performer.metric} 기준</div>
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-lg">{performer.value}</div>

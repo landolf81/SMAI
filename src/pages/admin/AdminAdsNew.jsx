@@ -485,10 +485,10 @@ const AdminAdsNew = () => {
   if (loading) {
     return (
       <AdminOnly>
-        <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 pt-20">
+        <div className="min-h-screen bg-base-200 pt-20">
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <div className="w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <span className="text-gray-600 font-medium">광고 목록을 불러오는 중...</span>
+            <span className="text-base-content/60 font-medium">광고 목록을 불러오는 중...</span>
           </div>
         </div>
       </AdminOnly>
@@ -497,18 +497,18 @@ const AdminAdsNew = () => {
 
   return (
     <AdminOnly>
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50">
+      <div className="min-h-screen bg-base-200">
         <div className="px-4 sm:px-6 pt-20 pb-6 max-w-7xl mx-auto">
           {/* 헤더 */}
-          <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-4 sm:p-6 mb-6">
+          <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-4 sm:p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
                   <CampaignIcon className="text-white" style={{ fontSize: 28 }} />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">광고 관리</h1>
-                  <p className="text-xs text-gray-500">모바일 광고 생성 및 관리</p>
+                  <h1 className="text-xl sm:text-2xl font-bold text-base-content">광고 관리</h1>
+                  <p className="text-xs text-base-content/60">모바일 광고 생성 및 관리</p>
                 </div>
               </div>
 
@@ -547,23 +547,23 @@ const AdminAdsNew = () => {
           )}
 
           {/* 검색창 */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+          <div className="bg-base-100 rounded-xl shadow-sm border border-base-300 p-4 mb-6">
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* 검색 */}
                 <div className="flex-1">
                   <div className="relative">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style={{ fontSize: 20 }} />
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/40" style={{ fontSize: 20 }} />
                     <input
                       type="text"
                       value={searchTerm}
                       onChange={handleSearch}
                       placeholder="광고 제목이나 내용으로 검색..."
-                      className="w-full pl-10 pr-10 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all bg-base-100 text-base-content"
                     />
                     {searchTerm && (
                       <button
                         onClick={clearSearch}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-base-content/40 hover:text-base-content/60 transition-colors"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -575,11 +575,11 @@ const AdminAdsNew = () => {
 
                 {/* 정렬 옵션 */}
                 <div className="flex items-center gap-2">
-                  <SortIcon className="text-gray-400" style={{ fontSize: 20 }} />
+                  <SortIcon className="text-base-content/40" style={{ fontSize: 20 }} />
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-white"
+                    className="px-3 py-2.5 border border-base-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-base-100 text-base-content"
                   >
                     <option value="created_at">생성일</option>
                     <option value="view_count">노출수</option>
@@ -589,7 +589,7 @@ const AdminAdsNew = () => {
                   <select
                     value={sortOrder}
                     onChange={(e) => setSortOrder(e.target.value)}
-                    className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-white"
+                    className="px-3 py-2.5 border border-base-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent bg-base-100 text-base-content"
                   >
                     <option value="DESC">내림차순</option>
                     <option value="ASC">오름차순</option>
@@ -598,7 +598,7 @@ const AdminAdsNew = () => {
               </div>
 
               {searchTerm && (
-                <div className="mt-3 text-sm text-gray-500">
+                <div className="mt-3 text-sm text-base-content/60">
                   &quot;{searchTerm}&quot; 검색 결과: {filteredAds.length}개
                 </div>
               )}
@@ -607,11 +607,11 @@ const AdminAdsNew = () => {
           {/* 광고 목록 */}
           <div className="space-y-6">
               {filteredAds.length === 0 ? (
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CampaignIcon className="text-gray-300" style={{ fontSize: 40 }} />
+                <div className="bg-base-100 rounded-2xl shadow-sm border border-base-300 p-12 text-center">
+                  <div className="w-20 h-20 bg-base-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CampaignIcon className="text-base-content/30" style={{ fontSize: 40 }} />
                   </div>
-                  <p className="text-gray-500 mb-4 text-lg">
+                  <p className="text-base-content/60 mb-4 text-lg">
                     {searchTerm ? `"${searchTerm}"에 대한 검색 결과가 없습니다.` : '등록된 광고가 없습니다.'}
                   </p>
                   <button
@@ -643,9 +643,9 @@ const AdminAdsNew = () => {
                   {/* 페이지네이션 */}
                   {pagination.totalPages > 1 && (
                     <div className="flex justify-center mt-8">
-                      <div className="inline-flex items-center gap-1 bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+                      <div className="inline-flex items-center gap-1 bg-base-100 rounded-xl shadow-sm border border-base-300 p-1">
                         <button
-                          className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-3 py-2 rounded-lg text-sm font-medium text-base-content/60 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           disabled={pagination.page === 1}
                           onClick={() => fetchAds(pagination.page - 1)}
                         >
@@ -656,13 +656,13 @@ const AdminAdsNew = () => {
                         {pagination.page > 4 && (
                           <>
                             <button
-                              className="w-10 h-10 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50 transition-colors"
+                              className="w-10 h-10 rounded-lg text-sm font-medium text-base-content/60 hover:bg-amber-50 transition-colors"
                               onClick={() => fetchAds(1)}
                             >
                               1
                             </button>
                             {pagination.page > 5 && (
-                              <span className="w-10 h-10 flex items-center justify-center text-gray-400">...</span>
+                              <span className="w-10 h-10 flex items-center justify-center text-base-content/40">...</span>
                             )}
                           </>
                         )}
@@ -674,7 +674,7 @@ const AdminAdsNew = () => {
                             className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
                               page === pagination.page
                                 ? 'bg-amber-500 text-white'
-                                : 'text-gray-600 hover:bg-amber-50'
+                                : 'text-base-content/60 hover:bg-amber-50'
                             }`}
                             onClick={() => fetchAds(page)}
                           >
@@ -686,10 +686,10 @@ const AdminAdsNew = () => {
                         {pagination.page < pagination.totalPages - 3 && (
                           <>
                             {pagination.page < pagination.totalPages - 4 && (
-                              <span className="w-10 h-10 flex items-center justify-center text-gray-400">...</span>
+                              <span className="w-10 h-10 flex items-center justify-center text-base-content/40">...</span>
                             )}
                             <button
-                              className="w-10 h-10 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50 transition-colors"
+                              className="w-10 h-10 rounded-lg text-sm font-medium text-base-content/60 hover:bg-amber-50 transition-colors"
                               onClick={() => fetchAds(pagination.totalPages)}
                             >
                               {pagination.totalPages}
@@ -698,7 +698,7 @@ const AdminAdsNew = () => {
                         )}
 
                         <button
-                          className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          className="px-3 py-2 rounded-lg text-sm font-medium text-base-content/60 hover:bg-amber-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           disabled={pagination.page === pagination.totalPages}
                           onClick={() => fetchAds(pagination.page + 1)}
                         >
@@ -714,7 +714,7 @@ const AdminAdsNew = () => {
           {/* 광고 생성/수정 모달 */}
           {(currentView === 'create' || currentView === 'edit') && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+              <div className="bg-base-100 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
               {/* 폼 헤더 */}
               <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 sticky top-0 z-10">
                 <div className="flex items-center justify-between">
@@ -744,13 +744,13 @@ const AdminAdsNew = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* 기본 정보 */}
                   <div className="space-y-5">
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="font-semibold text-base-content flex items-center gap-2">
                       <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-sm">1</span>
                       기본 정보
                     </h3>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/70 mb-2">
                         제목 <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -758,13 +758,13 @@ const AdminAdsNew = () => {
                         name="title"
                         value={formData.title}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all bg-base-100 text-base-content"
                         placeholder="광고 제목을 입력하세요"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/70 mb-2">
                         내용 <span className="text-red-500">*</span>
                       </label>
                       <textarea
@@ -772,13 +772,13 @@ const AdminAdsNew = () => {
                         value={formData.content}
                         onChange={handleInputChange}
                         rows={4}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none"
+                        className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all resize-none bg-base-100 text-base-content"
                         placeholder="광고 내용을 입력하세요"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/70 mb-2">
                         미디어 업로드
                       </label>
 
@@ -809,24 +809,24 @@ const AdminAdsNew = () => {
                         />
                         <label
                           htmlFor="file-upload"
-                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-all"
+                          className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-base-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition-all"
                         >
-                          <svg className="w-8 h-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-8 h-8 text-base-content/40 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                           </svg>
-                          <span className="text-sm text-gray-500">클릭하여 파일 선택</span>
-                          <span className="text-xs text-gray-400 mt-1">이미지 또는 동영상</span>
+                          <span className="text-sm text-base-content/60">클릭하여 파일 선택</span>
+                          <span className="text-xs text-base-content/40 mt-1">이미지 또는 동영상</span>
                         </label>
                       </div>
 
                       {/* 선택된 파일 목록 */}
                       {selectedFiles.length > 0 && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium text-gray-700 mb-3">선택된 파일 ({selectedFiles.length}개)</p>
+                          <p className="text-sm font-medium text-base-content/70 mb-3">선택된 파일 ({selectedFiles.length}개)</p>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {selectedFiles.map((file, index) => (
                               <div key={index} className="relative group">
-                                <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                                <div className="aspect-square bg-base-200 rounded-xl overflow-hidden border-2 border-base-300">
                                   {file.type.startsWith('image/') ? (
                                     <img
                                       src={URL.createObjectURL(file)}
@@ -857,7 +857,7 @@ const AdminAdsNew = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                   </svg>
                                 </button>
-                                <p className="text-xs text-gray-500 mt-1 truncate">{file.name}</p>
+                                <p className="text-xs text-base-content/60 mt-1 truncate">{file.name}</p>
                               </div>
                             ))}
                           </div>
@@ -867,11 +867,11 @@ const AdminAdsNew = () => {
                       {/* 수정 모드: 기존 미디어 미리보기 */}
                       {selectedFiles.length === 0 && editingAd && (editingAd.image_url || (editingAd.media_urls && editingAd.media_urls.length > 0)) && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium text-gray-700 mb-3">현재 등록된 미디어</p>
+                          <p className="text-sm font-medium text-base-content/70 mb-3">현재 등록된 미디어</p>
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {editingAd.image_url && (
                               <div className="relative">
-                                <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 border-amber-300">
+                                <div className="aspect-square bg-base-200 rounded-xl overflow-hidden border-2 border-amber-300">
                                   {isVideoFile(editingAd.image_url) ? (
                                     <video
                                       src={getImageUrl(editingAd.image_url)}
@@ -893,7 +893,7 @@ const AdminAdsNew = () => {
                             )}
                             {editingAd.media_urls && editingAd.media_urls.map((url, index) => (
                               <div key={index} className="relative">
-                                <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-200">
+                                <div className="aspect-square bg-base-200 rounded-xl overflow-hidden border-2 border-base-300">
                                   {isVideoFile(url) ? (
                                     <video
                                       src={getImageUrl(url)}
@@ -911,13 +911,13 @@ const AdminAdsNew = () => {
                               </div>
                             ))}
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">새 파일을 선택하면 기존 미디어가 교체됩니다.</p>
+                          <p className="text-xs text-base-content/60 mt-2">새 파일을 선택하면 기존 미디어가 교체됩니다.</p>
                         </div>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/70 mb-2">
                         이미지 대체 텍스트
                       </label>
                       <input
@@ -925,7 +925,7 @@ const AdminAdsNew = () => {
                         name="image_alt"
                         value={formData.image_alt}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all bg-base-100 text-base-content"
                         placeholder="이미지 설명 (접근성)"
                       />
                     </div>
@@ -935,7 +935,7 @@ const AdminAdsNew = () => {
                       <button
                         type="button"
                         onClick={() => openMediaGallery(editingAd)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-gray-300 rounded-xl text-gray-600 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/50 transition-all"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-base-300 rounded-xl text-base-content/60 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50/50 transition-all"
                       >
                         <PhotoLibraryIcon />
                         <span>미디어 갤러리 열기</span>
@@ -945,13 +945,13 @@ const AdminAdsNew = () => {
 
                   {/* 링크 및 설정 */}
                   <div className="space-y-5">
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="font-semibold text-base-content flex items-center gap-2">
                       <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-sm">2</span>
                       설정
                     </h3>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/70 mb-2">
                         링크 URL (선택)
                       </label>
                       <input
@@ -959,15 +959,15 @@ const AdminAdsNew = () => {
                         name="link_url"
                         value={formData.link_url}
                         onChange={handleInputChange}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                        className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all bg-base-100 text-base-content"
                         placeholder="https://example.com"
                       />
-                      <p className="text-xs text-gray-500 mt-1">클릭 시 이동할 외부 링크</p>
+                      <p className="text-xs text-base-content/60 mt-1">클릭 시 이동할 외부 링크</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-base-content/70 mb-2">
                           시작일
                         </label>
                         <input
@@ -975,12 +975,12 @@ const AdminAdsNew = () => {
                           name="start_date"
                           value={formData.start_date}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                          className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all bg-base-100 text-base-content"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-base-content/70 mb-2">
                           종료일
                         </label>
                         <input
@@ -988,15 +988,15 @@ const AdminAdsNew = () => {
                           name="end_date"
                           value={formData.end_date}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all"
+                          className="w-full px-4 py-3 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition-all bg-base-100 text-base-content"
                         />
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-base-200 rounded-xl">
                       <div>
-                        <span className="font-medium text-gray-900">활성 상태</span>
-                        <p className="text-xs text-gray-500 mt-0.5">비활성화하면 광고가 표시되지 않습니다</p>
+                        <span className="font-medium text-base-content">활성 상태</span>
+                        <p className="text-xs text-base-content/60 mt-0.5">비활성화하면 광고가 표시되지 않습니다</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -1006,13 +1006,13 @@ const AdminAdsNew = () => {
                           onChange={handleInputChange}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                        <div className="w-11 h-6 bg-base-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-base-100 after:border-base-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                       </label>
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-base-content/70">
                           우선순위 부스팅
                         </label>
                         <span className="text-sm font-semibold text-amber-600">+{formData.priority_boost}</span>
@@ -1024,9 +1024,9 @@ const AdminAdsNew = () => {
                         max="100"
                         value={formData.priority_boost}
                         onChange={handleInputChange}
-                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        className="w-full h-2 bg-base-300 rounded-lg appearance-none cursor-pointer accent-amber-500"
                       />
-                      <div className="flex justify-between text-xs text-gray-500 mt-1">
+                      <div className="flex justify-between text-xs text-base-content/60 mt-1">
                         <span>기본 (0)</span>
                         <span>중간 (50)</span>
                         <span>최고 (100)</span>
@@ -1044,9 +1044,9 @@ const AdminAdsNew = () => {
                 </div>
 
                 {/* 투표 설정 (선택사항) */}
-                <div className="lg:col-span-2 mt-6 pt-6 border-t border-gray-100">
+                <div className="lg:col-span-2 mt-6 pt-6 border-t border-base-300">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <h3 className="font-semibold text-base-content flex items-center gap-2">
                       <span className="w-6 h-6 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center text-sm">📊</span>
                       투표 (선택사항)
                     </h3>
@@ -1070,13 +1070,13 @@ const AdminAdsNew = () => {
                 </div>
 
                 {/* 저장 버튼 */}
-                <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-gray-100">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 mt-8 pt-6 border-t border-base-300">
                   <button
                     onClick={() => {
                       resetForm();
                       setCurrentView('list');
                     }}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    className="px-6 py-3 border border-base-300 text-base-content/70 rounded-xl font-medium hover:bg-base-200 transition-colors"
                   >
                     <span className="flex items-center justify-center gap-2">
                       <CancelIcon style={{ fontSize: 20 }} />
@@ -1106,12 +1106,12 @@ const AdminAdsNew = () => {
           {/* 광고 미리보기 모달 */}
           {showPreview && previewAd && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="flex justify-between items-center p-4 border-b border-gray-100">
-                  <h3 className="font-bold text-lg">광고 미리보기</h3>
+              <div className="bg-base-100 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="flex justify-between items-center p-4 border-b border-base-300">
+                  <h3 className="font-bold text-lg text-base-content">광고 미리보기</h3>
                   <button
                     onClick={closePreview}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-base-200 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1121,20 +1121,20 @@ const AdminAdsNew = () => {
 
                 {/* 모바일 광고 미리보기 */}
                 <div className="p-4">
-                  <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-200">
+                  <div className="bg-base-100 rounded-xl overflow-hidden shadow-lg border border-base-300">
                     {/* 광고 헤더 */}
-                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                    <div className="flex items-center justify-between px-3 py-2 border-b border-base-300">
                       <div className="flex items-center space-x-2">
                         <div className="w-6 h-6 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center">
                           <span className="text-white text-xs font-bold">AD</span>
                         </div>
-                        <span className="text-xs font-semibold text-gray-900">스폰서</span>
+                        <span className="text-xs font-semibold text-base-content">스폰서</span>
                       </div>
-                      <span className="text-xs text-gray-500">광고</span>
+                      <span className="text-xs text-base-content/60">광고</span>
                     </div>
 
                     {/* 메인 미디어 */}
-                    <div className="relative aspect-square bg-gray-100">
+                    <div className="relative aspect-square bg-base-200">
                       {isVideoFile(previewAd.image_content) ? (
                         <video
                           src={getImageUrl(previewAd.image_content)}
@@ -1155,10 +1155,10 @@ const AdminAdsNew = () => {
 
                     {/* 콘텐츠 영역 */}
                     <div className="p-4">
-                      <h3 className="font-bold text-base text-gray-900 mb-2">
+                      <h3 className="font-bold text-base text-base-content mb-2">
                         {previewAd.title}
                       </h3>
-                      <p className="text-sm text-gray-600 line-clamp-3">
+                      <p className="text-sm text-base-content/60 line-clamp-3">
                         {previewAd.content}
                       </p>
                       {previewAd.link_url && (
@@ -1171,25 +1171,25 @@ const AdminAdsNew = () => {
                 </div>
 
                 {/* 광고 정보 */}
-                <div className="p-4 bg-gray-50 border-t border-gray-100">
+                <div className="p-4 bg-base-200 border-t border-base-300">
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500">상태:</span>
+                      <span className="text-base-content/60">상태:</span>
                       <span className={`font-medium ${previewAd.is_active ? 'text-green-600' : 'text-red-600'}`}>
                         {previewAd.is_active ? '활성' : '비활성'}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-500">링크:</span>
-                      <span className="font-medium">{previewAd.link_url ? '있음' : '없음'}</span>
+                      <span className="text-base-content/60">링크:</span>
+                      <span className="font-medium text-base-content">{previewAd.link_url ? '있음' : '없음'}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-gray-100">
+                <div className="p-4 border-t border-base-300">
                   <button
                     onClick={closePreview}
-                    className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    className="w-full px-4 py-2.5 border border-base-300 text-base-content/70 rounded-xl font-medium hover:bg-base-200 transition-colors"
                   >
                     닫기
                   </button>
@@ -1201,12 +1201,12 @@ const AdminAdsNew = () => {
           {/* 미디어 갤러리 모달 */}
           {showMediaGallery && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-                <div className="flex justify-between items-center p-4 border-b border-gray-100">
-                  <h3 className="text-lg font-bold">미디어 갤러리 - {editingAd?.title}</h3>
+              <div className="bg-base-100 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                <div className="flex justify-between items-center p-4 border-b border-base-300">
+                  <h3 className="text-lg font-bold text-base-content">미디어 갤러리 - {editingAd?.title}</h3>
                   <button
                     onClick={() => setShowMediaGallery(false)}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-base-200 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1221,10 +1221,10 @@ const AdminAdsNew = () => {
                   />
                 </div>
 
-                <div className="p-4 border-t border-gray-100">
+                <div className="p-4 border-t border-base-300">
                   <button
                     onClick={() => setShowMediaGallery(false)}
-                    className="w-full px-4 py-2.5 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors"
+                    className="w-full px-4 py-2.5 border border-base-300 text-base-content/70 rounded-xl font-medium hover:bg-base-200 transition-colors"
                   >
                     닫기
                   </button>

@@ -55,8 +55,8 @@ const AdminAdsSimple = () => {
         <div className="flex items-center gap-3 mb-6">
           <CampaignIcon className="text-3xl text-red-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">광고 관리 (간단 버전)</h1>
-            <p className="text-gray-600">광고 목록 확인 및 디버깅</p>
+            <h1 className="text-2xl font-bold text-base-content">광고 관리 (간단 버전)</h1>
+            <p className="text-base-content/60">광고 목록 확인 및 디버깅</p>
           </div>
         </div>
 
@@ -73,28 +73,28 @@ const AdminAdsSimple = () => {
         </div>
 
         {/* 광고 목록 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold mb-4">광고 목록 ({ads.length}개)</h2>
-          
+        <div className="bg-base-100 rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-base-content mb-4">광고 목록 ({ads.length}개)</h2>
+
           {ads.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-base-content/60">
               등록된 광고가 없습니다.
             </div>
           ) : (
             <div className="grid gap-4">
               {ads.map((ad) => (
-                <div key={ad.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div key={ad.id} className="border border-base-300 rounded-lg p-4 hover:bg-base-200">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <h3 className="font-bold text-lg">{ad.title}</h3>
-                      <p className="text-gray-600 mt-2">{ad.content}</p>
-                      <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                      <h3 className="font-bold text-lg text-base-content">{ad.title}</h3>
+                      <p className="text-base-content/60 mt-2">{ad.content}</p>
+                      <div className="flex gap-4 mt-2 text-sm text-base-content/60">
                         <span>노출: {ad.view_count || 0}</span>
                         <span>클릭: {ad.click_count || 0}</span>
                         <span>활성: {ad.is_active ? '예' : '아니오'}</span>
                       </div>
                       {ad.start_date && ad.end_date && (
-                        <div className="text-sm text-gray-500 mt-1">
+                        <div className="text-sm text-base-content/60 mt-1">
                           기간: {ad.start_date} ~ {ad.end_date}
                         </div>
                       )}

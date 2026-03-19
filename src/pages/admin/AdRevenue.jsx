@@ -104,8 +104,8 @@ const AdRevenue = () => {
           <div className="flex items-center gap-3">
             <AttachMoneyIcon className="text-3xl text-red-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">수익 통계</h1>
-              <p className="text-gray-600">광고 수익 분석 및 매출 현황</p>
+              <h1 className="text-2xl font-bold text-base-content">수익 통계</h1>
+              <p className="text-base-content/60">광고 수익 분석 및 매출 현황</p>
             </div>
           </div>
           
@@ -136,7 +136,7 @@ const AdRevenue = () => {
             <div className="stat-desc text-green-100">이번 달 누적</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-blue-600">
               <TrendingUpIcon />
             </div>
@@ -145,7 +145,7 @@ const AdRevenue = () => {
             <div className="stat-desc text-green-600">↗︎ 전월 대비</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-purple-600">
               <CalendarTodayIcon />
             </div>
@@ -154,7 +154,7 @@ const AdRevenue = () => {
             <div className="stat-desc">지난 30일 평균</div>
           </div>
 
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-orange-600">
               <PieChartIcon />
             </div>
@@ -165,8 +165,8 @@ const AdRevenue = () => {
         </div>
 
         {/* 월별 수익 차트 */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-lg font-semibold mb-4">월별 수익 추이</h3>
+        <div className="bg-base-100 rounded-lg shadow p-6 mb-8">
+          <h3 className="text-lg font-semibold text-base-content mb-4">월별 수익 추이</h3>
           <div className="h-80 flex items-end justify-between gap-3">
             {revenueData.monthlyRevenue.map((month, index) => (
               <div key={index} className="flex flex-col items-center flex-1">
@@ -183,7 +183,7 @@ const AdRevenue = () => {
                   style={{ height: `${(month.revenue / 2500000) * 240}px`, minHeight: '20px' }}
                   title={`${formatMonth(month.month)}: ${formatCurrency(month.revenue)}`}
                 ></div>
-                <div className="text-xs mt-2 text-gray-500 transform -rotate-45 origin-top-left w-16">
+                <div className="text-xs mt-2 text-base-content/60 transform -rotate-45 origin-top-left w-16">
                   {formatMonth(month.month)}
                 </div>
               </div>
@@ -193,25 +193,25 @@ const AdRevenue = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* 광고별 수익 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">광고별 수익 순위</h3>
+          <div className="bg-base-100 rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-base-content mb-4">광고별 수익 순위</h3>
             <div className="space-y-4">
               {revenueData.revenueByAd.map((ad, index) => (
-                <div key={ad.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div key={ad.id} className="flex items-center justify-between p-3 border border-base-300 rounded-lg">
                   <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 bg-blue-500 text-white rounded-full text-sm font-bold">
                       {index + 1}
                     </div>
                     <div>
-                      <div className="font-medium">{ad.title}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="font-medium text-base-content">{ad.title}</div>
+                      <div className="text-sm text-base-content/60">
                         CTR: {ad.ctr}% | 클릭: {ad.clicks.toLocaleString()}
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="font-bold text-green-600">{formatCurrency(ad.revenue)}</div>
-                    <div className="text-sm text-gray-500">{ad.percentage}%</div>
+                    <div className="text-sm text-base-content/60">{ad.percentage}%</div>
                   </div>
                 </div>
               ))}
@@ -219,16 +219,16 @@ const AdRevenue = () => {
           </div>
 
           {/* 카테고리별 수익 */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">카테고리별 수익 분포</h3>
+          <div className="bg-base-100 rounded-lg shadow p-6">
+            <h3 className="text-lg font-semibold text-base-content mb-4">카테고리별 수익 분포</h3>
             <div className="space-y-4">
               {revenueData.revenueByCategory.map((category, index) => (
                 <div key={index} className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{category.category}</span>
-                    <span className="text-sm text-gray-500">{category.percentage}%</span>
+                    <span className="font-medium text-base-content">{category.category}</span>
+                    <span className="text-sm text-base-content/60">{category.percentage}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div className="w-full bg-base-300 rounded-full h-3">
                     <div
                       className={`${category.color} h-3 rounded-full transition-all duration-500`}
                       style={{ width: `${category.percentage}%` }}
@@ -244,24 +244,24 @@ const AdRevenue = () => {
         </div>
 
         {/* 수익 예측 및 목표 */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">수익 예측 및 목표</h3>
+        <div className="bg-base-100 rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-base-content mb-4">수익 예측 및 목표</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-center p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
               <div className="text-2xl font-bold text-blue-600 mb-2">₩3,200,000</div>
-              <div className="text-sm text-gray-600">다음 달 예상 수익</div>
+              <div className="text-sm text-base-content/60">다음 달 예상 수익</div>
               <div className="text-xs text-green-600 mt-1">+30% 증가 예상</div>
             </div>
-            
-            <div className="text-center p-4 bg-green-50 rounded-lg">
+
+            <div className="text-center p-4 bg-green-50 dark:bg-green-950/30 rounded-lg">
               <div className="text-2xl font-bold text-green-600 mb-2">₩5,000,000</div>
-              <div className="text-sm text-gray-600">월간 목표 수익</div>
+              <div className="text-sm text-base-content/60">월간 목표 수익</div>
               <div className="text-xs text-blue-600 mt-1">현재 49% 달성</div>
             </div>
-            
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
+
+            <div className="text-center p-4 bg-purple-50 dark:bg-purple-950/30 rounded-lg">
               <div className="text-2xl font-bold text-purple-600 mb-2">₩28,000,000</div>
-              <div className="text-sm text-gray-600">연간 목표 수익</div>
+              <div className="text-sm text-base-content/60">연간 목표 수익</div>
               <div className="text-xs text-green-600 mt-1">순조로운 진행</div>
             </div>
           </div>

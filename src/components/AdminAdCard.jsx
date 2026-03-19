@@ -192,7 +192,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
   return (
     <div className="w-full max-w-md mx-auto mb-6">
       {/* 관리자 정보 섹션 */}
-      <div className="bg-white rounded-t-xl p-4 border-x border-t border-gray-200">
+      <div className="bg-base-100 rounded-t-xl p-4 border-x border-t border-base-300">
         {/* 상태 및 액션 버튼 */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
@@ -203,25 +203,25 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
           <div className="flex items-center gap-1">
             <button
               onClick={() => onToggleStatus(ad.id)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-base-200 transition-colors"
               title={ad.is_active ? '비활성화' : '활성화'}
             >
               {ad.is_active ? (
                 <VisibilityIcon className="text-green-600 text-sm" />
               ) : (
-                <VisibilityOffIcon className="text-gray-400 text-sm" />
+                <VisibilityOffIcon className="text-base-content/40 text-sm" />
               )}
             </button>
             <button
               onClick={() => onEdit(ad)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-base-200 transition-colors"
               title="수정"
             >
               <EditIcon className="text-blue-600 text-sm" />
             </button>
             <button
               onClick={() => onDelete(ad.id)}
-              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-base-200 transition-colors"
               title="삭제"
             >
               <DeleteIcon className="text-red-600 text-sm" />
@@ -232,24 +232,24 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
         {/* 날짜 정보 */}
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-1">
-            <CalendarTodayIcon className="text-gray-400" style={{ fontSize: '14px' }} />
-            <span className="text-gray-500">생성일:</span>
-            <span className="font-medium">{formatDate(ad.created_at)}</span>
+            <CalendarTodayIcon className="text-base-content/40" style={{ fontSize: '14px' }} />
+            <span className="text-base-content/60">생성일:</span>
+            <span className="font-medium text-base-content">{formatDate(ad.created_at)}</span>
           </div>
           <div className="flex items-center gap-1">
             <AccessTimeIcon className="text-green-500" style={{ fontSize: '14px' }} />
-            <span className="text-gray-500">시작일:</span>
-            <span className="font-medium">{formatDate(ad.start_date)}</span>
+            <span className="text-base-content/60">시작일:</span>
+            <span className="font-medium text-base-content">{formatDate(ad.start_date)}</span>
           </div>
           <div className="flex items-center gap-1">
             <AccessTimeIcon className="text-red-500" style={{ fontSize: '14px' }} />
-            <span className="text-gray-500">종료일:</span>
-            <span className="font-medium">{formatDate(ad.end_date)}</span>
+            <span className="text-base-content/60">종료일:</span>
+            <span className="font-medium text-base-content">{formatDate(ad.end_date)}</span>
           </div>
         </div>
 
         {/* 통계 정보 */}
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-4 mt-3 pt-3 border-t border-base-300">
           <div className="flex items-center gap-1">
             <VisibilityIcon className="text-blue-500" style={{ fontSize: '16px' }} />
             <span className="text-sm font-semibold">{ad.view_count || 0}</span>
@@ -263,24 +263,24 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
               <span className="font-semibold text-purple-600">
                 {ad.view_count > 0 ? ((ad.click_count / ad.view_count) * 100).toFixed(2) : 0}%
               </span>
-              <span className="text-gray-500 ml-1">CTR</span>
+              <span className="text-base-content/60 ml-1">CTR</span>
             </span>
           </div>
         </div>
 
         {/* 우선순위 부스팅 정보 */}
         {ad.priority_boost > 0 && (
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
+          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-base-300">
             <div className="flex items-center gap-1">
               <svg className="w-4 h-4 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
               <span className="text-sm">
                 <span className="font-semibold text-orange-600">+{ad.priority_boost}</span>
-                <span className="text-gray-500 ml-1">우선순위 부스팅</span>
+                <span className="text-base-content/60 ml-1">우선순위 부스팅</span>
               </span>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-base-content/60">
               {ad.priority_boost >= 71 ? '최우선' : ad.priority_boost >= 31 ? '우선' : '기본'}
             </div>
           </div>
@@ -288,20 +288,20 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
       </div>
 
       {/* 모바일 광고 프리뷰 (인스타그램 스타일) */}
-      <div className="bg-white rounded-b-xl overflow-hidden shadow-lg border-x border-b border-gray-200">
+      <div className="bg-base-100 rounded-b-xl overflow-hidden shadow-lg border-x border-b border-base-300">
         {/* 광고 헤더 */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-bold">AD</span>
             </div>
-            <span className="text-sm font-semibold text-gray-900">스폰서</span>
+            <span className="text-sm font-semibold text-base-content">스폰서</span>
           </div>
-          <span className="text-xs text-gray-500">광고 미리보기</span>
+          <span className="text-xs text-base-content/60">광고 미리보기</span>
         </div>
 
         {/* 메인 미디어 */}
-        <div className="relative bg-gray-100 overflow-hidden aspect-square">
+        <div className="relative bg-base-200 overflow-hidden aspect-square">
           {getCurrentMedia() ? (
             <div className="absolute inset-0">
               {getCurrentMedia().type === 'stream' ? (
@@ -333,10 +333,10 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
               )}
             </div>
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <div className="w-full h-full flex items-center justify-center bg-base-200">
               <div className="text-center">
                 <div className="text-4xl mb-2">📷</div>
-                <div className="text-gray-500 text-sm">이미지 없음</div>
+                <div className="text-base-content/60 text-sm">이미지 없음</div>
               </div>
             </div>
           )}
@@ -344,21 +344,21 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
 
         {/* 콘텐츠 영역 */}
         <div className="p-4">
-          <h3 className="text-base font-bold text-gray-900 mb-2 leading-tight">
+          <h3 className="text-base font-bold text-base-content mb-2 leading-tight">
             {ad.title}
           </h3>
-          
+
           {ad.content && (
-            <p className="text-sm text-gray-700 mb-3 leading-relaxed line-clamp-3">
+            <p className="text-sm text-base-content/70 mb-3 leading-relaxed line-clamp-3">
               {ad.content.replace(/<[^>]*>/g, '')}
             </p>
           )}
-          
+
           {/* 랜딩 정보 */}
-          <div className="text-xs text-gray-500 mb-3">
+          <div className="text-xs text-base-content/60 mb-3">
             <div className="flex items-center gap-2">
               <span>랜딩 타입:</span>
-              <span className="font-medium">
+              <span className="font-medium text-base-content">
                 {ad.link_url ? '외부 링크' : '내부 콘텐츠'}
               </span>
             </div>
@@ -383,18 +383,18 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
       {/* 상세보기 모달 */}
       {showDetailModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10000]">
-          <div className="bg-white w-full h-full flex flex-col overflow-hidden sm:rounded-lg sm:max-w-lg sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:mx-4">
+          <div className="bg-base-100 w-full h-full flex flex-col overflow-hidden sm:rounded-lg sm:max-w-lg sm:h-auto sm:max-h-[calc(100vh-4rem)] sm:mx-4">
             {/* 모달 헤더 */}
-            <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center justify-between p-4 border-b border-base-300">
               <div className="flex items-center space-x-2">
                 <div className="w-6 h-6 bg-gradient-to-r from-orange-400 to-pink-500 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs font-bold">AD</span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">{ad.title}</h3>
+                <h3 className="text-lg font-bold text-base-content">{ad.title}</h3>
               </div>
               <button
                 onClick={closeDetailModal}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold w-8 h-8 flex items-center justify-center"
+                className="text-base-content/60 hover:text-base-content text-2xl font-bold w-8 h-8 flex items-center justify-center"
               >
                 ×
               </button>
@@ -491,8 +491,8 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
                         }`}
                       >
                         {media.type === 'stream' || media.type?.startsWith('video') ? (
-                          <div className="w-14 h-14 bg-gray-200 rounded flex items-center justify-center">
-                            <svg className="w-6 h-6 text-gray-500" fill="currentColor" viewBox="0 0 24 24">
+                          <div className="w-14 h-14 bg-base-200 rounded flex items-center justify-center">
+                            <svg className="w-6 h-6 text-base-content/60" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z"/>
                             </svg>
                           </div>
@@ -518,8 +518,8 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
               {/* 광고 내용 */}
               {ad.content && (
                 <div className="mb-4">
-                  <h4 className="text-md font-semibold text-gray-900 mb-2">광고 내용</h4>
-                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                  <h4 className="text-md font-semibold text-base-content mb-2">광고 내용</h4>
+                  <p className="text-sm text-base-content/70 leading-relaxed whitespace-pre-wrap">
                     {ad.content.replace(/<[^>]*>/g, '')}
                   </p>
                 </div>
@@ -537,7 +537,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
               {ad.link_url && (
                 <div className="mb-4">
                   <div className="p-3">
-                    <p className="text-sm text-gray-500 mb-2 break-all">{ad.link_url}</p>
+                    <p className="text-sm text-base-content/60 mb-2 break-all">{ad.link_url}</p>
                     <button
                       onClick={() => window.open(ad.link_url, '_blank')}
                       className="w-full bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-700 transition-all duration-200"
@@ -550,10 +550,10 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
             </div>
 
             {/* 모달 액션 */}
-            <div className="p-4 border-t bg-gray-50">
+            <div className="p-4 border-t border-base-300 bg-base-200">
               <button
                 onClick={closeDetailModal}
-                className="w-full bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-600 transition-all duration-200"
+                className="w-full bg-base-content/70 text-base-100 font-semibold py-2 px-4 rounded-lg hover:bg-base-content/80 transition-all duration-200"
               >
                 닫기
               </button>
