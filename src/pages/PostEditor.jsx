@@ -849,7 +849,7 @@ const PostEditor = () => {
             <div className="relative">
               <textarea
                 placeholder={postType === 'secondhand' ? '중고 물품에 대해 설명해주세요.' : '무슨 생각을 하고 계신가요?'}
-                className={`w-full h-[180px] p-4 pb-6 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 ${
+                className={`w-full h-[180px] p-4 pb-6 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-400 bg-base-100 text-base-content placeholder:text-base-content/40 ${
                   isListening ? 'border-red-400 bg-red-50' : 'border-base-300'
                 }`}
                 value={desc}
