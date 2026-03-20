@@ -205,7 +205,7 @@ const AdminPosts = () => {
             <h3 className="text-lg font-medium text-red-600 mb-2">
               데이터 로드 실패
             </h3>
-            <p className="text-gray-500 mb-4">
+            <p className="text-base-content/60 mb-4">
               오류: {errorMessage}
             </p>
             <button
@@ -231,27 +231,27 @@ const AdminPosts = () => {
           <div className="flex items-center gap-3">
             <ArticleIcon className="text-3xl text-red-600" />
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">게시물 관리</h1>
-              <p className="text-gray-600">커뮤니티 게시물 조회 및 관리</p>
+              <h1 className="text-2xl font-bold text-base-content">게시물 관리</h1>
+              <p className="text-base-content/60">커뮤니티 게시물 조회 및 관리</p>
             </div>
           </div>
         </div>
 
         {/* 통계 카드 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-title">전체 게시물</div>
             <div className="stat-value text-blue-600">
               {statsLoading ? '...' : (stats.totalPosts || 0)}
             </div>
           </div>
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-title">오늘 작성</div>
             <div className="stat-value text-green-600">
               {statsLoading ? '...' : (stats.todayPosts || 0)}
             </div>
           </div>
-          <div className="stat bg-white rounded-lg shadow">
+          <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-title">신고된 글</div>
             <div className="stat-value text-red-600">
               {statsLoading ? '...' : (stats.reportedPosts || 0)}
@@ -260,10 +260,10 @@ const AdminPosts = () => {
         </div>
 
         {/* 검색 */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="bg-base-100 rounded-lg shadow p-4 mb-6">
           <div className="flex gap-2">
             <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-base-content/40" />
               <input
                 type="text"
                 placeholder="제목, 내용, 작성자로 검색..."
@@ -290,14 +290,14 @@ const AdminPosts = () => {
             const profilePic = getProfileImageUrl(post.user?.profile_pic);
 
             return (
-              <div key={post.id} className={`bg-white rounded-lg shadow-md overflow-hidden ${isLoading ? 'opacity-50' : ''} ${post.is_pinned ? 'ring-2 ring-orange-400' : ''}`}>
+              <div key={post.id} className={`bg-base-100 rounded-lg shadow-md overflow-hidden ${isLoading ? 'opacity-50' : ''} ${post.is_pinned ? 'ring-2 ring-orange-400' : ''}`}>
                 {/* 상단 헤더 - 작성자 정보 & 고정 상태 */}
-                <div className="p-4 border-b">
+                <div className="p-4 border-b border-base-300">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3 flex-1">
                       {/* 프로필 이미지 */}
                       <div className="avatar">
-                        <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                        <div className="w-10 h-10 rounded-full bg-base-200 overflow-hidden">
                           {profilePic ? (
                             <img
                               src={profilePic}
@@ -308,7 +308,7 @@ const AdminPosts = () => {
                               }}
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-500 text-lg font-bold">
+                            <div className="w-full h-full flex items-center justify-center text-base-content/60 text-lg font-bold">
                               {authorName.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -316,11 +316,11 @@ const AdminPosts = () => {
                       </div>
                       <div>
                         <div className="font-semibold">{authorName}</div>
-                        <div className="text-xs text-gray-500">#{post.id || 'N/A'}</div>
+                        <div className="text-xs text-base-content/60">#{post.id || 'N/A'}</div>
                       </div>
                       {/* hot_score 표시 */}
                       <div className="ml-auto text-right">
-                        <div className="text-xs text-gray-400">HOT</div>
+                        <div className="text-xs text-base-content/40">HOT</div>
                         <div className="font-bold text-orange-500">{(post.hot_score || 0).toFixed(1)}</div>
                       </div>
                     </div>
@@ -351,7 +351,7 @@ const AdminPosts = () => {
                         </span>
                       ))
                     ) : (
-                      <span className="text-xs text-gray-400">태그 없음</span>
+                      <span className="text-xs text-base-content/40">태그 없음</span>
                     )}
                     {post.tags && post.tags.length > 3 && (
                       <span className="badge badge-ghost badge-xs">+{post.tags.length - 3}</span>
@@ -406,18 +406,18 @@ const AdminPosts = () => {
                 {/* 컨텐츠 섹션 */}
                 <div className="p-4">
                   <div className="mb-3">
-                    <div className="font-semibold text-gray-900 line-clamp-2">
+                    <div className="font-semibold text-base-content line-clamp-2">
                       {post.title || (post.description ? post.description.substring(0, 50) + '...' : '제목 없음')}
                     </div>
                     {post.description && (
-                      <div className="text-sm text-gray-600 mt-1 line-clamp-2">
+                      <div className="text-sm text-base-content/60 mt-1 line-clamp-2">
                         {post.description}
                       </div>
                     )}
                   </div>
 
                   {/* 통계 정보 */}
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                  <div className="flex items-center justify-between text-sm text-base-content/60 mb-3">
                     <div className="flex items-center gap-3">
                       <span className="flex items-center gap-1">
                         <span>👁</span> {post.views_count || 0}
@@ -432,7 +432,7 @@ const AdminPosts = () => {
                   </div>
 
                   {/* 작성일 */}
-                  <div className="text-xs text-gray-400 mb-3">
+                  <div className="text-xs text-base-content/40 mb-3">
                     {new Date(post.created_at).toLocaleString('ko-KR', {
                       year: 'numeric',
                       month: '2-digit',
@@ -504,9 +504,9 @@ const AdminPosts = () => {
 
         {posts.length === 0 && !isLoading && (
           <div className="text-center py-12">
-            <ArticleIcon className="mx-auto text-gray-400 text-6xl mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">게시물이 없습니다</h3>
-            <p className="text-gray-500">다른 검색어나 필터를 시도해보세요.</p>
+            <ArticleIcon className="mx-auto text-base-content/40 text-6xl mb-4" />
+            <h3 className="text-lg font-medium text-base-content mb-2">게시물이 없습니다</h3>
+            <p className="text-base-content/60">다른 검색어나 필터를 시도해보세요.</p>
           </div>
         )}
 
@@ -534,7 +534,7 @@ const AdminPosts = () => {
 
                 <div>
                   <label className="font-medium">내용:</label>
-                  <div className="mt-2 p-4 bg-gray-50 rounded-lg whitespace-pre-wrap">
+                  <div className="mt-2 p-4 bg-base-200 rounded-lg whitespace-pre-wrap">
                     {selectedPost.description || '내용 없음'}
                   </div>
                 </div>
@@ -601,7 +601,7 @@ const AdminPosts = () => {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center text-sm text-gray-500">
+                <div className="flex justify-between items-center text-sm text-base-content/60">
                   <span>작성일: {new Date(selectedPost.created_at).toLocaleString('ko-KR')}</span>
                   <div className="flex gap-4">
                     <span>조회수: {selectedPost.views_count || 0}</span>
@@ -611,18 +611,18 @@ const AdminPosts = () => {
                 </div>
 
                 {/* 댓글 섹션 */}
-                <div className="mt-6 border-t pt-4">
+                <div className="mt-6 border-t border-base-300 pt-4">
                   <div
                     className="flex items-center justify-between cursor-pointer mb-4"
                     onClick={() => setShowCommentsSection(!showCommentsSection)}
                   >
                     <div className="flex items-center gap-2">
-                      <CommentIcon className="text-gray-600" />
-                      <span className="font-medium text-gray-900">
+                      <CommentIcon className="text-base-content/60" />
+                      <span className="font-medium text-base-content">
                         댓글 ({postComments.length})
                       </span>
                     </div>
-                    <span className="text-gray-500 text-sm">
+                    <span className="text-base-content/60 text-sm">
                       {showCommentsSection ? '접기 ▲' : '펼치기 ▼'}
                     </span>
                   </div>
@@ -634,16 +634,16 @@ const AdminPosts = () => {
                           <div className="loading loading-spinner loading-md"></div>
                         </div>
                       ) : postComments.length === 0 ? (
-                        <div className="text-center py-4 text-gray-500">
+                        <div className="text-center py-4 text-base-content/60">
                           댓글이 없습니다.
                         </div>
                       ) : (
                         postComments.map((comment) => (
-                          <div key={comment.id} className="bg-gray-50 rounded-lg p-3">
+                          <div key={comment.id} className="bg-base-200 rounded-lg p-3">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-start gap-2 flex-1">
                                 {/* 프로필 이미지 */}
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
+                                <div className="w-8 h-8 rounded-full bg-base-300 flex-shrink-0 overflow-hidden">
                                   {comment.profile_pic ? (
                                     <img
                                       src={getProfileImageUrl(comment.profile_pic)}
@@ -653,41 +653,41 @@ const AdminPosts = () => {
                                     />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <PersonIcon className="text-gray-400" fontSize="small" />
+                                      <PersonIcon className="text-base-content/40" fontSize="small" />
                                     </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 mb-1">
-                                    <span className="font-medium text-sm text-gray-900">
+                                    <span className="font-medium text-sm text-base-content">
                                       {comment.name || comment.username || '알 수 없음'}
                                     </span>
-                                    <span className="text-xs text-gray-400">
+                                    <span className="text-xs text-base-content/40">
                                       {new Date(comment.created_at).toLocaleString('ko-KR')}
                                     </span>
                                     {comment.is_hidden && (
                                       <span className="badge badge-error badge-xs">차단됨</span>
                                     )}
                                   </div>
-                                  <p className={`text-sm whitespace-pre-wrap break-words ${comment.is_hidden ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                                  <p className={`text-sm whitespace-pre-wrap break-words ${comment.is_hidden ? 'text-base-content/40 line-through' : 'text-base-content/70'}`}>
                                     {comment.is_hidden ? '[숨김 처리된 댓글]' : (comment.description || comment.desc)}
                                   </p>
                                   {/* 답글 표시 */}
                                   {comment.replies && comment.replies.length > 0 && (
-                                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-gray-200 pl-3">
+                                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-base-300 pl-3">
                                       {comment.replies.map((reply) => (
-                                        <div key={reply.id} className="bg-white rounded p-2">
+                                        <div key={reply.id} className="bg-base-100 rounded p-2">
                                           <div className="flex items-start justify-between gap-2">
                                             <div className="flex-1">
                                               <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-medium text-xs text-gray-900">
+                                                <span className="font-medium text-xs text-base-content">
                                                   {reply.name || reply.username || '알 수 없음'}
                                                 </span>
-                                                <span className="text-xs text-gray-400">
+                                                <span className="text-xs text-base-content/40">
                                                   {new Date(reply.created_at).toLocaleString('ko-KR')}
                                                 </span>
                                               </div>
-                                              <p className="text-xs text-gray-700 whitespace-pre-wrap">
+                                              <p className="text-xs text-base-content/70 whitespace-pre-wrap">
                                                 {reply.description || reply.desc}
                                               </p>
                                             </div>
