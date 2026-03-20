@@ -168,6 +168,12 @@ const AdminLeftbar = () => {
           icon: InfoOutlinedIcon,
           label: "공판장 정보",
           badge: null
+        },
+        {
+          path: "/admin/detail-grade-settings",
+          icon: StoreIcon,
+          label: "등급 세부 정렬",
+          badge: null
         }
       ]
     },
