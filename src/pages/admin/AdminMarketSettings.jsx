@@ -258,16 +258,16 @@ const AdminMarketSettings = () => {
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body p-4">
             <h2 className="card-title text-lg text-blue-600 mb-2">공판장 목록</h2>
-            <p className="text-sm text-gray-500 mb-2">
+            <p className="text-sm text-base-content/60 mb-2">
               공판장을 클릭하면 오른쪽에 등급 목록이 표시됩니다
             </p>
 
             {marketOrder.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
+              <div className="text-center py-8 text-base-content/40">
                 <p>등록된 공판장이 없습니다</p>
               </div>
             ) : (
-              <ul className="space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto">
+              <ul className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
                 {marketOrder.map((market, index) => (
                   <li
                     key={market}
@@ -276,31 +276,31 @@ const AdminMarketSettings = () => {
                     onDragOver={(e) => handleDragOver(e, index, 'market')}
                     onDragEnd={handleDragEnd}
                     onClick={() => handleMarketSelect(market)}
-                    className={`flex items-center gap-2 p-3 rounded-lg cursor-pointer transition-colors ${
+                    className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm ${
                       draggedItem === index && draggedType === 'market' ? 'opacity-50' : ''
                     } ${
                       selectedMarket === market
-                        ? 'bg-blue-100 border-2 border-blue-400'
-                        : 'bg-gray-50 hover:bg-gray-100'
+                        ? 'bg-blue-100 border border-blue-400'
+                        : 'bg-base-200 hover:bg-base-300'
                     }`}
                   >
-                    <DragIndicatorIcon className="text-gray-400 cursor-move" />
-                    <span className={`flex-1 font-medium ${selectedMarket === market ? 'text-blue-700' : 'text-gray-700'}`}>
+                    <DragIndicatorIcon className="text-base-content/40 cursor-move" style={{ fontSize: 16 }} />
+                    <span className={`flex-1 font-medium ${selectedMarket === market ? 'text-blue-700' : 'text-base-content'}`}>
                       {market}
                     </span>
-                    <span className="text-gray-400 text-sm mr-2">#{index + 1}</span>
-                    <div className="flex gap-1">
+                    <span className="text-base-content/40 text-xs">#{index + 1}</span>
+                    <div className="flex">
                       <button
                         onClick={(e) => { e.stopPropagation(); moveUp(index, 'market'); }}
                         disabled={index === 0}
-                        className="btn btn-ghost btn-xs"
+                        className="btn btn-ghost btn-xs px-1 min-h-0 h-5"
                       >
                         ▲
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); moveDown(index, 'market'); }}
                         disabled={index === marketOrder.length - 1}
-                        className="btn btn-ghost btn-xs"
+                        className="btn btn-ghost btn-xs px-1 min-h-0 h-5"
                       >
                         ▼
                       </button>
@@ -320,20 +320,20 @@ const AdminMarketSettings = () => {
             </h2>
 
             {!selectedMarket ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-base-content/40">
                 <p className="text-lg mb-2">공판장을 선택하세요</p>
                 <p className="text-sm">왼쪽 목록에서 공판장을 클릭하면<br/>해당 공판장의 등급 목록이 표시됩니다</p>
               </div>
             ) : currentGradeOrder.length === 0 ? (
-              <div className="text-center py-12 text-gray-400">
+              <div className="text-center py-12 text-base-content/40">
                 <p className="text-lg">등급 정보가 없습니다</p>
               </div>
             ) : (
               <>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-base-content/60 mb-2">
                   드래그하거나 화살표로 정렬 순서를 변경하세요
                 </p>
-                <ul className="space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto">
+                <ul className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
                   {currentGradeOrder.map((grade, index) => (
                     <li
                       key={grade}
@@ -341,25 +341,25 @@ const AdminMarketSettings = () => {
                       onDragStart={(e) => handleDragStart(e, index, 'grade')}
                       onDragOver={(e) => handleDragOver(e, index, 'grade')}
                       onDragEnd={handleDragEnd}
-                      className={`flex items-center gap-2 p-3 bg-gray-50 rounded-lg cursor-move hover:bg-gray-100 transition-colors ${
+                      className={`flex items-center gap-1.5 px-2 py-1.5 bg-base-200 rounded-md cursor-move hover:bg-base-300 transition-colors text-sm ${
                         draggedItem === index && draggedType === 'grade' ? 'opacity-50' : ''
                       }`}
                     >
-                      <DragIndicatorIcon className="text-gray-400" />
-                      <span className="flex-1 font-medium text-gray-700">{grade}</span>
-                      <span className="text-gray-400 text-sm mr-2">#{index + 1}</span>
-                      <div className="flex gap-1">
+                      <DragIndicatorIcon className="text-base-content/40" style={{ fontSize: 16 }} />
+                      <span className="flex-1 font-medium text-base-content">{grade}</span>
+                      <span className="text-base-content/40 text-xs">#{index + 1}</span>
+                      <div className="flex">
                         <button
                           onClick={() => moveUp(index, 'grade')}
                           disabled={index === 0}
-                          className="btn btn-ghost btn-xs"
+                          className="btn btn-ghost btn-xs px-1 min-h-0 h-5"
                         >
                           ▲
                         </button>
                         <button
                           onClick={() => moveDown(index, 'grade')}
                           disabled={index === currentGradeOrder.length - 1}
-                          className="btn btn-ghost btn-xs"
+                          className="btn btn-ghost btn-xs px-1 min-h-0 h-5"
                         >
                           ▼
                         </button>
