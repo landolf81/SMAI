@@ -2,10 +2,11 @@
  * PriceDetailModal.jsx
  * 도매시장 법인별 상세 데이터 모달
  * - 규격 + 출하지명별 평균가, 최고가, 최저가 표시
+ * - 각 카드 탭 → 아코디언 펼침 → 등급+크기규격별 세분화 데이터 (T+1)
  * - Prices.jsx에서 도매시장 카드 클릭 시 열림
  */
 import { createPortal } from 'react-dom';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -17,11 +18,112 @@ const formatPrice = (price) => {
   return Number(price).toLocaleString();
 };
 
+// 변동값 표시 컴포넌트
+const ChangeIndicator = ({ current, prev }) => {
+  if (!prev || prev === 0) return null;
+  const diff = current - prev;
+  if (diff === 0) return <span className="text-xs text-base-content/40">보합</span>;
+  const isUp = diff > 0;
+  return (
+    <span className={`text-xs font-medium ${isUp ? 'text-red-500' : 'text-blue-500'}`}>
+      {isUp ? '▲' : '▼'} {formatPrice(Math.abs(diff))}
+    </span>
+  );
+};
+
+// 등급별 세부 데이터 아코디언 내용
+const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
+  const { data: gradeDetails, isLoading } = useQuery({
+    queryKey: ['market-detail-grade', marketName, marketDate, shipperName, weight],
+    queryFn: () => marketService.getMarketDetailGrade(marketName, marketDate, shipperName, weight),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!gradeDetails || gradeDetails.length === 0) {
+    return (
+      <div className="text-center py-4 text-base-content/40 text-sm">
+        등급별 세부 데이터가 아직 없습니다 (T+1)
+      </div>
+    );
+  }
+
+  // 등급별로 그룹핑
+  const grouped = {};
+  gradeDetails.forEach((item) => {
+    const key = item.grade || '.';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(item);
+  });
+
+  return (
+    <div className="space-y-2">
+      {Object.entries(grouped).map(([grade, items]) => (
+        <div key={grade} className="bg-base-100 rounded-lg border border-base-300 overflow-hidden">
+          {/* 등급 헤더 */}
+          <div className="px-3 py-1.5 bg-base-200 border-b border-base-300">
+            <span className="text-sm font-bold text-base-content">
+              {grade === '.' ? '미분류' : grade}
+            </span>
+            <span className="text-xs text-base-content/50 ml-2">
+              {items.length}건
+            </span>
+          </div>
+          {/* 크기규격별 데이터 */}
+          <div className="divide-y divide-base-200">
+            {items.map((item, idx) => (
+              <div key={idx} className="px-3 py-2">
+                {/* 크기규격 */}
+                <div className="text-xs text-base-content/60 mb-1">
+                  {item.size_name === '.' ? '전체' : item.size_name}
+                </div>
+                {/* 수치 */}
+                <div className="grid grid-cols-4 gap-1 text-center text-sm">
+                  <div>
+                    <div className="text-base-content/40 text-xs">수량</div>
+                    <div className="font-bold text-base-content">{formatPrice(item.boxes)}</div>
+                    <ChangeIndicator current={item.boxes} prev={item.prev_boxes} />
+                  </div>
+                  <div>
+                    <div className="text-base-content/40 text-xs">평균가</div>
+                    <div className="font-bold text-base-content">{formatPrice(item.avg_price)}</div>
+                    <ChangeIndicator current={item.avg_price} prev={item.prev_avg_price} />
+                  </div>
+                  <div>
+                    <div className="text-base-content/40 text-xs">최고가</div>
+                    <div className="font-bold text-red-500">{formatPrice(item.max_price)}</div>
+                    <ChangeIndicator current={item.max_price} prev={item.prev_max_price} />
+                  </div>
+                  <div>
+                    <div className="text-base-content/40 text-xs">최저가</div>
+                    <div className="font-bold text-blue-500">{formatPrice(item.min_price)}</div>
+                    <ChangeIndicator current={item.min_price} prev={item.prev_min_price} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }) => {
-  // 모달 열릴 때 스크롤 잠금
+  const [expandedIndex, setExpandedIndex] = useState(null);
+
+  // 모달 열릴 때 스크롤 잠금 + 아코디언 초기화
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      setExpandedIndex(null);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -82,48 +184,80 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
               </p>
             </div>
           ) : (
-            /* 데이터 카드 리스트 */
+            /* 데이터 카드 리스트 (아코디언) */
             <div className="space-y-3">
-              {details.map((item, index) => (
-                <div
-                  key={item.id || index}
-                  className="bg-base-200/50 rounded-xl p-3 border border-base-200"
-                >
-                  {/* 1줄: 규격 · 출하지명 */}
-                  <div className="text-lg text-base-content/60 mb-2">
-                    <span className="font-medium text-base-content">{item.weight}</span>
-                    <span className="mx-1.5">·</span>
-                    <span>{item.shipper_name}</span>
+              {details.map((item, index) => {
+                const isExpanded = expandedIndex === index;
+                return (
+                  <div
+                    key={item.id || index}
+                    className="bg-base-200/50 rounded-xl border border-base-200 overflow-hidden"
+                  >
+                    {/* 카드 헤더 (탭 가능) */}
+                    <div
+                      className="p-3 cursor-pointer active:bg-base-200 transition-colors"
+                      onClick={() => setExpandedIndex(isExpanded ? null : index)}
+                    >
+                      {/* 1줄: 규격 · 출하지명 + 펼침 화살표 */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-lg text-base-content/60">
+                          <span className="font-medium text-base-content">{item.weight}</span>
+                          <span className="mx-1.5">·</span>
+                          <span>{item.shipper_name}</span>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-base-content/40 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                      {/* 2줄: 수량 | 평균가 | 최고가 | 최저가 */}
+                      <div className="grid grid-cols-4 gap-1 text-center">
+                        <div className="bg-base-100 rounded-lg py-2 px-1">
+                          <div className="text-sm text-base-content/50 mb-0.5">수량</div>
+                          <div className="text-lg font-bold text-base-content whitespace-nowrap">
+                            {formatPrice(item.boxes)}
+                          </div>
+                        </div>
+                        <div className="bg-base-100 rounded-lg py-2 px-1">
+                          <div className="text-sm text-base-content/50 mb-0.5">평균가</div>
+                          <div className="text-lg font-bold text-base-content whitespace-nowrap">
+                            {formatPrice(item.avg_price)}
+                          </div>
+                        </div>
+                        <div className="bg-base-100 rounded-lg py-2 px-1">
+                          <div className="text-sm text-base-content/50 mb-0.5">최고가</div>
+                          <div className="text-lg font-bold text-red-500 whitespace-nowrap">
+                            {formatPrice(item.max_price)}
+                          </div>
+                        </div>
+                        <div className="bg-base-100 rounded-lg py-2 px-1">
+                          <div className="text-sm text-base-content/50 mb-0.5">최저가</div>
+                          <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
+                            {formatPrice(item.min_price)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 아코디언 펼침: 등급별 세부 데이터 */}
+                    {isExpanded && (
+                      <div className="px-3 pb-3 pt-1 border-t border-base-300">
+                        <div className="text-xs font-medium text-base-content/50 mb-2">
+                          📊 등급·크기규격별 세부
+                        </div>
+                        <GradeAccordion
+                          marketName={gradeName}
+                          marketDate={marketDate}
+                          shipperName={item.shipper_name}
+                          weight={item.weight}
+                        />
+                      </div>
+                    )}
                   </div>
-                  {/* 2줄: 수량 | 평균가 | 최고가 | 최저가 */}
-                  <div className="grid grid-cols-4 gap-1 text-center">
-                    <div className="bg-base-100 rounded-lg py-2 px-1">
-                      <div className="text-sm text-base-content/50 mb-0.5">수량</div>
-                      <div className="text-lg font-bold text-base-content whitespace-nowrap">
-                        {formatPrice(item.boxes)}
-                      </div>
-                    </div>
-                    <div className="bg-base-100 rounded-lg py-2 px-1">
-                      <div className="text-sm text-base-content/50 mb-0.5">평균가</div>
-                      <div className="text-lg font-bold text-base-content whitespace-nowrap">
-                        {formatPrice(item.avg_price)}
-                      </div>
-                    </div>
-                    <div className="bg-base-100 rounded-lg py-2 px-1">
-                      <div className="text-sm text-base-content/50 mb-0.5">최고가</div>
-                      <div className="text-lg font-bold text-red-500 whitespace-nowrap">
-                        {formatPrice(item.max_price)}
-                      </div>
-                    </div>
-                    <div className="bg-base-100 rounded-lg py-2 px-1">
-                      <div className="text-sm text-base-content/50 mb-0.5">최저가</div>
-                      <div className="text-lg font-bold text-blue-500 whitespace-nowrap">
-                        {formatPrice(item.min_price)}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

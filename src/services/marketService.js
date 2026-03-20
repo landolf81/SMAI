@@ -936,6 +936,36 @@ export const marketService = {
   },
 
   /**
+   * 도매시장 법인별 등급+크기규격 세분화 데이터 조회
+   * market_detail_grade 테이블 (T+1 데이터)
+   * @param {string} marketName - 법인명
+   * @param {string} date - 날짜 (YYYY-MM-DD)
+   * @param {string} shipper - 출하지명
+   * @param {string} weight - 규격 (10kg 등)
+   * @returns {Array} 등급별 상세 데이터 배열
+   */
+  async getMarketDetailGrade(marketName, date, shipper, weight) {
+    try {
+      marketName = nfc(marketName);
+      const { data, error } = await supabase
+        .from('market_detail_grade')
+        .select('*')
+        .eq('market_name', marketName)
+        .eq('market_date', date)
+        .eq('shipper', shipper)
+        .eq('weight', weight)
+        .order('grade')
+        .order('size_name');
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('등급별 상세 데이터 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
    * 시장 설정 조회 (공판장 순서, 등급 순서)
    * @returns {Object|null} { market_order: [], grade_orders: {} }
    */
