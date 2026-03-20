@@ -11,6 +11,9 @@ import { useQuery } from '@tanstack/react-query';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { marketService } from '../services';
+import { supabase } from '../lib/supabaseClient';
+
+const SETTINGS_KEY = 'detail_grade_display_settings';
 
 // 가격 포맷
 const formatPrice = (price) => {
@@ -39,6 +42,20 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // 정렬 설정 조회 (캐시 30분)
+  const { data: sortSettings } = useQuery({
+    queryKey: ['detail-grade-settings'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('app_settings')
+        .select('value')
+        .eq('key', SETTINGS_KEY)
+        .maybeSingle();
+      return data?.value || null;
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-4">
@@ -63,9 +80,35 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
     grouped[key].push(item);
   });
 
+  // 저장된 등급 순서 적용
+  const gradeOrder = sortSettings?.grade_order || [];
+  const sizeOrder = sortSettings?.size_order || [];
+
+  const sortedGradeEntries = Object.entries(grouped).sort(([a], [b]) => {
+    const idxA = gradeOrder.indexOf(a);
+    const idxB = gradeOrder.indexOf(b);
+    if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+
+  // 크기규격 정렬 함수
+  const sortBySizeOrder = (items) => {
+    if (sizeOrder.length === 0) return items;
+    return [...items].sort((a, b) => {
+      const idxA = sizeOrder.indexOf(a.size_name);
+      const idxB = sizeOrder.indexOf(b.size_name);
+      if (idxA === -1 && idxB === -1) return 0;
+      if (idxA === -1) return 1;
+      if (idxB === -1) return -1;
+      return idxA - idxB;
+    });
+  };
+
   return (
     <div className="space-y-2">
-      {Object.entries(grouped).map(([grade, items]) => (
+      {sortedGradeEntries.map(([grade, items]) => (
         <div key={grade} className="bg-base-100 rounded-lg border border-base-300 overflow-hidden">
           {/* 등급 헤더 */}
           <div className="px-3 py-2 bg-base-200 border-b border-base-300">
@@ -76,9 +119,9 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
               {items.length}건
             </span>
           </div>
-          {/* 크기규격별 데이터 */}
+          {/* 크기규격별 데이터 (정렬 적용) */}
           <div className="divide-y divide-base-200">
-            {items.map((item, idx) => (
+            {sortBySizeOrder(items).map((item, idx) => (
               <div key={idx} className="px-3 py-2.5">
                 {/* 크기규격 */}
                 <div className="text-sm font-medium text-base-content/60 mb-1.5">
