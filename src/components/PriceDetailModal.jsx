@@ -80,9 +80,10 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
     grouped[key].push(item);
   });
 
-  // 저장된 등급 순서 적용
-  const gradeOrder = sortSettings?.grade_order || [];
-  const sizeOrder = sortSettings?.size_order || [];
+  // 법인별 저장된 등급 순서 적용
+  const corpSettings = sortSettings?.corporations?.[marketName] || {};
+  const gradeOrder = corpSettings.grade_order || [];
+  const sizeOrder = corpSettings.size_order || [];
 
   const sortedGradeEntries = Object.entries(grouped).sort(([a], [b]) => {
     const idxA = gradeOrder.indexOf(a);

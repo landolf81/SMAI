@@ -1,9 +1,9 @@
 /**
  * AdminDetailGradeSettings.jsx
- * 도매시장 등급별 세부 데이터(market_detail_grade)의 등급 정렬 순서 관리
- * - 등급(특, 상, 보통, 등외 등)의 표시 순서 설정
- * - 크기규격(30내, 40내 등)의 표시 순서 설정
- * - app_settings 테이블에 저장
+ * 도매시장 법인별 등급/크기규격 정렬 순서 관리
+ * - 왼쪽: 법인 목록 선택
+ * - 오른쪽: 선택된 법인의 등급 순서 + 크기규격 순서
+ * - app_settings 테이블에 법인별로 저장
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -21,16 +21,20 @@ const AdminDetailGradeSettings = () => {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // 등급 순서
-  const [gradeOrder, setGradeOrder] = useState([]);
-  // 크기규격 순서
-  const [sizeOrder, setSizeOrder] = useState([]);
+  // 법인 목록
+  const [corporationList, setCorporationList] = useState([]);
+  const [selectedCorp, setSelectedCorp] = useState(null);
+
+  // 법인별 DB 원본 데이터 (등급/크기규격 목록)
+  const [corpDataMap, setCorpDataMap] = useState({});
+
+  // 법인별 정렬 설정 { "㈜중앙청과": { grade_order: [], size_order: [] }, ... }
+  const [corpSettings, setCorpSettings] = useState({});
 
   // 드래그 상태
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedType, setDraggedType] = useState(null);
 
-  // 초기 로드
   useEffect(() => {
     loadData();
   }, []);
@@ -47,34 +51,64 @@ const AdminDetailGradeSettings = () => {
           .select('value')
           .eq('key', SETTINGS_KEY)
           .maybeSingle();
-        savedSettings = data?.value;
+        savedSettings = data?.value?.corporations || {};
       }
 
-      // 2. DB에서 고유 등급/크기규격 목록 조회
-      const { data: gradeData } = await supabase
+      // 2. DB에서 법인별 고유 등급/크기규격 조회
+      const { data: rawData } = await supabase
         .from('market_detail_grade')
-        .select('grade, size_name');
+        .select('market_name, grade, size_name');
 
-      const uniqueGrades = [...new Set((gradeData || []).map((r) => r.grade))].sort();
-      const uniqueSizes = [...new Set((gradeData || []).map((r) => r.size_name))].sort((a, b) => {
-        // 숫자 기준 정렬 (30내 < 40내 < 50내...)
-        const numA = parseInt(a) || 999;
-        const numB = parseInt(b) || 999;
-        return numA - numB;
+      // 법인별로 그룹핑
+      const dataMap = {};
+      (rawData || []).forEach((row) => {
+        if (!dataMap[row.market_name]) {
+          dataMap[row.market_name] = { grades: new Set(), sizes: new Set() };
+        }
+        dataMap[row.market_name].grades.add(row.grade);
+        dataMap[row.market_name].sizes.add(row.size_name);
       });
 
-      if (savedSettings && !forceRefresh) {
-        // 저장된 순서 사용 (새로 추가된 항목은 뒤에 붙임)
-        const savedGrades = savedSettings.grade_order || [];
-        const newGrades = uniqueGrades.filter((g) => !savedGrades.includes(g));
-        setGradeOrder([...savedGrades.filter((g) => uniqueGrades.includes(g)), ...newGrades]);
+      // Set → 정렬된 배열로 변환
+      const corpList = Object.keys(dataMap).sort();
+      const processedMap = {};
+      corpList.forEach((corp) => {
+        processedMap[corp] = {
+          grades: [...dataMap[corp].grades].sort(),
+          sizes: [...dataMap[corp].sizes].sort((a, b) => {
+            const numA = parseInt(a) || 999;
+            const numB = parseInt(b) || 999;
+            return numA - numB;
+          }),
+        };
+      });
 
-        const savedSizes = savedSettings.size_order || [];
-        const newSizes = uniqueSizes.filter((s) => !savedSizes.includes(s));
-        setSizeOrder([...savedSizes.filter((s) => uniqueSizes.includes(s)), ...newSizes]);
-      } else {
-        setGradeOrder(uniqueGrades);
-        setSizeOrder(uniqueSizes);
+      setCorporationList(corpList);
+      setCorpDataMap(processedMap);
+
+      // 3. 저장된 설정 병합 (새 항목은 뒤에 추가)
+      const mergedSettings = {};
+      corpList.forEach((corp) => {
+        const saved = savedSettings?.[corp] || {};
+        const dbGrades = processedMap[corp].grades;
+        const dbSizes = processedMap[corp].sizes;
+
+        const savedGrades = saved.grade_order || [];
+        const savedSizes = saved.size_order || [];
+
+        mergedSettings[corp] = {
+          grade_order: forceRefresh
+            ? dbGrades
+            : [...savedGrades.filter((g) => dbGrades.includes(g)), ...dbGrades.filter((g) => !savedGrades.includes(g))],
+          size_order: forceRefresh
+            ? dbSizes
+            : [...savedSizes.filter((s) => dbSizes.includes(s)), ...dbSizes.filter((s) => !savedSizes.includes(s))],
+        };
+      });
+
+      setCorpSettings(mergedSettings);
+      if (corpList.length > 0 && !selectedCorp) {
+        setSelectedCorp(corpList[0]);
       }
     } catch (error) {
       console.error('데이터 로드 오류:', error);
@@ -91,7 +125,7 @@ const AdminDetailGradeSettings = () => {
         .from('app_settings')
         .upsert({
           key: SETTINGS_KEY,
-          value: { grade_order: gradeOrder, size_order: sizeOrder },
+          value: { corporations: corpSettings },
           updated_at: new Date().toISOString(),
         }, { onConflict: 'key' });
 
@@ -106,6 +140,22 @@ const AdminDetailGradeSettings = () => {
     }
   };
 
+  // 현재 선택된 법인의 등급/크기규격 순서
+  const currentGradeOrder = selectedCorp ? (corpSettings[selectedCorp]?.grade_order || []) : [];
+  const currentSizeOrder = selectedCorp ? (corpSettings[selectedCorp]?.size_order || []) : [];
+
+  // 순서 변경 헬퍼
+  const updateOrder = (type, newOrder) => {
+    if (!selectedCorp) return;
+    setCorpSettings((prev) => ({
+      ...prev,
+      [selectedCorp]: {
+        ...prev[selectedCorp],
+        [type === 'grade' ? 'grade_order' : 'size_order']: newOrder,
+      },
+    }));
+  };
+
   // 드래그 핸들러
   const handleDragStart = (e, index, type) => {
     setDraggedItem(index);
@@ -117,19 +167,11 @@ const AdminDetailGradeSettings = () => {
     e.preventDefault();
     if (draggedType !== type || draggedItem === index) return;
 
-    if (type === 'grade') {
-      const items = [...gradeOrder];
-      const dragged = items[draggedItem];
-      items.splice(draggedItem, 1);
-      items.splice(index, 0, dragged);
-      setGradeOrder(items);
-    } else {
-      const items = [...sizeOrder];
-      const dragged = items[draggedItem];
-      items.splice(draggedItem, 1);
-      items.splice(index, 0, dragged);
-      setSizeOrder(items);
-    }
+    const list = type === 'grade' ? [...currentGradeOrder] : [...currentSizeOrder];
+    const dragged = list[draggedItem];
+    list.splice(draggedItem, 1);
+    list.splice(index, 0, dragged);
+    updateOrder(type, list);
     setDraggedItem(index);
   };
 
@@ -138,32 +180,18 @@ const AdminDetailGradeSettings = () => {
     setDraggedType(null);
   };
 
-  // 화살표 이동
   const moveUp = (index, type) => {
     if (index === 0) return;
-    if (type === 'grade') {
-      const items = [...gradeOrder];
-      [items[index - 1], items[index]] = [items[index], items[index - 1]];
-      setGradeOrder(items);
-    } else {
-      const items = [...sizeOrder];
-      [items[index - 1], items[index]] = [items[index], items[index - 1]];
-      setSizeOrder(items);
-    }
+    const list = type === 'grade' ? [...currentGradeOrder] : [...currentSizeOrder];
+    [list[index - 1], list[index]] = [list[index], list[index - 1]];
+    updateOrder(type, list);
   };
 
   const moveDown = (index, type) => {
-    const list = type === 'grade' ? gradeOrder : sizeOrder;
+    const list = type === 'grade' ? [...currentGradeOrder] : [...currentSizeOrder];
     if (index === list.length - 1) return;
-    if (type === 'grade') {
-      const items = [...gradeOrder];
-      [items[index], items[index + 1]] = [items[index + 1], items[index]];
-      setGradeOrder(items);
-    } else {
-      const items = [...sizeOrder];
-      [items[index], items[index + 1]] = [items[index + 1], items[index]];
-      setSizeOrder(items);
-    }
+    [list[index], list[index + 1]] = [list[index + 1], list[index]];
+    updateOrder(type, list);
   };
 
   if (loading) {
@@ -256,44 +284,85 @@ const AdminDetailGradeSettings = () => {
         </div>
       )}
 
-      <p className="text-sm text-base-content/60 mb-4">
-        도매시장 등급별 세부 데이터의 표시 순서를 설정합니다.<br />
-        드래그하거나 화살표로 순서를 변경하세요.
-      </p>
-
-      <div className="grid md:grid-cols-2 gap-6 items-start">
-        {/* 등급 정렬 */}
+      {/* 3열 레이아웃: 법인 | 등급 | 크기규격 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+        {/* 법인 목록 */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body p-4">
-            <h2 className="card-title text-lg text-blue-600 mb-2">등급 순서</h2>
-            {gradeOrder.length === 0 ? (
+            <h2 className="card-title text-lg text-blue-600 mb-2">도매법인</h2>
+            <p className="text-xs text-base-content/60 mb-2">
+              법인을 선택하면 등급/크기규격 순서 설정
+            </p>
+            {corporationList.length === 0 ? (
               <div className="text-center py-8 text-base-content/40">
-                <p>등급 데이터가 없습니다</p>
+                <p>법인 데이터가 없습니다</p>
                 <p className="text-sm mt-1">market_detail_grade에 데이터를 먼저 업로드하세요</p>
               </div>
             ) : (
               <ul className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
-                {gradeOrder.map((grade, index) =>
-                  renderSortableItem(grade, index, 'grade', gradeOrder.length)
+                {corporationList.map((corp) => (
+                  <li
+                    key={corp}
+                    onClick={() => setSelectedCorp(corp)}
+                    className={`flex items-center gap-1.5 px-2 py-2 rounded-md cursor-pointer transition-colors text-sm ${
+                      selectedCorp === corp
+                        ? 'bg-blue-100 border border-blue-400 text-blue-700 font-bold'
+                        : 'bg-base-200 hover:bg-base-300 text-base-content'
+                    }`}
+                  >
+                    <span className="flex-1 font-medium">{corp}</span>
+                    <span className="text-xs text-base-content/40">
+                      {corpDataMap[corp]?.grades.length || 0}등급
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
+        {/* 등급 순서 */}
+        <div className="card bg-base-100 shadow-xl">
+          <div className="card-body p-4">
+            <h2 className="card-title text-lg text-green-600 mb-2">
+              {selectedCorp ? `등급 순서` : '등급 순서'}
+            </h2>
+            {!selectedCorp ? (
+              <div className="text-center py-8 text-base-content/40">
+                <p>법인을 선택하세요</p>
+              </div>
+            ) : currentGradeOrder.length === 0 ? (
+              <div className="text-center py-8 text-base-content/40">
+                <p>등급 데이터 없음</p>
+              </div>
+            ) : (
+              <ul className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+                {currentGradeOrder.map((grade, index) =>
+                  renderSortableItem(grade, index, 'grade', currentGradeOrder.length)
                 )}
               </ul>
             )}
           </div>
         </div>
 
-        {/* 크기규격 정렬 */}
+        {/* 크기규격 순서 */}
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body p-4">
-            <h2 className="card-title text-lg text-green-600 mb-2">크기규격 순서</h2>
-            {sizeOrder.length === 0 ? (
+            <h2 className="card-title text-lg text-orange-500 mb-2">
+              {selectedCorp ? `크기규격 순서` : '크기규격 순서'}
+            </h2>
+            {!selectedCorp ? (
               <div className="text-center py-8 text-base-content/40">
-                <p>크기규격 데이터가 없습니다</p>
-                <p className="text-sm mt-1">market_detail_grade에 데이터를 먼저 업로드하세요</p>
+                <p>법인을 선택하세요</p>
+              </div>
+            ) : currentSizeOrder.length === 0 ? (
+              <div className="text-center py-8 text-base-content/40">
+                <p>크기규격 데이터 없음</p>
               </div>
             ) : (
               <ul className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
-                {sizeOrder.map((size, index) =>
-                  renderSortableItem(size, index, 'size', sizeOrder.length)
+                {currentSizeOrder.map((size, index) =>
+                  renderSortableItem(size, index, 'size', currentSizeOrder.length)
                 )}
               </ul>
             )}
