@@ -274,13 +274,15 @@ const AdminDetailGradeSettings = () => {
         </div>
       </div>
 
-      {/* 성공 메시지 */}
+      {/* 성공 토스트 (화면 상단 중앙, 자동 사라짐) */}
       {successMessage && (
-        <div className="alert alert-info mb-4 bg-blue-50 border-blue-200">
-          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-blue-600 shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span className="text-blue-700">{successMessage}</span>
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-fade-in">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" className="shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {successMessage}
+          </div>
         </div>
       )}
 
