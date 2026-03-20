@@ -11,7 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import CloseIcon from '@mui/icons-material/Close';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { marketService } from '../services';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../config/supabase';
 
 const SETTINGS_KEY = 'detail_grade_display_settings';
 

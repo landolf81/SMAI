@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabaseClient';
+import { supabase } from '../../config/supabase';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import SaveIcon from '@mui/icons-material/Save';
