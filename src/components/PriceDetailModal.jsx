@@ -178,6 +178,24 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
     staleTime: 5 * 60 * 1000,
   });
 
+  // 등급 세부 데이터 존재 여부 확인 (해당 법인+날짜의 전체 데이터)
+  const { data: gradeDataExists } = useQuery({
+    queryKey: ['market-detail-grade-exists', gradeName, marketDate],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('market_detail_grade')
+        .select('shipper, weight')
+        .eq('market_name', gradeName)
+        .eq('market_date', marketDate)
+        .limit(200);
+      // shipper+weight 조합 Set 생성
+      const keys = new Set((data || []).map((r) => `${r.shipper}|${r.weight}`));
+      return keys;
+    },
+    enabled: isOpen && !!gradeName && !!marketDate,
+    staleTime: 5 * 60 * 1000,
+  });
+
   if (!isOpen) return null;
 
   return createPortal(
@@ -228,29 +246,32 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
             <div className="space-y-3">
               {details.map((item, index) => {
                 const isExpanded = expandedIndex === index;
+                const hasGradeData = gradeDataExists?.has(`${item.shipper_name}|${item.weight}`);
                 return (
                   <div
                     key={item.id || index}
                     className="bg-base-200/50 rounded-xl border border-base-200 overflow-hidden"
                   >
-                    {/* 카드 헤더 (탭 가능) */}
+                    {/* 카드 헤더 */}
                     <div
-                      className="p-3 cursor-pointer active:bg-base-200 transition-colors"
-                      onClick={() => setExpandedIndex(isExpanded ? null : index)}
+                      className={`p-3 transition-colors ${hasGradeData ? 'cursor-pointer active:bg-base-200' : ''}`}
+                      onClick={() => hasGradeData && setExpandedIndex(isExpanded ? null : index)}
                     >
-                      {/* 1줄: 규격 · 출하지명 + 펼침 화살표 */}
+                      {/* 1줄: 규격 · 출하지명 + 펼침 화살표 (데이터 있을 때만) */}
                       <div className="flex items-center justify-between mb-2">
                         <div className="text-lg text-base-content/60">
                           <span className="font-medium text-base-content">{item.weight}</span>
                           <span className="mx-1.5">·</span>
                           <span>{item.shipper_name}</span>
                         </div>
-                        <svg
-                          className={`w-5 h-5 text-base-content/40 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                        </svg>
+                        {hasGradeData && (
+                          <svg
+                            className={`w-5 h-5 text-base-content/40 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        )}
                       </div>
                       {/* 2줄: 수량 | 평균가 | 최고가 | 최저가 */}
                       <div className="grid grid-cols-4 gap-1 text-center">
@@ -281,8 +302,8 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
                       </div>
                     </div>
 
-                    {/* 아코디언 펼침: 등급별 세부 데이터 */}
-                    {isExpanded && (
+                    {/* 아코디언 펼침: 등급별 세부 데이터 (데이터 있을 때만) */}
+                    {isExpanded && hasGradeData && (
                       <div className="px-3 pb-3 pt-1 border-t border-base-300">
                         <div className="text-xs font-medium text-base-content/50 mb-2">
                           📊 등급·크기규격별 세부
