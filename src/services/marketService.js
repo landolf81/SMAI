@@ -966,6 +966,74 @@ export const marketService = {
   },
 
   /**
+   * 산지(로컬마켓) 원본 데이터 존재 여부 확인
+   * @param {string} marketName - 공판장명
+   * @param {string} date - 날짜 (YYYY-MM-DD)
+   * @returns {boolean} 데이터 존재 여부
+   */
+  async checkMarketDataRawExists(marketName, date) {
+    try {
+      marketName = nfc(marketName);
+      const { count, error } = await supabase
+        .from('market_data_raw')
+        .select('id', { count: 'exact', head: true })
+        .eq('market_name', marketName)
+        .eq('market_date', date)
+        .limit(1);
+
+      if (error) throw error;
+      return (count || 0) > 0;
+    } catch (error) {
+      console.error('원본 데이터 존재 확인 오류:', error);
+      return false;
+    }
+  },
+
+  /**
+   * 산지(로컬마켓) 원본 데이터 조회 (표시등급별)
+   * market_data_raw 테이블에서 display_grade로 필터링
+   * display_grade가 없는 기존 데이터는 grade로 fallback
+   * @param {string} marketName - 공판장명
+   * @param {string} date - 날짜 (YYYY-MM-DD)
+   * @param {string} grade - 표시 등급 (market_data의 grade와 동일)
+   * @returns {Array} 원본 데이터 배열
+   */
+  async getMarketDataRaw(marketName, date, grade) {
+    try {
+      marketName = nfc(marketName);
+
+      // display_grade로 먼저 조회
+      const { data, error } = await supabase
+        .from('market_data_raw')
+        .select('*')
+        .eq('market_name', marketName)
+        .eq('market_date', date)
+        .eq('display_grade', grade)
+        .order('id', { ascending: true });
+
+      if (error) throw error;
+
+      // display_grade 결과가 있으면 반환
+      if (data && data.length > 0) return data;
+
+      // fallback: 기존 데이터 호환 (display_grade 없는 경우 grade로 조회)
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('market_data_raw')
+        .select('*')
+        .eq('market_name', marketName)
+        .eq('market_date', date)
+        .eq('grade', grade)
+        .order('id', { ascending: true });
+
+      if (fallbackError) throw fallbackError;
+      return fallbackData || [];
+    } catch (error) {
+      console.error('원본 데이터 조회 오류:', error);
+      return [];
+    }
+  },
+
+  /**
    * 시장 설정 조회 (공판장 순서, 등급 순서)
    * @returns {Object|null} { market_order: [], grade_orders: {} }
    */

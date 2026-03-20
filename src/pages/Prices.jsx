@@ -17,6 +17,7 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 import PriceDetailModal from '../components/PriceDetailModal';
+import LocalMarketDetailModal from '../components/LocalMarketDetailModal';
 import MarketSearchModal from '../components/MarketSearchModal';
 
 // 산지 목록 — 이 외에는 모두 모달 지원 (도매시장)
@@ -41,7 +42,8 @@ const Prices = () => {
   const [briefing, setBriefing] = useState(null); // AI 브리핑
   const [briefingGenerating, setBriefingGenerating] = useState(false); // 브리핑 생성 중
   const [auctionTime, setAuctionTime] = useState(null); // 경매시간
-  const [selectedGrade, setSelectedGrade] = useState(null); // 모달용 선택된 등급/법인명
+  const [selectedGrade, setSelectedGrade] = useState(null); // 도매시장 모달용 선택된 등급/법인명
+  const [localSelectedGrade, setLocalSelectedGrade] = useState(null); // 산지(로컬마켓) 모달용 선택된 등급
   const [favorites, setFavorites] = useState([]); // 즐겨찾기 목록
   const [searchModalOpen, setSearchModalOpen] = useState(false); // 검색 모달
   const adminPermissions = useAdminPermissions();
@@ -72,6 +74,15 @@ const Prices = () => {
     if (!adsData || adsData.length === 0) return [];
     return sortAdsByPriority(adsData, getAdViewCounts());
   }, [adsData]);
+
+  // 로컬마켓일 때 raw 데이터 존재 여부 확인
+  const isLocal = LOCAL_MARKETS.includes(marketName);
+  const { data: hasRawData } = useQuery({
+    queryKey: ['market-data-raw-exists', marketName, selectedDate],
+    queryFn: () => marketService.checkMarketDataRawExists(marketName, selectedDate),
+    enabled: !!marketName && isLocal,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // 페이지 진입 시 홈 캐시 무효화 플래그 세팅 (뒤로가기 시 홈이 신선한 데이터 로드)
   useEffect(() => {
@@ -643,12 +654,18 @@ const Prices = () => {
                   comparison_available: false
                 };
                 const isWholesale = isWholesaleMarket(marketName);
+                const isLocalMarket = LOCAL_MARKETS.includes(marketName);
+                const canShowDetail = isWholesale || (isLocalMarket && hasRawData);
 
                 return (
                   <div
                     key={index}
-                    className={`relative pt-4 ${isWholesale ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
-                    onClick={() => isWholesale && setSelectedGrade(item.grade)}
+                    className={`relative pt-4 ${canShowDetail ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
+                    onClick={() => {
+                      if (!canShowDetail) return;
+                      if (isWholesale) setSelectedGrade(item.grade);
+                      else if (isLocalMarket) setLocalSelectedGrade(item.grade);
+                    }}
                   >
                     {/* 등급 뱃지 + 즐겨찾기 - 카드 위에 걸쳐있는 형태 */}
                     <div className="absolute -top-0 left-4 right-4 z-10 flex items-center justify-between">
@@ -660,7 +677,7 @@ const Prices = () => {
                           <span className="w-2 h-2 bg-white rounded-full"></span>
                           {item.grade}
                         </span>
-                        {isWholesale && (
+                        {canShowDetail && (
                           <span className="text-sm text-base-content/40">상세 보기 &gt;</span>
                         )}
                       </div>
@@ -781,6 +798,15 @@ const Prices = () => {
         marketName={marketName}
         marketDate={selectedDate}
         gradeName={selectedGrade}
+      />
+
+      {/* 산지(로컬마켓) 상세 모달 */}
+      <LocalMarketDetailModal
+        isOpen={!!localSelectedGrade}
+        onClose={() => setLocalSelectedGrade(null)}
+        marketName={marketName}
+        marketDate={selectedDate}
+        gradeName={localSelectedGrade}
       />
 
       {/* 플로팅 버튼: 오른쪽 세로 (검색 + 즐겨찾기), 왼쪽 (admin) */}
