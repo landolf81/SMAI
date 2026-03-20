@@ -124,30 +124,32 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
           <div className="divide-y divide-base-200">
             {sortBySizeOrder(items).map((item, idx) => (
               <div key={idx} className="px-3 py-2.5">
-                {/* 크기규격 */}
-                <div className="text-sm font-medium text-base-content/60 mb-1.5">
-                  {item.size_name === '.' ? '전체' : item.size_name}
-                </div>
-                {/* 수치 */}
-                <div className="grid grid-cols-4 gap-1 text-center">
-                  <div>
-                    <div className="text-base-content/40 text-xs">수량</div>
-                    <div className="text-base font-bold text-base-content">{formatPrice(item.boxes)}</div>
+                {/* 1줄: 크기규격 + 수량 */}
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="text-base font-bold text-base-content">
+                    {item.size_name === '.' ? '전체' : item.size_name}
+                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-xs text-base-content/40">수량</span>
+                    <span className="text-lg font-bold text-base-content">{formatPrice(item.boxes)}</span>
                     <ChangeIndicator current={item.boxes} prev={item.prev_boxes} />
                   </div>
+                </div>
+                {/* 2줄: 평균가 | 최고가 | 최저가 */}
+                <div className="grid grid-cols-3 gap-1 text-center">
                   <div>
                     <div className="text-base-content/40 text-xs">평균가</div>
-                    <div className="text-base font-bold text-base-content">{formatPrice(item.avg_price)}</div>
+                    <div className="text-lg font-bold text-base-content">{formatPrice(item.avg_price)}</div>
                     <ChangeIndicator current={item.avg_price} prev={item.prev_avg_price} />
                   </div>
                   <div>
                     <div className="text-base-content/40 text-xs">최고가</div>
-                    <div className="text-base font-bold text-red-500">{formatPrice(item.max_price)}</div>
+                    <div className="text-lg font-bold text-red-500">{formatPrice(item.max_price)}</div>
                     <ChangeIndicator current={item.max_price} prev={item.prev_max_price} />
                   </div>
                   <div>
                     <div className="text-base-content/40 text-xs">최저가</div>
-                    <div className="text-base font-bold text-blue-500">{formatPrice(item.min_price)}</div>
+                    <div className="text-lg font-bold text-blue-500">{formatPrice(item.min_price)}</div>
                     <ChangeIndicator current={item.min_price} prev={item.prev_min_price} />
                   </div>
                 </div>
