@@ -127,7 +127,7 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
                 {/* 1줄: 크기규격 | 수량 | 변동 */}
                 <div className="flex items-baseline gap-3 mb-1.5">
                   <span className="text-base font-bold text-base-content">
-                    {item.size_name === '.' ? '전체' : item.size_name}
+                    {item.size_name === '.' ? '미분류' : item.size_name}
                   </span>
                   <span className="text-xs text-base-content/40">수량</span>
                   <span className="text-lg font-bold text-base-content">{formatPrice(item.boxes)}</span>
