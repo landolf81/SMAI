@@ -242,9 +242,9 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
               </p>
             </div>
           ) : (
-            /* 데이터 카드 리스트 (아코디언) */
+            /* 데이터 카드 리스트 (아코디언) - 중량 내림차순 정렬 */
             <div className="space-y-3">
-              {details.map((item, index) => {
+              {[...details].sort((a, b) => (parseFloat(b.weight) || 0) - (parseFloat(a.weight) || 0)).map((item, index) => {
                 const isExpanded = expandedIndex === index;
                 const hasGradeData = gradeDataExists?.has(`${item.shipper_name}|${item.weight}`);
                 return (

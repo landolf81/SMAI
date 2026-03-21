@@ -924,7 +924,7 @@ export const marketService = {
         .eq('market_name', marketName)
         .eq('market_date', date)
         .eq('grade', grade)
-        .order('weight')
+        .order('weight', { ascending: false })
         .order('shipper_name');
 
       if (error) throw error;

@@ -21,7 +21,7 @@ import LocalMarketDetailModal from '../components/LocalMarketDetailModal';
 import MarketSearchModal from '../components/MarketSearchModal';
 
 // 산지 목록 — 이 외에는 모두 모달 지원 (도매시장)
-const LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협', '가락공판장', '대전공판장', '광주공판장'];
+const LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협', '가락공판장', '대전공판장', '광주공판장', '구리공판장'];
 const isWholesaleMarket = (name) => {
   if (!name) return false;
   return !LOCAL_MARKETS.includes(name);
