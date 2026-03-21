@@ -259,6 +259,8 @@ const Layout = () => {
     return (
       <Suspense fallback={<PageLoader />}>
         <Outlet />
+        <Analytics />
+        <SpeedInsights />
       </Suspense>
     );
   }
@@ -441,6 +443,10 @@ const Layout = () => {
       {/* 최초 접속자 안내 툴팁 */}
       <OnboardingTooltip />
       <MarketTrendTooltip />
+
+      {/* Vercel Analytics - Router 내부에 배치해야 SPA 페이지 전환 정확히 추적 */}
+      <Analytics />
+      <SpeedInsights />
     </div>
   );
 };
@@ -740,8 +746,6 @@ function App() {
             },
           }}
         />
-        <Analytics />
-        <SpeedInsights />
       </QueryClientProvider>
     </ThemeProvider>
   );
