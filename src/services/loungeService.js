@@ -127,6 +127,19 @@ const loungeService = {
   },
 
   /**
+   * 메시지 삭제 - 관리자 전용 (타인 메시지 삭제 가능)
+   * @param {string} id - 메시지 UUID
+   */
+  async deleteMessageAdmin(id) {
+    const { error } = await supabase
+      .from('lounge_messages')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  },
+
+  /**
    * 메시지 숨기기/복구 (관리자 전용)
    * @param {string} id - 메시지 UUID
    * @param {boolean} isHidden - true: 숨기기, false: 복구

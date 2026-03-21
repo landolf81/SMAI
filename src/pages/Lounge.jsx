@@ -112,7 +112,7 @@ const renderContent = (content, knownNames) => {
 // LoungeMessage
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, knownNames
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMention, onProfileClick, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onAdminDelete, onTTS, onMention, onProfileClick, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -221,12 +221,20 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onTTS, onMenti
             </button>
           )}
           {isAdmin && (
-            <button
-              onClick={() => onHide(msg.id, !isHidden)}
-              className={`text-[11px] ${isMe ? '' : 'ml-auto'} ${isHidden ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}`}
-            >
-              {isHidden ? '복구' : '숨기기'}
-            </button>
+            <>
+              <button
+                onClick={() => onHide(msg.id, !isHidden)}
+                className={`text-[11px] ${isMe ? '' : 'ml-auto'} ${isHidden ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}`}
+              >
+                {isHidden ? '복구' : '숨기기'}
+              </button>
+              <button
+                onClick={() => onAdminDelete(msg.id)}
+                className="text-[11px] text-red-500 font-medium"
+              >
+                삭제
+              </button>
+            </>
           )}
         </div>
         {msg.content && (
@@ -727,6 +735,17 @@ const Lounge = () => {
     }
   }, []);
 
+  // ── 관리자 메시지 삭제 (hard delete) ──
+  const handleAdminDelete = useCallback(async (id) => {
+    if (!window.confirm('이 메시지를 완전히 삭제하시겠습니까?\n(복구 불가)')) return;
+    try {
+      await loungeService.deleteMessageAdmin(id);
+      setMessages((prev) => prev.filter((m) => m.id !== id));
+    } catch (e) {
+      console.error('[Lounge] 관리자 삭제 실패:', e);
+    }
+  }, []);
+
   // ── 메시지 숨기기/복구 (관리자) ──
   const handleHide = useCallback(async (id, isHidden) => {
     const action = isHidden ? '숨기기' : '복구';
@@ -826,6 +845,7 @@ const Lounge = () => {
                 msg={item.msg}
                 currentUserId={currentUser?.id}
                 onDelete={handleDelete}
+                onAdminDelete={handleAdminDelete}
                 onTTS={handleTTS}
                 onMention={handleMention}
                 onProfileClick={handleProfileClick}
