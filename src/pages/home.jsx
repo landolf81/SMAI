@@ -351,7 +351,7 @@ const Home = () => {
       setMarketData(sortedData);
 
       // 도매시장 합계 처리 (market_aggregate_summary에서 DB 조회 - 성주군과 동일 패턴)
-      if (wholesaleAggregate?.today) {
+      if (wholesaleAggregate?.today && (wholesaleAggregate.today.avg_price > 0 || wholesaleAggregate.today.total_boxes > 0)) {
         const wToday = wholesaleAggregate.today;
         const wPrev = wholesaleAggregate.previous;
 

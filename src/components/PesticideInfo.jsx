@@ -13,9 +13,9 @@ import { pesticideService } from '../services';
 /** 용도 필터 칩 */
 const PURPOSE_FILTERS = [
   { key: 'all', label: '전체' },
-  { key: '살균제', label: '살균제' },
-  { key: '살충제', label: '살충제' },
-  { key: '살충살균제', label: '살충살균' },
+  { key: '살균', label: '살균제' },
+  { key: '살충', label: '살충제' },
+  { key: '균충', label: '살충살균' },
 ];
 
 /** 용도별 뱃지 색상 */
