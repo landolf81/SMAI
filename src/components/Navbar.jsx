@@ -1,7 +1,7 @@
 /**
  * Navbar - 상단 네비게이션 바
  * 다크모드 토글(좌측) + 로고(중앙) + PWA설치 버튼 + 벨 아이콘(우측, 로그인 사용자만)
- * 미확인 알림 시 빨간 점 표시
+ * 미확인 알림 시 숫자 뱃지 표시 (개인 알림 미읽은 수 + 공지 미확인)
  * PWA 설치 가능(Android)할 때만 설치 아이콘 노출
  * 벨 아이콘 클릭 시 페이지 이동 대신 NotificationModal 표시
  */
@@ -12,20 +12,25 @@ import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { supabase } from '../config/supabase';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { useUnreadNotifications } from '../hooks/useUnreadNotifications';
 import NotificationModal from './NotificationModal';
 
-const LAST_VIEW_KEY = 'last_notifications_view';
+// 전체 공지 마지막 확인 시간 키 (NotificationModal, Notifications 페이지와 공유)
+const LAST_BROADCAST_VIEW_KEY = 'last_broadcast_view';
 
 const Navbar = () => {
   const { currentUser } = useContext(AuthContext);
   const { isDark, setTheme } = useTheme();
-  const [hasUnseen, setHasUnseen] = useState(false);
+  const [hasUnseenBroadcast, setHasUnseenBroadcast] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // 개인 알림 미읽은 카운트 (실시간)
+  const { unreadCount, refetch: refetchUnread } = useUnreadNotifications(currentUser?.id);
 
   // PWA 설치 훅 (Android에서 beforeinstallprompt 캡처)
   const { canInstall, isInstalled, promptInstall } = usePWAInstall();
 
-  // 미확인 알림 여부 체크
+  // 미확인 공지 알림 여부 체크 (push_logs 최신 vs last_broadcast_view 비교)
   useEffect(() => {
     if (!currentUser) return;
 
@@ -39,9 +44,9 @@ const Navbar = () => {
           .single();
 
         if (data) {
-          const lastViewed = localStorage.getItem(LAST_VIEW_KEY);
+          const lastViewed = localStorage.getItem(LAST_BROADCAST_VIEW_KEY);
           if (!lastViewed || new Date(data.created_at) > new Date(Number(lastViewed))) {
-            setHasUnseen(true);
+            setHasUnseenBroadcast(true);
           }
         }
       } catch {
@@ -52,8 +57,11 @@ const Navbar = () => {
     checkUnseen();
   }, [currentUser]);
 
+  // 뱃지에 표시할 총 미확인 수
+  const hasUnseen = hasUnseenBroadcast || unreadCount > 0;
+
   const handleBellClick = () => {
-    setHasUnseen(false);
+    setHasUnseenBroadcast(false);
     setShowNotifications(true);
   };
 
@@ -119,7 +127,13 @@ const Navbar = () => {
                   <path d="m12.44 28.18c1.84-0.08 3.3-1.46 3.59-3.13h-7.11c0.33 1.74 1.74 3.18 3.52 3.13z" />
                 </svg>
                 {hasUnseen && (
-                  <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
+                  unreadCount > 0 ? (
+                    <span className="absolute -top-0.5 -right-1 min-w-[16px] h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center px-0.5">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  ) : (
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full" />
+                  )
                 )}
               </button>
             ) : (
@@ -134,6 +148,7 @@ const Navbar = () => {
     <NotificationModal
       isOpen={showNotifications}
       onClose={() => setShowNotifications(false)}
+      onUnreadChange={refetchUnread}
     />
     </>
   );

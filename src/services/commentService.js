@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { getCachedSession } from '../utils/sessionCache.js';
+import { notificationService } from './notificationService.js';
 
 /**
  * 댓글 서비스
@@ -205,6 +206,54 @@ export const commentService = {
         .single();
 
       if (error) throw error;
+
+      // 개인 알림 생성 (fire-and-forget)
+      const senderName = data.users?.name || '누군가';
+      if (commentData.parentId) {
+        // 답글: 부모 댓글 작성자에게 알림
+        supabase
+          .from('comments')
+          .select('user_id')
+          .eq('id', commentData.parentId)
+          .single()
+          .then(({ data: parent }) => {
+            if (parent?.user_id) {
+              notificationService.createNotification({
+                receiverId: parent.user_id,
+                senderId: user.id,
+                type: 'reply',
+                title: `${senderName}님이 답글을 남겼어요`,
+                body: commentData.content?.slice(0, 80),
+                url: `/post/${commentData.postId}`,
+                referenceId: data.id,
+                referenceType: 'comment',
+              }).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      } else {
+        // 댓글: 게시물 작성자에게 알림
+        supabase
+          .from('posts')
+          .select('user_id')
+          .eq('id', commentData.postId)
+          .single()
+          .then(({ data: post }) => {
+            if (post?.user_id) {
+              notificationService.createNotification({
+                receiverId: post.user_id,
+                senderId: user.id,
+                type: 'comment',
+                title: `${senderName}님이 댓글을 남겼어요`,
+                body: commentData.content?.slice(0, 80),
+                url: `/post/${commentData.postId}`,
+                referenceId: data.id,
+                referenceType: 'comment',
+              }).catch(() => {});
+            }
+          })
+          .catch(() => {});
+      }
 
       // 사용자 정보 매핑
       return {

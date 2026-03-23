@@ -4,6 +4,7 @@
  */
 import { supabase } from '../config/supabase.js';
 import { pushNotificationService } from './pushNotificationService.js';
+import { notificationService } from './notificationService.js';
 import { storageService } from './storageService.js';
 import { v4 as uuidv4 } from 'uuid';
 import { POLL_SELECT } from './loungePollService.js';
@@ -99,10 +100,22 @@ const loungeService = {
             .eq('name', candidate)
             .maybeSingle();
           if (mentioned && mentioned.id !== user.id) {
+            const senderName = data.users?.name || '누군가';
             pushNotificationService.sendMentionPush({
               receiverId: mentioned.id,
-              senderName: data.users?.name || '누군가',
+              senderName,
               content,
+            }).catch(() => {});
+            // 개인 알림 저장
+            notificationService.createNotification({
+              receiverId: mentioned.id,
+              senderId: user.id,
+              type: 'mention',
+              title: `${senderName}님이 회원님을 언급했어요`,
+              body: content?.slice(0, 80),
+              url: '/lounge',
+              referenceId: data.id,
+              referenceType: 'lounge_message',
             }).catch(() => {});
             break; // 가장 긴 매칭으로 확정
           }

@@ -1002,31 +1002,20 @@ export const marketService = {
     try {
       marketName = nfc(marketName);
 
-      // display_grade로 먼저 조회
+      // 1회 쿼리: display_grade 또는 grade 일치하는 데이터 조회
       const { data, error } = await supabase
         .from('market_data_raw')
         .select('*')
         .eq('market_name', marketName)
         .eq('market_date', date)
-        .eq('display_grade', grade)
+        .or(`display_grade.eq.${grade},grade.eq.${grade}`)
         .order('id', { ascending: true });
 
       if (error) throw error;
 
-      // display_grade 결과가 있으면 반환
-      if (data && data.length > 0) return data;
-
-      // fallback: 기존 데이터 호환 (display_grade 없는 경우 grade로 조회)
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('market_data_raw')
-        .select('*')
-        .eq('market_name', marketName)
-        .eq('market_date', date)
-        .eq('grade', grade)
-        .order('id', { ascending: true });
-
-      if (fallbackError) throw fallbackError;
-      return fallbackData || [];
+      // display_grade 일치하는 데이터 우선 반환
+      const displayMatches = (data || []).filter(d => d.display_grade === grade);
+      return displayMatches.length > 0 ? displayMatches : (data || []);
     } catch (error) {
       console.error('원본 데이터 조회 오류:', error);
       return [];

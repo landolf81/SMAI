@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase.js';
 import { deleteFromR2, isR2Url } from './r2Service.js';
 import { getCachedSession } from '../utils/sessionCache.js';
+import { notificationService } from './notificationService.js';
 
 /**
  * 게시물 서비스
@@ -612,6 +613,26 @@ export const postService = {
         }]);
 
       if (error) throw error;
+
+      // 좋아요 알림 (fire-and-forget)
+      // post.user_id는 이미 위에서 조회됨 (자기 글 좋아요 차단 체크)
+      supabase
+        .from('users')
+        .select('name')
+        .eq('id', user.id)
+        .single()
+        .then(({ data: sender }) => {
+          notificationService.createNotification({
+            receiverId: post.user_id,
+            senderId: user.id,
+            type: 'like',
+            title: `${sender?.name || '누군가'}님이 좋아요를 눌렀어요`,
+            url: `/post/${postId}`,
+            referenceId: postId,
+            referenceType: 'post',
+          }).catch(() => {});
+        })
+        .catch(() => {});
 
       return { success: true };
     } catch (error) {
