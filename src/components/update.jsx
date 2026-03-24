@@ -649,7 +649,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 별명/닉네임 <span className="text-error">*</span>
               </label>
               <input
-                className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
+                className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 bg-base-100 text-base-content placeholder:text-base-content/40 ${
                   errors.name
                     ? 'border-error focus:ring-2 focus:ring-error/20 focus:border-error'
                     : 'border-base-300 focus:ring-2 focus:ring-primary/20 focus:border-primary'
@@ -689,7 +689,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 소개
               </label>
               <textarea
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-none ${
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-none bg-base-100 text-base-content placeholder:text-base-content/40 ${
                   errors.bio ? 'border-error' : 'border-base-300'
                 }`}
                 name="bio"
