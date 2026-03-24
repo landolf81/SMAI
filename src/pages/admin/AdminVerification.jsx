@@ -270,7 +270,12 @@ const AdminVerification = () => {
                           />
                         </div>
                         <div>
-                          <div className="font-medium text-base-content">{request.users?.username || request.users?.name || '-'}</div>
+                          <div className="font-medium text-base-content">
+                            {request.users?.username || request.users?.name || '-'}
+                            {request.users?.name && request.users?.name !== request.users?.username && (
+                              <span className="ml-1 text-xs text-base-content/50">({request.users.name})</span>
+                            )}
+                          </div>
                           <div className="text-xs text-base-content/60">{request.users?.email || '-'}</div>
                         </div>
                       </div>

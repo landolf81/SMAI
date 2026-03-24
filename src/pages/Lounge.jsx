@@ -28,6 +28,9 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 import LoungeComposeModal from '../components/lounge/LoungeComposeModal';
 import LoungeImageScroll from '../components/lounge/LoungeImageScroll';
 import ProfileModal from '../components/ProfileModal';
+import { BadgeList } from '../components/BadgeDisplay';
+import { badgeService } from '../services';
+import { useQuery } from '@tanstack/react-query';
 import { adService } from '../services';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 
@@ -112,7 +115,7 @@ const renderContent = (content, knownNames) => {
 // LoungeMessage
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, knownNames
 // ─────────────────────────────────────────────
-const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onAdminDelete, onTTS, onMention, onProfileClick, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting }) => {
+const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onAdminDelete, onTTS, onMention, onProfileClick, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting, badges }) => {
   const user = msg.users || {};
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
@@ -194,6 +197,9 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onAdminDelete,
           >
             {displayName}
           </span>
+          {badges && badges.length > 0 && (
+            <BadgeList badges={badges} size="xs" maxDisplay={2} className="gap-0.5 flex-shrink-0" />
+          )}
           {isAI && <AIBadge />}
           {msg.poll_id && <PollBadge />}
           {isHidden && <span className="text-[10px] text-red-400 font-medium">숨김</span>}
@@ -332,6 +338,23 @@ const Lounge = () => {
     }
     return [...names];
   }, [messages]);
+
+  // 메시지 작성자 ID 목록 (뱃지 일괄 조회용)
+  const messageUserIds = useMemo(() => {
+    const ids = new Set();
+    for (const m of messages) {
+      if (m.user_id) ids.add(m.user_id);
+    }
+    return [...ids];
+  }, [messages]);
+
+  // 뱃지 일괄 조회 (userId → badges[] 맵)
+  const { data: badgeMap = {} } = useQuery({
+    queryKey: ['loungeBadges', messageUserIds.sort().join(',')],
+    queryFn: () => badgeService.getBadgesByUserIds(messageUserIds),
+    staleTime: 5 * 60 * 1000,
+    enabled: messageUserIds.length > 0,
+  });
 
   // TTS: 현재 재생 중인 메시지 ID
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
@@ -858,6 +881,7 @@ const Lounge = () => {
                 onVote={handleVote}
                 onClosePoll={handleClosePoll}
                 isVoting={votingPollId === item.msg.poll_id}
+                badges={badgeMap[item.msg.user_id] || []}
               />
             );
           })}

@@ -187,12 +187,12 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
 
           {/* 뱃지 표시 - @id 아래에 배치 */}
           {!isLoading && userBadges && userBadges.length > 0 && (
-            <div className="flex items-center justify-center gap-1 flex-wrap mt-2 mb-4">
+            <div className="flex items-center justify-center gap-1.5 flex-wrap mt-2 mb-4">
               {userBadges.map((badge, index) => (
                 <BadgeDisplay
                   key={badge.id || index}
                   badge={badge}
-                  size="sm"
+                  size="md"
                 />
               ))}
             </div>

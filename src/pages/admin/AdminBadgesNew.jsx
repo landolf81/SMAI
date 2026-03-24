@@ -419,29 +419,29 @@ const AdminBadgesNew = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 pt-20">
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-base-100 rounded-lg shadow-sm border">
         {/* 헤더 */}
-        <div className="border-b border-gray-200 px-6 py-4">
+        <div className="border-b border-base-300 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-base-content flex items-center gap-2">
                 <VerifiedIcon className="text-blue-500" />
                 뱃지 관리 (아이콘 지원)
               </h1>
-              <p className="text-gray-600 mt-1">사용자의 인증 뱃지를 관리하고 아이콘을 설정할 수 있습니다</p>
+              <p className="text-base-content/60 mt-1">사용자의 인증 뱃지를 관리하고 아이콘을 설정할 수 있습니다</p>
             </div>
           </div>
         </div>
 
         {/* 탭 네비게이션 */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-base-300">
           <nav className="flex">
             <button
               onClick={() => setActiveTab('manage')}
               className={`px-6 py-3 font-medium ${
                 activeTab === 'manage'
                   ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-base-content/50 hover:text-base-content/80'
               }`}
             >
               뱃지 관리
@@ -451,7 +451,7 @@ const AdminBadgesNew = () => {
               className={`px-6 py-3 font-medium ${
                 activeTab === 'add'
                   ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-base-content/50 hover:text-base-content/80'
               }`}
             >
               뱃지 추가
@@ -461,7 +461,7 @@ const AdminBadgesNew = () => {
               className={`px-6 py-3 font-medium ${
                 activeTab === 'types'
                   ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  : 'text-base-content/50 hover:text-base-content/80'
               }`}
             >
               뱃지 타입 관리
@@ -474,7 +474,7 @@ const AdminBadgesNew = () => {
           {activeTab === 'manage' && (
             <div>
               <h3 className="text-lg font-semibold mb-4">뱃지별 발급 현황</h3>
-              <p className="text-gray-600 mb-4">각 뱃지별로 발급받은 사용자 목록을 확인하고 개별 뱃지를 삭제할 수 있습니다.</p>
+              <p className="text-base-content/60 mb-4">각 뱃지별로 발급받은 사용자 목록을 확인하고 개별 뱃지를 삭제할 수 있습니다.</p>
               
               {/* 사용자 검색 */}
               <div className="mb-6">
@@ -486,10 +486,10 @@ const AdminBadgesNew = () => {
                     placeholder="사용자 이름으로 검색..."
                     className="input input-bordered w-full pl-10"
                   />
-                  <SearchIcon className="absolute left-3 top-3 text-gray-400" />
+                  <SearchIcon className="absolute left-3 top-3 text-base-content/40" />
                 </div>
                 {manageSearchTerm && (
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-base-content/50 mt-2">
                     '{manageSearchTerm}' 검색 결과
                     <button
                       onClick={() => setManageSearchTerm('')}
@@ -504,9 +504,9 @@ const AdminBadgesNew = () => {
               {badgesByType && badgesByType.length > 0 ? (
                 <div className="space-y-6">
                   {badgesByType.map((badgeGroup, index) => (
-                    <div key={index} className="bg-white rounded-lg border shadow-sm">
+                    <div key={index} className="bg-base-100 rounded-lg border shadow-sm">
                       {/* 뱃지 정보 헤더 */}
-                      <div className="border-b border-gray-200 p-4">
+                      <div className="border-b border-base-300 p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
                             <BadgeDisplay
@@ -522,12 +522,12 @@ const AdminBadgesNew = () => {
                             />
                             <div>
                               <h4 className="font-semibold text-lg">{badgeGroup.badge_name}</h4>
-                              <p className="text-sm text-gray-500">타입: {badgeGroup.badge_type}</p>
+                              <p className="text-sm text-base-content/50">타입: {badgeGroup.badge_type}</p>
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-blue-600">{badgeGroup.user_count}</div>
-                            <div className="text-xs text-gray-500">명이 보유</div>
+                            <div className="text-xs text-base-content/50">명이 보유</div>
                           </div>
                         </div>
                       </div>
@@ -536,12 +536,12 @@ const AdminBadgesNew = () => {
                       <div className="p-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                           {badgeGroup.users.map((user) => (
-                            <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div key={user.id} className="flex items-center justify-between p-3 bg-base-200/50 rounded-lg">
                               <div className="flex items-center gap-3">
                                 <img
                                   src={user.profilePicUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e5e7eb"/%3E%3Cpath d="M16 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 10c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z" fill="%239ca3af"/%3E%3C/svg%3E'}
                                   alt={user.user_name}
-                                  className="w-8 h-8 rounded-full transition-opacity duration-300 bg-gray-100"
+                                  className="w-8 h-8 rounded-full transition-opacity duration-300 bg-base-200"
                                   loading="lazy"
                                   onError={(e) => {
                                     if (e.target.src !== 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e5e7eb"/%3E%3Cpath d="M16 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 10c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z" fill="%239ca3af"/%3E%3C/svg%3E') {
@@ -552,7 +552,7 @@ const AdminBadgesNew = () => {
                                 />
                                 <div>
                                   <div className="font-medium text-sm">{user.user_name || user.username}</div>
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-xs text-base-content/50">
                                     {new Date(user.created_at).toLocaleDateString('ko-KR')}
                                   </div>
                                 </div>
@@ -573,7 +573,7 @@ const AdminBadgesNew = () => {
                         </div>
                         
                         {badgeGroup.users.length === 0 && (
-                          <div className="text-center py-4 text-gray-500">
+                          <div className="text-center py-4 text-base-content/50">
                             <p>이 뱃지를 보유한 사용자가 없습니다.</p>
                           </div>
                         )}
@@ -582,8 +582,8 @@ const AdminBadgesNew = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <VerifiedIcon className="text-6xl text-gray-300 mb-4" />
+                <div className="text-center py-12 text-base-content/50">
+                  <VerifiedIcon className="text-6xl text-base-content/30 mb-4" />
                   {manageSearchTerm ? (
                     <>
                       <p>'{manageSearchTerm}' 검색 결과가 없습니다.</p>
@@ -603,14 +603,14 @@ const AdminBadgesNew = () => {
           {activeTab === 'add' && (
             <div>
               <h3 className="text-lg font-semibold mb-4">사용자에게 뱃지 추가</h3>
-              <p className="text-gray-600 mb-6">먼저 사용자를 선택한 후, 부여할 뱃지들을 검색하여 선택하세요.</p>
+              <p className="text-base-content/60 mb-6">먼저 사용자를 선택한 후, 부여할 뱃지들을 검색하여 선택하세요.</p>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* 왼쪽: 사용자 선택 */}
                   <div>
-                    <div className="bg-gray-50 rounded-lg p-5">
-                      <h4 className="text-md font-semibold text-gray-800 mb-4">1단계: 사용자 선택</h4>
+                    <div className="bg-base-200/50 rounded-lg p-5">
+                      <h4 className="text-md font-semibold text-base-content mb-4">1단계: 사용자 선택</h4>
                       
                       {/* 사용자 검색 */}
                       <div className="relative mb-4">
@@ -621,22 +621,22 @@ const AdminBadgesNew = () => {
                           placeholder="사용자 이름 또는 아이디 검색"
                           className="input input-bordered w-full pl-10"
                         />
-                        <SearchIcon className="absolute left-3 top-3 text-gray-400" />
+                        <SearchIcon className="absolute left-3 top-3 text-base-content/40" />
                         
                         {/* 검색 결과 드롭다운 */}
                         {searchTerm && users && users.length > 0 && !selectedUser && (
-                          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          <div className="absolute z-10 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             {users.map((user) => (
                               <button
                                 key={user.id}
                                 type="button"
                                 onClick={() => handleUserSelect(user)}
-                                className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3"
+                                className="w-full px-4 py-2 text-left hover:bg-base-200/50 flex items-center gap-3"
                               >
                                 <img
                                   src={user.profilePicUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e5e7eb"/%3E%3Cpath d="M16 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 10c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z" fill="%239ca3af"/%3E%3C/svg%3E'}
                                   alt={user.name}
-                                  className="w-8 h-8 rounded-full transition-opacity duration-300 bg-gray-100"
+                                  className="w-8 h-8 rounded-full transition-opacity duration-300 bg-base-200"
                                   loading="lazy"
                                   onError={(e) => {
                                     if (e.target.src !== 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"%3E%3Ccircle cx="16" cy="16" r="16" fill="%23e5e7eb"/%3E%3Cpath d="M16 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 10c-4 0-8 2-8 4v2h16v-2c0-2-4-4-8-4z" fill="%239ca3af"/%3E%3C/svg%3E') {
@@ -647,7 +647,7 @@ const AdminBadgesNew = () => {
                                 />
                                 <div>
                                   <div className="font-medium">{user.name || user.username}</div>
-                                  <div className="text-sm text-gray-500">@{user.username}</div>
+                                  <div className="text-sm text-base-content/50">@{user.username}</div>
                                 </div>
                               </button>
                             ))}
@@ -657,13 +657,13 @@ const AdminBadgesNew = () => {
                       
                       {/* 선택된 사용자 표시 */}
                       {selectedUser ? (
-                        <div className="bg-white rounded-lg p-4 border border-blue-300">
+                        <div className="bg-base-100 rounded-lg p-4 border border-primary/30">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                               <img
                                 src={selectedUser.profilePicUrl || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Ccircle cx="24" cy="24" r="24" fill="%23e5e7eb"/%3E%3Cpath d="M24 12a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm0 15c-6 0-12 3-12 6v3h24v-3c0-3-6-6-12-6z" fill="%239ca3af"/%3E%3C/svg%3E'}
                                 alt={selectedUser.name}
-                                className="w-12 h-12 rounded-full transition-opacity duration-300 bg-gray-100"
+                                className="w-12 h-12 rounded-full transition-opacity duration-300 bg-base-200"
                                 loading="lazy"
                                 onError={(e) => {
                                   if (e.target.src !== 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"%3E%3Ccircle cx="24" cy="24" r="24" fill="%23e5e7eb"/%3E%3Cpath d="M24 12a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm0 15c-6 0-12 3-12 6v3h24v-3c0-3-6-6-12-6z" fill="%239ca3af"/%3E%3C/svg%3E') {
@@ -674,7 +674,7 @@ const AdminBadgesNew = () => {
                               />
                               <div>
                                 <div className="font-semibold">{selectedUser.name || selectedUser.username}</div>
-                                <div className="text-sm text-gray-500">@{selectedUser.username}</div>
+                                <div className="text-sm text-base-content/50">@{selectedUser.username}</div>
                               </div>
                             </div>
                             <button
@@ -683,14 +683,14 @@ const AdminBadgesNew = () => {
                                 setSelectedUser(null);
                                 setBadgeForm({ ...badgeForm, userId: null });
                               }}
-                              className="text-gray-400 hover:text-gray-600"
+                              className="text-base-content/40 hover:text-base-content/70"
                             >
                               <DeleteIcon className="w-5 h-5" />
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-center py-8 text-gray-400">
+                        <div className="text-center py-8 text-base-content/40">
                           <VerifiedIcon className="text-5xl mb-2" />
                           <p>사용자를 검색하여 선택해주세요</p>
                         </div>
@@ -700,8 +700,8 @@ const AdminBadgesNew = () => {
                   
                   {/* 오른쪽: 뱃지 선택 */}
                   <div>
-                    <div className="bg-gray-50 rounded-lg p-5">
-                      <h4 className="text-md font-semibold text-gray-800 mb-4">
+                    <div className="bg-base-200/50 rounded-lg p-5">
+                      <h4 className="text-md font-semibold text-base-content mb-4">
                         2단계: 뱃지 선택 ({badgeForm.selectedBadgeTypes.length}개 선택됨)
                       </h4>
                       
@@ -715,7 +715,7 @@ const AdminBadgesNew = () => {
                           className="input input-bordered w-full pl-10"
                           disabled={!selectedUser}
                         />
-                        <SearchIcon className="absolute left-3 top-3 text-gray-400" />
+                        <SearchIcon className="absolute left-3 top-3 text-base-content/40" />
                       </div>
                       
                       {/* 뱃지 타입 목록 */}
@@ -730,8 +730,8 @@ const AdminBadgesNew = () => {
                                 key={badgeType.id}
                                 className={`border rounded-lg p-3 cursor-pointer transition-colors ${
                                   isSelected 
-                                    ? 'border-blue-500 bg-blue-50' 
-                                    : 'border-gray-200 hover:border-gray-300'
+                                    ? 'border-primary bg-primary/10' 
+                                    : 'border-base-300 hover:border-base-content/30'
                                 }`}
                                 onClick={() => {
                                   if (isSelected) {
@@ -768,7 +768,7 @@ const AdminBadgesNew = () => {
                             );
                           })
                         ) : (
-                          <div className="text-center py-8 text-gray-400">
+                          <div className="text-center py-8 text-base-content/40">
                             <LocalOfferIcon className="text-5xl mb-2" />
                             <p>먼저 사용자를 선택해주세요</p>
                           </div>
@@ -780,13 +780,13 @@ const AdminBadgesNew = () => {
                 
                 {/* 선택된 뱃지 요약 */}
                 {selectedUser && badgeForm.selectedBadgeTypes.length > 0 && (
-                  <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="bg-primary/10 rounded-lg p-4">
                     <h4 className="font-medium text-blue-800 mb-3">선택된 뱃지 목록</h4>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {badgeForm.selectedBadgeTypes.map((badgeType) => (
                         <div
                           key={badgeType.id}
-                          className="flex items-center gap-2 bg-white px-3 py-1 rounded-full text-sm border border-blue-200"
+                          className="flex items-center gap-2 bg-base-100 px-3 py-1 rounded-full text-sm border border-primary/20"
                         >
                           <BadgeDisplay
                             badge={{
@@ -804,7 +804,7 @@ const AdminBadgesNew = () => {
                           <button
                             type="button"
                             onClick={() => handleRemoveBadgeType(badgeType.id)}
-                            className="ml-1 text-gray-500 hover:text-gray-700"
+                            className="ml-1 text-base-content/50 hover:text-base-content/80"
                           >
                             ×
                           </button>
@@ -848,7 +848,7 @@ const AdminBadgesNew = () => {
               <h3 className="text-lg font-semibold mb-4">뱃지 타입 관리</h3>
               
               {/* 새 뱃지 타입 추가 */}
-              <div className="bg-gray-50 rounded-lg p-6 mb-6">
+              <div className="bg-base-200/50 rounded-lg p-6 mb-6">
                 <h4 className="font-medium mb-4">새 뱃지 타입 추가</h4>
                 <form onSubmit={handleAddBadgeType} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -880,18 +880,18 @@ const AdminBadgesNew = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/80 mb-2">
                         색상
                       </label>
                       <input
                         type="color"
                         value={newTypeForm.color}
                         onChange={(e) => setNewTypeForm(prev => ({ ...prev, color: e.target.value }))}
-                        className="w-full h-10 border border-gray-300 rounded"
+                        className="w-full h-10 border border-base-300 rounded"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-base-content/80 mb-2">
                         정렬 순서
                       </label>
                       <input
@@ -906,7 +906,7 @@ const AdminBadgesNew = () => {
 
                   {/* 아이콘 업로더 */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-base-content/80 mb-2">
                       뱃지 아이콘 (필수)
                     </label>
                     <BadgeIconUploader
@@ -938,7 +938,7 @@ const AdminBadgesNew = () => {
               {badgeTypes && badgeTypes.length > 0 ? (
                 <div className="space-y-4">
                   {badgeTypes.map((badgeType) => (
-                    <div key={badgeType.id} className="bg-white rounded-lg border p-4">
+                    <div key={badgeType.id} className="bg-base-100 rounded-lg border p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <BadgeDisplay
@@ -955,9 +955,9 @@ const AdminBadgesNew = () => {
                           />
                           <div>
                             <div className="font-medium">{badgeType.name}</div>
-                            <div className="text-sm text-gray-500">{badgeType.type}</div>
+                            <div className="text-sm text-base-content/50">{badgeType.type}</div>
                           </div>
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-base-content/40">
                             순서: {badgeType.sort_order || 0}
                           </div>
                         </div>
@@ -988,7 +988,7 @@ const AdminBadgesNew = () => {
                                 deleteBadgeTypeMutation.mutate(badgeType.id);
                               }
                             }}
-                            className="btn btn-ghost btn-sm text-red-600 hover:bg-red-50"
+                            className="btn btn-ghost btn-sm text-red-600 hover:bg-error/10"
                             disabled={deleteBadgeTypeMutation.isPending}
                           >
                             <DeleteIcon className="w-4 h-4" />
@@ -999,8 +999,8 @@ const AdminBadgesNew = () => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <LocalOfferIcon className="text-6xl text-gray-300 mb-4" />
+                <div className="text-center py-12 text-base-content/50">
+                  <LocalOfferIcon className="text-6xl text-base-content/30 mb-4" />
                   <p>뱃지 타입이 없습니다.</p>
                   <p className="text-sm">새 뱃지 타입을 추가해보세요.</p>
                 </div>
@@ -1013,13 +1013,13 @@ const AdminBadgesNew = () => {
       {/* 뱃지 타입 수정 모달 */}
       {editingType && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-gray-200 px-6 py-4">
+          <div className="bg-base-100 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="border-b border-base-300 px-6 py-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">뱃지 타입 수정</h3>
                 <button
                   onClick={() => setEditingType(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-base-content/40 hover:text-base-content/70"
                 >
                   ×
                 </button>
@@ -1029,7 +1029,7 @@ const AdminBadgesNew = () => {
             <form onSubmit={handleUpdateBadgeType} className="p-6 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-base-content/80 mb-2">
                     타입
                   </label>
                   <input
@@ -1042,7 +1042,7 @@ const AdminBadgesNew = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-base-content/80 mb-2">
                     이름
                   </label>
                   <input
@@ -1057,7 +1057,7 @@ const AdminBadgesNew = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-base-content/80 mb-2">
                   설명
                 </label>
                 <textarea
@@ -1071,18 +1071,18 @@ const AdminBadgesNew = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-base-content/80 mb-2">
                     색상
                   </label>
                   <input
                     type="color"
                     value={typeForm.color}
                     onChange={(e) => setTypeForm(prev => ({ ...prev, color: e.target.value }))}
-                    className="w-full h-10 border border-gray-300 rounded"
+                    className="w-full h-10 border border-base-300 rounded"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-base-content/80 mb-2">
                     정렬 순서
                   </label>
                   <input
@@ -1097,7 +1097,7 @@ const AdminBadgesNew = () => {
 
               {/* 아이콘 업로더 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-base-content/80 mb-2">
                   뱃지 아이콘
                 </label>
                 <BadgeIconUploader

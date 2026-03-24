@@ -33,7 +33,7 @@ import { isVideoFile, normalizeMediaUrl, getMediaType, isCloudflareStreamUrl, is
 import LazyStreamPlayer from './LazyStreamPlayer';
 import YouTubeEmbed from './YouTubeEmbed';
 import LinkPreview from './LinkPreview';
-import BadgeDisplay from './BadgeDisplay';
+import BadgeDisplay, { BadgeList } from './BadgeDisplay';
 import { badgeService } from '../services';
 import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
@@ -178,11 +178,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     queryFn: () => postService.getLikes(post.id),
   });
 
-  // 사용자 뱃지 조회 (프로필 모달용)
+  // 사용자 뱃지 조회 (헤더 + 프로필 모달용)
   const { data: userBadges } = useQuery({
     queryKey: ["userBadges", post.userId],
     queryFn: () => badgeService.getUserBadges(post.userId),
-    enabled: showProfileModal, // 모달이 열릴 때만 조회
+    staleTime: 5 * 60 * 1000,
   });
 
   const queryClient = useQueryClient();
@@ -935,9 +935,14 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
           {/* 사용자 정보 - 클릭 불가 */}
           <div className="flex-1 min-w-0">
-            <p className={`font-semibold text-sm truncate leading-tight ${!canClickProfile ? 'text-base-content/50' : 'text-base-content'}`}>
-              {authorName}
-            </p>
+            <div className="flex items-center gap-1">
+              <p className={`font-semibold text-sm truncate leading-tight ${!canClickProfile ? 'text-base-content/50' : 'text-base-content'}`}>
+                {authorName}
+              </p>
+              {userBadges && userBadges.length > 0 && (
+                <BadgeList badges={userBadges} size="xs" maxDisplay={3} className="gap-0.5 flex-shrink-0" />
+              )}
+            </div>
             <div className="flex items-center space-x-1 text-[10px] text-base-content/50">
               <span>{formatTime(post.createdAt)}</span>
               {post.related_market && (

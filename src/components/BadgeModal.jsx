@@ -1,3 +1,8 @@
+/**
+ * BadgeModal.jsx
+ * 역할: 뱃지 상세 정보 모달 (클릭 시 표시)
+ * 다크모드 지원, created_at 기반 인증일 표시
+ */
 import React, { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { API_BASE_URL } from '../config/api';
@@ -42,6 +47,9 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
     icon_url: badgeTypeInfo?.icon_url || badge.icon_url,
     icon_background: badgeTypeInfo?.icon_background || badge.icon_background || '#3B82F6'
   };
+
+  // 인증일: verified_at → created_at 순서로 fallback
+  const badgeDate = badge.verified_at || badge.created_at;
 
   const renderBadgeIcon = (size = 'large') => {
     const sizeClass = size === 'large' ? 'w-16 h-16 text-2xl' : 'w-8 h-8 text-base';
@@ -101,12 +109,12 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative animate-fade-in">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-base-100 rounded-lg max-w-md w-full p-6 relative animate-fade-in shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* 닫기 버튼 */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          className="absolute top-4 right-4 text-base-content/40 hover:text-base-content/70 transition-colors"
         >
           <CloseIcon />
         </button>
@@ -116,49 +124,50 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
           {/* 큰 아이콘 */}
           <div className="flex justify-center mb-4">
             {loading ? (
-              <div className="w-16 h-16 rounded bg-gray-200 animate-pulse" />
+              <div className="w-16 h-16 rounded bg-base-300 animate-pulse" />
             ) : (
               renderBadgeIcon('large')
             )}
           </div>
 
           {/* 뱃지 이름 */}
-          <h3 className="text-xl font-bold text-gray-800 mb-2">
+          <h3 className="text-xl font-bold text-base-content mb-2">
             {displayData.name}
           </h3>
 
           {/* 추가 정보 */}
-          <div className="bg-gray-50 rounded-lg p-4 text-left">
+          <div className="bg-base-200/50 rounded-lg p-4 text-left">
             <div className="space-y-3 text-sm">
               {/* 타입 ID */}
               <div className="flex justify-between">
-                <span className="text-gray-500">타입:</span>
-                <span className="font-medium text-blue-600">
+                <span className="text-base-content/50">타입:</span>
+                <span className="font-medium text-primary">
                   {displayData.type || '-'}
                 </span>
               </div>
 
               {/* 설명 */}
-              <div className="pt-2 border-t border-gray-200">
-                <span className="text-gray-500 block mb-1">설명:</span>
-                <p className="text-gray-700 leading-relaxed">
+              <div className="pt-2 border-t border-base-300">
+                <span className="text-base-content/50 block mb-1">설명:</span>
+                <p className="text-base-content/70 leading-relaxed">
                   {displayData.description || '-'}
                 </p>
               </div>
 
-              {badge.verified_at && (
-                <div className="flex justify-between pt-2 border-t border-gray-200">
-                  <span className="text-gray-500">인증일:</span>
-                  <span className="font-medium">
-                    {new Date(badge.verified_at).toLocaleDateString('ko-KR')}
+              {/* 인증일 (verified_at 또는 created_at) */}
+              {badgeDate && (
+                <div className="flex justify-between pt-2 border-t border-base-300">
+                  <span className="text-base-content/50">인증일:</span>
+                  <span className="font-medium text-base-content">
+                    {new Date(badgeDate).toLocaleDateString('ko-KR')}
                   </span>
                 </div>
               )}
 
               {badge.verified_by_name && (
                 <div className="flex justify-between">
-                  <span className="text-gray-500">인증자:</span>
-                  <span className="font-medium">{badge.verified_by_name}</span>
+                  <span className="text-base-content/50">인증자:</span>
+                  <span className="font-medium text-base-content">{badge.verified_by_name}</span>
                 </div>
               )}
             </div>
@@ -169,7 +178,7 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
         <div className="mt-6 flex justify-center">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-6 py-2 bg-primary text-primary-content rounded-lg hover:bg-primary-focus transition-colors"
           >
             확인
           </button>

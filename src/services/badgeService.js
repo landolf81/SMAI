@@ -92,6 +92,57 @@ export const badgeService = {
   },
 
   /**
+   * 여러 사용자의 뱃지를 한 번에 조회 (userId → badges[] 맵 반환)
+   * @param {string[]} userIds - 사용자 ID 배열
+   * @returns {Promise<Record<string, Array>>} userId별 뱃지 배열 맵
+   */
+  async getBadgesByUserIds(userIds) {
+    try {
+      if (!userIds || userIds.length === 0) return {};
+      const uniqueIds = [...new Set(userIds)];
+      const { data: allBadges, error } = await supabase
+        .from('user_badges')
+        .select('*')
+        .in('user_id', uniqueIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      if (!allBadges || allBadges.length === 0) return {};
+
+      // badge_types 정보 병합
+      const badgeTypes = [...new Set(allBadges.map(b => b.badge_type))];
+      const { data: typeInfos } = await supabase
+        .from('badge_types')
+        .select('*')
+        .in('type', badgeTypes);
+
+      const typeInfoMap = new Map();
+      (typeInfos || []).forEach(info => typeInfoMap.set(info.type, info));
+
+      // userId별 그룹핑
+      const result = {};
+      allBadges.forEach(badge => {
+        const typeInfo = typeInfoMap.get(badge.badge_type);
+        const merged = {
+          ...badge,
+          badge_name: badge.badge_name || typeInfo?.name,
+          badge_color: badge.badge_color || typeInfo?.color,
+          icon_type: badge.icon_type || typeInfo?.icon_type,
+          icon_value: badge.icon_value || typeInfo?.icon_value,
+          icon_url: badge.icon_url || typeInfo?.icon_url,
+          icon_background: badge.icon_background || typeInfo?.icon_background,
+        };
+        if (!result[badge.user_id]) result[badge.user_id] = [];
+        result[badge.user_id].push(merged);
+      });
+      return result;
+    } catch (error) {
+      console.error('다중 사용자 뱃지 조회 오류:', error);
+      return {};
+    }
+  },
+
+  /**
    * 특정 사용자의 뱃지 조회
    * @param {string} userId - 사용자 ID
    */
@@ -158,6 +209,7 @@ export const badgeService = {
         badge_name: badgeData.badgeName,
         badge_color: badgeData.badgeColor,
         verified_by: user.id,
+        verified_at: new Date().toISOString(),
         created_at: new Date().toISOString()
       };
 
