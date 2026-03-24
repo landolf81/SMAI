@@ -262,7 +262,16 @@ const Home = () => {
         marketService.getWholesaleAggregateForCard(date),
       ]);
 
+      // 날짜 변경 중 stale 응답 무시
+      if (fetchingDateRef.current && fetchingDateRef.current !== date) return;
+
       // 시장 목록 업데이트
+      if (!response) {
+        setMarketData([]);
+        setSeongjuTotal(null);
+        setWholesaleTotal(null);
+        return;
+      }
       setAvailableMarkets(response.availableMarkets || []);
 
       // 데이터가 없으면 빈 배열로 설정
@@ -280,11 +289,13 @@ const Home = () => {
 
       const transformedData = response.markets.map((market, index) => {
         if (market.success && market.data && market.data.details) {
-          const details = market.data.details;
+          const details = market.data.details || [];
           const totalQuantity = details.reduce((sum, item) => sum + (item.boxes || 0), 0);
           const avgPrice = market.data.summary?.overall_avg_price || 0;
-          const minPrice = Math.min(...details.map(item => item.min_price || 0));
-          const maxPrice = Math.max(...details.map(item => item.max_price || 0));
+          const prices = details.map(item => item.min_price || 0).filter(p => p > 0);
+          const maxPrices = details.map(item => item.max_price || 0).filter(p => p > 0);
+          const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+          const maxPrice = maxPrices.length > 0 ? Math.max(...maxPrices) : 0;
           const overallComparison = market.data.overall_comparison;
           const volumeComparison = market.data.volume_comparison;
           const previousData = overallComparison?.comparison_available ? {
@@ -404,10 +415,11 @@ const Home = () => {
       }
 
     } catch (error) {
-      // API 호출 실패
-
+      console.error('[Home] 경락가 조회 실패:', error);
       // API 실패시 빈 배열로 설정하여 에러 메시지 표시
       setMarketData([]);
+      setSeongjuTotal(null);
+      setWholesaleTotal(null);
     } finally {
       fetchingDateRef.current = null; // fetch 완료
       setLoading(false);
