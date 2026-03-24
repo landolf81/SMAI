@@ -206,9 +206,11 @@ export const pushNotificationService = {
    * @returns {Promise<Array>} - { id, title, body, url, created_at }[]
    */
   async getNotificationHistory(limit = 30) {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await supabase
       .from('push_logs')
       .select('id, title, body, url, created_at')
+      .gte('created_at', sevenDaysAgo)
       .order('created_at', { ascending: false })
       .limit(limit);
 

@@ -16,6 +16,8 @@ import { AdminOnly } from '../../components/PermissionComponents';
 import { userService } from '../../services';
 import { dmService } from '../../services/dmService';
 import { generateDiceBearAvatar, getProfilePic } from '../../utils/userHelper';
+import NicknameHistorySection from '../../components/admin/NicknameHistorySection';
+import ProfileModal from '../../components/ProfileModal';
 
 const WELCOME_MESSAGE = `참외이야기에 오신 것을 환영합니다! 🍈
 
@@ -315,6 +317,8 @@ const UserListContent = ({
   setPagination,
   loading
 }) => {
+  const [profileUser, setProfileUser] = useState(null);
+
   return (
     <div>
       {/* 통계 카드 - 전체 기준 */}
@@ -458,7 +462,11 @@ const UserListContent = ({
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-base-200 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
+                    <div
+                      className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => setProfileUser(user)}
+                      title="프로필 보기"
+                    >
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-base-300">
                         <img
                           src={getProfilePic(user)}
@@ -471,7 +479,7 @@ const UserListContent = ({
                         />
                       </div>
                       <div>
-                        <div className="font-medium text-base-content">{user.username || user.name}</div>
+                        <div className="font-medium text-base-content hover:text-primary transition-colors">{user.username || user.name}</div>
                         {user.name && user.name !== user.username && (
                           <div className="text-sm text-blue-600">{user.name}</div>
                         )}
@@ -674,6 +682,16 @@ const UserListContent = ({
           </div>
         </div>
       )}
+
+      {/* 별명 변경 내역 */}
+      <NicknameHistorySection />
+
+      {/* 프로필 모달 */}
+      <ProfileModal
+        isOpen={!!profileUser}
+        onClose={() => setProfileUser(null)}
+        user={profileUser}
+      />
     </div>
   );
 };

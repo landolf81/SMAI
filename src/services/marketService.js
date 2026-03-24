@@ -1160,18 +1160,22 @@ export const marketService = {
    */
   async getSeongjuAggregateForCard(date) {
     try {
+      // 빈 데이터(0원) 레코드를 건너뛰기 위해 넉넉히 조회
       const { data, error } = await supabase
         .from('market_aggregate_summary')
         .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
         .eq('region_name', '성주군')
         .lte('market_date', date)
         .order('market_date', { ascending: false })
-        .limit(2);
+        .limit(7);
 
       if (error) throw error;
 
       const today = data?.find(d => d.market_date === date) || null;
-      const previous = data?.find(d => d.market_date !== date) || null;
+      // 전일 데이터: 당일이 아니면서 실제 데이터가 있는 레코드
+      const previous = data?.find(d =>
+        d.market_date !== date && (d.avg_price > 0 || d.total_boxes > 0)
+      ) || null;
 
       // is_finalized 조회 시도 (컬럼 미생성 시 무시)
       if (today) {
@@ -1428,18 +1432,22 @@ export const marketService = {
    */
   async getWholesaleAggregateForCard(date) {
     try {
+      // 빈 데이터(0원) 레코드를 건너뛰기 위해 넉넉히 조회
       const { data, error } = await supabase
         .from('market_aggregate_summary')
         .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price, is_finalized')
         .eq('region_name', '도매시장')
         .lte('market_date', date)
         .order('market_date', { ascending: false })
-        .limit(2);
+        .limit(7);
 
       if (error) throw error;
 
       const today = data?.find((d) => d.market_date === date) || null;
-      const previous = data?.find((d) => d.market_date !== date) || null;
+      // 전일 데이터: 당일이 아니면서 실제 데이터가 있는 레코드 (avg_price > 0 또는 total_boxes > 0)
+      const previous = data?.find((d) =>
+        d.market_date !== date && (d.avg_price > 0 || d.total_boxes > 0)
+      ) || null;
 
       return { today, previous };
     } catch (error) {

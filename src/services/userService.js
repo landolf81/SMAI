@@ -177,6 +177,14 @@ export const userService = {
 
       console.log('🔄 프로필 업데이트 시작:', { userId: user.id, userData });
 
+      // 별명 변경 이력 기록을 위해 현재 이름 조회
+      let prevName = null;
+      if (userData.name !== undefined) {
+        const { data: current } = await supabase
+          .from('users').select('name').eq('id', user.id).single();
+        prevName = current?.name || '';
+      }
+
       // 업데이트할 필드만 추출
       const updateData = {};
       if (userData.name !== undefined) updateData.name = userData.name;
@@ -198,6 +206,11 @@ export const userService = {
       if (error) {
         console.error('❌ 프로필 업데이트 실패:', error);
         throw error;
+      }
+
+      // 별명이 실제로 변경된 경우 이력 기록 (fire-and-forget)
+      if (userData.name !== undefined && prevName !== null && prevName.trim() !== userData.name.trim()) {
+        this.logNicknameChange(user.id, prevName, userData.name);
       }
 
       console.log('✅ 프로필 업데이트 성공:', data);
@@ -972,6 +985,46 @@ export const userService = {
       console.error('회원 탈퇴 오류:', error);
       throw error;
     }
+  },
+
+  // ─── 별명 변경 이력 ───
+
+  /**
+   * 별명 변경 이력 기록
+   * @param {string} userId - 사용자 ID
+   * @param {string} oldName - 이전 별명
+   * @param {string} newName - 새 별명
+   */
+  async logNicknameChange(userId, oldName, newName) {
+    try {
+      const { error } = await supabase
+        .from('nickname_history')
+        .insert({ user_id: userId, old_name: oldName, new_name: newName });
+
+      if (error) console.error('[NicknameHistory] 이력 저장 실패:', error);
+    } catch (err) {
+      // fire-and-forget: 이력 저장 실패가 프로필 업데이트를 막지 않음
+      console.error('[NicknameHistory] 이력 저장 오류:', err);
+    }
+  },
+
+  /**
+   * 최근 별명 변경 이력 조회 (관리자 대시보드용)
+   * @param {number} limit - 조회 개수 (기본 20)
+   * @returns {Promise<Array>} - { id, user_id, old_name, new_name, changed_at, user }[]
+   */
+  async getNicknameHistory(limit = 20) {
+    const { data, error } = await supabase
+      .from('nickname_history')
+      .select('id, user_id, old_name, new_name, changed_at, users:user_id(id, username, name, profile_pic)')
+      .order('changed_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('[NicknameHistory] 조회 실패:', error);
+      return [];
+    }
+    return data || [];
   }
 };
 

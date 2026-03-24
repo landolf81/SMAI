@@ -139,7 +139,18 @@ async function fetchAllChamoeRows(): Promise<DbRow[]> {
   }
 
   console.log(`[sync-pesticide] 완료: 전체 ${fetched}건 중 참외 ${chamoeRows.length}건`)
-  return chamoeRows
+
+  // 완전히 동일한 행 중복 제거
+  const seen = new Set<string>()
+  const uniqueRows = chamoeRows.filter(row => {
+    const key = JSON.stringify(row)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+  console.log(`[sync-pesticide] 중복 제거: ${chamoeRows.length}건 → ${uniqueRows.length}건 (${chamoeRows.length - uniqueRows.length}건 제거)`)
+
+  return uniqueRows
 }
 
 // ── 메인 핸들러 ──

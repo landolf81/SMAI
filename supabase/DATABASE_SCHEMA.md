@@ -102,6 +102,20 @@
 - `post_id` (uuid, FK → posts)
 - `viewed_at` (timestamp)
 
+### 10. nickname_history
+별명 변경 이력
+
+**컬럼**:
+- `id` (uuid, PK)
+- `user_id` (uuid, FK → users)
+- `old_name` (text) - 이전 별명
+- `new_name` (text) - 새 별명
+- `changed_at` (timestamptz) - 변경 시점
+
+**RLS**:
+- 관리자: 전체 조회
+- 일반 사용자: 본인 이력만 조회/삽입
+
 ## 중요 사항
 
 ### ⚠️ 존재하지 않는 테이블
@@ -116,5 +130,5 @@
 - **reports**: post_id, comment_id, status, created_at
 
 ## 참고
-이 문서는 2025-12-18 기준으로 작성되었습니다.
+이 문서는 2026-03-24 기준으로 작성되었습니다.
 테이블 구조 변경 시 반드시 이 문서를 업데이트하세요.
