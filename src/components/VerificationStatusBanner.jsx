@@ -35,9 +35,9 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
               </svg>
             </div>
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-yellow-800">인증이 필요합니다</h4>
+              <h4 className="text-sm font-medium text-yellow-800">인증을 완료해보세요</h4>
               <p className="text-xs text-yellow-700 mt-1">
-                별명 수정 및 일부 기능을 사용하려면 인증이 필요합니다.
+                인증하면 프로필에 인증 뱃지가 표시됩니다.
               </p>
               <button
                 onClick={() => setShowRequestModal(true)}

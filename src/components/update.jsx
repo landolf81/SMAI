@@ -492,8 +492,8 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       return;
     }
 
-    // 별명 변경 시 중복 체크 (인증 사용자만 name 변경 가능)
-    if (isVerified && info.name.trim() !== (user.name || '').trim()) {
+    // 별명 변경 시 중복 체크 (모든 사용자 가능)
+    if (info.name.trim() !== (user.name || '').trim()) {
       try {
         const taken = await userService.isNicknameTaken(info.name, user.id);
         if (taken) {
@@ -647,97 +647,22 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 별명/닉네임 <span className="text-red-500">*</span>
-                {!isVerified && (
-                  <span className="text-xs text-gray-500 ml-2">(인증 후 변경 가능)</span>
-                )}
               </label>
               <input
                 className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
-                  !isVerified
-                    ? 'bg-gray-100 cursor-not-allowed border-gray-200'
-                    : errors.name
-                      ? 'border-red-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500'
-                      : 'border-gray-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
+                  errors.name
+                    ? 'border-red-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500'
+                    : 'border-gray-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
                 }`}
                 type="text"
-                placeholder={isVerified ? "사용할 별명이나 닉네임을 입력하세요" : "인증 후 변경 가능합니다"}
+                placeholder="사용할 별명이나 닉네임을 입력하세요"
                 name="name"
                 value={info.name}
                 onChange={handleChange}
-                disabled={!isVerified}
                 required
               />
               {errors.name && (
                 <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
-              {/* 인증 안내 */}
-              {!isVerified && (
-                <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  {!verificationRequest && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-yellow-700">별명을 수정하려면 인증이 필요합니다.</span>
-                      <button
-                        type="button"
-                        onClick={() => setShowVerificationRequestModal(true)}
-                        className="text-xs font-medium text-yellow-700 underline hover:text-yellow-800"
-                      >
-                        인증 요청
-                      </button>
-                    </div>
-                  )}
-                  {verificationRequest?.status === 'pending' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-yellow-700">SMS 발송 오류 — 다시 시도해주세요.</span>
-                      <button
-                        type="button"
-                        onClick={() => setShowVerificationRequestModal(true)}
-                        className="text-xs font-medium text-yellow-700 underline hover:text-yellow-800"
-                      >
-                        다시 받기
-                      </button>
-                    </div>
-                  )}
-                  {verificationRequest?.status === 'code_sent' && (() => {
-                    const isExpired = verificationRequest.code_expires_at && new Date(verificationRequest.code_expires_at) < new Date();
-                    return isExpired ? (
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-orange-700">인증 코드가 만료되었습니다.</span>
-                        <button
-                          type="button"
-                          onClick={() => setShowVerificationRequestModal(true)}
-                          className="text-xs font-medium text-orange-700 underline hover:text-orange-800"
-                        >
-                          재발송
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-green-700">인증 코드가 발송되었습니다.</span>
-                        <button
-                          type="button"
-                          onClick={() => setShowVerificationCodeModal(true)}
-                          className="text-xs font-medium text-green-700 underline hover:text-green-800"
-                        >
-                          코드 입력
-                        </button>
-                      </div>
-                    );
-                  })()}
-                  {verificationRequest?.status === 'rejected' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-red-700">
-                        인증 거부됨{verificationRequest.rejection_reason ? `: ${verificationRequest.rejection_reason}` : ''}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowVerificationRequestModal(true)}
-                        className="text-xs font-medium text-red-700 underline hover:text-red-800"
-                      >
-                        다시 요청
-                      </button>
-                    </div>
-                  )}
-                </div>
               )}
             </div>
 
