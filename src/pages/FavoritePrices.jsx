@@ -244,7 +244,7 @@ const FavoritePrices = () => {
                   </button>
                   <button
                     onClick={(e) => { if (stopProp) e.stopPropagation(); handleRemove(fav.id); }}
-                    className="p-1.5 rounded-full shadow-sm bg-red-50 border border-red-200 transition-transform active:scale-90"
+                    className="p-1.5 rounded-full shadow-sm bg-base-100 border border-base-300 transition-transform active:scale-90"
                     title="즐겨찾기 해제"
                   >
                     <svg className="w-4 h-4 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

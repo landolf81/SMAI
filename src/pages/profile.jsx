@@ -10,6 +10,7 @@ import SavedPosts from "../components/SavedPosts";
 import Update from "../components/update";
 import LoadingSpinner from "../components/LoadingSpinner";
 import DMList from "../components/DMList";
+import VerificationStatusBanner from "../components/VerificationStatusBanner";
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { generateDiceBearAvatar } from '../utils/userHelper';
 
@@ -295,6 +296,18 @@ const Profile = () => {
               ) : null}
             </div>
           </div>
+
+          {/* 인증 배너 (본인 프로필 + 미인증 시) */}
+          {isOwnProfile && !data.verified && (
+            <div className="mt-4">
+              <VerificationStatusBanner
+                user={data}
+                onVerificationComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ['user', userId] });
+                }}
+              />
+            </div>
+          )}
 
           {/* 통계 */}
           <div className="grid grid-cols-2 gap-4 mt-6 pt-6 border-t">
