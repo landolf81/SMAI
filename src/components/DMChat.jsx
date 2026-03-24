@@ -131,11 +131,11 @@ const DMChat = ({ conversation, onClose }) => {
       onClick={handleOverlayClick}
     >
       <div
-        className="w-full h-full md:w-full md:max-w-2xl md:h-[90vh] md:max-h-[700px] md:rounded-2xl overflow-hidden bg-white flex flex-col"
+        className="w-full h-full md:w-full md:max-w-2xl md:h-[90vh] md:max-h-[700px] md:rounded-2xl overflow-hidden bg-base-100 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 커스텀 헤더 */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 bg-white flex-shrink-0">
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-base-300 bg-base-100 flex-shrink-0">
           <img
             src={profileUrl}
             alt={conversation.other_user_name}
@@ -143,16 +143,16 @@ const DMChat = ({ conversation, onClose }) => {
             onError={(e) => { e.target.onerror = null; e.target.src = '/default/default_profile.png'; }}
           />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-gray-900 truncate">
+            <p className="font-semibold text-base-content truncate">
               {conversation.other_user_name || conversation.other_user_username}
             </p>
             {conversation.other_user_username && conversation.other_user_username !== conversation.other_user_name && (
-              <p className="text-xs text-gray-500 truncate">@{conversation.other_user_username}</p>
+              <p className="text-xs text-base-content/50 truncate">@{conversation.other_user_username}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+            className="p-2 text-base-content/50 hover:text-base-content hover:bg-base-200 rounded-full transition-colors flex-shrink-0"
           >
             <CloseIcon />
           </button>

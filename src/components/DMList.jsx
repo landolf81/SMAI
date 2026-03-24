@@ -43,42 +43,42 @@ const DMList = () => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border">
+      <div className="bg-base-100 rounded-lg shadow-sm border border-base-300">
         {/* 헤더 */}
-        <div className="p-4 border-b">
+        <div className="p-4 border-b border-base-300">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <MessageIcon className="text-market-600" />
-              <h2 className="text-xl font-semibold text-gray-900">메시지</h2>
+              <MessageIcon className="text-primary" />
+              <h2 className="text-xl font-semibold text-base-content">메시지</h2>
             </div>
           </div>
-          
+
           {/* 검색바 */}
-          <div className="flex items-center border rounded-lg focus-within:ring-2 focus-within:ring-market-500 focus-within:border-transparent bg-white">
-            <SearchIcon className="ml-3 flex-shrink-0 text-gray-400" fontSize="small" />
+          <div className="flex items-center border border-base-300 rounded-lg focus-within:ring-2 focus-within:ring-primary/50 focus-within:border-transparent bg-base-200">
+            <SearchIcon className="ml-3 flex-shrink-0 text-base-content/40" fontSize="small" />
             <input
               type="text"
               placeholder="대화 상대를 검색하세요..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="flex-1 pl-2 pr-4 py-2 focus:outline-none bg-transparent"
+              className="flex-1 pl-2 pr-4 py-2 focus:outline-none bg-transparent text-base-content placeholder:text-base-content/40"
             />
           </div>
         </div>
 
         {/* 대화 목록 */}
-        <div className="divide-y">
+        <div className="divide-y divide-base-300">
           {isLoading ? (
             <div className="p-8 text-center">
               <div className="loading loading-spinner loading-lg mx-auto mb-4"></div>
-              <p className="text-gray-500">대화 목록을 불러오는 중...</p>
+              <p className="text-base-content/50">대화 목록을 불러오는 중...</p>
             </div>
           ) : filteredConversations.length > 0 ? (
             filteredConversations.map((conversation) => (
               <div
                 key={conversation.id}
                 onClick={() => handleConversationSelect(conversation)}
-                className="p-4 hover:bg-gray-50 cursor-pointer transition-colors"
+                className="p-4 hover:bg-base-200 cursor-pointer transition-colors"
               >
                 <div className="flex items-start gap-3">
                   {/* 프로필 이미지 */}
@@ -96,30 +96,30 @@ const DMList = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* 대화 정보 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-medium text-gray-900 truncate">
+                      <h3 className="font-medium text-base-content truncate">
                         {conversation.other_user_name || conversation.other_user_username}
                       </h3>
-                      <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                      <span className="text-xs text-base-content/50 flex-shrink-0 ml-2">
                         {moment(conversation.last_message_time).fromNow()}
                       </span>
                     </div>
-                    
+
                     {conversation.last_message && (
                       <p className={`text-sm truncate mt-1 ${
-                        conversation.unread_count > 0 
-                          ? 'text-gray-900 font-medium' 
-                          : 'text-gray-500'
+                        conversation.unread_count > 0
+                          ? 'text-base-content font-medium'
+                          : 'text-base-content/50'
                       }`}>
                         {conversation.last_message}
                       </p>
                     )}
-                    
+
                     {conversation.other_user_username && (
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-base-content/40 mt-1">
                         @{conversation.other_user_username}
                       </p>
                     )}
@@ -129,14 +129,14 @@ const DMList = () => {
             ))
           ) : searchTerm ? (
             <div className="p-8 text-center">
-              <MessageIcon className="text-gray-300 text-4xl mb-4" />
-              <p className="text-gray-500">'{searchTerm}'에 대한 검색 결과가 없습니다.</p>
+              <MessageIcon className="text-base-content/20 text-4xl mb-4" />
+              <p className="text-base-content/50">&apos;{searchTerm}&apos;에 대한 검색 결과가 없습니다.</p>
             </div>
           ) : (
             <div className="p-8 text-center">
-              <MessageIcon className="text-gray-300 text-6xl mb-4 mx-auto" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">아직 메시지가 없습니다</h3>
-              <p className="text-gray-500">다른 사용자의 프로필에서 메시지를 보내보세요!</p>
+              <MessageIcon className="text-base-content/20 text-6xl mb-4 mx-auto" />
+              <h3 className="text-lg font-medium text-base-content mb-2">아직 메시지가 없습니다</h3>
+              <p className="text-base-content/50">다른 사용자의 프로필에서 메시지를 보내보세요!</p>
             </div>
           )}
         </div>
