@@ -579,7 +579,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
 
   return (
     <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-base-100 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* 헤더 - 진한 녹색 그라데이션 */}
         <div className="bg-gradient-to-r from-emerald-700 to-teal-600 text-white p-5">
           <div className="flex items-center justify-between">
@@ -613,14 +613,14 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       
           {/* 성공 메시지 */}
           {successMessage && (
-            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4">
+            <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg mb-4">
               <span>{successMessage}</span>
             </div>
           )}
           
           {/* 전체 에러 메시지 */}
           {errors.submit && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4">
+            <div className="bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg mb-4">
               <span>{errors.submit}</span>
             </div>
           )}
@@ -628,12 +628,12 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
           <form className="space-y-6">
             {/* 사용자명 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-base-content/70 mb-2">
                 사용자명
-                <span className="text-xs text-gray-400 ml-2">(변경 불가)</span>
+                <span className="text-xs text-base-content/40 ml-2">(변경 불가)</span>
               </label>
               <input
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed text-gray-500"
+                className="w-full px-4 py-3 border-2 border-base-300 rounded-xl bg-base-200 cursor-not-allowed text-base-content/50"
                 type="text"
                 placeholder="사용자명"
                 name="username"
@@ -645,14 +645,14 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
 
             {/* 별명/닉네임 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                별명/닉네임 <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-base-content/70 mb-2">
+                별명/닉네임 <span className="text-error">*</span>
               </label>
               <input
                 className={`w-full px-4 py-3 border-2 rounded-xl transition-all duration-200 ${
                   errors.name
-                    ? 'border-red-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500'
-                    : 'border-gray-200 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500'
+                    ? 'border-error focus:ring-2 focus:ring-error/20 focus:border-error'
+                    : 'border-base-300 focus:ring-2 focus:ring-primary/20 focus:border-primary'
                 }`}
                 type="text"
                 placeholder="사용할 별명이나 닉네임을 입력하세요"
@@ -662,18 +662,18 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 required
               />
               {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                <p className="text-error text-xs mt-1">{errors.name}</p>
               )}
             </div>
 
             {/* 이메일 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-base-content/70 mb-2">
                 이메일
-                <span className="text-xs text-gray-400 ml-2">(변경 불가)</span>
+                <span className="text-xs text-base-content/40 ml-2">(변경 불가)</span>
               </label>
               <input
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 cursor-not-allowed text-gray-500"
+                className="w-full px-4 py-3 border-2 border-base-300 rounded-xl bg-base-200 cursor-not-allowed text-base-content/50"
                 type="email"
                 placeholder="admin@test.com"
                 name="email"
@@ -685,12 +685,12 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
 
             {/* 소개 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-base-content/70 mb-2">
                 소개
               </label>
               <textarea
-                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 resize-none ${
-                  errors.bio ? 'border-red-400' : 'border-gray-200'
+                className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 resize-none ${
+                  errors.bio ? 'border-error' : 'border-base-300'
                 }`}
                 name="bio"
                 placeholder="자기소개를 입력하세요
@@ -702,22 +702,22 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
               />
               <div className="flex justify-between items-center mt-1">
                 {errors.bio && (
-                  <p className="text-red-500 text-xs">{errors.bio}</p>
+                  <p className="text-error text-xs">{errors.bio}</p>
                 )}
-                <p className="text-xs text-gray-500 ml-auto">{info.bio ? info.bio.length : 0}/200자</p>
+                <p className="text-xs text-base-content/50 ml-auto">{info.bio ? info.bio.length : 0}/200자</p>
               </div>
             </div>
 
             {/* 프로필 사진 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-base-content/70 mb-2">
                 프로필 사진
               </label>
               <div className="flex items-start space-x-4">
                 {/* 현재 프로필 이미지 또는 새로 선택한 이미지 미리보기 */}
                 {(profilePreview || (!deleteProfilePic && (user.profilePic || user.profile_pic))) && (
                   <div className="relative">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-300">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-base-300">
                       <img
                         src={profilePreview || user.profilePic || user.profile_pic}
                         alt="프로필 미리보기"
@@ -729,7 +729,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                       <button
                         type="button"
                         onClick={() => setShowProfileCropper(true)}
-                        className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md border border-gray-200 hover:bg-gray-50"
+                        className="absolute bottom-0 right-0 bg-base-100 rounded-full p-1 shadow-md border border-base-300 hover:bg-base-200"
                         title="이미지 자르기"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -763,8 +763,8 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 {/* 삭제 예약된 상태 표시 */}
                 {deleteProfilePic && !profilePreview && (
                   <div className="relative">
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 bg-gray-100 flex items-center justify-center">
-                      <span className="text-xs text-gray-400 text-center px-2">삭제 예정</span>
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-base-300 bg-base-200 flex items-center justify-center">
+                      <span className="text-xs text-base-content/40 text-center px-2">삭제 예정</span>
                     </div>
                     <button
                       type="button"
@@ -795,25 +795,25 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     />
                   </label>
                   {!profilePreview && !deleteProfilePic && !(user.profilePic || user.profile_pic) && (
-                    <p className="text-xs text-gray-400 mt-2">프로필 사진을 선택해주세요</p>
+                    <p className="text-xs text-base-content/40 mt-2">프로필 사진을 선택해주세요</p>
                   )}
                 </div>
               </div>
               {errors.profile && (
-                <p className="text-red-500 text-xs mt-2">{errors.profile}</p>
+                <p className="text-error text-xs mt-2">{errors.profile}</p>
               )}
             </div>
 
             {/* 배경 사진 */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-base-content/70 mb-2">
                 배경 사진
               </label>
               <div className="space-y-3">
                 {/* 현재 커버 이미지 또는 새로 선택한 이미지 미리보기 */}
                 {(coverPreview || (!deleteCoverPic && (user.coverPic || user.cover_pic))) && (
                   <div className="relative">
-                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-gray-300">
+                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-base-300">
                       <img
                         src={coverPreview || user.coverPic || user.cover_pic}
                         alt="배경 미리보기"
@@ -825,7 +825,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                       <button
                         type="button"
                         onClick={() => setShowCoverCropper(true)}
-                        className="absolute top-2 right-10 bg-white rounded-lg p-1.5 shadow-md border border-gray-200 hover:bg-gray-50"
+                        className="absolute top-2 right-10 bg-base-100 rounded-lg p-1.5 shadow-md border border-base-300 hover:bg-base-200"
                         title="이미지 자르기"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -859,8 +859,8 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 {/* 삭제 예약된 상태 표시 */}
                 {deleteCoverPic && !coverPreview && (
                   <div className="relative">
-                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 bg-gray-100 flex items-center justify-center">
-                      <span className="text-sm text-gray-400">삭제 예정</span>
+                    <div className="w-full h-32 rounded-lg overflow-hidden border-2 border-dashed border-base-300 bg-base-200 flex items-center justify-center">
+                      <span className="text-sm text-base-content/40">삭제 예정</span>
                     </div>
                     <button
                       type="button"
@@ -890,11 +890,11 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                   />
                 </label>
                 {!coverPreview && !deleteCoverPic && !(user.coverPic || user.cover_pic) && (
-                  <p className="text-xs text-gray-400">배경 사진을 선택해주세요</p>
+                  <p className="text-xs text-base-content/40">배경 사진을 선택해주세요</p>
                 )}
               </div>
               {errors.cover && (
-                <p className="text-red-500 text-xs mt-2">{errors.cover}</p>
+                <p className="text-error text-xs mt-2">{errors.cover}</p>
               )}
             </div>
 
@@ -902,7 +902,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
         </div>
 
         {/* 하단 버튼 - 모바일 네비게이션 메뉴와 겹치지 않도록 padding 추가 */}
-        <div className="border-t border-gray-200 p-6 pb-20 bg-gradient-to-b from-gray-50 to-white">
+        <div className="border-t border-base-300 p-6 pb-20 bg-base-100">
           <div className="flex gap-3">
             <button
               onClick={handleSubmit}
@@ -933,7 +933,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                 setOpenUpdate(false);
                 setIsUpdating(false);
               }}
-              className="px-6 py-3.5 bg-white text-gray-600 border-2 border-gray-200 rounded-xl font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all duration-200"
+              className="px-6 py-3.5 bg-base-100 text-base-content/70 border-2 border-base-300 rounded-xl font-semibold hover:bg-base-200 hover:border-base-content/30 transition-all duration-200"
               disabled={isLoading}
             >
               취소
@@ -941,11 +941,11 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
           </div>
 
           {/* 회원탈퇴 버튼 - 붉은색 강조 */}
-          <div className="mt-6 pt-5 border-t border-gray-200">
+          <div className="mt-6 pt-5 border-t border-base-300">
             <button
               type="button"
               onClick={() => setShowWithdrawModal(true)}
-              className="w-full py-3 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 hover:border-red-300 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full py-3 text-sm font-medium text-error bg-error/10 hover:bg-error/20 border border-error/30 hover:border-error/40 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
               disabled={isLoading}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1002,7 +1002,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       {/* 회원탈퇴 확인 모달 */}
       {showWithdrawModal && (
         <div className="fixed inset-0 z-[60] bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+          <div className="bg-base-100 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
             {/* 헤더 */}
             <div className="bg-gradient-to-r from-red-500 to-red-600 text-white p-4">
               <h2 className="text-xl font-bold">회원탈퇴</h2>
@@ -1010,12 +1010,12 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
 
             <div className="p-6">
               {/* 경고 메시지 */}
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+              <div className="bg-error/10 border border-error/30 rounded-xl p-4 mb-4">
                 <div className="flex items-start gap-3">
                   <div className="text-2xl">⚠️</div>
                   <div>
-                    <h4 className="font-medium text-red-800 mb-1">탈퇴 시 주의사항</h4>
-                    <ul className="text-sm text-red-700 space-y-1">
+                    <h4 className="font-medium text-error mb-1">탈퇴 시 주의사항</h4>
+                    <ul className="text-sm text-error/80 space-y-1">
                       <li>• 작성한 게시글과 댓글은 <strong>삭제되지 않습니다</strong></li>
                       <li>• 작성자 정보는 "탈퇴한 사용자"로 표시됩니다</li>
                       <li>• 개인정보(이름, 연락처 등)는 즉시 삭제됩니다</li>
@@ -1027,15 +1027,15 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
 
               {/* 확인 입력 */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  탈퇴를 진행하려면 <span className="text-red-600 font-bold">"탈퇴합니다"</span>를 입력하세요
+                <label className="block text-sm font-medium text-base-content/70 mb-2">
+                  탈퇴를 진행하려면 <span className="text-error font-bold">"탈퇴합니다"</span>를 입력하세요
                 </label>
                 <input
                   type="text"
                   value={withdrawConfirmText}
                   onChange={(e) => setWithdrawConfirmText(e.target.value)}
                   placeholder="탈퇴합니다"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-base-300 rounded-xl focus:ring-2 focus:ring-error focus:border-transparent"
                 />
               </div>
 
@@ -1046,7 +1046,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     setShowWithdrawModal(false);
                     setWithdrawConfirmText('');
                   }}
-                  className="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-3 bg-base-200 text-base-content/70 rounded-xl font-medium hover:bg-base-300 transition-colors"
                   disabled={isWithdrawing}
                 >
                   취소
