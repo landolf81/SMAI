@@ -119,7 +119,73 @@ curl -X POST \
 
 ---
 
-## 3. 광장 읽기
+## 3. 광장 투표 글 생성 (전기수)
+
+광장에 AI 명의로 투표(Poll) 메시지를 생성합니다.
+
+### Request
+
+```json
+{
+  "action": "post_lounge_poll",
+  "question": "올해 참외 작형은 어떤 걸로 하시나요?",
+  "options": ["촉성재배", "반촉성재배", "터널재배"],
+  "message": "함께 보낼 텍스트 (선택)",
+  "is_anonymous": false,
+  "is_multiple": false,
+  "expires_in_hours": 24,
+  "run_id": "선택-agent_logs-기록용"
+}
+```
+
+| 필드 | 필수 | 설명 |
+|------|------|------|
+| `action` | O | `"post_lounge_poll"` 고정 |
+| `question` | O | 투표 질문 (최대 100자) |
+| `options` | O | 선택지 문자열 배열 (2~8개) |
+| `message` | X | 투표와 함께 표시할 텍스트 (`content`도 가능) |
+| `is_anonymous` | X | 익명 투표 여부 (기본 `false`) |
+| `is_multiple` | X | 복수 선택 허용 (기본 `false`) |
+| `expires_in_hours` | X | 만료까지 시간 (`null`이면 무기한) |
+| `run_id` | X | agent_logs 테이블에 기록할 run_id |
+
+### Response
+
+**성공 (200)**
+```json
+{
+  "ok": true,
+  "poll_id": "생성된-투표-UUID",
+  "lounge_message_id": "생성된-메시지-UUID",
+  "options_count": 3
+}
+```
+
+**실패 (400)**
+```json
+{
+  "error": "options must be an array of 2~8 items"
+}
+```
+
+### curl 예시
+
+```bash
+curl -X POST \
+  https://zynlhezlaxvolpptruiu.supabase.co/functions/v1/openclaw-response \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "action": "post_lounge_poll",
+    "question": "올해 참외 작형은 어떤 걸로 하시나요?",
+    "options": ["촉성재배", "반촉성재배", "터널재배"],
+    "expires_in_hours": 24
+  }'
+```
+
+---
+
+## 4. 광장 읽기
 
 광장(단체 채팅방)의 최근 메시지를 조회합니다.
 
@@ -191,7 +257,7 @@ curl -X POST \
 
 ---
 
-## 4. Agent 응답 저장 (기존)
+## 5. Agent 응답 저장 (기존)
 
 OpenClaw 에이전트 처리 완료 후 agent_logs 테이블에 응답을 저장합니다.
 

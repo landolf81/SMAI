@@ -218,29 +218,51 @@ const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onAdminDelete,
               )}
             </svg>
           </button>
-          {isMe && (
-            <button
-              onClick={() => onDelete(msg.id)}
-              className="text-[11px] text-base-content/50 ml-auto"
-            >
-              삭제
-            </button>
-          )}
-          {isAdmin && (
-            <>
+          {/* ··· 더보기 드롭다운 (삭제/관리자 메뉴) */}
+          {(isMe || isAdmin) && (
+            <div className="dropdown dropdown-end ml-auto">
               <button
-                onClick={() => onHide(msg.id, !isHidden)}
-                className={`text-[11px] ${isMe ? '' : 'ml-auto'} ${isHidden ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}`}
+                tabIndex={0}
+                className="p-0.5 rounded transition-colors text-base-content/40 hover:text-base-content/70 active:text-base-content"
+                aria-label="더보기"
               >
-                {isHidden ? '복구' : '숨기기'}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                  <path d="M3 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm5.5 0a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm5.5 0a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0z" />
+                </svg>
               </button>
-              <button
-                onClick={() => onAdminDelete(msg.id)}
-                className="text-[11px] text-red-500 font-medium"
-              >
-                삭제
-              </button>
-            </>
+              <ul className="dropdown-content z-50 py-1 shadow-xl bg-base-100 backdrop-blur-xl rounded-xl w-24 text-sm border border-base-200 mt-1">
+                {isMe && (
+                  <li>
+                    <button
+                      onClick={() => { document.activeElement?.blur(); onDelete(msg.id); }}
+                      className="w-full text-center py-2 hover:bg-base-200 rounded-lg text-base-content/70 text-[12px]"
+                    >
+                      삭제
+                    </button>
+                  </li>
+                )}
+                {isAdmin && (
+                  <>
+                    <li>
+                      <button
+                        onClick={() => { document.activeElement?.blur(); onHide(msg.id, !isHidden); }}
+                        className={`w-full text-center py-2 hover:bg-base-200 rounded-lg text-[12px] ${isHidden ? 'text-green-600 font-medium' : 'text-red-500 font-medium'}`}
+                      >
+                        {isHidden ? '복구' : '숨기기'}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => { document.activeElement?.blur(); onAdminDelete(msg.id); }}
+                        className="w-full text-center py-2 hover:bg-base-200 rounded-lg text-red-500 font-medium text-[12px]"
+                      >
+                        삭제
+                      </button>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
           )}
         </div>
         {msg.content && (

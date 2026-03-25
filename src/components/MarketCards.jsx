@@ -247,6 +247,27 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
     );
   };
 
+  // 출하수량 변동 표시 함수 (절사 없이 원래 값 표시)
+  const renderQuantityChange = (current, previous) => {
+    if (!previous || previous === 0) return null;
+
+    const change = current - previous;
+    const isPositive = change > 0;
+
+    if (change === 0) return <span className="text-base-content/50 text-sm">보합</span>;
+
+    return (
+      <div className="flex items-center justify-center space-x-1 text-sm">
+        <span className={isPositive ? 'text-red-600' : 'text-blue-600'}>
+          {isPositive ? '▲' : '▼'}
+        </span>
+        <span className={`font-bold ${isPositive ? 'text-red-600' : 'text-blue-600'}`}>
+          {Math.abs(change).toLocaleString()}
+        </span>
+      </div>
+    );
+  };
+
 
   if (loading) {
     return (
@@ -393,7 +414,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
               <span className="font-bold text-base-content text-lg ml-1">{formatPrice(totalData.totalQuantity)}</span>
               <span className="text-sm text-base-content/50 ml-1">{totalData.unit}</span>
               {totalData.previousTotalQuantity ? (
-                <span className="ml-2">{renderPriceChange(totalData.totalQuantity, totalData.previousTotalQuantity)}</span>
+                <span className="ml-2">{renderQuantityChange(totalData.totalQuantity, totalData.previousTotalQuantity)}</span>
               ) : null}
               {/* is_finalized가 false이면 '집계중' 표시 (당일만) */}
               {(() => {
@@ -574,7 +595,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                     <span className="text-sm text-base-content/50 ml-1">{market.unit}</span>
                     {/* 수량 변동폭 */}
                     {market.previousTotalQuantity ? (
-                      <span className="ml-2">{renderPriceChange(market.totalQuantity, market.previousTotalQuantity)}</span>
+                      <span className="ml-2">{renderQuantityChange(market.totalQuantity, market.previousTotalQuantity)}</span>
                     ) : null}
                     {/* is_finalized가 false이면 '집계중' 표시 (당일만) */}
                     {(() => {

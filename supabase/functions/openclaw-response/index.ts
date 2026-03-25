@@ -1,5 +1,5 @@
 // Supabase Edge Function - OpenClaw 에이전트 응답 수신기
-// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge')
+// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge') 5) 광장 투표 글 생성 (action: 'post_lounge_poll')
 // 배포: supabase functions deploy openclaw-response --no-verify-jwt
 // URL: https://<project>.supabase.co/functions/v1/openclaw-response
 
@@ -250,6 +250,123 @@ Deno.serve(async (req: Request) => {
     }
 
     return jsonResponse({ ok: true, lounge_message_id: inserted.id, images: imageUrls.length, video: !!videoUrl })
+  }
+
+  // ─── action: post_lounge_poll → 광장 투표 글 생성 (전기수) ───
+  // 지원 필드:
+  //   question (string)         - 투표 질문 (필수, 최대 100자)
+  //   options (string[])        - 선택지 배열 (필수, 2~8개)
+  //   content/message (string)  - 함께 보낼 텍스트 (선택)
+  //   is_anonymous (boolean)    - 익명 투표 여부 (기본 false)
+  //   is_multiple (boolean)     - 복수 선택 허용 (기본 false)
+  //   expires_in_hours (number) - 만료 시간 (null이면 무기한)
+  if (action === 'post_lounge_poll') {
+    const question = ((body.question ?? '') as string).trim()
+    const options  = body.options as string[] | undefined
+    const content  = ((body.message ?? body.content ?? '') as string).trim()
+    const isAnonymous   = (body.is_anonymous ?? false) as boolean
+    const isMultiple    = (body.is_multiple ?? false) as boolean
+    const expiresInHours = (body.expires_in_hours ?? null) as number | null
+
+    // 검증
+    if (!question) {
+      return jsonResponse({ error: 'question is required' }, 400)
+    }
+    if (question.length > 100) {
+      return jsonResponse({ error: 'question must be 100 characters or less' }, 400)
+    }
+    if (!Array.isArray(options) || options.length < 2 || options.length > 8) {
+      return jsonResponse({ error: 'options must be an array of 2~8 items' }, 400)
+    }
+    const cleanedOptions = options
+      .map(o => (typeof o === 'string' ? o.trim() : ''))
+      .filter(o => o.length > 0)
+    if (cleanedOptions.length < 2) {
+      return jsonResponse({ error: 'at least 2 non-empty options required' }, 400)
+    }
+
+    if (!AI_USER_ID) {
+      console.error('[openclaw-response] AI_USER_ID 시크릿 미설정')
+      return jsonResponse({ error: 'AI_USER_ID not configured' }, 500)
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+    // 1) 투표(lounge_polls) 생성
+    const expiresAt = expiresInHours
+      ? new Date(Date.now() + expiresInHours * 60 * 60 * 1000).toISOString()
+      : null
+
+    const { data: poll, error: pollErr } = await supabase
+      .from('lounge_polls')
+      .insert({
+        user_id:      AI_USER_ID,
+        question,
+        is_anonymous: isAnonymous,
+        is_multiple:  isMultiple,
+        expires_at:   expiresAt,
+      })
+      .select('id')
+      .single()
+
+    if (pollErr) {
+      console.error('[openclaw-response] 투표 생성 실패:', pollErr)
+      return jsonResponse({ error: pollErr.message }, 500)
+    }
+
+    // 2) 선택지(lounge_poll_options) 생성
+    const optionRows = cleanedOptions.map((label, idx) => ({
+      poll_id:    poll.id,
+      label,
+      sort_order: idx,
+    }))
+
+    const { error: optErr } = await supabase
+      .from('lounge_poll_options')
+      .insert(optionRows)
+
+    if (optErr) {
+      console.error('[openclaw-response] 선택지 생성 실패:', optErr)
+      return jsonResponse({ error: optErr.message }, 500)
+    }
+
+    // 3) 메시지(lounge_messages) 생성 (poll_id 연결)
+    const msgData: Record<string, unknown> = {
+      user_id: AI_USER_ID,
+      poll_id: poll.id,
+    }
+    if (content) msgData.content = content
+
+    const { data: msg, error: msgErr } = await supabase
+      .from('lounge_messages')
+      .insert([msgData])
+      .select('id')
+      .single()
+
+    if (msgErr) {
+      console.error('[openclaw-response] 투표 메시지 삽입 실패:', msgErr)
+      return jsonResponse({ error: msgErr.message }, 500)
+    }
+
+    console.log(`[openclaw-response] 전기수 광장 투표 생성 완료: poll_id=${poll.id}, message_id=${msg.id}, 선택지 ${cleanedOptions.length}개`)
+
+    // agent_logs 기록
+    const runId = ((body.run_id ?? '') as string).trim()
+    if (runId) {
+      await supabase.from('agent_logs').update({
+        status:       'done',
+        responded_at: new Date().toISOString(),
+        response:     `[투표] ${question}`,
+        metadata:     { action: 'post_lounge_poll', poll_id: poll.id, lounge_message_id: msg.id, options_count: cleanedOptions.length },
+      }).eq('run_id', runId)
+    }
+
+    return jsonResponse({
+      ok: true,
+      poll_id:           poll.id,
+      lounge_message_id: msg.id,
+      options_count:     cleanedOptions.length,
+    })
   }
 
   // ─── action: post_comment → AI 댓글 삽입 (전기수) ───
