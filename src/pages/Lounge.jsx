@@ -47,9 +47,15 @@ const formatTime = (dateStr) => {
 };
 
 // ─────────────────────────────────────────────
-// 전송 금지 패턴 검사 (전화번호, 음란·폭력 단어)
+// 전송 금지 패턴 검사 (개인정보, 광고, 음란·폭력)
 // ─────────────────────────────────────────────
 const PHONE_REGEX = /01[0-9][-\s.]?\d{3,4}[-\s.]?\d{4}|0\d{1,2}[-\s.]?\d{3,4}[-\s.]?\d{4}/;
+const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+const ACCOUNT_REGEX = /\d{3,6}[-\s]?\d{2,6}[-\s]?\d{2,8}/; // 계좌번호 패턴
+const SSN_REGEX = /\d{6}[-\s]?\d{7}/; // 주민등록번호
+const URL_REGEX = /https?:\/\/[^\s]+/gi;
+const KAKAO_ID_REGEX = /카[카톡]?\s*[:：]?\s*[a-zA-Z0-9_]{2,}/;
+
 const BLOCKED_WORDS = [
   // 음란
   '씹', '보지', '자지', '섹스', '야동', '음란',
@@ -58,8 +64,33 @@ const BLOCKED_WORDS = [
   // 욕설
   '씨발', '개새끼', '병신', '지랄', '미친놈', '꺼져', '닥쳐',
 ];
+
+const AD_KEYWORDS = [
+  // 광고·홍보
+  '무료상담', '무료체험', '할인쿠폰', '선착순', '한정판매',
+  '카톡상담', '톡상담', '문의주세요', '연락주세요', '입금하',
+  '수익보장', '일당', '고수익', '부업', '재택알바', '투잡',
+  '대출', '당일대출', '저금리', '무담보', '급전',
+  '카지노', '도박', '배팅', '토토', '슬롯',
+  '코인추천', '리딩방', '수익인증', '원금보장',
+  '다이어트', '살빠지', '체중감량',
+  '팔로우', '구독', '좋아요 눌러',
+];
+
 const validateMessage = (content) => {
+  // 개인정보 차단
   if (PHONE_REGEX.test(content)) return '전화번호는 광장에 남길 수 없어요.';
+  if (EMAIL_REGEX.test(content)) return '이메일 주소는 광장에 남길 수 없어요.';
+  if (SSN_REGEX.test(content)) return '주민등록번호는 광장에 남길 수 없어요.';
+  if (ACCOUNT_REGEX.test(content)) return '계좌번호는 광장에 남길 수 없어요.';
+  if (KAKAO_ID_REGEX.test(content)) return '카카오톡 ID는 광장에 남길 수 없어요.';
+  // 링크 차단
+  if (URL_REGEX.test(content)) return '링크는 광장에 남길 수 없어요.';
+  // 광고성 키워드 차단
+  for (const word of AD_KEYWORDS) {
+    if (content.includes(word)) return '광고성 내용은 광장에 남길 수 없어요.';
+  }
+  // 욕설·음란·폭력 차단
   for (const word of BLOCKED_WORDS) {
     if (content.includes(word)) return '부적절한 내용이 포함되어 있어요.';
   }
