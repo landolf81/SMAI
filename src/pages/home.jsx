@@ -783,10 +783,9 @@ const Home = () => {
           marketInfoMap={marketInfoMap}
         />
 
-        {/* 산지+도매 종합 합산 카드 */}
-        {!loading && seongjuTotal && (
+        {/* 산지+도매 종합 합산 카드 — 자체 데이터 조회 (baseDate 기준) */}
+        {!loading && (
           <CombinedMarketCard
-            seongjuTotal={seongjuTotal}
             selectedDate={selectedDate}
             formatPrice={formatPrice}
           />

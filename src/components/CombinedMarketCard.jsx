@@ -2,12 +2,12 @@
  * CombinedMarketCard.jsx
  * 홈 화면 최하단 - 산지 + 도매(익일) 종합 카드
  *
- * 합산 규칙:
- * - 기준일 = 산지(성주군) 날짜
- * - 합산 = 산지(당일) + 도매(익일)
- * - 당일(오늘): 도매 익일 없으므로 산지만 표시
- * - 전년 비교: 요일 매칭, 당일은 산지 vs 작년 산지만
- * - 14일 추세 차트 + 전년 오버레이
+ * 표시 규칙:
+ * - 항상 산지(baseDate) + 도매(baseDate+1) 쌍으로만 표시
+ * - baseDate: selectedDate >= 오늘이면 selectedDate-1, 아니면 selectedDate
+ * - seongjuOnly / isTodayOnly 모드 없음
+ * - 전년 비교: 항상 산지+도매 합산
+ * - 14일 추세 차트 (baseDate 기준) + 전년 오버레이
  */
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -25,6 +25,8 @@ import {
 } from 'recharts';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { marketCombinedService } from '../services';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
@@ -49,6 +51,13 @@ const getNextDate = (dateStr) => {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 };
 
+const getPrevDate = (dateStr) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+};
+
 // 커스텀 툴팁
 const ChartTooltip = ({ active, payload }) => {
   if (!active || !payload?.length) return null;
@@ -60,7 +69,11 @@ const ChartTooltip = ({ active, payload }) => {
     <div className="bg-base-100 border border-base-300 rounded-lg shadow-lg p-2.5 text-xs min-w-[150px]">
       <div className="font-bold text-base-content mb-1">
         산지 {d.market_date} ({dayName})
-        {d.wholesale_date && <span className="text-purple-600 ml-1">+ 도매 {formatShortDate(d.wholesale_date)}</span>}
+        {d.wholesale_date && (
+          <span className="text-purple-600 ml-1">
+            + 도매 {formatShortDate(d.wholesale_date)}
+          </span>
+        )}
       </div>
       <div className="text-emerald-600">
         평균가: <span className="font-bold">{(d.avg_price || 0).toLocaleString()}원</span>
@@ -73,21 +86,26 @@ const ChartTooltip = ({ active, payload }) => {
           도매(익일): {(d.wholesale_boxes || 0).toLocaleString()}상자
         </div>
       )}
-      {d.isTodayOnly && <div className="text-orange-500 mt-0.5">산지만 (도매 익일 미확정)</div>}
       {/* 작년 비교 */}
       {d.lastYear_avg_price != null && (
         <div className="mt-1.5 pt-1.5 border-t border-base-300">
           <div className="text-base-content/50 mb-0.5">
-            작년 {d.lastYear_date ? formatShortDate(d.lastYear_date) : ''} ({dayName})
+            작년 {d.lastYear_date ? formatShortDate(d.lastYear_date) : ''} ({dayName}) +도매
           </div>
           <div className="text-amber-600">
             평균가: <span className="font-bold">{d.lastYear_avg_price.toLocaleString()}원</span>
           </div>
           {d.lastYear_total_boxes != null && (
-            <div className="text-amber-600/70">출하량: {d.lastYear_total_boxes.toLocaleString()}상자</div>
+            <div className="text-amber-600/70">
+              출하량: {d.lastYear_total_boxes.toLocaleString()}상자
+            </div>
           )}
           {d.avg_price > 0 && d.lastYear_avg_price > 0 && (
-            <div className={`mt-0.5 font-bold ${d.avg_price > d.lastYear_avg_price ? 'text-red-600' : 'text-blue-600'}`}>
+            <div
+              className={`mt-0.5 font-bold ${
+                d.avg_price > d.lastYear_avg_price ? 'text-red-600' : 'text-blue-600'
+              }`}
+            >
               전년比 {d.avg_price > d.lastYear_avg_price ? '▲' : '▼'}{' '}
               {Math.abs(d.avg_price - d.lastYear_avg_price).toLocaleString()}원
               ({((d.avg_price - d.lastYear_avg_price) / d.lastYear_avg_price * 100).toFixed(1)}%)
@@ -99,42 +117,59 @@ const ChartTooltip = ({ active, payload }) => {
   );
 };
 
-const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, formatPrice }) => {
+/**
+ * @param {string} selectedDate - 홈에서 선택된 날짜 (YYYY-MM-DD)
+ * @param {Function} formatPrice - 숫자 포맷 함수
+ */
+const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const [expanded, setExpanded] = useState(false);
   const [chartType, setChartType] = useState('price');
+  const [chartOffset, setChartOffset] = useState(0); // 0=기본, -1=5일 전, -2=10일 전 ...
 
-  const isToday = selectedDate >= getKoreanToday();
-  const nextDate = getNextDate(selectedDate);
+  // baseDate 변경 시 차트 오프셋 초기화
+  const [prevBaseDate, setPrevBaseDate] = useState(null);
+  if (prevBaseDate !== null && prevBaseDate !== baseDate) {
+    setChartOffset(0);
+  }
+  if (prevBaseDate !== baseDate) setPrevBaseDate(baseDate);
 
-  // 과거일: 도매(익일) 데이터 조회
-  const { data: nextDayWholesale } = useQuery({
-    queryKey: ['nextDayWholesale', nextDate],
-    queryFn: () => marketCombinedService.getWholesaleForDate(nextDate),
+  // 기준일 결정: 오늘 이상이면 전일(어제 산지 + 오늘 도매), 아니면 선택일
+  const today = getKoreanToday();
+  const baseDate = selectedDate >= today ? getPrevDate(selectedDate) : selectedDate;
+  const wholesaleDate = getNextDate(baseDate);
+
+  // 산지 데이터 조회 (기준일)
+  const { data: seongjuData } = useQuery({
+    queryKey: ['combinedSeonju', baseDate],
+    queryFn: () => marketCombinedService.getSeongjuForDate(baseDate),
     staleTime: 5 * 60 * 1000,
-    enabled: !isToday,
   });
 
-  // 올해 산지만인지 여부 (당일이거나, 과거일이지만 도매 익일 데이터 없음)
-  const isSeongjuOnly = isToday || (!isToday && nextDayWholesale === null);
+  // 도매(익일) 데이터 조회
+  const { data: wholesaleData } = useQuery({
+    queryKey: ['combinedWholesale', wholesaleDate],
+    queryFn: () => marketCombinedService.getWholesaleForDate(wholesaleDate),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // 작년 비교 데이터 (올해 산지만이면 전년도도 산지만)
+  // 작년 비교 데이터 — 항상 산지+도매 합산
   const { data: lastYearData } = useQuery({
-    queryKey: ['lastYearComparison', selectedDate, isSeongjuOnly],
-    queryFn: () => marketCombinedService.getLastYearComparison(selectedDate, isSeongjuOnly),
+    queryKey: ['lastYearComparison', baseDate],
+    queryFn: () => marketCombinedService.getLastYearComparison(baseDate),
     staleTime: 10 * 60 * 1000,
-    // nextDayWholesale 로딩 완료 후에만 실행 (과거일에서 도매 유무 확인 필요)
-    enabled: isToday || nextDayWholesale !== undefined,
   });
 
-  // 14일 추세 차트
+  // 14일 추세 차트 날짜 범위 (baseDate 기준 + chartOffset)
   const dateRange = useMemo(() => {
-    const [y, m, d] = selectedDate.split('-').map(Number);
+    const [y, m, d] = baseDate.split('-').map(Number);
     const end = new Date(y, m - 1, d);
+    end.setDate(end.getDate() + chartOffset * 5); // 5일 단위 이동
     const start = new Date(end);
     start.setDate(start.getDate() - 13);
-    const f = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+    const f = (dt) =>
+      `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
     return { start: f(start), end: f(end) };
-  }, [selectedDate]);
+  }, [baseDate, chartOffset]);
 
   const { data: trendData, isLoading: trendLoading } = useQuery({
     queryKey: ['combinedTrend', dateRange.start, dateRange.end],
@@ -145,35 +180,29 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
 
   // 합산 계산
   const combined = useMemo(() => {
-    const s = seongjuTotal;
-    if (!s) return null;
-
-    const sBoxes = s.totalQuantity || 0;
-    const sAmount = s.totalAmount || 0;
-    // 과거일: 도매(익일) 합산
-    const wBoxes = (!isToday && nextDayWholesale) ? (nextDayWholesale.total_boxes || 0) : 0;
-    const wAmount = (!isToday && nextDayWholesale) ? (nextDayWholesale.total_amount || 0) : 0;
-
+    if (!seongjuData) return null;
+    const sBoxes = seongjuData.total_boxes || 0;
+    const sAmount = seongjuData.total_amount || 0;
+    const wBoxes = wholesaleData?.total_boxes || 0;
+    const wAmount = wholesaleData?.total_amount || 0;
     const totalBoxes = sBoxes + wBoxes;
     const totalAmount = sAmount + wAmount;
-    const avgPrice = totalBoxes > 0 ? Math.round(totalAmount / totalBoxes) : 0;
-
     return {
       totalBoxes,
       totalAmount,
-      avgPrice,
+      avgPrice: totalBoxes > 0 ? Math.round(totalAmount / totalBoxes) : 0,
       seongjuBoxes: sBoxes,
       wholesaleBoxes: wBoxes,
       hasWholesale: wBoxes > 0,
     };
-  }, [seongjuTotal, nextDayWholesale, isToday]);
+  }, [seongjuData, wholesaleData]);
 
   if (!combined) return null;
 
-  const dayOfWeek = getDayOfWeek(selectedDate);
+  const dayOfWeek = getDayOfWeek(baseDate);
   const dayName = DAY_NAMES[dayOfWeek];
 
-  // 등락 표시
+  // 등락 표시 헬퍼
   const renderChange = (current, previous, showPct = false, asMillion = false) => {
     if (!previous || previous === 0) return null;
     const rawChange = current - previous;
@@ -182,7 +211,10 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
     const isUp = change > 0;
     const pct = showPct ? ` (${((change / previous) * 100).toFixed(1)}%)` : '';
     const displayVal = asMillion
-      ? `${(Math.abs(change) / 1000000).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}백만`
+      ? `${(Math.abs(change) / 1000000).toLocaleString('ko-KR', {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        })}백만`
       : Math.abs(change).toLocaleString();
     return (
       <span className={`text-sm font-bold ${isUp ? 'text-red-600' : 'text-blue-600'}`}>
@@ -191,9 +223,10 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
     );
   };
 
-  // 비율
+  // 산지/도매 비율
   const seongjuPct = combined.totalBoxes > 0
-    ? Math.round((combined.seongjuBoxes / combined.totalBoxes) * 100) : 100;
+    ? Math.round((combined.seongjuBoxes / combined.totalBoxes) * 100)
+    : 100;
   const wholesalePct = 100 - seongjuPct;
 
   return (
@@ -206,28 +239,19 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
         >
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
-            <span className="text-white font-bold text-lg">
-              {isToday ? '산지 당일' : '산지 + 도매(익일)'}
-            </span>
+            <span className="text-white font-bold text-lg">산지 + 도매(익일)</span>
             <span className="text-white/60 text-sm">({dayName})</span>
           </div>
-          {isToday && (
-            <span className="text-sm bg-white/20 text-white px-2.5 py-0.5 rounded-full">
-              산지만
-            </span>
-          )}
         </div>
 
         {/* 본문 */}
         <div className="px-4 py-4">
-          {/* 날짜 안내 */}
-          {!isToday && combined.hasWholesale && (
-            <div className="text-sm text-base-content/50 mb-2">
-              산지 {selectedDate} + 도매 {nextDate}
-            </div>
-          )}
+          {/* 날짜 안내 — 항상 표시 */}
+          <div className="text-sm text-base-content/50 mb-2">
+            산지 {baseDate} + 도매 {wholesaleDate}
+          </div>
 
-          {/* 합산 요약 */}
+          {/* 총 출하량 */}
           <div className="flex items-baseline gap-2 mb-1.5">
             <span className="text-base-content/60 text-base">총 출하량</span>
             <span className="text-2xl font-bold text-base-content">
@@ -235,19 +259,22 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
             </span>
             <span className="text-sm text-base-content/50">상자</span>
           </div>
+
+          {/* 총 출하금액 */}
           <div className="text-base text-base-content/60 mb-4">
             총 출하금액{' '}
             <span className="font-bold text-base-content text-lg">
-              {(combined.totalAmount / 1000000).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              {(combined.totalAmount / 1000000).toLocaleString('ko-KR', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1,
+              })}
             </span>{' '}
             <span className="text-sm text-base-content/50">백만원</span>
           </div>
 
           {/* 가중평균가 */}
           <div className="bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 rounded-xl p-4 mb-4">
-            <div className="text-sm text-base-content/50 mb-1">
-              가중평균가 {isToday ? '(산지)' : '(합산)'}
-            </div>
+            <div className="text-sm text-base-content/50 mb-1">가중평균가 (합산)</div>
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-bold text-emerald-700 dark:text-emerald-400">
                 {formatPrice(combined.avgPrice)}
@@ -256,8 +283,8 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
             </div>
           </div>
 
-          {/* 산지/도매 비율 바 (과거일 + 도매 있을 때만) */}
-          {!isToday && combined.hasWholesale && (
+          {/* 산지/도매 비율 바 */}
+          {combined.hasWholesale && (
             <div className="mb-4">
               <div className="flex justify-between text-sm text-base-content/60 mb-1">
                 <span>산지 {seongjuPct}%</span>
@@ -286,8 +313,7 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
               <div className="flex items-center gap-1.5 mb-3">
                 <span className="text-sm font-bold text-base-content/70">작년 비교</span>
                 <span className="text-sm text-base-content/40">
-                  ({lastYearData.date} {DAY_NAMES[getDayOfWeek(lastYearData.date)]}
-                  {lastYearData.seongjuOnly ? ' 산지만' : ' +도매'})
+                  ({lastYearData.date} {DAY_NAMES[getDayOfWeek(lastYearData.date)]} +도매)
                 </span>
               </div>
               <div className="grid grid-cols-3 gap-2 text-center">
@@ -312,7 +338,10 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
                 <div>
                   <div className="text-sm text-base-content/50 mb-1">출하금액</div>
                   <div className="text-lg font-bold text-base-content">
-                    {(lastYearData.totalAmount / 1000000).toLocaleString('ko-KR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                    {(lastYearData.totalAmount / 1000000).toLocaleString('ko-KR', {
+                      minimumFractionDigits: 1,
+                      maximumFractionDigits: 1,
+                    })}
                     <span className="text-xs text-base-content/50 ml-0.5">백만</span>
                   </div>
                   <div className="mt-1">
@@ -339,7 +368,9 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
                 <button
                   onClick={() => setChartType('price')}
                   className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                    chartType === 'price' ? 'bg-emerald-600 text-white' : 'bg-base-200 text-base-content/60'
+                    chartType === 'price'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-base-200 text-base-content/60'
                   }`}
                 >
                   평균가 추세
@@ -347,10 +378,34 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
                 <button
                   onClick={() => setChartType('volume')}
                   className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors ${
-                    chartType === 'volume' ? 'bg-emerald-600 text-white' : 'bg-base-200 text-base-content/60'
+                    chartType === 'volume'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-base-200 text-base-content/60'
                   }`}
                 >
                   출하량 비교
+                </button>
+              </div>
+
+              {/* 차트 기간 네비게이션 */}
+              <div className="flex items-center justify-between mb-2">
+                <button
+                  onClick={() => setChartOffset(prev => prev - 1)}
+                  className="btn btn-ghost btn-xs btn-circle"
+                  aria-label="이전 5일"
+                >
+                  <ChevronLeftIcon fontSize="small" />
+                </button>
+                <span className="text-xs text-base-content/50">
+                  {formatShortDate(dateRange.start)} ~ {formatShortDate(dateRange.end)}
+                </span>
+                <button
+                  onClick={() => setChartOffset(prev => Math.min(prev + 1, 0))}
+                  className="btn btn-ghost btn-xs btn-circle"
+                  disabled={chartOffset >= 0}
+                  aria-label="다음 5일"
+                >
+                  <ChevronRightIcon fontSize="small" />
                 </button>
               </div>
 
@@ -362,7 +417,10 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
                 <div className="h-56">
                   <ResponsiveContainer width="100%" height="100%">
                     {chartType === 'price' ? (
-                      <ComposedChart data={trendData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                      <ComposedChart
+                        data={trendData}
+                        margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
+                      >
                         <defs>
                           <linearGradient id="combinedGradAvg" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
@@ -370,23 +428,99 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                        <XAxis dataKey="market_date" tickFormatter={formatShortDate} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} domain={['dataMin - 1000', 'dataMax + 1000']} />
+                        <XAxis
+                          dataKey="market_date"
+                          tickFormatter={formatShortDate}
+                          tick={{ fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10 }}
+                          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                          tickLine={false}
+                          axisLine={false}
+                          domain={['dataMin - 1000', 'dataMax + 1000']}
+                        />
                         <Tooltip content={<ChartTooltip />} />
-                        <Legend verticalAlign="top" height={24} iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                        <Area type="monotone" dataKey="avg_price" name="올해" stroke="#059669" strokeWidth={2.5} fill="url(#combinedGradAvg)" dot={{ r: 3, fill: '#059669', strokeWidth: 0 }} activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }} />
-                        <Line type="monotone" dataKey="lastYear_avg_price" name="작년" stroke="#D97706" strokeWidth={1.5} strokeDasharray="6 3" dot={{ r: 2, fill: '#D97706', strokeWidth: 0 }} activeDot={{ r: 4, stroke: '#fff', strokeWidth: 1.5 }} connectNulls={false} />
+                        <Legend
+                          verticalAlign="top"
+                          height={24}
+                          iconSize={8}
+                          wrapperStyle={{ fontSize: 10 }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="avg_price"
+                          name="올해"
+                          stroke="#059669"
+                          strokeWidth={2.5}
+                          fill="url(#combinedGradAvg)"
+                          dot={{ r: 3, fill: '#059669', strokeWidth: 0 }}
+                          activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="lastYear_avg_price"
+                          name="작년"
+                          stroke="#D97706"
+                          strokeWidth={1.5}
+                          strokeDasharray="6 3"
+                          dot={{ r: 2, fill: '#D97706', strokeWidth: 0 }}
+                          activeDot={{ r: 4, stroke: '#fff', strokeWidth: 1.5 }}
+                          connectNulls={false}
+                        />
                       </ComposedChart>
                     ) : (
-                      <ComposedChart data={trendData} margin={{ top: 5, right: 5, left: -15, bottom: 0 }}>
+                      <ComposedChart
+                        data={trendData}
+                        margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
+                      >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                        <XAxis dataKey="market_date" tickFormatter={formatShortDate} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                        <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} tickLine={false} axisLine={false} />
+                        <XAxis
+                          dataKey="market_date"
+                          tickFormatter={formatShortDate}
+                          tick={{ fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <YAxis
+                          tick={{ fontSize: 10 }}
+                          tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                          tickLine={false}
+                          axisLine={false}
+                        />
                         <Tooltip content={<ChartTooltip />} />
-                        <Legend verticalAlign="top" height={24} iconSize={8} wrapperStyle={{ fontSize: 10 }} />
-                        <Bar dataKey="seongju_boxes" name="산지" stackId="vol" fill="#3B82F6" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="wholesale_boxes" name="도매(익일)" stackId="vol" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
-                        <Line type="monotone" dataKey="lastYear_total_boxes" name="작년" stroke="#D97706" strokeWidth={1.5} strokeDasharray="6 3" dot={{ r: 2, fill: '#D97706', strokeWidth: 0 }} connectNulls={false} />
+                        <Legend
+                          verticalAlign="top"
+                          height={24}
+                          iconSize={8}
+                          wrapperStyle={{ fontSize: 10 }}
+                        />
+                        <Bar
+                          dataKey="seongju_boxes"
+                          name="산지"
+                          stackId="vol"
+                          fill="#3B82F6"
+                          radius={[0, 0, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="wholesale_boxes"
+                          name="도매(익일)"
+                          stackId="vol"
+                          fill="#8B5CF6"
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="lastYear_total_boxes"
+                          name="작년"
+                          stroke="#D97706"
+                          strokeWidth={1.5}
+                          strokeDasharray="6 3"
+                          dot={{ r: 2, fill: '#D97706', strokeWidth: 0 }}
+                          connectNulls={false}
+                        />
                       </ComposedChart>
                     )}
                   </ResponsiveContainer>
