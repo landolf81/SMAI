@@ -23,8 +23,7 @@ import {
   Legend,
   ComposedChart,
 } from 'recharts';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+// ExpandMore/Less 아이콘 제거 — 차트 항상 표시
 import { marketCombinedService } from '../services';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
@@ -130,7 +129,6 @@ const ChartTooltip = ({ active, payload }) => {
  * @param {Function} formatPrice - 숫자 포맷 함수
  */
 const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
-  const [expanded, setExpanded] = useState(false);
   const [chartType, setChartType] = useState('price');
   const scrollRef = useRef(null);
 
@@ -178,7 +176,6 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
     queryKey: ['combinedTrend', dateRange.start, dateRange.end],
     queryFn: () => marketCombinedService.getCombinedTrendData(dateRange.start, dateRange.end),
     staleTime: 5 * 60 * 1000,
-    enabled: expanded,
   });
 
   // 차트 데이터 수, 포인트당 너비
@@ -377,18 +374,8 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
             </div>
           )}
 
-          {/* 차트 토글 */}
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="w-full flex items-center justify-center gap-1 py-2 text-sm text-base-content/60 hover:text-base-content transition-colors"
-          >
-            <span>{expanded ? '차트 접기' : '추세 차트 보기'}</span>
-            {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-          </button>
-
-          {/* 확장 차트 — 좌우 스크롤 */}
-          {expanded && (
-            <div className="mt-2">
+          {/* 추세 차트 — 항상 표시, 좌우 스크롤 */}
+          <div className="mt-2">
               <div className="flex gap-1 mb-3">
                 <button
                   onClick={() => setChartType('price')}
@@ -554,7 +541,6 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                 </div>
               )}
             </div>
-          )}
         </div>
       </div>
     </div>
