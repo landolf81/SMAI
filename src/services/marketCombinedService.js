@@ -3,11 +3,10 @@
  * 산지+도매 합산 데이터 서비스 (홈 하단 종합 카드용)
  *
  * 합산 규칙:
- * - 기준일(baseDate) = 산지(성주군) 날짜
- * - 합산 = 산지(baseDate) + 도매(baseDate+1) — 항상 쌍으로만 표시
- * - selectedDate >= 오늘이면 baseDate = selectedDate - 1 (전일 산지 + 당일 도매)
- * - selectedDate < 오늘이면 baseDate = selectedDate (해당일 산지 + 익일 도매)
- * - 전년 비교: 항상 산지+도매 합산 (seongjuOnly 모드 없음)
+ * - baseDate = 항상 selectedDate - 1 (전일)
+ * - 합산 = 산지(baseDate=전일) + 도매(selectedDate=당일)
+ * - 예: 선택일 26일 → 산지 25일 + 도매 26일
+ * - 전년 비교·차트: 항상 전일 기준, 산지+도매 합산
  * - 추세 차트: 모든 날짜가 산지(date)+도매(date+1) — 예외 없음
  */
 import { supabase } from '../config/supabase.js';

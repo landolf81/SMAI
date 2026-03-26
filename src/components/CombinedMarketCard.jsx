@@ -1,13 +1,13 @@
 /**
  * CombinedMarketCard.jsx
- * 홈 화면 최하단 - 산지 + 도매(익일) 종합 카드
+ * 홈 화면 최하단 - 산지 + 도매 종합 카드
  *
  * 표시 규칙:
- * - 항상 산지(baseDate) + 도매(baseDate+1) 쌍으로만 표시
- * - baseDate: selectedDate >= 오늘이면 selectedDate-1, 아니면 selectedDate
- * - seongjuOnly / isTodayOnly 모드 없음
- * - 전년 비교: 항상 산지+도매 합산
- * - 14일 추세 차트 (baseDate 기준) + 전년 오버레이
+ * - baseDate = 항상 selectedDate - 1 (전일)
+ * - 합산 = 산지(baseDate=전일) + 도매(selectedDate=당일)
+ * - 예: 선택일 26일 → 산지 25일 + 도매 26일
+ * - 전년 비교·차트: 항상 전일 기준, 산지+도매 합산
+ * - 좌우 스크롤 차트 + 미래 날짜는 전년만
  */
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -36,12 +36,6 @@ const getDayOfWeek = (dateStr) => {
 
 const formatShortDate = (dateStr) => dateStr ? dateStr.slice(5).replace('-', '/') : '';
 
-const getKoreanToday = () => {
-  const now = new Date();
-  const k = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-  return `${k.getFullYear()}-${String(k.getMonth() + 1).padStart(2, '0')}-${String(k.getDate()).padStart(2, '0')}`;
-};
-
 const getNextDate = (dateStr) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
@@ -53,6 +47,19 @@ const getPrevDate = (dateStr) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const dt = new Date(y, m - 1, d);
   dt.setDate(dt.getDate() - 1);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+};
+
+// 산지 경매 가능일(직전 거래일) 찾기
+// 토요일(6)은 산지 휴장 → 건너뛰어서 금요일로
+const getPrevTradingDate = (dateStr) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() - 1); // 전일로 이동
+  // 토요일(6)이면 금요일(5)로 한 칸 더
+  if (dt.getDay() === 6) {
+    dt.setDate(dt.getDate() - 1);
+  }
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 };
 
@@ -127,10 +134,11 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const [chartType, setChartType] = useState('price');
   const scrollRef = useRef(null);
 
-  // 기준일 결정: 오늘 이상이면 전일(어제 산지 + 오늘 도매), 아니면 선택일
-  const today = getKoreanToday();
-  const baseDate = selectedDate >= today ? getPrevDate(selectedDate) : selectedDate;
-  const wholesaleDate = getNextDate(baseDate);
+  // 기준일: selectedDate의 직전 산지 거래일 (토요일 휴장 건너뜀)
+  // 예: 26일(수) → baseDate=25일(화) 산지 + 26일(수) 도매
+  //     일요일   → baseDate=금요일 산지 + 토요일 도매 (토 산지 휴장)
+  const baseDate = getPrevTradingDate(selectedDate);
+  const wholesaleDate = getNextDate(baseDate); // 도매 = baseDate + 1
 
   // 산지 데이터 조회 (기준일)
   const { data: seongjuData } = useQuery({
@@ -263,9 +271,9 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
 
         {/* 본문 */}
         <div className="px-4 py-4">
-          {/* 날짜 안내 — 항상 표시 */}
+          {/* 날짜 안내 — 항상 전일 기준 */}
           <div className="text-sm text-base-content/50 mb-2">
-            산지 {baseDate} + 도매 {wholesaleDate}
+            산지 {formatShortDate(baseDate)}({DAY_NAMES[getDayOfWeek(baseDate)]}) + 도매 {formatShortDate(wholesaleDate)}({DAY_NAMES[getDayOfWeek(wholesaleDate)]})
           </div>
 
           {/* 총 출하량 */}
