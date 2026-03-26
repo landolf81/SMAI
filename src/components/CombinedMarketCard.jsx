@@ -115,7 +115,6 @@ const ChartTooltip = ({ active, payload }) => {
             >
               전년比 {d.avg_price > d.lastYear_avg_price ? '▲' : '▼'}{' '}
               {Math.abs(d.avg_price - d.lastYear_avg_price).toLocaleString()}원
-              ({((d.avg_price - d.lastYear_avg_price) / d.lastYear_avg_price * 100).toFixed(1)}%)
             </div>
           )}
         </div>
@@ -225,13 +224,12 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const dayName = DAY_NAMES[dayOfWeek];
 
   // 등락 표시 헬퍼
-  const renderChange = (current, previous, showPct = false, asMillion = false) => {
+  const renderChange = (current, previous, _unused = false, asMillion = false) => {
     if (!previous || previous === 0) return null;
     const rawChange = current - previous;
     const change = Math.sign(rawChange) * Math.floor(Math.abs(rawChange) / 10) * 10;
     if (change === 0) return <span className="text-base-content/50 text-sm">보합</span>;
     const isUp = change > 0;
-    const pct = showPct ? ` (${((change / previous) * 100).toFixed(1)}%)` : '';
     const displayVal = asMillion
       ? `${(Math.abs(change) / 1000000).toLocaleString('ko-KR', {
           minimumFractionDigits: 1,
@@ -240,7 +238,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
       : Math.abs(change).toLocaleString();
     return (
       <span className={`text-sm font-bold ${isUp ? 'text-red-600' : 'text-blue-600'}`}>
-        {isUp ? '▲' : '▼'} {displayVal}{pct}
+        {isUp ? '▲' : '▼'} {displayVal}
       </span>
     );
   };
