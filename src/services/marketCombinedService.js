@@ -66,14 +66,14 @@ const marketCombinedService = {
 
   /**
    * 작년 비교 데이터 조회
-   * - 당일(오늘): 산지만 vs 작년 산지 (동일 요일)
-   * - 과거일: 산지(당일)+도매(익일) vs 작년 동일 패턴
+   * - seongjuOnly=true: 산지만 vs 작년 산지 (동일 요일)
+   * - seongjuOnly=false: 산지(당일)+도매(익일) vs 작년 동일 패턴
    * @param {string} date - 기준 날짜 (산지 날짜)
+   * @param {boolean} seongjuOnly - true면 산지만 비교 (올해 도매 없을 때)
    * @returns {Object|null}
    */
-  async getLastYearComparison(date) {
+  async getLastYearComparison(date, seongjuOnly = false) {
     try {
-      const isToday = date >= getKoreanToday();
       const { targetDate, weekday } = findLastYearWeekdayDate(date);
 
       // 작년 ±7일 범위에서 같은 요일 검색
@@ -111,8 +111,8 @@ const marketCombinedService = {
       const bestRows = dateMap.get(bestDate);
       const lySeongju = bestRows.find(r => r.region_name === '성주군');
 
-      if (isToday) {
-        // 당일: 산지만 비교
+      if (seongjuOnly) {
+        // 산지만 비교 (올해 도매 데이터 없는 경우)
         if (!lySeongju) return null;
         return {
           date: bestDate,
@@ -123,7 +123,7 @@ const marketCombinedService = {
         };
       }
 
-      // 과거일: 산지(bestDate) + 도매(bestDate+1)
+      // 합산: 산지(bestDate) + 도매(bestDate+1)
       const lyNextDate = getNextDate(bestDate);
       const { data: lyWholesale } = await supabase
         .from('market_aggregate_summary')

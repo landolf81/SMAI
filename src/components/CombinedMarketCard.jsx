@@ -114,11 +114,16 @@ const CombinedMarketCard = ({ seongjuTotal, wholesaleTotal, selectedDate, format
     enabled: !isToday,
   });
 
-  // 작년 비교 데이터
+  // 올해 산지만인지 여부 (당일이거나, 과거일이지만 도매 익일 데이터 없음)
+  const isSeongjuOnly = isToday || (!isToday && nextDayWholesale === null);
+
+  // 작년 비교 데이터 (올해 산지만이면 전년도도 산지만)
   const { data: lastYearData } = useQuery({
-    queryKey: ['lastYearComparison', selectedDate],
-    queryFn: () => marketCombinedService.getLastYearComparison(selectedDate),
+    queryKey: ['lastYearComparison', selectedDate, isSeongjuOnly],
+    queryFn: () => marketCombinedService.getLastYearComparison(selectedDate, isSeongjuOnly),
     staleTime: 10 * 60 * 1000,
+    // nextDayWholesale 로딩 완료 후에만 실행 (과거일에서 도매 유무 확인 필요)
+    enabled: isToday || nextDayWholesale !== undefined,
   });
 
   // 14일 추세 차트
