@@ -10,6 +10,7 @@ export { userService } from './userService.js';
 export { adService } from './adService.js';
 export { reportService } from './reportService.js';
 export { marketService } from './marketService.js';
+export { default as marketCombinedService } from './marketCombinedService.js';
 export { qnaService } from './qnaService.js';
 export { badgeService } from './badgeService.js';
 export { dmService } from './dmService.js';

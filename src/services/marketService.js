@@ -1485,6 +1485,7 @@ export const marketService = {
     if (error) throw error;
     return data;
   },
+
 };
 
 export default marketService;

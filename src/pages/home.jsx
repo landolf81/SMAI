@@ -22,6 +22,7 @@ import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useAdminPermissions } from '../hooks/usePermissions';
 import PushNotificationBanner from '../components/PushNotificationBanner';
 import MarketSearchModal from '../components/MarketSearchModal';
+import CombinedMarketCard from '../components/CombinedMarketCard';
 
 
 // 색상 정의
@@ -781,6 +782,16 @@ const Home = () => {
           handleRefresh={handleRefresh}
           marketInfoMap={marketInfoMap}
         />
+
+        {/* 산지+도매 종합 합산 카드 */}
+        {!loading && (seongjuTotal || wholesaleTotal) && (
+          <CombinedMarketCard
+            seongjuTotal={seongjuTotal}
+            wholesaleTotal={wholesaleTotal}
+            selectedDate={selectedDate}
+            formatPrice={formatPrice}
+          />
+        )}
 
         {/* 인기 게시물 섹션 - 스크롤 시 지연 로딩 */}
         {!loading && (
