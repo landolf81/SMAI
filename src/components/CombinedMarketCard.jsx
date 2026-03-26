@@ -9,7 +9,7 @@
  * - 전년 비교: 항상 산지+도매 합산
  * - 14일 추세 차트 (baseDate 기준) + 전년 오버레이
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Area,
@@ -25,8 +25,6 @@ import {
 } from 'recharts';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { marketCombinedService } from '../services';
 
 const DAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'];
@@ -86,6 +84,9 @@ const ChartTooltip = ({ active, payload }) => {
           도매(익일): {(d.wholesale_boxes || 0).toLocaleString()}상자
         </div>
       )}
+      {d.isFuture && (
+        <div className="text-orange-500 mt-0.5 font-medium">미래 (작년 참고)</div>
+      )}
       {/* 작년 비교 */}
       {d.lastYear_avg_price != null && (
         <div className="mt-1.5 pt-1.5 border-t border-base-300">
@@ -124,19 +125,12 @@ const ChartTooltip = ({ active, payload }) => {
 const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const [expanded, setExpanded] = useState(false);
   const [chartType, setChartType] = useState('price');
-  const [chartOffset, setChartOffset] = useState(0); // 0=기본, -1=5일 전, -2=10일 전 ...
+  const scrollRef = useRef(null);
 
   // 기준일 결정: 오늘 이상이면 전일(어제 산지 + 오늘 도매), 아니면 선택일
   const today = getKoreanToday();
   const baseDate = selectedDate >= today ? getPrevDate(selectedDate) : selectedDate;
   const wholesaleDate = getNextDate(baseDate);
-
-  // baseDate 변경 시 차트 오프셋 초기화
-  const [prevBaseDate, setPrevBaseDate] = useState(null);
-  if (prevBaseDate !== null && prevBaseDate !== baseDate) {
-    setChartOffset(0);
-  }
-  if (prevBaseDate !== baseDate) setPrevBaseDate(baseDate);
 
   // 산지 데이터 조회 (기준일)
   const { data: seongjuData } = useQuery({
@@ -159,17 +153,18 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // 14일 추세 차트 날짜 범위 (baseDate 기준 + chartOffset)
+  // 추세 차트 날짜 범위: baseDate 기준 앞 18일 + 뒤 5일 (스크롤 여유)
   const dateRange = useMemo(() => {
     const [y, m, d] = baseDate.split('-').map(Number);
-    const end = new Date(y, m - 1, d);
-    end.setDate(end.getDate() + chartOffset * 5); // 5일 단위 이동
-    const start = new Date(end);
-    start.setDate(start.getDate() - 13);
+    const base = new Date(y, m - 1, d);
+    const end = new Date(base);
+    end.setDate(end.getDate() + 5); // 미래 5일 (작년 데이터만)
+    const start = new Date(base);
+    start.setDate(start.getDate() - 18); // 과거 18일
     const f = (dt) =>
       `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
     return { start: f(start), end: f(end) };
-  }, [baseDate, chartOffset]);
+  }, [baseDate]);
 
   const { data: trendData, isLoading: trendLoading } = useQuery({
     queryKey: ['combinedTrend', dateRange.start, dateRange.end],
@@ -177,6 +172,28 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
     staleTime: 5 * 60 * 1000,
     enabled: expanded,
   });
+
+  // 차트 데이터 수, 포인트당 너비
+  const POINT_WIDTH = 38; // px per data point
+  const chartWidth = trendData ? Math.max(trendData.length * POINT_WIDTH, 320) : 320;
+
+  // 차트 로드 시 baseDate 위치로 스크롤
+  const scrollToBase = useCallback(() => {
+    if (!scrollRef.current || !trendData?.length) return;
+    // baseDate에 해당하는 인덱스 찾기
+    const baseIdx = trendData.findIndex(d => d.market_date === baseDate);
+    if (baseIdx < 0) return;
+    // baseDate가 화면 오른쪽 끝에 오도록
+    const containerWidth = scrollRef.current.clientWidth;
+    const targetX = (baseIdx + 1) * POINT_WIDTH - containerWidth;
+    scrollRef.current.scrollLeft = Math.max(0, targetX);
+  }, [trendData, baseDate]);
+
+  useEffect(() => {
+    if (trendData?.length) {
+      requestAnimationFrame(scrollToBase);
+    }
+  }, [trendData, scrollToBase]);
 
   // 합산 계산
   const combined = useMemo(() => {
@@ -361,7 +378,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
             {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
           </button>
 
-          {/* 확장 차트 */}
+          {/* 확장 차트 — 좌우 스크롤 */}
           {expanded && (
             <div className="mt-2">
               <div className="flex gap-1 mb-3">
@@ -387,26 +404,9 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                 </button>
               </div>
 
-              {/* 차트 기간 네비게이션 */}
-              <div className="flex items-center justify-between mb-2">
-                <button
-                  onClick={() => setChartOffset(prev => prev - 1)}
-                  className="btn btn-ghost btn-xs btn-circle"
-                  aria-label="이전 5일"
-                >
-                  <ChevronLeftIcon fontSize="small" />
-                </button>
-                <span className="text-xs text-base-content/50">
-                  {formatShortDate(dateRange.start)} ~ {formatShortDate(dateRange.end)}
-                </span>
-                <button
-                  onClick={() => setChartOffset(prev => Math.min(prev + 1, 0))}
-                  className="btn btn-ghost btn-xs btn-circle"
-                  disabled={chartOffset >= 0}
-                  aria-label="다음 5일"
-                >
-                  <ChevronRightIcon fontSize="small" />
-                </button>
+              {/* 스크롤 안내 */}
+              <div className="text-center text-xs text-base-content/40 mb-1">
+                ← 좌우 스크롤 →
               </div>
 
               {trendLoading ? (
@@ -414,12 +414,18 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                   <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : trendData && trendData.length > 0 ? (
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div
+                  ref={scrollRef}
+                  className="overflow-x-auto overflow-y-hidden scrollbar-hide"
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+                >
+                  <div style={{ width: chartWidth, height: 224 }}>
                     {chartType === 'price' ? (
                       <ComposedChart
+                        width={chartWidth}
+                        height={224}
                         data={trendData}
-                        margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
+                        margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
                       >
                         <defs>
                           <linearGradient id="combinedGradAvg" x1="0" y1="0" x2="0" y2="1">
@@ -458,6 +464,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                           fill="url(#combinedGradAvg)"
                           dot={{ r: 3, fill: '#059669', strokeWidth: 0 }}
                           activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }}
+                          connectNulls={false}
                         />
                         <Line
                           type="monotone"
@@ -473,8 +480,10 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                       </ComposedChart>
                     ) : (
                       <ComposedChart
+                        width={chartWidth}
+                        height={224}
                         data={trendData}
-                        margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
+                        margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                         <XAxis
@@ -523,7 +532,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                         />
                       </ComposedChart>
                     )}
-                  </ResponsiveContainer>
+                  </div>
                 </div>
               ) : (
                 <div className="h-32 flex items-center justify-center text-sm text-base-content/40">
@@ -533,7 +542,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
 
               {trendData?.length > 0 && trendData.some(d => d.lastYear_date) && (
                 <div className="text-center mt-1.5 text-xs text-base-content/40">
-                  기준일=산지, 합산=산지(당일)+도매(익일), 작년 동일 요일 매칭
+                  기준일=산지, 합산=산지+도매(익일), 미래=작년만, 좌우 스크롤
                 </div>
               )}
             </div>

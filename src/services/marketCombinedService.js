@@ -158,23 +158,34 @@ const marketCombinedService = {
   },
 
   /**
-   * 추세 차트용 합산 데이터 — 모든 날짜가 산지(date)+도매(date+1)
-   * 예외 없이 전부 합산, 작년도 동일 패턴으로 합산 비교
-   * @param {string} startDate - 산지 기준 시작일 (YYYY-MM-DD)
-   * @param {string} endDate - 산지 기준 종료일 (YYYY-MM-DD)
+   * 추세 차트용 합산 데이터 — 전체 날짜 범위 생성
+   * - 과거: 산지(date)+도매(date+1) 합산
+   * - 미래(데이터 없는 날): 전년 자료만 표시
+   * - 작년: 항상 산지+도매 합산
+   * @param {string} startDate - 시작일 (YYYY-MM-DD)
+   * @param {string} endDate - 종료일 (YYYY-MM-DD), 미래 가능
    * @returns {Array}
    */
   async getCombinedTrendData(startDate, endDate) {
     try {
+      // 전체 날짜 목록 생성 (startDate ~ endDate, 매일)
+      const allDates = [];
+      const [sY, sM, sD] = startDate.split('-').map(Number);
+      const [eY, eM, eD] = endDate.split('-').map(Number);
+      const cur = new Date(sY, sM - 1, sD);
+      const endDt = new Date(eY, eM - 1, eD);
+      while (cur <= endDt) {
+        allDates.push(fmt(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+
       // 도매 조회 범위: startDate+1 ~ endDate+1 (익일 매칭용)
       const wholesaleEnd = getNextDate(endDate);
       const wholesaleStart = getNextDate(startDate);
 
       // 작년 기간 계산 (요일 매칭)
       const { targetDate: lyEnd } = findLastYearWeekdayDate(endDate);
-      const [sY, sM, sD] = startDate.split('-').map(Number);
-      const [eY, eM, eD] = endDate.split('-').map(Number);
-      const daySpan = Math.round((new Date(eY, eM - 1, eD) - new Date(sY, sM - 1, sD)) / 86400000);
+      const daySpan = Math.round((endDt - new Date(sY, sM - 1, sD)) / 86400000);
       const lyEndDt = new Date(lyEnd + 'T00:00:00');
       const lyStartDt = new Date(lyEndDt);
       lyStartDt.setDate(lyStartDt.getDate() - daySpan);
@@ -192,11 +203,9 @@ const marketCombinedService = {
         ),
       ]);
 
-      // 산지 기준 날짜 목록
-      const seongjuDates = seongjuData.map(d => d.market_date).sort();
       const seongjuMap = new Map(seongjuData.map(d => [d.market_date, d]));
 
-      // 도매: 익일 데이터를 산지 기준일로 역매핑 (도매date-1 → 산지 기준일)
+      // 도매: 익일 데이터를 산지 기준일로 역매핑
       const wholesaleByPrevDay = new Map();
       wholesaleData.forEach(d => {
         const [wy, wm, wd] = d.market_date.split('-').map(Number);
@@ -216,27 +225,27 @@ const marketCombinedService = {
       });
       const lyDates = [...lySeongjuMap.keys()].sort();
 
-      // 작년 데이터 합산 (항상 산지+도매 합산, 예외 없음)
-      const lyMergedFull = lyDates.map(date => {
+      // 작년 합산 데이터
+      const lyMerged = lyDates.map(date => {
         const s = lySeongjuMap.get(date);
         const w = lyWholesaleByPrevDay.get(date);
-        const sBoxes = s?.total_boxes || 0;
-        const sAmount = s?.total_amount || 0;
-        const wBoxes = w?.total_boxes || 0;
-        const wAmount = w?.total_amount || 0;
-        const totalBoxes = sBoxes + wBoxes;
-        const totalAmount = sAmount + wAmount;
+        const boxes = (s?.total_boxes || 0) + (w?.total_boxes || 0);
+        const amount = (s?.total_amount || 0) + (w?.total_amount || 0);
         return {
           date,
-          avg_price: totalBoxes > 0 ? Math.round(totalAmount / totalBoxes) : 0,
-          total_boxes: totalBoxes,
+          avg_price: boxes > 0 ? Math.round(amount / boxes) : 0,
+          total_boxes: boxes,
         };
       });
 
-      // 올해 데이터 조합 — 모든 날짜가 산지+도매(익일)
-      return seongjuDates.map(date => {
+      // 전체 날짜를 순회하며 데이터 구성 (데이터 없는 미래일도 포함)
+      // 올해 데이터 있는 날짜들만 추출 (요일 매칭 인덱스용)
+      const datesWithData = allDates.filter(d => seongjuMap.has(d));
+
+      return allDates.map(date => {
         const s = seongjuMap.get(date);
         const w = wholesaleByPrevDay.get(date);
+        const hasData = !!s;
 
         const sBoxes = s?.total_boxes || 0;
         const sAmount = s?.total_amount || 0;
@@ -248,25 +257,29 @@ const marketCombinedService = {
 
         // 작년 매칭: 같은 요일끼리 순서 매칭
         const thisDay = new Date(date + 'T00:00:00').getDay();
-        const sameDayDates = seongjuDates.filter(d => new Date(d + 'T00:00:00').getDay() === thisDay);
-        const sameDayIdx = sameDayDates.indexOf(date);
-        const lySameDays = lyMergedFull.filter(ly => new Date(ly.date + 'T00:00:00').getDay() === thisDay);
+        const sameDayAll = allDates.filter(d => new Date(d + 'T00:00:00').getDay() === thisDay);
+        const sameDayIdx = sameDayAll.indexOf(date);
+        const lySameDays = lyMerged.filter(ly => new Date(ly.date + 'T00:00:00').getDay() === thisDay);
         const lyMatch = lySameDays[sameDayIdx] || null;
 
         return {
           market_date: date,
-          avg_price: avgPrice,
-          total_boxes: totalBoxes,
-          total_amount: totalAmount,
-          seongju_boxes: sBoxes,
-          wholesale_boxes: wBoxes,
-          wholesale_date: getNextDate(date),
+          avg_price: hasData ? avgPrice : null,
+          total_boxes: hasData ? totalBoxes : null,
+          total_amount: hasData ? totalAmount : null,
+          seongju_boxes: hasData ? sBoxes : null,
+          wholesale_boxes: hasData ? wBoxes : null,
+          wholesale_date: hasData ? getNextDate(date) : null,
           hasSeonju: !!s,
           hasWholesale: !!w,
+          isFuture: !hasData,
           lastYear_avg_price: lyMatch?.avg_price ?? null,
           lastYear_total_boxes: lyMatch?.total_boxes ?? null,
           lastYear_date: lyMatch?.date || null,
         };
+      }).filter(d => {
+        // 올해 데이터도 없고 작년 데이터도 없으면 제외
+        return d.avg_price !== null || d.lastYear_avg_price !== null;
       });
     } catch (error) {
       console.error('합산 추세 데이터 조회 오류:', error);
