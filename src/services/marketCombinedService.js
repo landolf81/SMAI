@@ -206,7 +206,7 @@ const marketCombinedService = {
         wholesaleByPrevDay.set(fmt(prevDt), d);
       });
 
-      // 작년 동일 패턴 구성
+      // 작년 동일 패턴 구성 (산지만/합산 여부는 올해 매칭 시 결정)
       const lySeongjuMap = new Map(lySeonju.map(d => [d.market_date, d]));
       const lyWholesaleByPrevDay = new Map();
       lyWholesale.forEach(d => {
@@ -216,13 +216,26 @@ const marketCombinedService = {
         lyWholesaleByPrevDay.set(fmt(prevDt), d);
       });
       const lyDates = [...lySeongjuMap.keys()].sort();
-      const lyMerged = lyDates.map(date => {
+
+      // 작년 데이터를 산지만/합산 두 버전으로 준비
+      const lyMergedFull = lyDates.map(date => {
         const s = lySeongjuMap.get(date);
         const w = lyWholesaleByPrevDay.get(date);
-        const isLyToday = date === lyDates[lyDates.length - 1]; // 작년 마지막 날은 산지만
-        const boxes = (s?.total_boxes || 0) + (isLyToday ? 0 : (w?.total_boxes || 0));
-        const amount = (s?.total_amount || 0) + (isLyToday ? 0 : (w?.total_amount || 0));
-        return { date, avg_price: boxes > 0 ? Math.round(amount / boxes) : 0, total_boxes: boxes };
+        const sBoxes = s?.total_boxes || 0;
+        const sAmount = s?.total_amount || 0;
+        const wBoxes = w?.total_boxes || 0;
+        const wAmount = w?.total_amount || 0;
+        const fullBoxes = sBoxes + wBoxes;
+        const fullAmount = sAmount + wAmount;
+        return {
+          date,
+          // 합산 (산지+도매익일)
+          avg_price: fullBoxes > 0 ? Math.round(fullAmount / fullBoxes) : 0,
+          total_boxes: fullBoxes,
+          // 산지만
+          seongju_avg: sBoxes > 0 ? Math.round(sAmount / sBoxes) : 0,
+          seongju_boxes: sBoxes,
+        };
       });
 
       // 올해 데이터 조합
@@ -239,12 +252,23 @@ const marketCombinedService = {
         const totalAmount = sAmount + wAmount;
         const avgPrice = totalBoxes > 0 ? Math.round(totalAmount / totalBoxes) : 0;
 
+        // 올해 이 날짜가 산지만인지 여부
+        const thisIsSeongjuOnly = isDateToday || wBoxes === 0;
+
         // 작년 매칭: 같은 요일끼리 순서 매칭
         const thisDay = new Date(date + 'T00:00:00').getDay();
         const sameDayDates = seongjuDates.filter(d => new Date(d + 'T00:00:00').getDay() === thisDay);
         const sameDayIdx = sameDayDates.indexOf(date);
-        const lySameDays = lyMerged.filter(ly => new Date(ly.date + 'T00:00:00').getDay() === thisDay);
+        const lySameDays = lyMergedFull.filter(ly => new Date(ly.date + 'T00:00:00').getDay() === thisDay);
         const lyMatch = lySameDays[sameDayIdx] || null;
+
+        // 올해가 산지만이면 작년도 산지만, 아니면 합산
+        const lyAvg = lyMatch
+          ? (thisIsSeongjuOnly ? lyMatch.seongju_avg : lyMatch.avg_price)
+          : null;
+        const lyBoxes = lyMatch
+          ? (thisIsSeongjuOnly ? lyMatch.seongju_boxes : lyMatch.total_boxes)
+          : null;
 
         return {
           market_date: date,
@@ -257,8 +281,8 @@ const marketCombinedService = {
           hasSeonju: !!s,
           hasWholesale: !!w,
           isTodayOnly: isDateToday,
-          lastYear_avg_price: lyMatch?.avg_price || null,
-          lastYear_total_boxes: lyMatch?.total_boxes || null,
+          lastYear_avg_price: lyAvg,
+          lastYear_total_boxes: lyBoxes,
           lastYear_date: lyMatch?.date || null,
         };
       });
