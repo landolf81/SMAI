@@ -784,10 +784,9 @@ const Home = () => {
         />
 
         {/* 산지+도매 종합 합산 카드 */}
-        {!loading && (seongjuTotal || wholesaleTotal) && (
+        {!loading && seongjuTotal && (
           <CombinedMarketCard
             seongjuTotal={seongjuTotal}
-            wholesaleTotal={wholesaleTotal}
             selectedDate={selectedDate}
             formatPrice={formatPrice}
           />
