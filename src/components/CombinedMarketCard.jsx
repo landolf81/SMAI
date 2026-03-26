@@ -126,17 +126,17 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const [chartType, setChartType] = useState('price');
   const [chartOffset, setChartOffset] = useState(0); // 0=기본, -1=5일 전, -2=10일 전 ...
 
+  // 기준일 결정: 오늘 이상이면 전일(어제 산지 + 오늘 도매), 아니면 선택일
+  const today = getKoreanToday();
+  const baseDate = selectedDate >= today ? getPrevDate(selectedDate) : selectedDate;
+  const wholesaleDate = getNextDate(baseDate);
+
   // baseDate 변경 시 차트 오프셋 초기화
   const [prevBaseDate, setPrevBaseDate] = useState(null);
   if (prevBaseDate !== null && prevBaseDate !== baseDate) {
     setChartOffset(0);
   }
   if (prevBaseDate !== baseDate) setPrevBaseDate(baseDate);
-
-  // 기준일 결정: 오늘 이상이면 전일(어제 산지 + 오늘 도매), 아니면 선택일
-  const today = getKoreanToday();
-  const baseDate = selectedDate >= today ? getPrevDate(selectedDate) : selectedDate;
-  const wholesaleDate = getNextDate(baseDate);
 
   // 산지 데이터 조회 (기준일)
   const { data: seongjuData } = useQuery({
