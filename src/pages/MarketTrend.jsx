@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   LineChart,
@@ -336,25 +336,30 @@ const MarketTrend = () => {
   }, [chartData]);
 
   const [activeData, setActiveData] = useState(null);
-  const [userTouched, setUserTouched] = useState(false);
-  // 데이터 로드 시 기본값 설정 (사용자가 아직 터치 안 한 경우만)
-  useEffect(() => {
-    if (defaultActiveData && !userTouched) setActiveData(defaultActiveData);
-  }, [defaultActiveData, userTouched]);
-  // 기간/마켓 변경 시 터치 상태 리셋
-  useEffect(() => {
-    setUserTouched(false);
-  }, [marketName, periodDays, isCustomPeriod]);
+  const activeFullDateRef = useRef(null); // 현재 선택된 날짜 (무한루프 방지)
+  const defaultFullDateRef = useRef(null); // 마지막 적용된 기본값
 
-  const handleChartInteraction = (state) => {
-    if (state?.activePayload?.length) {
-      setUserTouched(true);
-      setActiveData(state.activePayload[0].payload);
+  // 데이터 로드 시 기본값 설정 (기본값의 날짜가 실제로 바뀔 때만)
+  useEffect(() => {
+    const newDefault = defaultActiveData?.fullDate || null;
+    if (newDefault && newDefault !== defaultFullDateRef.current) {
+      defaultFullDateRef.current = newDefault;
+      activeFullDateRef.current = newDefault;
+      setActiveData(defaultActiveData);
     }
-  };
+  }, [defaultActiveData]);
 
-  // 차트 내부 툴팁은 투명 처리
-  const EmptyTooltip = () => <div style={{ display: 'none' }} />;
+  // Recharts Tooltip을 이용한 터치/마우스 감지 (ref로 무한루프 방지)
+  const SyncTooltip = useCallback(({ active, payload }) => {
+    if (active && payload?.length) {
+      const data = payload[0]?.payload;
+      if (data && data.fullDate !== activeFullDateRef.current) {
+        activeFullDateRef.current = data.fullDate;
+        Promise.resolve().then(() => setActiveData(data));
+      }
+    }
+    return null;
+  }, []);
 
   return (
     <div className="min-h-screen bg-base-200 pt-14 pb-20">
@@ -444,8 +449,6 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
-                onMouseMove={handleChartInteraction}
-                onClick={handleChartInteraction}
                 onMouseLeave={() => {}}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -461,7 +464,7 @@ const MarketTrend = () => {
                   axisLine={{ stroke: '#e0e0e0' }}
                   tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                 />
-                <Tooltip content={<EmptyTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                <Tooltip content={<SyncTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
 
                 {/* 오늘 날짜 수직선 */}
                 {todayXValue && (
@@ -631,8 +634,6 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
-                onMouseMove={handleChartInteraction}
-                onClick={handleChartInteraction}
                 onMouseLeave={() => {}}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -648,7 +649,7 @@ const MarketTrend = () => {
                   axisLine={{ stroke: '#e0e0e0' }}
                   tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                 />
-                <Tooltip content={<EmptyTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                <Tooltip content={<SyncTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
 
                 {/* 오늘 날짜 수직선 */}
                 {todayXValue && (
