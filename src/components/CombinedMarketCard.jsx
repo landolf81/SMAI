@@ -541,13 +541,18 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                   ) : (
                     <div className="grid grid-cols-2 gap-2 text-center">
                       <div>
-                        <p className="text-xs text-base-content/50 mb-0.5">산지+도매</p>
-                        <p className="text-xl font-bold text-blue-600">{(activeChartData.seongju_boxes || 0).toLocaleString()}</p>
-                        <p className="text-xs text-purple-600">+{(activeChartData.wholesale_boxes || 0).toLocaleString()}</p>
+                        <p className="text-xs text-base-content/50 mb-0.5">올해 합계</p>
+                        <p className="text-2xl font-bold text-base-content">
+                          {((activeChartData.seongju_boxes || 0) + (activeChartData.wholesale_boxes || 0)).toLocaleString()}
+                        </p>
+                        <div className="flex justify-center gap-2 mt-1 text-xs">
+                          <span className="text-blue-600">산지 {(activeChartData.seongju_boxes || 0).toLocaleString()}</span>
+                          <span className="text-purple-600">도매 {(activeChartData.wholesale_boxes || 0).toLocaleString()}</span>
+                        </div>
                       </div>
                       <div>
                         <p className="text-xs text-base-content/50 mb-0.5">작년 합계</p>
-                        <p className="text-xl text-blue-400">{(activeChartData.lastYear_total_boxes || 0).toLocaleString()}</p>
+                        <p className="text-xl text-base-content/40">{(activeChartData.lastYear_total_boxes || 0).toLocaleString()}</p>
                       </div>
                     </div>
                   )}
