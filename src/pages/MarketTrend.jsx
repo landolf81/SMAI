@@ -275,7 +275,7 @@ const MarketTrend = () => {
     const dayOfWeek = item?.dayOfWeek;
     const fullDate = item?.fullDate;
 
-    let fill = '#374151'; // 기본 회색
+    let fill = 'currentColor'; // 기본: 테마 텍스트색
     if (dayOfWeek === 0 || isHoliday(fullDate)) fill = '#dc2626'; // 일요일/공휴일: 빨간색
     else if (dayOfWeek === 6) fill = '#2563eb'; // 토요일: 파란색
 
@@ -495,7 +495,7 @@ const MarketTrend = () => {
                   type="monotone"
                   dataKey="avgPrice"
                   name="올해 평균"
-                  stroke="#1f2937"
+                  stroke="#f5f5f5"
                   strokeWidth={2.5}
                   dot={false}
                   activeDot={{ r: 5 }}
@@ -556,7 +556,7 @@ const MarketTrend = () => {
                   <span>최고</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-6 h-1 bg-gray-800 rounded"></div>
+                  <div className="w-6 h-1 rounded" style={{ backgroundColor: '#f5f5f5' }}></div>
                   <span>평균</span>
                 </div>
                 <div className="flex items-center gap-1">
