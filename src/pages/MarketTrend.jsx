@@ -441,6 +441,7 @@ const MarketTrend = () => {
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
                 onMouseMove={handleChartMouseMove}
+                onClick={handleChartMouseMove}
                 onMouseLeave={handleChartMouseLeave}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -626,12 +627,9 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
-                onMouseMove={(state) => {
-                  if (state?.activePayload?.length) {
-                    setActiveData(state.activePayload[0].payload);
-                  }
-                }}
-                onMouseLeave={() => setActiveData(null)}
+                onMouseMove={handleChartMouseMove}
+                onClick={handleChartMouseMove}
+                onMouseLeave={handleChartMouseLeave}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
