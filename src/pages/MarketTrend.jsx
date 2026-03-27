@@ -322,14 +322,32 @@ const MarketTrend = () => {
 
   // 커스텀 툴팁
   // 차트 밖 고정 영역에 표시할 활성 데이터
+  // 기본값: 오늘(또는 가장 최근 데이터가 있는 날)
+  const defaultActiveData = useMemo(() => {
+    if (!chartData.length) return null;
+    // 오늘 데이터 우선, 없으면 가장 최근 데이터가 있는 날
+    const todayItem = chartData.find(d => d.isToday);
+    if (todayItem && (todayItem.avgPrice || todayItem.lastYearAvg)) return todayItem;
+    // 과거에서 가장 최근 데이터 있는 날
+    for (let i = chartData.length - 1; i >= 0; i--) {
+      if (!chartData[i].isFuture && (chartData[i].avgPrice || chartData[i].lastYearAvg)) return chartData[i];
+    }
+    return chartData[chartData.length - 1];
+  }, [chartData]);
+
   const [activeData, setActiveData] = useState(null);
+  // chartData 변경 시 기본값으로 리셋
+  useEffect(() => {
+    if (defaultActiveData) setActiveData(defaultActiveData);
+  }, [defaultActiveData]);
 
   const handleChartMouseMove = (state) => {
     if (state?.activePayload?.length) {
       setActiveData(state.activePayload[0].payload);
     }
   };
-  const handleChartMouseLeave = () => setActiveData(null);
+  // 터치/마우스 떼도 마지막 선택 유지
+  const handleChartMouseLeave = () => {};
 
   // 차트 내부 툴팁은 투명하게 (터치 활성화 유지)
   const EmptyTooltip = ({ active, payload }) => {

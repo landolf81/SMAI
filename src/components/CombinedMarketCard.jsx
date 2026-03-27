@@ -525,18 +525,29 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                     )}
                   </div>
                   {chartType === 'price' ? (
-                    <div className="text-center">
-                      <p className="text-xs text-base-content/50 mb-0.5">평균가</p>
-                      <p className="text-2xl font-bold text-emerald-600">{(activeChartData.avg_price || 0).toLocaleString()}원</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-center flex-1">
+                        <p className="text-xs text-base-content/50 mb-0.5">평균가</p>
+                        <p className="text-xl font-bold text-emerald-600">{(activeChartData.avg_price || 0).toLocaleString()}</p>
+                      </div>
                       {activeChartData.lastYear_avg_price != null && (
-                        <p className="text-lg text-emerald-400 mt-0.5">{activeChartData.lastYear_avg_price.toLocaleString()}원</p>
+                        <div className="text-center flex-1">
+                          <p className="text-xs text-base-content/50 mb-0.5">전년</p>
+                          <p className="text-xl font-bold text-base-content/40">{activeChartData.lastYear_avg_price.toLocaleString()}</p>
+                        </div>
                       )}
-                      {activeChartData.avg_price > 0 && activeChartData.lastYear_avg_price > 0 && (
-                        <p className={`text-sm font-bold mt-1 ${activeChartData.avg_price > activeChartData.lastYear_avg_price ? 'text-red-500' : 'text-blue-500'}`}>
-                          {activeChartData.avg_price > activeChartData.lastYear_avg_price ? '▲' : '▼'}{' '}
-                          {Math.abs(activeChartData.avg_price - activeChartData.lastYear_avg_price).toLocaleString()}원
-                        </p>
-                      )}
+                      {activeChartData.avg_price > 0 && activeChartData.lastYear_avg_price > 0 && (() => {
+                        const diff = activeChartData.avg_price - activeChartData.lastYear_avg_price;
+                        const isUp = diff > 0;
+                        return (
+                          <div className="text-center flex-1">
+                            <p className="text-xs text-base-content/50 mb-0.5">변동</p>
+                            <p className={`text-xl font-bold ${isUp ? 'text-red-500' : 'text-blue-500'}`}>
+                              {isUp ? '▲' : '▼'}{Math.abs(diff).toLocaleString()}
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     <div className="grid grid-cols-2 gap-2 text-center">
@@ -545,9 +556,9 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                         <p className="text-2xl font-bold text-base-content">
                           {((activeChartData.seongju_boxes || 0) + (activeChartData.wholesale_boxes || 0)).toLocaleString()}
                         </p>
-                        <div className="flex justify-center gap-2 mt-1 text-xs">
-                          <span className="text-blue-600">산지 {(activeChartData.seongju_boxes || 0).toLocaleString()}</span>
-                          <span className="text-purple-600">도매 {(activeChartData.wholesale_boxes || 0).toLocaleString()}</span>
+                        <div className="flex justify-center gap-3 mt-1 text-sm font-bold">
+                          <span className="text-blue-600">{(activeChartData.seongju_boxes || 0).toLocaleString()}</span>
+                          <span className="text-purple-600">{(activeChartData.wholesale_boxes || 0).toLocaleString()}</span>
                         </div>
                       </div>
                       <div>
