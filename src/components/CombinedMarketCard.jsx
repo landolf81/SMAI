@@ -129,6 +129,18 @@ const ChartTooltip = ({ active, payload }) => {
  */
 const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const [chartType, setChartType] = useState('price');
+  const [activeChartData, setActiveChartData] = useState(null);
+
+  // 차트 내 툴팁 숨기고 아래 패널에 표시
+  const EmptyTooltip = ({ active, payload }) => {
+    if (active && payload?.length) {
+      const d = payload[0]?.payload;
+      if (d && d !== activeChartData) {
+        setTimeout(() => setActiveChartData(d), 0);
+      }
+    }
+    return <div style={{ display: 'none' }} />;
+  };
 
   // 기준일: selectedDate의 직전 산지 거래일 (토요일 휴장 건너뜀)
   // 예: 26일(수) → baseDate=25일(화) 산지 + 26일(수) 도매
@@ -385,6 +397,8 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                       <ComposedChart
                         data={trendData}
                         margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
+                        onMouseMove={(s) => s?.activePayload?.length && setActiveChartData(s.activePayload[0].payload)}
+                        onMouseLeave={() => setActiveChartData(null)}
                       >
                         <defs>
                           <linearGradient id="combinedGradAvg" x1="0" y1="0" x2="0" y2="1">
@@ -407,7 +421,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                           axisLine={false}
                           domain={['dataMin - 1000', 'dataMax + 1000']}
                         />
-                        <Tooltip content={<ChartTooltip />} />
+                        <Tooltip content={<EmptyTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
                         <Legend
                           verticalAlign="top"
                           height={24}
@@ -441,6 +455,8 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                       <ComposedChart
                         data={trendData}
                         margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
+                        onMouseMove={(s) => s?.activePayload?.length && setActiveChartData(s.activePayload[0].payload)}
+                        onMouseLeave={() => setActiveChartData(null)}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                         <XAxis
@@ -456,7 +472,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                           tickLine={false}
                           axisLine={false}
                         />
-                        <Tooltip content={<ChartTooltip />} />
+                        <Tooltip content={<EmptyTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
                         <Legend
                           verticalAlign="top"
                           height={24}
@@ -497,9 +513,50 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                 </div>
               )}
 
-              {trendData?.length > 0 && trendData.some(d => d.lastYear_date) && (
+              {/* 차트 아래 고정 정보 패널 */}
+              {activeChartData && (
+                <div className="mt-2 p-3 bg-base-200 rounded-xl">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-base font-bold text-base-content">
+                      {activeChartData.market_date} ({DAY_NAMES[getDayOfWeek(activeChartData.market_date)]})
+                    </span>
+                    {activeChartData.lastYear_date && (
+                      <span className="text-xs text-base-content/40">작년 {activeChartData.lastYear_date}</span>
+                    )}
+                  </div>
+                  {chartType === 'price' ? (
+                    <div className="text-center">
+                      <p className="text-xs text-base-content/50 mb-0.5">평균가</p>
+                      <p className="text-2xl font-bold text-emerald-600">{(activeChartData.avg_price || 0).toLocaleString()}원</p>
+                      {activeChartData.lastYear_avg_price != null && (
+                        <p className="text-lg text-emerald-400 mt-0.5">{activeChartData.lastYear_avg_price.toLocaleString()}원</p>
+                      )}
+                      {activeChartData.avg_price > 0 && activeChartData.lastYear_avg_price > 0 && (
+                        <p className={`text-sm font-bold mt-1 ${activeChartData.avg_price > activeChartData.lastYear_avg_price ? 'text-red-500' : 'text-blue-500'}`}>
+                          {activeChartData.avg_price > activeChartData.lastYear_avg_price ? '▲' : '▼'}{' '}
+                          {Math.abs(activeChartData.avg_price - activeChartData.lastYear_avg_price).toLocaleString()}원
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      <div>
+                        <p className="text-xs text-base-content/50 mb-0.5">산지+도매</p>
+                        <p className="text-xl font-bold text-blue-600">{(activeChartData.seongju_boxes || 0).toLocaleString()}</p>
+                        <p className="text-xs text-purple-600">+{(activeChartData.wholesale_boxes || 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-base-content/50 mb-0.5">작년 합계</p>
+                        <p className="text-xl text-blue-400">{(activeChartData.lastYear_total_boxes || 0).toLocaleString()}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {trendData?.length > 0 && !activeChartData && trendData.some(d => d.lastYear_date) && (
                 <div className="text-center mt-1.5 text-xs text-base-content/40">
-                  과거 10일 + 미래 5일(작년만) · 산지+도매(익일) 합산
+                  차트를 터치하면 상세 정보를 볼 수 있습니다
                 </div>
               )}
             </div>
