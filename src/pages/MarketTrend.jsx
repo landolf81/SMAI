@@ -316,48 +316,18 @@ const MarketTrend = () => {
   };
 
   // 커스텀 툴팁
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (!active || !payload || !payload.length) return null;
+  // 차트 밖 고정 영역에 표시할 활성 데이터
+  const [activeData, setActiveData] = useState(null);
 
-    const data = payload[0]?.payload;
-
-    return (
-      <div className="bg-base-100 p-3 rounded-lg shadow-lg border border-base-300">
-        <p className="font-bold text-base-content mb-2">{data?.fullDate}</p>
-        <div className="space-y-1 text-sm">
-          <p className="text-red-600">
-            최고가: {formatPrice(data?.maxPrice)}원
-            {data?.lastYearMax && (
-              <span className="text-base-content/40 ml-2">
-                (작년 {formatPrice(data?.lastYearMax)})
-              </span>
-            )}
-          </p>
-          <p className="text-base-content">
-            평균가: {formatPrice(data?.avgPrice)}원
-            {data?.lastYearAvg && (
-              <span className="text-base-content/40 ml-2">
-                (작년 {formatPrice(data?.lastYearAvg)})
-              </span>
-            )}
-          </p>
-          <p className="text-blue-600">
-            최저가: {formatPrice(data?.minPrice)}원
-            {data?.lastYearMin && (
-              <span className="text-base-content/40 ml-2">
-                (작년 {formatPrice(data?.lastYearMin)})
-              </span>
-            )}
-          </p>
-          {data?.lastYearDate && (
-            <p className="text-base-content/30 text-xs mt-1">
-              작년 매칭: {data.lastYearDate} (동일요일)
-            </p>
-          )}
-        </div>
-      </div>
-    );
+  const handleChartMouseMove = (state) => {
+    if (state?.activePayload?.length) {
+      setActiveData(state.activePayload[0].payload);
+    }
   };
+  const handleChartMouseLeave = () => setActiveData(null);
+
+  // 차트 내부 툴팁은 숨기고 커서만 표시
+  const EmptyTooltip = () => null;
 
   return (
     <div className="min-h-screen bg-base-200 pt-14 pb-20">
@@ -447,6 +417,8 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
+                onMouseMove={handleChartMouseMove}
+                onMouseLeave={handleChartMouseLeave}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
@@ -461,7 +433,7 @@ const MarketTrend = () => {
                   axisLine={{ stroke: '#e0e0e0' }}
                   tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<EmptyTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
 
                 {/* 오늘 날짜 수직선 */}
                 {todayXValue && (
@@ -581,6 +553,41 @@ const MarketTrend = () => {
                 </div>
               </div>
             </div>
+
+            {/* 차트 아래 고정 정보 패널 */}
+            {activeData && (activeData.maxPrice || activeData.lastYearMax) && (
+              <div className="mt-3 p-3 bg-base-200 rounded-xl text-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-base-content">{activeData.fullDate}</span>
+                  {activeData.lastYearDate && (
+                    <span className="text-xs text-base-content/40">작년 {activeData.lastYearDate}</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-xs text-base-content/50 mb-0.5">최고가</p>
+                    <p className="font-bold text-red-600 dark:text-red-400">{activeData.maxPrice ? formatPrice(activeData.maxPrice) : '-'}</p>
+                    {activeData.lastYearMax && (
+                      <p className="text-xs text-base-content/40">작년 {formatPrice(activeData.lastYearMax)}</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-base-content/50 mb-0.5">평균가</p>
+                    <p className="font-bold text-base-content">{activeData.avgPrice ? formatPrice(activeData.avgPrice) : '-'}</p>
+                    {activeData.lastYearAvg && (
+                      <p className="text-xs text-base-content/40">작년 {formatPrice(activeData.lastYearAvg)}</p>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs text-base-content/50 mb-0.5">최저가</p>
+                    <p className="font-bold text-blue-600 dark:text-blue-400">{activeData.minPrice ? formatPrice(activeData.minPrice) : '-'}</p>
+                    {activeData.lastYearMin && (
+                      <p className="text-xs text-base-content/40">작년 {formatPrice(activeData.lastYearMin)}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -596,6 +603,12 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
+                onMouseMove={(state) => {
+                  if (state?.activePayload?.length) {
+                    setActiveData(state.activePayload[0].payload);
+                  }
+                }}
+                onMouseLeave={() => setActiveData(null)}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
@@ -610,27 +623,7 @@ const MarketTrend = () => {
                   axisLine={{ stroke: '#e0e0e0' }}
                   tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
                 />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (!active || !payload || !payload.length) return null;
-                    const data = payload[0]?.payload;
-                    return (
-                      <div className="bg-base-100 p-3 rounded-lg shadow-lg border border-base-300">
-                        <p className="font-bold text-base-content mb-2">{data?.fullDate}</p>
-                        <div className="space-y-1 text-sm">
-                          <p className="text-emerald-600">
-                            올해 물량: {data?.totalBoxes?.toLocaleString() || '-'}박스
-                          </p>
-                          {data?.lastYearBoxes && (
-                            <p className="text-base-content/50">
-                              작년 물량: {data?.lastYearBoxes?.toLocaleString()}박스
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }}
-                />
+                <Tooltip content={<EmptyTooltip />} cursor={{ stroke: '#059669', strokeWidth: 1, strokeDasharray: '4 4' }} />
 
                 {/* 오늘 날짜 수직선 */}
                 {todayXValue && (
@@ -688,6 +681,28 @@ const MarketTrend = () => {
                 </div>
               </div>
             </div>
+
+            {/* 차트 아래 물량 정보 패널 */}
+            {activeData && (activeData.totalBoxes || activeData.lastYearBoxes) && (
+              <div className="mt-3 p-3 bg-base-200 rounded-xl text-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-base-content">{activeData.fullDate}</span>
+                  {activeData.lastYearDate && (
+                    <span className="text-xs text-base-content/40">작년 {activeData.lastYearDate}</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div>
+                    <p className="text-xs text-base-content/50 mb-0.5">올해 물량</p>
+                    <p className="font-bold text-emerald-600">{activeData.totalBoxes?.toLocaleString() || '-'}박스</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-base-content/50 mb-0.5">작년 물량</p>
+                    <p className="font-bold text-base-content/50">{activeData.lastYearBoxes?.toLocaleString() || '-'}박스</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
