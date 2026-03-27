@@ -9,7 +9,7 @@
  * - 전년 비교·차트: 항상 전일 기준, 산지+도매 합산
  * - 좌우 스크롤 차트 + 미래 날짜는 전년만
  */
-import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Area,
@@ -129,7 +129,6 @@ const ChartTooltip = ({ active, payload }) => {
  */
 const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const [chartType, setChartType] = useState('price');
-  const scrollRef = useRef(null);
 
   // 기준일: selectedDate의 직전 산지 거래일 (토요일 휴장 건너뜀)
   // 예: 26일(수) → baseDate=25일(화) 산지 + 26일(수) 도매
@@ -158,14 +157,14 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
     staleTime: 10 * 60 * 1000,
   });
 
-  // 추세 차트 날짜 범위: baseDate 기준 앞 18일 + 뒤 5일 (스크롤 여유)
+  // 추세 차트 날짜 범위: baseDate 기준 과거 10일 + 미래 5일
   const dateRange = useMemo(() => {
     const [y, m, d] = baseDate.split('-').map(Number);
     const base = new Date(y, m - 1, d);
     const end = new Date(base);
     end.setDate(end.getDate() + 5); // 미래 5일 (작년 데이터만)
     const start = new Date(base);
-    start.setDate(start.getDate() - 18); // 과거 18일
+    start.setDate(start.getDate() - 10); // 과거 10일
     const f = (dt) =>
       `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
     return { start: f(start), end: f(end) };
@@ -176,28 +175,6 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
     queryFn: () => marketCombinedService.getCombinedTrendData(dateRange.start, dateRange.end),
     staleTime: 5 * 60 * 1000,
   });
-
-  // 차트 데이터 수, 포인트당 너비
-  const POINT_WIDTH = 38; // px per data point
-  const chartWidth = trendData ? Math.max(trendData.length * POINT_WIDTH, 320) : 320;
-
-  // 차트 로드 시 baseDate 위치로 스크롤
-  const scrollToBase = useCallback(() => {
-    if (!scrollRef.current || !trendData?.length) return;
-    // baseDate에 해당하는 인덱스 찾기
-    const baseIdx = trendData.findIndex(d => d.market_date === baseDate);
-    if (baseIdx < 0) return;
-    // baseDate가 화면 오른쪽 끝에 오도록
-    const containerWidth = scrollRef.current.clientWidth;
-    const targetX = (baseIdx + 1) * POINT_WIDTH - containerWidth;
-    scrollRef.current.scrollLeft = Math.max(0, targetX);
-  }, [trendData, baseDate]);
-
-  useEffect(() => {
-    if (trendData?.length) {
-      requestAnimationFrame(scrollToBase);
-    }
-  }, [trendData, scrollToBase]);
 
   // 합산 계산
   const combined = useMemo(() => {
@@ -372,7 +349,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
             </div>
           )}
 
-          {/* 추세 차트 — 항상 표시, 좌우 스크롤 */}
+          {/* 추세 차트 — 항상 표시 */}
           <div className="mt-2">
               <div className="flex gap-1 mb-3">
                 <button
@@ -397,28 +374,17 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                 </button>
               </div>
 
-              {/* 스크롤 안내 */}
-              <div className="text-center text-xs text-base-content/40 mb-1">
-                ← 좌우 스크롤 →
-              </div>
-
               {trendLoading ? (
                 <div className="h-48 flex items-center justify-center">
                   <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : trendData && trendData.length > 0 ? (
-                <div
-                  ref={scrollRef}
-                  className="overflow-x-auto overflow-y-hidden scrollbar-hide"
-                  style={{ WebkitOverflowScrolling: 'touch' }}
-                >
-                  <div style={{ width: chartWidth, height: 224 }}>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
                     {chartType === 'price' ? (
                       <ComposedChart
-                        width={chartWidth}
-                        height={224}
                         data={trendData}
-                        margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+                        margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
                       >
                         <defs>
                           <linearGradient id="combinedGradAvg" x1="0" y1="0" x2="0" y2="1">
@@ -473,10 +439,8 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                       </ComposedChart>
                     ) : (
                       <ComposedChart
-                        width={chartWidth}
-                        height={224}
                         data={trendData}
-                        margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+                        margin={{ top: 5, right: 5, left: -15, bottom: 0 }}
                       >
                         <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                         <XAxis
@@ -525,7 +489,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                         />
                       </ComposedChart>
                     )}
-                  </div>
+                  </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="h-32 flex items-center justify-center text-sm text-base-content/40">
@@ -535,7 +499,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
 
               {trendData?.length > 0 && trendData.some(d => d.lastYear_date) && (
                 <div className="text-center mt-1.5 text-xs text-base-content/40">
-                  기준일=산지, 합산=산지+도매(익일), 미래=작년만, 좌우 스크롤
+                  과거 10일 + 미래 5일(작년만) · 산지+도매(익일) 합산
                 </div>
               )}
             </div>
