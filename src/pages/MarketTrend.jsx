@@ -726,9 +726,9 @@ const MarketTrend = () => {
               {/* 올해 요약 */}
               <h3 className="font-bold text-base-content mb-3">기간 요약 (올해)</h3>
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="bg-red-50 rounded-xl p-3">
-                  <p className="text-xs text-red-600 mb-1">최고가</p>
-                  <p className="text-lg font-bold text-red-600">
+                <div className="bg-red-50 dark:bg-red-950/40 rounded-xl p-3">
+                  <p className="text-xs text-red-600 dark:text-red-400 mb-1">최고가</p>
+                  <p className="text-lg font-bold text-red-600 dark:text-red-400">
                     {formatPrice(maxPrice)}
                   </p>
                 </div>
@@ -738,9 +738,9 @@ const MarketTrend = () => {
                     {formatPrice(avgPrice)}
                   </p>
                 </div>
-                <div className="bg-blue-50 rounded-xl p-3">
-                  <p className="text-xs text-blue-600 mb-1">최저가</p>
-                  <p className="text-lg font-bold text-blue-600">
+                <div className="bg-blue-50 dark:bg-blue-950/40 rounded-xl p-3">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">최저가</p>
+                  <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
                     {formatPrice(minPrice)}
                   </p>
                 </div>
@@ -749,23 +749,23 @@ const MarketTrend = () => {
               {/* 작년 동기 요약 */}
               {lastYearMaxPrice > 0 && (
                 <>
-                  <h3 className="font-bold text-base-content/60 mb-3 mt-4 pt-4 border-t border-base-200">작년 동기</h3>
+                  <h3 className="font-bold text-base-content/60 mb-3 mt-4 pt-4 border-t border-base-200">작년 동기 (동일요일)</h3>
                   <div className="grid grid-cols-3 gap-3 text-center">
-                    <div className="bg-orange-50 rounded-xl p-3">
-                      <p className="text-xs text-orange-600 mb-1">최고가</p>
-                      <p className="text-lg font-bold text-orange-600">
+                    <div className="bg-orange-50 dark:bg-orange-950/40 rounded-xl p-3">
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mb-1">최고가</p>
+                      <p className="text-lg font-bold text-orange-600 dark:text-orange-400">
                         {formatPrice(lastYearMaxPrice)}
                       </p>
                     </div>
-                    <div className="bg-base-300 rounded-xl p-3">
+                    <div className="bg-base-200 rounded-xl p-3">
                       <p className="text-xs text-base-content/60 mb-1">평균가</p>
                       <p className="text-lg font-bold text-base-content/60">
                         {formatPrice(lastYearAvgPrice)}
                       </p>
                     </div>
-                    <div className="bg-cyan-50 rounded-xl p-3">
-                      <p className="text-xs text-cyan-600 mb-1">최저가</p>
-                      <p className="text-lg font-bold text-cyan-600">
+                    <div className="bg-cyan-50 dark:bg-cyan-950/40 rounded-xl p-3">
+                      <p className="text-xs text-cyan-600 dark:text-cyan-400 mb-1">최저가</p>
+                      <p className="text-lg font-bold text-cyan-600 dark:text-cyan-400">
                         {formatPrice(lastYearMinPrice)}
                       </p>
                     </div>
