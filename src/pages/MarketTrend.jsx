@@ -566,33 +566,33 @@ const MarketTrend = () => {
 
             {/* 차트 아래 고정 정보 패널 */}
             {activeData && (activeData.maxPrice || activeData.lastYearMax) && (
-              <div className="mt-3 p-3 bg-base-200 rounded-xl text-sm">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-bold text-base-content">{activeData.fullDate}</span>
+              <div className="mt-3 p-4 bg-base-200 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-lg font-bold text-base-content">{activeData.fullDate}</span>
                   {activeData.lastYearDate && (
-                    <span className="text-xs text-base-content/40">작년 {activeData.lastYearDate}</span>
+                    <span className="text-sm text-base-content/40">작년 {activeData.lastYearDate}</span>
                   )}
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
-                    <p className="text-xs text-base-content/50 mb-0.5">최고가</p>
-                    <p className="font-bold text-red-600 dark:text-red-400">{activeData.maxPrice ? formatPrice(activeData.maxPrice) : '-'}</p>
+                    <p className="text-sm text-base-content/50 mb-1">최고가</p>
+                    <p className="text-xl font-bold text-red-600 dark:text-red-400">{activeData.maxPrice ? formatPrice(activeData.maxPrice) : '-'}</p>
                     {activeData.lastYearMax && (
-                      <p className="text-xs text-base-content/40">작년 {formatPrice(activeData.lastYearMax)}</p>
+                      <p className="text-sm text-base-content/40 mt-0.5">작년 {formatPrice(activeData.lastYearMax)}</p>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs text-base-content/50 mb-0.5">평균가</p>
-                    <p className="font-bold text-base-content">{activeData.avgPrice ? formatPrice(activeData.avgPrice) : '-'}</p>
+                    <p className="text-sm text-base-content/50 mb-1">평균가</p>
+                    <p className="text-xl font-bold text-base-content">{activeData.avgPrice ? formatPrice(activeData.avgPrice) : '-'}</p>
                     {activeData.lastYearAvg && (
-                      <p className="text-xs text-base-content/40">작년 {formatPrice(activeData.lastYearAvg)}</p>
+                      <p className="text-sm text-base-content/40 mt-0.5">작년 {formatPrice(activeData.lastYearAvg)}</p>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs text-base-content/50 mb-0.5">최저가</p>
-                    <p className="font-bold text-blue-600 dark:text-blue-400">{activeData.minPrice ? formatPrice(activeData.minPrice) : '-'}</p>
+                    <p className="text-sm text-base-content/50 mb-1">최저가</p>
+                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{activeData.minPrice ? formatPrice(activeData.minPrice) : '-'}</p>
                     {activeData.lastYearMin && (
-                      <p className="text-xs text-base-content/40">작년 {formatPrice(activeData.lastYearMin)}</p>
+                      <p className="text-sm text-base-content/40 mt-0.5">작년 {formatPrice(activeData.lastYearMin)}</p>
                     )}
                   </div>
                 </div>
@@ -694,21 +694,21 @@ const MarketTrend = () => {
 
             {/* 차트 아래 물량 정보 패널 */}
             {activeData && (activeData.totalBoxes || activeData.lastYearBoxes) && (
-              <div className="mt-3 p-3 bg-base-200 rounded-xl text-sm">
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-bold text-base-content">{activeData.fullDate}</span>
+              <div className="mt-3 p-4 bg-base-200 rounded-xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-lg font-bold text-base-content">{activeData.fullDate}</span>
                   {activeData.lastYearDate && (
-                    <span className="text-xs text-base-content/40">작년 {activeData.lastYearDate}</span>
+                    <span className="text-sm text-base-content/40">작년 {activeData.lastYearDate}</span>
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div>
-                    <p className="text-xs text-base-content/50 mb-0.5">올해 물량</p>
-                    <p className="font-bold text-emerald-600">{activeData.totalBoxes?.toLocaleString() || '-'}박스</p>
+                    <p className="text-sm text-base-content/50 mb-1">올해 물량</p>
+                    <p className="text-xl font-bold text-emerald-600">{activeData.totalBoxes?.toLocaleString() || '-'}박스</p>
                   </div>
                   <div>
-                    <p className="text-xs text-base-content/50 mb-0.5">작년 물량</p>
-                    <p className="font-bold text-base-content/50">{activeData.lastYearBoxes?.toLocaleString() || '-'}박스</p>
+                    <p className="text-sm text-base-content/50 mb-1">작년 물량</p>
+                    <p className="text-xl font-bold text-base-content/50">{activeData.lastYearBoxes?.toLocaleString() || '-'}박스</p>
                   </div>
                 </div>
               </div>
