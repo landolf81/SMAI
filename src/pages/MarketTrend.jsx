@@ -326,8 +326,18 @@ const MarketTrend = () => {
   };
   const handleChartMouseLeave = () => setActiveData(null);
 
-  // 차트 내부 툴팁은 숨기고 커서만 표시
-  const EmptyTooltip = () => null;
+  // 차트 내부 툴팁은 투명하게 (터치 활성화 유지)
+  const EmptyTooltip = ({ active, payload }) => {
+    // 터치/마우스 이벤트로 activeData 업데이트
+    if (active && payload?.length) {
+      const data = payload[0]?.payload;
+      if (data && data !== activeData) {
+        // 비동기로 state 업데이트 (렌더 중 setState 방지)
+        setTimeout(() => setActiveData(data), 0);
+      }
+    }
+    return <div style={{ display: 'none' }} />;
+  };
 
   return (
     <div className="min-h-screen bg-base-200 pt-14 pb-20">
