@@ -578,21 +578,21 @@ const MarketTrend = () => {
                     <p className="text-sm text-base-content/50 mb-1">최고가</p>
                     <p className="text-xl font-bold text-red-600 dark:text-red-400">{activeData.maxPrice ? formatPrice(activeData.maxPrice) : '-'}</p>
                     {activeData.lastYearMax && (
-                      <p className="text-sm text-base-content/40 mt-0.5">작년 {formatPrice(activeData.lastYearMax)}</p>
+                      <p className="text-sm text-base-content/40 mt-0.5">{formatPrice(activeData.lastYearMax)}</p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-base-content/50 mb-1">평균가</p>
                     <p className="text-xl font-bold text-base-content">{activeData.avgPrice ? formatPrice(activeData.avgPrice) : '-'}</p>
                     {activeData.lastYearAvg && (
-                      <p className="text-sm text-base-content/40 mt-0.5">작년 {formatPrice(activeData.lastYearAvg)}</p>
+                      <p className="text-sm text-base-content/40 mt-0.5">{formatPrice(activeData.lastYearAvg)}</p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-base-content/50 mb-1">최저가</p>
                     <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{activeData.minPrice ? formatPrice(activeData.minPrice) : '-'}</p>
                     {activeData.lastYearMin && (
-                      <p className="text-sm text-base-content/40 mt-0.5">작년 {formatPrice(activeData.lastYearMin)}</p>
+                      <p className="text-sm text-base-content/40 mt-0.5">{formatPrice(activeData.lastYearMin)}</p>
                     )}
                   </div>
                 </div>
