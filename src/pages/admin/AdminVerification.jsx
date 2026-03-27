@@ -295,7 +295,7 @@ const AdminVerification = () => {
                       )}
                       {request.status === 'code_sent' && request.code_expires_at && (
                         <p className="text-xs text-blue-500 mt-1">
-                          만료: {new Date(request.code_expires_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                          만료: {new Date(request.code_expires_at).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })} {new Date(request.code_expires_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       )}
                     </td>

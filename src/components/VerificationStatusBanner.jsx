@@ -90,7 +90,7 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-orange-800">인증 코드가 만료되었습니다</h4>
                 <p className="text-xs text-orange-700 mt-1">
-                  10분이 지나 코드가 만료되었습니다. 새 인증번호를 받아주세요.
+                  유효기간(3일)이 지나 코드가 만료되었습니다. 새 인증번호를 받아주세요.
                 </p>
                 <button
                   onClick={() => setShowRequestModal(true)}

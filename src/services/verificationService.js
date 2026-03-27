@@ -298,7 +298,7 @@ export const verificationService = {
     // 6자리 숫자 코드 생성
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24시간 유효
+    expiresAt.setDate(expiresAt.getDate() + 3); // 3일 유효
 
     const { data, error } = await supabase
       .from('verification_requests')
