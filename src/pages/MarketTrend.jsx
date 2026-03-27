@@ -16,6 +16,7 @@ import { marketService } from '../services';
 import { findLastYearWeekdayDate } from '../services/marketCombinedService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DatePickerModal from '../components/DatePickerModal';
+import { useTheme } from '../context/ThemeContext';
 
 // 고정 공휴일 (MM-DD 형식)
 const FIXED_HOLIDAYS = [
@@ -69,6 +70,10 @@ const MarketTrend = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const marketName = searchParams.get('market') || '선남농협';
+  const { isDark } = useTheme();
+
+  // 평균가 라인 색상: 다크모드 흰색, 라이트모드 검정
+  const avgLineColor = isDark ? '#f5f5f5' : '#1f2937';
 
   // 상태
   const [loading, setLoading] = useState(true);
@@ -477,7 +482,7 @@ const MarketTrend = () => {
                   type="monotone"
                   dataKey="avgPrice"
                   name="올해 평균"
-                  stroke="#f5f5f5"
+                  stroke={avgLineColor}
                   strokeWidth={2.5}
                   dot={false}
                   activeDot={{ r: 5 }}
@@ -538,7 +543,7 @@ const MarketTrend = () => {
                   <span>최고</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-6 h-1 rounded" style={{ backgroundColor: '#f5f5f5' }}></div>
+                  <div className="w-6 h-1 rounded" style={{ backgroundColor: avgLineColor }}></div>
                   <span>평균</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -576,23 +581,23 @@ const MarketTrend = () => {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
                     <p className="text-sm text-base-content/50 mb-1">최고가</p>
-                    <p className="text-xl font-bold text-red-600 dark:text-red-400">{activeData.maxPrice ? formatPrice(activeData.maxPrice) : '-'}</p>
+                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">{activeData.maxPrice ? formatPrice(activeData.maxPrice) : '-'}</p>
                     {activeData.lastYearMax && (
-                      <p className="text-sm text-base-content/40 mt-0.5">{formatPrice(activeData.lastYearMax)}</p>
+                      <p className="text-base text-base-content/30 mt-0.5">{formatPrice(activeData.lastYearMax)}</p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-base-content/50 mb-1">평균가</p>
-                    <p className="text-xl font-bold text-base-content">{activeData.avgPrice ? formatPrice(activeData.avgPrice) : '-'}</p>
+                    <p className="text-2xl font-bold text-base-content">{activeData.avgPrice ? formatPrice(activeData.avgPrice) : '-'}</p>
                     {activeData.lastYearAvg && (
-                      <p className="text-sm text-base-content/40 mt-0.5">{formatPrice(activeData.lastYearAvg)}</p>
+                      <p className="text-base text-base-content/30 mt-0.5">{formatPrice(activeData.lastYearAvg)}</p>
                     )}
                   </div>
                   <div>
                     <p className="text-sm text-base-content/50 mb-1">최저가</p>
-                    <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{activeData.minPrice ? formatPrice(activeData.minPrice) : '-'}</p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{activeData.minPrice ? formatPrice(activeData.minPrice) : '-'}</p>
                     {activeData.lastYearMin && (
-                      <p className="text-sm text-base-content/40 mt-0.5">{formatPrice(activeData.lastYearMin)}</p>
+                      <p className="text-base text-base-content/30 mt-0.5">{formatPrice(activeData.lastYearMin)}</p>
                     )}
                   </div>
                 </div>
@@ -704,11 +709,11 @@ const MarketTrend = () => {
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div>
                     <p className="text-sm text-base-content/50 mb-1">올해 물량</p>
-                    <p className="text-xl font-bold text-emerald-600">{activeData.totalBoxes?.toLocaleString() || '-'}박스</p>
+                    <p className="text-2xl font-bold text-emerald-600">{activeData.totalBoxes?.toLocaleString() || '-'}박스</p>
                   </div>
                   <div>
-                    <p className="text-sm text-base-content/50 mb-1">작년 물량</p>
-                    <p className="text-xl font-bold text-base-content/50">{activeData.lastYearBoxes?.toLocaleString() || '-'}박스</p>
+                    <p className="text-sm text-base-content/30 mb-1">작년 물량</p>
+                    <p className="text-xl text-base-content/30">{activeData.lastYearBoxes?.toLocaleString() || '-'}박스</p>
                   </div>
                 </div>
               </div>
