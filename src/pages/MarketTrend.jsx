@@ -336,20 +336,24 @@ const MarketTrend = () => {
   }, [chartData]);
 
   const [activeData, setActiveData] = useState(null);
-  // chartData 변경 시 기본값으로 리셋
+  const [userTouched, setUserTouched] = useState(false);
+  // 데이터 로드 시 기본값 설정 (사용자가 아직 터치 안 한 경우만)
   useEffect(() => {
-    if (defaultActiveData) setActiveData(defaultActiveData);
-  }, [defaultActiveData]);
+    if (defaultActiveData && !userTouched) setActiveData(defaultActiveData);
+  }, [defaultActiveData, userTouched]);
+  // 기간/마켓 변경 시 터치 상태 리셋
+  useEffect(() => {
+    setUserTouched(false);
+  }, [marketName, periodDays, isCustomPeriod]);
 
-  const handleChartMouseMove = (state) => {
+  const handleChartInteraction = (state) => {
     if (state?.activePayload?.length) {
+      setUserTouched(true);
       setActiveData(state.activePayload[0].payload);
     }
   };
-  // 터치/마우스 떼도 마지막 선택 유지
-  const handleChartMouseLeave = () => {};
 
-  // 차트 내부 툴팁은 투명 (onMouseMove로 activeData 업데이트)
+  // 차트 내부 툴팁은 투명 처리
   const EmptyTooltip = () => <div style={{ display: 'none' }} />;
 
   return (
@@ -440,9 +444,9 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
-                onMouseMove={handleChartMouseMove}
-                onClick={handleChartMouseMove}
-                onMouseLeave={handleChartMouseLeave}
+                onMouseMove={handleChartInteraction}
+                onClick={handleChartInteraction}
+                onMouseLeave={() => {}}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
@@ -627,9 +631,9 @@ const MarketTrend = () => {
               <LineChart
                 data={chartData}
                 margin={{ top: 30, right: 10, left: -10, bottom: 10 }}
-                onMouseMove={handleChartMouseMove}
-                onClick={handleChartMouseMove}
-                onMouseLeave={handleChartMouseLeave}
+                onMouseMove={handleChartInteraction}
+                onClick={handleChartInteraction}
+                onMouseLeave={() => {}}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                 <XAxis
