@@ -13,6 +13,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { marketService } from '../services';
+import { findLastYearWeekdayDate } from '../services/marketCombinedService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DatePickerModal from '../components/DatePickerModal';
 
@@ -104,15 +105,11 @@ const MarketTrend = () => {
     return { startDate: formatDate(start), endDate: formatDate(end) };
   };
 
-  // 작년 동일 기간 계산
+  // 작년 동일 요일 기간 계산 (시작/종료 모두 같은 요일로 매칭)
   const getLastYearRange = (startDate, endDate) => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    start.setFullYear(start.getFullYear() - 1);
-    end.setFullYear(end.getFullYear() - 1);
-
-    const formatDate = (d) => d.toISOString().split('T')[0];
-    return { startDate: formatDate(start), endDate: formatDate(end) };
+    const lyStart = findLastYearWeekdayDate(startDate).targetDate;
+    const lyEnd = findLastYearWeekdayDate(endDate).targetDate;
+    return { startDate: lyStart, endDate: lyEnd };
   };
 
   // 성주군 합계 / 도매시장 합계 여부 확인
@@ -188,62 +185,80 @@ const MarketTrend = () => {
     return getDateRange(periodDays);
   }, [periodDays, isCustomPeriod, customStartDate, customEndDate]);
 
-  // 차트 데이터 생성 (기간 내 모든 날짜를 X축에 표시)
+  // 차트 데이터 생성 — 전년 동일 요일 순서 매칭
   const chartData = useMemo(() => {
     const { startDate, endDate } = dateRange;
 
-    // 올해 데이터를 날짜별 맵으로
+    // 올해 데이터를 날짜(YYYY-MM-DD) 맵으로
     const currentYearMap = new Map();
     trendData.forEach((item) => {
-      const dayMonth = `${new Date(item.market_date).getMonth() + 1}/${new Date(item.market_date).getDate()}`;
-      currentYearMap.set(dayMonth, item);
+      currentYearMap.set(item.market_date, item);
     });
 
-    // 작년 데이터를 날짜별 맵으로
-    const lastYearMap = new Map();
-    lastYearData.forEach((item) => {
-      const dayMonth = `${new Date(item.market_date).getMonth() + 1}/${new Date(item.market_date).getDate()}`;
-      lastYearMap.set(dayMonth, item);
+    // 작년 데이터를 날짜별로 정렬
+    const sortedLastYear = [...lastYearData].sort((a, b) => a.market_date.localeCompare(b.market_date));
+
+    // 작년 데이터를 요일별로 그룹화 (순서 인덱스 매칭용)
+    const lyByWeekday = {};
+    sortedLastYear.forEach((item) => {
+      const day = new Date(item.market_date + 'T00:00:00').getDay();
+      if (!lyByWeekday[day]) lyByWeekday[day] = [];
+      lyByWeekday[day].push(item);
     });
 
     // 기간 내 모든 날짜 생성
-    const result = [];
-    const currentDate = new Date(startDate);
-    const endDateObj = new Date(endDate);
+    const allDates = [];
+    const cur = new Date(startDate + 'T00:00:00');
+    const endDt = new Date(endDate + 'T00:00:00');
+    while (cur <= endDt) {
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, '0');
+      const d = String(cur.getDate()).padStart(2, '0');
+      allDates.push(`${y}-${m}-${d}`);
+      cur.setDate(cur.getDate() + 1);
+    }
 
-    while (currentDate <= endDateObj) {
-      const dayMonth = `${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
-      const fullDateStr = currentDate.toISOString().split('T')[0];
+    // 올해 날짜들의 요일별 순서 카운터
+    const weekdayCounter = {};
+
+    const result = allDates.map((fullDateStr) => {
+      const dt = new Date(fullDateStr + 'T00:00:00');
+      const dayMonth = `${dt.getMonth() + 1}/${dt.getDate()}`;
       const isTodayDate = fullDateStr === today;
-      const dayOfWeek = currentDate.getDay(); // 0: 일요일, 6: 토요일
+      const dayOfWeek = dt.getDay();
 
-      const currentItem = currentYearMap.get(dayMonth);
-      const lastYearItem = lastYearMap.get(dayMonth);
+      // 요일별 순서 인덱스 (0, 1, 2, ...)
+      if (weekdayCounter[dayOfWeek] === undefined) weekdayCounter[dayOfWeek] = 0;
+      const weekdayIdx = weekdayCounter[dayOfWeek]++;
 
-      result.push({
+      const currentItem = currentYearMap.get(fullDateStr);
+      // 작년: 같은 요일의 n번째 데이터로 매칭
+      const lyGroup = lyByWeekday[dayOfWeek] || [];
+      const lastYearItem = lyGroup[weekdayIdx] || null;
+
+      return {
         date: dayMonth,
         fullDate: fullDateStr,
         isToday: isTodayDate,
         isFuture: fullDateStr > today,
-        dayOfWeek, // 요일 정보 추가
-        // 올해 가격 데이터 (0이면 null 처리 → connectNulls로 자연스럽게 이어짐)
+        dayOfWeek,
+        lastYearDate: lastYearItem?.market_date || null,
+        // 올해 가격 데이터
         maxPrice: currentItem ? (parseInt(currentItem.max_price) || null) : null,
         avgPrice: currentItem ? (parseInt(currentItem.avg_price) || null) : null,
         minPrice: currentItem ? (parseInt(currentItem.min_price) || null) : null,
         // 올해 물량 데이터
         totalBoxes: currentItem ? (parseInt(currentItem.total_boxes) || null) : null,
         totalAmount: currentItem ? (parseInt(currentItem.total_amount) || null) : null,
-        // 작년 가격 데이터
+        // 작년 가격 데이터 (동일 요일 매칭)
         lastYearMax: lastYearItem ? (parseInt(lastYearItem.max_price) || null) : null,
         lastYearAvg: lastYearItem ? (parseInt(lastYearItem.avg_price) || null) : null,
         lastYearMin: lastYearItem ? (parseInt(lastYearItem.min_price) || null) : null,
         // 작년 물량 데이터
         lastYearBoxes: lastYearItem ? (parseInt(lastYearItem.total_boxes) || null) : null,
         lastYearAmount: lastYearItem ? (parseInt(lastYearItem.total_amount) || null) : null,
-      });
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+      };
+    });
 
     return result;
   }, [trendData, lastYearData, today, dateRange]);
@@ -334,6 +349,11 @@ const MarketTrend = () => {
               </span>
             )}
           </p>
+          {data?.lastYearDate && (
+            <p className="text-base-content/30 text-xs mt-1">
+              작년 매칭: {data.lastYearDate} (동일요일)
+            </p>
+          )}
         </div>
       </div>
     );

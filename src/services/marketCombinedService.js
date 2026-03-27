@@ -25,7 +25,7 @@ const getNextDate = (dateStr) => {
 };
 
 // 요일 매칭: 작년 동일 날짜 근처에서 같은 요일 찾기
-const findLastYearWeekdayDate = (dateStr) => {
+export const findLastYearWeekdayDate = (dateStr) => {
   const [y, m, d] = dateStr.split('-').map(Number);
   const thisDate = new Date(y, m - 1, d);
   const lyBase = new Date(y - 1, m - 1, d);
