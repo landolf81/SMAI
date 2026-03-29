@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faPause, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faPause, faVolumeUp, faVolumeMute, faExpand } from "@fortawesome/free-solid-svg-icons";
 import { isVideoFile, getMediaIcon, normalizeMediaUrl } from '../utils/mediaUtils';
 
 const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "auto", onMediaClick, videoRef: externalVideoRef, disableAutoplay = false, priority = false }) => {
@@ -116,8 +116,9 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
         return <div className={`${containerClass} bg-base-300 flex items-center justify-center text-base-content/50`}>미디어가 없습니다.</div>;
     }
 
-    // 단일 미디어용 비디오 ref
+    // 단일 미디어용 비디오 ref & 재생 상태
     const singleVideoRef = useRef(null);
+    const [singleVideoPlaying, setSingleVideoPlaying] = useState(false);
 
     if (normalizedImages.length === 1) {
         const isVideo = isVideoFile(normalizedImages[0]);
@@ -125,7 +126,6 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
         if (isVideo) {
             return (
                 <div className={`${containerClass} relative`}>
-                    {/* 피드 동영상: 자동재생(커뮤니티만), 무음, 루프, 클릭시 모달 */}
                     <video
                         ref={singleVideoRef}
                         key={normalizedImages[0]}
@@ -135,22 +135,38 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         muted
                         playsInline
                         autoPlay={!disableAutoplay}
-                        controls={disableAutoplay}
-                        onLoadedData={(e) => {
-                            // iOS에서 볼륨 0으로 설정 (벨소리가 아닌 미디어 볼륨 사용)
-                            e.target.volume = 0;
-                        }}
-                        onClick={() => {
+                        onLoadedData={(e) => { e.target.volume = 0; }}
+                        onPlay={() => setSingleVideoPlaying(true)}
+                        onPause={() => setSingleVideoPlaying(false)}
+                        onClick={disableAutoplay ? () => {
+                            const v = singleVideoRef.current;
+                            if (!v) return;
+                            if (v.paused) { v.play(); } else { v.pause(); }
+                        } : () => {
                             const currentTime = singleVideoRef.current?.currentTime || 0;
                             onMediaClick && onMediaClick(0, currentTime);
                         }}
                     />
-                    {/* 동영상 아이콘 표시 (자동재생 비활성화 시에만) */}
-                    {disableAutoplay && (
-                        <div className="absolute top-3 left-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                            <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
-                            <span>동영상</span>
+                    {/* 재생 오버레이 (자동재생 비활성화 + 일시정지 상태) */}
+                    {disableAutoplay && !singleVideoPlaying && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-black bg-opacity-50 rounded-full w-16 h-16 flex items-center justify-center">
+                                <FontAwesomeIcon icon={faPlay} className="w-6 h-6 text-white ml-1" />
+                            </div>
                         </div>
+                    )}
+                    {/* 전체화면 버튼 (자동재생 비활성화 시) */}
+                    {disableAutoplay && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                const currentTime = singleVideoRef.current?.currentTime || 0;
+                                onMediaClick && onMediaClick(0, currentTime);
+                            }}
+                            className="absolute top-3 right-3 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all z-10"
+                        >
+                            <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
+                        </button>
                     )}
                 </div>
             );
@@ -283,7 +299,6 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                 onTouchEnd={handleTouchEnd}
             >
                 {isVideoFile(normalizedImages[currentIndex]) ? (
-                    // 피드 동영상: 자동재생(커뮤니티만), 무음, 루프, 클릭시 모달
                     <>
                         <video
                             ref={(el) => { videoRefs.current[currentIndex] = el; }}
@@ -294,22 +309,38 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                             muted
                             playsInline
                             autoPlay={!disableAutoplay}
-                            controls={disableAutoplay}
-                            onLoadedData={(e) => {
-                                // iOS에서 볼륨 0으로 설정 (벨소리가 아닌 미디어 볼륨 사용)
-                                e.target.volume = 0;
-                            }}
-                            onClick={() => {
+                            onLoadedData={(e) => { e.target.volume = 0; }}
+                            onPlay={() => setVideoStates(prev => ({ ...prev, [currentIndex]: { ...prev[currentIndex], isPlaying: true } }))}
+                            onPause={() => setVideoStates(prev => ({ ...prev, [currentIndex]: { ...prev[currentIndex], isPlaying: false } }))}
+                            onClick={disableAutoplay ? () => {
+                                const v = videoRefs.current[currentIndex];
+                                if (!v) return;
+                                if (v.paused) { v.play(); } else { v.pause(); }
+                            } : () => {
                                 const currentTime = videoRefs.current[currentIndex]?.currentTime || 0;
                                 onMediaClick && onMediaClick(currentIndex, currentTime);
                             }}
                         />
-                        {/* 동영상 아이콘 표시 (자동재생 비활성화 시에만) */}
-                        {disableAutoplay && (
-                            <div className="absolute top-3 left-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                                <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
-                                <span>동영상</span>
+                        {/* 재생 오버레이 */}
+                        {disableAutoplay && !videoStates[currentIndex]?.isPlaying && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div className="bg-black bg-opacity-50 rounded-full w-16 h-16 flex items-center justify-center">
+                                    <FontAwesomeIcon icon={faPlay} className="w-6 h-6 text-white ml-1" />
+                                </div>
                             </div>
+                        )}
+                        {/* 전체화면 버튼 */}
+                        {disableAutoplay && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    const currentTime = videoRefs.current[currentIndex]?.currentTime || 0;
+                                    onMediaClick && onMediaClick(currentIndex, currentTime);
+                                }}
+                                className="absolute top-3 right-3 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all z-10"
+                            >
+                                <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
+                            </button>
                         )}
                     </>
                 ) : (

@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faVolumeUp, faVolumeMute } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faVolumeUp, faVolumeMute, faExpand } from "@fortawesome/free-solid-svg-icons";
 import { getCloudflareStreamUid } from '../utils/mediaUtils';
 import LoadingSpinner from './LoadingSpinner';
 import Hls from 'hls.js';
@@ -31,12 +31,16 @@ const CloudflareStreamPlayer = ({
   onReady,
   onError,
   onEnded, // 동영상 종료 콜백
+  onFullscreen, // 전체화면 버튼 콜백
 }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   // autoplay가 true면 즉시 플레이어 표시, 한번 true가 되면 계속 유지
   const [showPlayer, setShowPlayer] = useState(autoplay);
   const [isMuted, setIsMuted] = useState(initialMuted);
+  // 사용자가 썸네일 클릭으로 재생 요청했는지 (ref로 관리 — effect 타이밍 충돌 방지)
+  const userClickedPlayRef = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   // HLS 로딩 완료 여부 (재생 제어용)
   const [isHlsReady, setIsHlsReady] = useState(false);
   const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
@@ -89,35 +93,31 @@ const CloudflareStreamPlayer = ({
     // paused가 true면 재생하지 않음
     if (paused) return;
 
+    // 사용자가 썸네일 클릭으로 재생 요청 → 이 effect에서 개입하지 않음
+    if (userClickedPlayRef.current) return;
+
     if (autoplay) {
-      // 화면에 들어오면 재생
-      // initialMuted가 false면 소리 재생 허용 (광고 모달 등)
       if (!initialMuted) {
-        // 소리 재생 시도 (사용자 인터랙션 후이므로 가능)
         videoRef.current.muted = false;
         setIsMuted(false);
       } else {
-        // 피드에서는 음소거 상태로 재생
         videoRef.current.muted = true;
         setIsMuted(true);
       }
       videoRef.current.play().catch(() => {
-        // 자동재생 실패 시 음소거로 재시도
         videoRef.current.muted = true;
         setIsMuted(true);
         videoRef.current.play().catch(() => {});
       });
     } else {
-      // 화면 밖으로 나가면 정지 + 음소거
+      // autoplay=false: 정지 + 음소거
       videoRef.current.pause();
       videoRef.current.muted = true;
-      // loop 모드가 아닐 때만 재생 위치 리셋 (광고는 loop 모드라 스크롤 중에도 위치 유지)
       if (!loop) {
         videoRef.current.currentTime = 0;
       }
       setIsMuted(true);
 
-      // replay 타이머 클리어
       if (replayTimeoutRef.current) {
         clearTimeout(replayTimeoutRef.current);
         replayTimeoutRef.current = null;
@@ -156,6 +156,21 @@ const CloudflareStreamPlayer = ({
       setIsLoading(false);
       setIsHlsReady(true);
       if (onReady) onReady();
+
+      // 사용자가 썸네일 클릭으로 재생 요청했으면 즉시 소리와 함께 재생
+      if (userClickedPlayRef.current && video) {
+        video.muted = false;
+        setIsMuted(false);
+        video.play().then(() => {
+          setIsPlaying(true);
+        }).catch(() => {
+          // 소리 재생 실패 시 음소거로 재시도
+          video.muted = true;
+          setIsMuted(true);
+          video.play().then(() => setIsPlaying(true)).catch(() => {});
+        });
+        // ref는 true로 유지 — autoplay effect가 개입하지 않도록
+      }
     };
 
     // Safari는 네이티브 HLS 지원 (iOS에서 HLS.js가 작동하지 않음)
@@ -330,6 +345,7 @@ const CloudflareStreamPlayer = ({
 
   const handleThumbnailClick = (e) => {
     e.stopPropagation();
+    userClickedPlayRef.current = true;
     setShowPlayer(true);
     if (onClick) onClick(e);
   };
@@ -416,12 +432,24 @@ const CloudflareStreamPlayer = ({
         muted={isMuted}
         loop={loop}
         playsInline
-        controls={controls}
         onEnded={loop ? undefined : handleVideoEnded}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
       />
 
-      {/* 클릭 영역 - onClick이 있으면 항상 클릭 가능 */}
-      {onClick && !controls && (
+      {/* 클릭 영역: onFullscreen이 있으면 터치로 재생/일시정지, onClick이 있으면 기존 동작 */}
+      {onFullscreen && !controls && (
+        <div
+          className="absolute inset-0 z-10 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            const v = videoRef.current;
+            if (!v) return;
+            if (v.paused) { v.play(); } else { v.pause(); }
+          }}
+        />
+      )}
+      {onClick && !onFullscreen && !controls && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
           onClick={(e) => {
@@ -430,16 +458,38 @@ const CloudflareStreamPlayer = ({
           }}
         />
       )}
-      {/* hideOverlay만 있고 onClick이 없고 disableClickToggle이 false면 음소거 토글 */}
-      {hideOverlay && !onClick && !controls && !disableClickToggle && (
+      {/* hideOverlay만 있고 onClick/onFullscreen이 없고 disableClickToggle이 false면 음소거 토글 */}
+      {hideOverlay && !onClick && !onFullscreen && !controls && !disableClickToggle && (
         <div
           className="absolute inset-0 z-10 cursor-pointer"
           onClick={handleMuteToggle}
         />
       )}
 
-      {/* 동영상 아이콘 - hideOverlay일 때 숨김 */}
-      {!hideOverlay && (
+      {/* 재생/일시정지 오버레이 (onFullscreen 모드에서 일시정지 상태일 때) */}
+      {onFullscreen && !isPlaying && !isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div className="bg-black bg-opacity-50 rounded-full w-16 h-16 flex items-center justify-center">
+            <FontAwesomeIcon icon={faPlay} className="w-6 h-6 text-white ml-1" />
+          </div>
+        </div>
+      )}
+
+      {/* 전체화면 버튼 (onFullscreen 모드) */}
+      {onFullscreen && !hideOverlay && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onFullscreen(e);
+          }}
+          className="absolute top-3 right-3 z-20 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all"
+        >
+          <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
+        </button>
+      )}
+
+      {/* 동영상 아이콘 - hideOverlay일 때 숨김, onFullscreen 모드에서도 숨김 */}
+      {!hideOverlay && !onFullscreen && (
         <div className="absolute top-3 left-3 z-10 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1 pointer-events-none">
           <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
           <span>동영상</span>

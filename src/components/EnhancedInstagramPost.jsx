@@ -11,7 +11,8 @@ import {
   faVolumeUp,
   faVolumeMute,
   faBookmark,
-  faFlag
+  faFlag,
+  faExpand
 } from "@fortawesome/free-solid-svg-icons";
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import PushPinIcon from '@mui/icons-material/PushPin';
@@ -1167,16 +1168,19 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   autoplay={!disableAutoplay && isVisible}
                   muted={true}
                   loop={true}
-                  controls={disableAutoplay} // 자동재생 비활성화 시 컨트롤 표시
                   showMuteToggle={!disableAutoplay}
-                  paused={showMediaModal} // 모달 열리면 피드 동영상 일시정지
+                  paused={showMediaModal}
                   aspectRatio="4-5"
                   className="w-full h-full"
-                  priority={priority} // LCP 최적화: 첫 번째 게시물 썸네일 우선 로드
-                  onClick={() => {
+                  priority={priority}
+                  onClick={disableAutoplay ? undefined : () => {
                     setMediaModalIndex(0);
                     setShowMediaModal(true);
                   }}
+                  onFullscreen={disableAutoplay ? () => {
+                    setMediaModalIndex(0);
+                    setShowMediaModal(true);
+                  } : undefined}
                 />
               ) : (isVideo || isR2Video) ? (
                 mediaLoadError ? (
@@ -1187,33 +1191,61 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                   </div>
                 ) : (
                   <>
-                    {/* 피드 동영상: 자동재생(커뮤니티만), 무음, 재생 완료 후 1초 대기 후 재시작, 클릭시 모달 */}
+                    {/* 피드 동영상 */}
                     <video
                       ref={videoRef}
                       src={normalizedMediaFiles[0]}
                       className="w-full h-full object-cover cursor-pointer"
-                      onClick={() => {
-                        // 현재 재생 위치 저장 후 모달 열기
+                      onClick={disableAutoplay ? () => {
+                        // 터치로 재생/일시정지 토글
+                        const v = videoRef.current;
+                        if (!v) return;
+                        if (v.paused) {
+                          v.play();
+                          setIsPlaying(true);
+                        } else {
+                          v.pause();
+                          setIsPlaying(false);
+                        }
+                      } : () => {
                         const currentTime = videoRef.current?.currentTime || 0;
                         setMediaModalTime(currentTime);
                         setMediaModalIndex(0);
                         setShowMediaModal(true);
                       }}
                       autoPlay={!disableAutoplay}
-                      controls={disableAutoplay} // 프로필에서는 컨트롤 표시
                       muted
                       playsInline
                       preload="auto"
                       onError={handleVideoError}
                       onEnded={handleVideoEnded}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
                     />
 
-                    {/* 동영상 아이콘 표시 (자동재생 비활성화 시에만) */}
-                    {disableAutoplay && (
-                      <div className="absolute top-3 left-3 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                        <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
-                        <span>동영상</span>
+                    {/* 재생/일시정지 오버레이 (자동재생 비활성화 시) */}
+                    {disableAutoplay && !isPlaying && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-black bg-opacity-50 rounded-full w-16 h-16 flex items-center justify-center">
+                          <FontAwesomeIcon icon={faPlay} className="w-6 h-6 text-white ml-1" />
+                        </div>
                       </div>
+                    )}
+
+                    {/* 전체화면 버튼 (자동재생 비활성화 시) */}
+                    {disableAutoplay && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const currentTime = videoRef.current?.currentTime || 0;
+                          setMediaModalTime(currentTime);
+                          setMediaModalIndex(0);
+                          setShowMediaModal(true);
+                        }}
+                        className="absolute top-3 right-3 bg-black bg-opacity-60 text-white p-2 rounded-full hover:bg-opacity-80 transition-all z-10"
+                      >
+                        <FontAwesomeIcon icon={faExpand} className="w-4 h-4" />
+                      </button>
                     )}
 
                     {/* 음소거 토글 버튼 (자동재생 활성화 시에만) */}
