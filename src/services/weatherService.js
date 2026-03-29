@@ -709,6 +709,15 @@ const fetchWeatherFromApi = async (location) => {
   };
 };
 
+// 캐시 데이터가 유효한지 (핵심 날씨 정보가 있는지) 검사
+const isCacheUsable = (data) => {
+  if (!data) return false;
+  // shortTerm 또는 current가 있어야 위젯에 온도 표시 가능
+  const hasShortTerm = data.shortTerm && data.shortTerm.length > 0;
+  const hasCurrent = data.current && data.current.temp != null;
+  return hasShortTerm || hasCurrent;
+};
+
 // 통합 날씨 데이터 가져오기 (캐시 우선, 만료되어도 즉시 반환)
 const getWeatherData = async () => {
   const locationKey = 'default';
@@ -716,16 +725,18 @@ const getWeatherData = async () => {
   // 1. 캐시에서 먼저 조회
   const { data: cachedData, isExpired } = await getCachedWeather(locationKey);
 
-  // 2. 캐시가 있으면 즉시 반환 (만료 여부 무관)
-  if (cachedData) {
+  // 2. 캐시가 있고 핵심 데이터가 존재하면 즉시 반환
+  if (cachedData && isCacheUsable(cachedData)) {
     console.log('캐시된 날씨 데이터 사용', isExpired ? '(만료됨, 백그라운드 갱신)' : '(유효)');
 
     // 만료된 경우 백그라운드에서 갱신 (사용자는 기다리지 않음)
     if (isExpired) {
       fetchWeatherFromApi(DEFAULT_LOCATION)
         .then(freshData => {
-          setCachedWeather(locationKey, freshData);
-          console.log('백그라운드 날씨 캐시 갱신 완료');
+          if (isCacheUsable(freshData)) {
+            setCachedWeather(locationKey, freshData);
+            console.log('백그라운드 날씨 캐시 갱신 완료');
+          }
         })
         .catch(err => console.warn('백그라운드 날씨 갱신 실패:', err));
     }
@@ -733,12 +744,20 @@ const getWeatherData = async () => {
     return cachedData;
   }
 
-  // 3. 캐시가 전혀 없는 경우에만 API 호출 후 대기
-  console.log('기상청 API에서 날씨 데이터 가져오는 중...');
+  // 3. 캐시가 없거나 빈 데이터인 경우 API 호출
+  if (cachedData && !isCacheUsable(cachedData)) {
+    console.warn('캐시된 날씨 데이터가 비어있음 (shortTerm/current 없음), API 재호출');
+  } else {
+    console.log('기상청 API에서 날씨 데이터 가져오는 중...');
+  }
   const weatherData = await fetchWeatherFromApi(DEFAULT_LOCATION);
 
-  // 4. 결과를 캐시에 저장
-  setCachedWeather(locationKey, weatherData);
+  // 4. 핵심 데이터가 있을 때만 캐시 저장
+  if (isCacheUsable(weatherData)) {
+    setCachedWeather(locationKey, weatherData);
+  } else {
+    console.warn('기상청 API 응답에 핵심 날씨 데이터 없음 — 캐시 저장 건너뜀');
+  }
 
   return weatherData;
 };
