@@ -249,14 +249,14 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 bg-white rounded-full animate-pulse" />
             <span className="text-white font-bold text-lg">산지 + 도매(익일)</span>
-            <span className="text-white/60 text-sm">({dayName})</span>
+            <span className="text-yellow-300 font-bold text-base">({dayName})</span>
           </div>
         </div>
 
         {/* 본문 */}
         <div className="px-4 py-4">
           {/* 날짜 안내 — 항상 전일 기준 */}
-          <div className="text-sm text-base-content/50 mb-2">
+          <div className="text-base font-semibold text-warning mb-2">
             산지 {formatShortDate(baseDate)}({DAY_NAMES[getDayOfWeek(baseDate)]}) + 도매 {formatShortDate(wholesaleDate)}({DAY_NAMES[getDayOfWeek(wholesaleDate)]})
           </div>
 
