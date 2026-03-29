@@ -61,7 +61,7 @@ const uploadWithXHR = (url, formData, onProgress) => {
         }
       } else {
         if (xhr.status === 413) {
-          reject(new Error('파일 용량이 너무 큽니다. 이미지는 10MB, GIF는 50MB 이하만 업로드할 수 있습니다.'));
+          reject(new Error('파일 용량이 너무 큽니다. 10MB 이하만 업로드할 수 있습니다.'));
         } else {
           reject(new Error(`업로드 실패: ${xhr.status}`));
         }
