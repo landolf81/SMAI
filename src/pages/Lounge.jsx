@@ -25,6 +25,7 @@ import PollBadge from '../components/lounge/PollBadge';
 import PollCard from '../components/lounge/PollCard';
 import LoungeAdMessage from '../components/lounge/LoungeAdMessage';
 import { useScrollDirection } from '../hooks/useScrollDirection';
+import { estimateLoungeMessageHeight, getDateSeparatorHeight } from '../lib/textMeasure';
 import LoungeComposeModal from '../components/lounge/LoungeComposeModal';
 import LoungeImageScroll from '../components/lounge/LoungeImageScroll';
 import ProfileModal from '../components/ProfileModal';
@@ -525,10 +526,21 @@ const Lounge = () => {
   }, []);
 
   // ── Realtime 구독 (새 메시지 → 상단에 삽입) ──
+  // Pretext 기반 스크롤 보정: DOM reflow 없이 새 메시지 높이를 사전 계산
   useEffect(() => {
     subscriptionRef.current = loungeService.subscribeToNewMessages((newMsg) => {
       const el = scrollAreaRef.current;
-      const prevScrollHeight = el?.scrollHeight || 0;
+
+      // Pretext로 새 메시지 높이 사전 계산 (DOM 측정 없음)
+      const containerWidth = el?.clientWidth || window.innerWidth;
+      let estimatedHeight = estimateLoungeMessageHeight(newMsg, containerWidth);
+
+      // 날짜 구분선 추가 여부 체크
+      const newDateKey = getDateKey(newMsg.created_at);
+      const firstExisting = messages[0];
+      if (!firstExisting || getDateKey(firstExisting.created_at) !== newDateKey) {
+        estimatedHeight += getDateSeparatorHeight();
+      }
 
       setMessages((prev) => {
         if (prev.some((m) => m.id === newMsg.id)) return prev;
@@ -539,16 +551,16 @@ const Lounge = () => {
       if (isAtTopRef.current) {
         requestAnimationFrame(() => scrollToTop());
       } else {
-        // 스크롤 위치 보정 (상단에 콘텐츠 추가되면 뷰포트가 밀리므로)
+        // Pretext 예측 높이로 스크롤 보정 (reflow 0회)
         requestAnimationFrame(() => {
-          if (el) el.scrollTop += el.scrollHeight - prevScrollHeight;
+          if (el) el.scrollTop += estimatedHeight;
         });
         setShowScrollUp(true);
       }
     });
 
     return () => subscriptionRef.current?.unsubscribe();
-  }, [scrollToTop]);
+  }, [scrollToTop, messages]);
 
   // ── 투표 Realtime 구독 (투표 변경 시 메시지 내 poll 데이터 갱신) ──
   useEffect(() => {
