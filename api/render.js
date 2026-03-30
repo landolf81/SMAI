@@ -225,7 +225,7 @@ export default async function handler(req) {
   // 일반 사용자: 정적 index.html 반환
   const origin = url.origin;
   try {
-    const indexResponse = await fetch(`${origin}/index.html`, {
+    const indexResponse = await fetch(`${origin}/_app.html`, {
       headers: { 'x-bypass-render': 'true' },
     });
 
@@ -239,6 +239,6 @@ export default async function handler(req) {
     });
   } catch (e) {
     // fallback: 리다이렉트
-    return Response.redirect(`${origin}/index.html`, 302);
+    return Response.redirect(`${origin}/_app.html`, 302);
   }
 }

@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run build && mv dist/index.html dist/_app.html",
   "outputDirectory": "dist",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/render" }
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "source": "/index.html",
+      "source": "/_app.html",
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
