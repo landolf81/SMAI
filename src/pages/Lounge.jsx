@@ -384,11 +384,23 @@ const Lounge = () => {
   const pollVoteSubRef = useRef(null);
 
   // 로드된 메시지의 닉네임 목록 (멘션 하이라이트용)
+  // 작성자 닉네임 + 메시지 내용에서 @멘션된 이름도 포함
   const knownNames = useMemo(() => {
     const names = new Set();
     for (const m of messages) {
       const name = m.users?.name;
       if (name) names.add(name);
+      // 메시지 내용에서 @멘션 추출 (최대 3단어 조합)
+      if (m.content) {
+        const matches = m.content.matchAll(/@(\S+(?:\s+\S+){0,2})/g);
+        for (const match of matches) {
+          // @뒤 1~3단어 조합을 모두 후보로 등록
+          const words = match[1].split(/\s+/).filter(Boolean);
+          for (let len = words.length; len >= 1; len--) {
+            names.add(words.slice(0, len).join(' '));
+          }
+        }
+      }
     }
     return [...names];
   }, [messages]);
@@ -678,7 +690,7 @@ const Lounge = () => {
 
   // ── 투표 핸들러 ──
   const handleVote = useCallback(async (pollId, optionId) => {
-    if (votingPollId || !currentUser) return;
+    if (votingPollId) return;
     setVotingPollId(pollId);
 
     // 해당 poll의 is_multiple 확인
@@ -712,7 +724,7 @@ const Lounge = () => {
     } finally {
       setVotingPollId(null);
     }
-  }, [votingPollId, currentUser, messages]);
+  }, [votingPollId, messages]);
 
   // ── 투표 마감 핸들러 ──
   const handleClosePoll = useCallback(async (pollId) => {

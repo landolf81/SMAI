@@ -23,7 +23,7 @@
 
   <!-- 시세 정보 -->
   <url>
-    <loc>https://seonnam.com/market</loc>
+    <loc>https://seonnam.com/market-landing</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

@@ -485,21 +485,21 @@ const Prices = () => {
       <div className="w-full max-w-screen-xl mx-auto p-4">
         {!marketData || !marketData.details || marketData.details.length === 0 ? (
           <div className="text-center py-12">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/50 rounded-lg p-6 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
                 경락가 데이터가 없습니다
               </h3>
-              <p className="text-yellow-600 text-base mb-4">
+              <p className="text-yellow-600 dark:text-yellow-400/80 text-base mb-4">
                 {formatDate(selectedDate)}에 <strong>{marketName}</strong>의 거래 데이터가 없습니다.
               </p>
               <div className="space-y-2 mb-4">
-                <p className="text-yellow-600 text-sm">
+                <p className="text-yellow-600 dark:text-yellow-400/70 text-sm">
                   • 주말이나 휴일에는 경매가 진행되지 않습니다
                 </p>
-                <p className="text-yellow-600 text-sm">
+                <p className="text-yellow-600 dark:text-yellow-400/70 text-sm">
                   • 평일 오전 6시~오후 2시에 거래가 진행됩니다
                 </p>
-                <p className="text-yellow-600 text-sm">
+                <p className="text-yellow-600 dark:text-yellow-400/70 text-sm">
                   • 계절에 따라 거래 품목이 달라질 수 있습니다
                 </p>
               </div>
@@ -513,7 +513,7 @@ const Prices = () => {
                       newParams.set('date', newDate);
                       setSearchParams(newParams, { replace: true });
                     }}
-                    className="btn btn-sm btn-outline border-[#004225] text-[#004225] hover:bg-[#004225] hover:text-white"
+                    className="btn btn-sm btn-outline border-[#004225] text-[#004225] hover:bg-[#004225] hover:text-white dark:border-emerald-500 dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
                   >
                     오늘 데이터 보기
                   </button>
@@ -527,14 +527,14 @@ const Prices = () => {
                       newParams.set('date', newDate);
                       setSearchParams(newParams, { replace: true });
                     }}
-                    className="btn btn-sm bg-[#004225] text-white hover:bg-[#003018] border-none"
+                    className="btn btn-sm bg-[#004225] text-white hover:bg-[#003018] border-none dark:bg-emerald-600 dark:hover:bg-emerald-700"
                   >
                     어제 데이터 보기
                   </button>
                 </div>
                 <Link
                   to="/"
-                  className="btn bg-[#004225] text-white hover:bg-[#003018] border-none"
+                  className="btn bg-[#004225] text-white hover:bg-[#003018] border-none dark:bg-emerald-600 dark:hover:bg-emerald-700"
                 >
                   홈으로 돌아가기
                 </Link>

@@ -61,7 +61,7 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
 
   // 투표 핸들러
   const handleVote = useCallback((optionId) => {
-    if (isClosed || isVoting || !currentUserId) return;
+    if (isClosed || isVoting) return;
     setSelectedForVote(optionId);
     onVote?.(poll.id, optionId);
   }, [isClosed, isVoting, currentUserId, onVote, poll?.id]);

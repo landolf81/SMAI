@@ -1,4 +1,11 @@
-import React, { useState, useContext } from 'react';
+/**
+ * AdminReports.jsx
+ * 관리자 신고 관리 페이지.
+ * 사용자 신고 목록 조회, 상태 필터링, 신고 처리(숨김/삭제/경고/정지/영구정지),
+ * 허위 신고 처리, 신고자 신고 권한 토글 기능을 제공한다.
+ * DaisyUI market-dark 테마 기반 MUI 다크모드 sx 스타일 지원.
+ */
+import { useState, useContext } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reportService, postService, commentService, userService } from '../services';
 import { AuthContext } from '../context/AuthContext';
@@ -38,12 +45,81 @@ import {
   Report as ReportIcon,
   Visibility as ViewIcon,
   Check as CheckIcon,
-  Close as CloseIcon,
-  Warning as WarningIcon,
-  OpenInNew as OpenInNewIcon,
   Article as ArticleIcon
 } from '@mui/icons-material';
 import { SUPABASE_URL } from '../config/supabase';
+
+// ─── 다크모드 공통 sx 스타일 객체 (DaisyUI market-dark 테마 기반) ───────────
+const darkPaper = {
+  '.dark &': {
+    bgcolor: '#1d232a',
+    color: '#a6adba',
+    borderColor: '#2a323c',
+  },
+};
+
+const darkCard = {
+  '.dark &': {
+    bgcolor: '#191e24',
+    color: '#a6adba',
+    borderColor: '#2a323c',
+  },
+};
+
+const darkText = {
+  '.dark &': { color: '#a6adba' },
+};
+
+const darkTextSecondary = {
+  '.dark &': { color: '#6b7280' },
+};
+
+const darkDialog = {
+  '.dark &': {
+    bgcolor: '#1d232a',
+    color: '#a6adba',
+  },
+};
+
+const darkTableHead = {
+  '.dark &': {
+    bgcolor: '#15191e',
+    color: '#e5e7eb',
+  },
+};
+
+const darkTableRow = {
+  '.dark &': {
+    borderColor: '#2a323c',
+    '&:hover': { bgcolor: '#232a31' },
+  },
+};
+
+const darkTableCell = {
+  '.dark &': {
+    color: '#a6adba',
+    borderColor: '#2a323c',
+  },
+};
+
+const darkInput = {
+  '.dark &': {
+    bgcolor: '#15191e',
+    color: '#a6adba',
+    borderColor: '#2a323c',
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#2a323c' },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#3d4451' },
+    '& .MuiInputBase-input': { color: '#a6adba' },
+    '& .MuiInputLabel-root': { color: '#6b7280' },
+    '& .MuiSelect-icon': { color: '#6b7280' },
+  },
+};
+
+const darkDivider = {
+  '.dark &': { borderColor: '#2a323c' },
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const AdminReports = () => {
   const { currentUser } = useContext(AuthContext);
@@ -389,17 +465,17 @@ const AdminReports = () => {
           <ReportIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
           신고 관리
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={darkTextSecondary}>
           사용자 신고를 검토하고 적절한 조치를 취하세요.
         </Typography>
       </Box>
 
       {/* 필터 */}
-      <Card sx={{ mb: 3 }}>
+      <Card sx={{ mb: 3, ...darkCard }}>
         <CardContent>
           <Box display="flex" gap={2} alignItems="center">
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>상태</InputLabel>
+            <FormControl size="small" sx={{ minWidth: 120, ...darkInput }}>
+              <InputLabel sx={darkTextSecondary}>상태</InputLabel>
               <Select
                 value={statusFilter}
                 label="상태"
@@ -407,6 +483,7 @@ const AdminReports = () => {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
+                sx={darkInput}
               >
                 <MenuItem value="all">전체</MenuItem>
                 <MenuItem value="pending">대기중</MenuItem>
@@ -415,8 +492,8 @@ const AdminReports = () => {
                 <MenuItem value="dismissed">기각</MenuItem>
               </Select>
             </FormControl>
-            
-            <Typography variant="body2" color="text.secondary">
+
+            <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>
               총 {totalReports}건의 신고
             </Typography>
           </Box>
@@ -424,37 +501,37 @@ const AdminReports = () => {
       </Card>
 
       {/* 신고 목록 */}
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={darkPaper}>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>신고 ID</TableCell>
-              <TableCell>카테고리</TableCell>
-              <TableCell>신고자</TableCell>
-              <TableCell>대상</TableCell>
-              <TableCell>신고일</TableCell>
-              <TableCell>상태</TableCell>
-              <TableCell>심각도</TableCell>
-              <TableCell>액션</TableCell>
+            <TableRow sx={darkTableHead}>
+              <TableCell sx={darkTableHead}>신고 ID</TableCell>
+              <TableCell sx={darkTableHead}>카테고리</TableCell>
+              <TableCell sx={darkTableHead}>신고자</TableCell>
+              <TableCell sx={darkTableHead}>대상</TableCell>
+              <TableCell sx={darkTableHead}>신고일</TableCell>
+              <TableCell sx={darkTableHead}>상태</TableCell>
+              <TableCell sx={darkTableHead}>심각도</TableCell>
+              <TableCell sx={darkTableHead}>액션</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {reports.map((report) => (
-              <TableRow key={report.id} hover>
-                <TableCell>#{report.id}</TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight="medium">
+              <TableRow key={report.id} hover sx={darkTableRow}>
+                <TableCell sx={darkTableCell}>#{report.id}</TableCell>
+                <TableCell sx={darkTableCell}>
+                  <Typography variant="body2" fontWeight="medium" sx={darkText}>
                     {report.category_name}
                   </Typography>
                   {report.custom_reason && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {report.custom_reason.length > 50 
-                        ? `${report.custom_reason.substring(0, 50)}...` 
+                    <Typography variant="caption" color="text.secondary" display="block" sx={darkTextSecondary}>
+                      {report.custom_reason.length > 50
+                        ? `${report.custom_reason.substring(0, 50)}...`
                         : report.custom_reason}
                     </Typography>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={darkTableCell}>
                   <Box>
                     {report.reporter_username}
                     {report.reporter_can_report === false && (
@@ -467,28 +544,28 @@ const AdminReports = () => {
                     )}
                   </Box>
                 </TableCell>
-                <TableCell>
-                  {report.comment_id 
+                <TableCell sx={darkTableCell}>
+                  {report.comment_id
                     ? `${report.comment_author_username} (댓글)`
                     : `${report.post_author_username} (게시물)`}
                 </TableCell>
-                <TableCell>{formatDate(report.created_at)}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={getStatusLabel(report.status)} 
+                <TableCell sx={darkTableCell}>{formatDate(report.created_at)}</TableCell>
+                <TableCell sx={darkTableCell}>
+                  <Chip
+                    label={getStatusLabel(report.status)}
                     color={getStatusColor(report.status)}
                     size="small"
                   />
                 </TableCell>
-                <TableCell>
-                  <Chip 
+                <TableCell sx={darkTableCell}>
+                  <Chip
                     label={`Level ${report.severity_level}`}
                     color={getSeverityColor(report.severity_level)}
                     size="small"
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell sx={darkTableCell}>
                   <Box display="flex" gap={1}>
                     <Button
                       size="small"
@@ -534,18 +611,24 @@ const AdminReports = () => {
       )}
 
       {/* 신고 처리 모달 */}
-      <Dialog open={showProcessModal} onClose={() => setShowProcessModal(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog
+        open={showProcessModal}
+        onClose={() => setShowProcessModal(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: darkDialog }}
+      >
+        <DialogTitle sx={darkText}>
           {selectedReport?.status === 'resolved' ? '처리 결과 조회' : '신고 처리'} - #{selectedReport?.id}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={darkDialog}>
           {selectedReport && (
             <Box>
               {/* 신고 정보 */}
-              <Card sx={{ mb: 3 }}>
+              <Card sx={{ mb: 3, ...darkCard }}>
                 <CardContent>
                   <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h6">
+                    <Typography variant="h6" sx={darkText}>
                       신고 정보
                     </Typography>
                     {selectedReport.post_id && (
@@ -564,13 +647,13 @@ const AdminReports = () => {
                   </Box>
                   <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">카테고리</Typography>
-                      <Typography variant="body1">{selectedReport.category_name}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>카테고리</Typography>
+                      <Typography variant="body1" sx={darkText}>{selectedReport.category_name}</Typography>
                     </Box>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">신고자</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>신고자</Typography>
                       <Box display="flex" alignItems="center" gap={1} flexWrap="wrap">
-                        <Typography variant="body1">{selectedReport.reporter_username}</Typography>
+                        <Typography variant="body1" sx={darkText}>{selectedReport.reporter_username}</Typography>
                         {selectedReport.reporter_can_report === false ? (
                           <>
                             <Chip
@@ -609,8 +692,8 @@ const AdminReports = () => {
                       </Box>
                     </Box>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">대상 작성자</Typography>
-                      <Typography variant="body1">
+                      <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>대상 작성자</Typography>
+                      <Typography variant="body1" sx={darkText}>
                         {selectedReport.comment_id
                           ? selectedReport.comment_author_username
                           : selectedReport.post_author_username}
@@ -644,25 +727,25 @@ const AdminReports = () => {
                       )}
                     </Box>
                     <Box>
-                      <Typography variant="body2" color="text.secondary">신고일</Typography>
-                      <Typography variant="body1">{formatDate(selectedReport.created_at)}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>신고일</Typography>
+                      <Typography variant="body1" sx={darkText}>{formatDate(selectedReport.created_at)}</Typography>
                     </Box>
                     {(selectedReport.post_report_count > 0 || selectedReport.comment_report_count > 0) && (
                       <Box>
-                        <Typography variant="body2" color="text.secondary">총 신고 횟수</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>총 신고 횟수</Typography>
                         <Typography variant="body1" color="error">
-                          {selectedReport.comment_id 
+                          {selectedReport.comment_id
                             ? `${selectedReport.comment_report_count}회`
                             : `${selectedReport.post_report_count}회`}
                         </Typography>
                       </Box>
                     )}
                   </Box>
-                  
+
                   {selectedReport.custom_reason && (
                     <Box mt={2}>
-                      <Typography variant="body2" color="text.secondary">상세 사유</Typography>
-                      <Typography variant="body1">{selectedReport.custom_reason}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>상세 사유</Typography>
+                      <Typography variant="body1" sx={darkText}>{selectedReport.custom_reason}</Typography>
                     </Box>
                   )}
                 </CardContent>
@@ -670,9 +753,9 @@ const AdminReports = () => {
 
               {/* 컨텐츠 내용 */}
               {(selectedReport.post_content || selectedReport.comment_content) && (
-                <Card sx={{ mb: 3 }}>
+                <Card sx={{ mb: 3, ...darkCard }}>
                   <CardContent>
-                    <Typography variant="h6" gutterBottom>
+                    <Typography variant="h6" gutterBottom sx={darkText}>
                       신고된 {selectedReport.comment_id ? '댓글' : '게시물'} 내용
                     </Typography>
                     
@@ -724,12 +807,12 @@ const AdminReports = () => {
                     )}
                     
                     {/* 텍스트 내용 표시 (전체 내용 표시) */}
-                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {selectedReport.comment_id 
+                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', ...darkText }}>
+                      {selectedReport.comment_id
                         ? selectedReport.comment_content
                         : selectedReport.post_content}
                     </Typography>
-                    
+
                     {(selectedReport.post_is_hidden || selectedReport.comment_is_hidden) && (
                       <Alert severity="info" sx={{ mt: 2 }}>
                         이 {selectedReport.comment_id ? '댓글은' : '게시물은'} 현재 숨김 처리되어 있습니다.
@@ -739,24 +822,29 @@ const AdminReports = () => {
                 </Card>
               )}
 
-              <Divider sx={{ my: 3 }} />
+              <Divider sx={{ my: 3, ...darkDivider }} />
 
               {/* 처리 완료된 경우 결과 표시 */}
               {selectedReport?.status === 'resolved' ? (
                 <Box>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom sx={darkText}>
                     처리 결과
                   </Typography>
-                  <Card sx={{ bgcolor: 'success.50', border: '1px solid', borderColor: 'success.main' }}>
+                  <Card sx={{
+                    bgcolor: 'success.50',
+                    border: '1px solid',
+                    borderColor: 'success.main',
+                    '.dark &': { bgcolor: '#1a2a1f', borderColor: '#2d6a4f' },
+                  }}>
                     <CardContent>
                       <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
                         <Box>
-                          <Typography variant="body2" color="text.secondary">처리 상태</Typography>
+                          <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>처리 상태</Typography>
                           <Chip label="처리 완료" color="success" size="small" sx={{ mt: 0.5 }} />
                         </Box>
                         <Box>
-                          <Typography variant="body2" color="text.secondary">처리 조치</Typography>
-                          <Typography variant="body1" fontWeight="medium">
+                          <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>처리 조치</Typography>
+                          <Typography variant="body1" fontWeight="medium" sx={darkText}>
                             {selectedReport.admin_action === 'no_action' && '조치 없음'}
                             {selectedReport.admin_action === 'hide_post' && '게시물 숨김'}
                             {selectedReport.admin_action === 'delete_post' && '게시물 삭제'}
@@ -769,22 +857,22 @@ const AdminReports = () => {
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="body2" color="text.secondary">처리일시</Typography>
-                          <Typography variant="body1">
+                          <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>처리일시</Typography>
+                          <Typography variant="body1" sx={darkText}>
                             {selectedReport.processed_at ? formatDate(selectedReport.processed_at) : '-'}
                           </Typography>
                         </Box>
                         <Box>
-                          <Typography variant="body2" color="text.secondary">처리자</Typography>
-                          <Typography variant="body1">
+                          <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>처리자</Typography>
+                          <Typography variant="body1" sx={darkText}>
                             {selectedReport.processed_by_username || selectedReport.processed_by || '-'}
                           </Typography>
                         </Box>
                       </Box>
                       {selectedReport.admin_notes && (
                         <Box mt={2}>
-                          <Typography variant="body2" color="text.secondary">처리 메모</Typography>
-                          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mt: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary" sx={darkTextSecondary}>처리 메모</Typography>
+                          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mt: 0.5, ...darkText }}>
                             {selectedReport.admin_notes}
                           </Typography>
                         </Box>
@@ -800,17 +888,18 @@ const AdminReports = () => {
               ) : (
                 /* 처리 옵션 */
                 <Box>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="h6" gutterBottom sx={darkText}>
                     처리 방법
                   </Typography>
 
-                  <FormControl fullWidth sx={{ mb: 2 }}>
-                    <InputLabel required>조치 선택</InputLabel>
+                  <FormControl fullWidth sx={{ mb: 2, ...darkInput }}>
+                    <InputLabel required sx={darkTextSecondary}>조치 선택</InputLabel>
                     <Select
                       value={processAction}
                       label="조치 선택"
                       onChange={(e) => setProcessAction(e.target.value)}
                       required
+                      sx={darkInput}
                     >
                       <MenuItem value="no_action">조치 없음</MenuItem>
                       <MenuItem value="hide_post" disabled={!!selectedReport?.comment_id}>게시물 숨김</MenuItem>
@@ -831,7 +920,7 @@ const AdminReports = () => {
                     placeholder="처리 사유나 추가 설명을 입력하세요..."
                     value={processNotes}
                     onChange={(e) => setProcessNotes(e.target.value)}
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 2, ...darkInput }}
                   />
 
                   <FormControlLabel
@@ -846,7 +935,9 @@ const AdminReports = () => {
                         }}
                       />
                     }
-                    label="허위 신고로 판단"
+                    label={
+                      <Typography variant="body2" sx={darkText}>허위 신고로 판단</Typography>
+                    }
                   />
 
                   {isFalseReport && (
@@ -864,7 +955,7 @@ const AdminReports = () => {
                             <Typography variant="body2" color="error">
                               신고자의 신고 기능 비활성화
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography variant="caption" color="text.secondary" sx={darkTextSecondary}>
                               해당 사용자는 더 이상 신고할 수 없게 됩니다
                             </Typography>
                           </Box>
@@ -882,7 +973,7 @@ const AdminReports = () => {
             </Box>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={darkDialog}>
           <Button onClick={() => setShowProcessModal(false)}>
             {selectedReport?.status === 'resolved' ? '닫기' : '취소'}
           </Button>
