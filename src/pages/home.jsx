@@ -349,15 +349,8 @@ const Home = () => {
           if (indexA === -1) return 1;
           if (indexB === -1) return -1;
         }
-        const isASpecial = a.name.includes('가락') || a.name.includes('대전');
-        const isBSpecial = b.name.includes('가락') || b.name.includes('대전');
-        if (isASpecial && !isBSpecial) return 1;
-        if (!isASpecial && isBSpecial) return -1;
-        if (isASpecial && isBSpecial) {
-          if (a.name.includes('가락') && b.name.includes('대전')) return -1;
-          if (a.name.includes('대전') && b.name.includes('가락')) return 1;
-        }
-        return a.name.localeCompare(b.name);
+        // 기본: 가나다순 정렬
+        return a.name.localeCompare(b.name, 'ko');
       });
 
       setMarketData(sortedData);
@@ -816,7 +809,7 @@ const Home = () => {
                 <EnhancedInstagramPost
                   post={hottestPost}
                   isVisible={true}
-                  disableAutoplay={false}
+                  disableAutoplay={true}
                   priority={true}
                 />
               </>

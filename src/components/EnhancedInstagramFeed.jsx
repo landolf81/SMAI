@@ -751,7 +751,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
                   onVideoPlay={handleVideoPlay}
                   onVideoPause={handleVideoPause}
                   isVisible={visiblePosts.has(itemId)}
-                  disableAutoplay={!!userId} // 프로필 화면에서는 자동재생 비활성화
+                  disableAutoplay={true} // 모든 피드에서 자동재생 비활성화
                   priority={index === 0} // 첫 번째 게시물은 LCP 우선순위 높임
                 />
               ) : item.type === 'ad' ? (

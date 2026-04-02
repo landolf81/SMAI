@@ -848,7 +848,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const MAX_DESC_LENGTH = 100;
   const postContent = post.Desc || post.desc || '';
   const shouldShowMore = postContent && postContent.length > MAX_DESC_LENGTH;
-  const displayDescription = shouldShowMore && !showFullDescription 
+  const displayDescription = shouldShowMore && !showFullDescription
     ? postContent.slice(0, MAX_DESC_LENGTH) + '...'
     : postContent;
 

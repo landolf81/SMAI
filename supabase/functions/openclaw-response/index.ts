@@ -1,5 +1,5 @@
 // Supabase Edge Function - OpenClaw 에이전트 응답 수신기
-// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge') 5) 광장 투표 글 생성 (action: 'post_lounge_poll')
+// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 + @멘션 알림 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge') 5) 광장 투표 글 생성 (action: 'post_lounge_poll')
 // 배포: supabase functions deploy openclaw-response --no-verify-jwt
 // URL: https://<project>.supabase.co/functions/v1/openclaw-response
 
@@ -238,6 +238,80 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log(`[openclaw-response] 전기수 광장 글 삽입 완료: id=${inserted.id} (이미지: ${imageUrls.length}장, 동영상: ${videoUrl ? '있음' : '없음'})`)
+
+    // ── @멘션 감지 → 알림 + 푸시 (fire-and-forget) ──
+    if (message) {
+      const mentionStarts: number[] = []
+      for (let idx = 0; idx < message.length; idx++) {
+        if (message[idx] === '@' && (idx === 0 || message[idx - 1] === ' ' || message[idx - 1] === '\n')) {
+          mentionStarts.push(idx)
+        }
+      }
+
+      // AI 유저 이름 조회 (알림 제목에 사용)
+      let aiName = '전기수'
+      if (mentionStarts.length > 0) {
+        const { data: aiUser } = await supabase.from('users').select('name').eq('id', AI_USER_ID).maybeSingle()
+        if (aiUser?.name) aiName = aiUser.name
+      }
+
+      for (const start of mentionStarts) {
+        const after = message.slice(start + 1)
+        const words = after.split(/\s+/).filter(Boolean).slice(0, 3)
+        // 3단어 → 2단어 → 1단어 순으로 시도 (greedy DB 매칭)
+        for (let len = words.length; len >= 1; len--) {
+          const candidate = words.slice(0, len).join(' ')
+          if (!candidate) continue
+          const { data: mentioned } = await supabase
+            .from('users')
+            .select('id')
+            .eq('name', candidate)
+            .maybeSingle()
+          if (mentioned && mentioned.id !== AI_USER_ID) {
+            // 개인 알림 저장
+            await supabase.from('user_notifications').upsert({
+              receiver_id: mentioned.id,
+              sender_id: AI_USER_ID,
+              type: 'mention',
+              title: `${aiName}님이 회원님을 언급했어요`,
+              body: message.slice(0, 80),
+              url: '/lounge',
+              reference_id: inserted.id,
+              reference_type: 'lounge_message',
+              is_read: false,
+            }, {
+              onConflict: 'receiver_id,sender_id,type,reference_id,reference_type',
+              ignoreDuplicates: true,
+            }).then(() => {
+              console.log(`[openclaw-response] 멘션 알림 저장: ${candidate} (${mentioned.id})`)
+            }).catch((e: unknown) => {
+              console.error(`[openclaw-response] 멘션 알림 저장 실패:`, e)
+            })
+            // 푸시 알림 전송
+            try {
+              const pushUrl = `${SUPABASE_URL}/functions/v1/send-push`
+              await fetch(pushUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                },
+                body: JSON.stringify({
+                  title: `${aiName}님이 회원님을 언급했어요`,
+                  body: message.slice(0, 80),
+                  url: '/lounge',
+                  userId: mentioned.id,
+                }),
+              })
+              console.log(`[openclaw-response] 멘션 푸시 전송: ${candidate}`)
+            } catch (pushErr) {
+              console.error(`[openclaw-response] 멘션 푸시 실패:`, pushErr)
+            }
+            break // 가장 긴 매칭으로 확정
+          }
+        }
+      }
+    }
 
     const runId = ((body.run_id ?? '') as string).trim()
     if (runId) {

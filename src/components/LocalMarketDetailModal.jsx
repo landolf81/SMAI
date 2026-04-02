@@ -34,7 +34,8 @@ const LocalMarketDetailModal = ({ isOpen, onClose, marketName, marketDate, grade
     staleTime: 5 * 60 * 1000,
   });
 
-  const showGradeCol = marketName === '대전공판장';
+  const GRADE_COL_MARKETS = ['대전공판장', '목포원예농업협동조합', '경주농협 공판장', '제주시농협농산물공판장'];
+  const showGradeCol = GRADE_COL_MARKETS.includes(marketName);
 
   if (!isOpen) return null;
 

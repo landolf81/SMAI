@@ -21,10 +21,13 @@ import LocalMarketDetailModal from '../components/LocalMarketDetailModal';
 import MarketSearchModal from '../components/MarketSearchModal';
 
 // 산지 목록 — 이 외에는 모두 모달 지원 (도매시장)
-const LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협', '가락공판장', '대전공판장', '광주공판장', '구리공판장'];
+// 성주 내부 산지 + 공판장 (도매시장 집계에서 제외되는 시장)
+const SEONGJU_LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협', '가락공판장', '대전공판장', '광주공판장', '구리공판장'];
+// 디테일 데이터가 market_data_raw 테이블에 있는 시장 (산지 + 목포원예 등)
+const RAW_DETAIL_MARKETS = [...SEONGJU_LOCAL_MARKETS, '목포원예농업협동조합', '경주농협 공판장', '제주시농협농산물공판장'];
 const isWholesaleMarket = (name) => {
   if (!name) return false;
-  return !LOCAL_MARKETS.includes(name);
+  return !SEONGJU_LOCAL_MARKETS.includes(name);
 };
 
 // 뱃지 색상 - 파랑으로 통일
@@ -76,7 +79,7 @@ const Prices = () => {
   }, [adsData]);
 
   // 로컬마켓일 때 raw 데이터 존재 여부 확인
-  const isLocal = LOCAL_MARKETS.includes(marketName);
+  const isLocal = RAW_DETAIL_MARKETS.includes(marketName);
   const { data: hasRawData } = useQuery({
     queryKey: ['market-data-raw-exists', marketName, selectedDate],
     queryFn: () => marketService.checkMarketDataRawExists(marketName, selectedDate),
@@ -654,7 +657,7 @@ const Prices = () => {
                   comparison_available: false
                 };
                 const isWholesale = isWholesaleMarket(marketName);
-                const isLocalMarket = LOCAL_MARKETS.includes(marketName);
+                const isLocalMarket = RAW_DETAIL_MARKETS.includes(marketName);
                 const canShowDetail = isWholesale || (isLocalMarket && hasRawData);
 
                 return (
@@ -663,8 +666,8 @@ const Prices = () => {
                     className={`relative pt-4 ${canShowDetail ? 'cursor-pointer active:scale-[0.98] transition-transform' : ''}`}
                     onClick={() => {
                       if (!canShowDetail) return;
-                      if (isWholesale) setSelectedGrade(item.grade);
-                      else if (isLocalMarket) setLocalSelectedGrade(item.grade);
+                      if (isLocalMarket) setLocalSelectedGrade(item.grade);
+                      else if (isWholesale) setSelectedGrade(item.grade);
                     }}
                   >
                     {/* 등급 뱃지 + 즐겨찾기 - 카드 위에 걸쳐있는 형태 */}

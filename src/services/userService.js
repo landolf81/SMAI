@@ -636,7 +636,13 @@ export const userService = {
         status = 'all'
       } = options;
 
-      // 기본 쿼리 - 가입일자 역순 정렬
+      // 기본 쿼리 - 역할 필터에 따라 join 방식 변경
+      // admin/super_admin: inner join으로 해당 역할만 필터
+      // member: left join 후 admin_roles가 null인 사용자만
+      // all: left join (전체)
+      const useInnerJoin = role !== 'all' && role !== 'member';
+      const adminJoin = useInnerJoin ? 'admin_roles!inner (role)' : 'admin_roles (role)';
+
       let query = supabase
         .from('users')
         .select(`
@@ -647,9 +653,7 @@ export const userService = {
           profile_pic,
           created_at,
           status,
-          admin_roles (
-            role
-          )
+          ${adminJoin}
         `, { count: 'exact' });
 
       // 검색 조건 (검색어가 있을 때만 필터링)
@@ -660,6 +664,15 @@ export const userService = {
       // 상태 필터
       if (status !== 'all') {
         query = query.eq('status', status);
+      }
+
+      // 역할 필터 (DB 레벨)
+      if (useInnerJoin) {
+        // admin, super_admin → inner join으로 이미 필터, role 값 매칭
+        query = query.eq('admin_roles.role', role);
+      } else if (role === 'member') {
+        // member = admin_roles 레코드가 없는 사용자
+        query = query.is('admin_roles', null);
       }
 
       // 데이터 가져오기 - 가입일자 역순 (최신순)
@@ -716,11 +729,6 @@ export const userService = {
           comments_count: commentsCounts[user.id] || 0
         };
       });
-
-      // 역할 필터 (클라이언트 사이드)
-      if (role !== 'all') {
-        processedUsers = processedUsers.filter(user => user.role === role);
-      }
 
       return {
         users: processedUsers,
