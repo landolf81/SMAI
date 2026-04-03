@@ -483,7 +483,7 @@ const MobileAdDisplay = ({ ad }) => {
 
         {/* 메인 미디어 */}
         <div
-          className="relative bg-base-200 cursor-pointer overflow-hidden aspect-square"
+          className="relative bg-base-200 cursor-pointer overflow-hidden aspect-[4/5]"
           onClick={handleAdClick}
         >
           {/* 미디어 예시 */}
@@ -498,7 +498,7 @@ const MobileAdDisplay = ({ ad }) => {
                     muted={true}
                     loop={true}
                     controls={false}
-                    aspectRatio="square"
+                    aspectRatio="4/5"
                     hideOverlay={true}
                     onClick={handleAdClick}
                   />
