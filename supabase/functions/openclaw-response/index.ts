@@ -1,5 +1,5 @@
 // Supabase Edge Function - OpenClaw 에이전트 응답 수신기
-// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 + @멘션 알림 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge') 5) 광장 투표 글 생성 (action: 'post_lounge_poll')
+// 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 + @멘션 알림 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge') 5) 광장 투표 글 생성 (action: 'post_lounge_poll') 6) 이미지 업로드 (action: 'upload_image')
 // 배포: supabase functions deploy openclaw-response --no-verify-jwt
 // URL: https://<project>.supabase.co/functions/v1/openclaw-response
 
@@ -13,6 +13,10 @@ const AI_USER_ID = Deno.env.get('AI_USER_ID') ?? ''
 // OPENCLAW_RESPONSE_TOKEN: OpenClaw이 이 웹훅을 호출할 때 쓰는 시크릿 (별도 설정)
 // 미설정 시 검증 스킵 (디버깅 단계에서 사용)
 const OPENCLAW_RESPONSE_TOKEN = Deno.env.get('OPENCLAW_RESPONSE_TOKEN') ?? ''
+
+// Cloudflare Images (upload_image 액션용)
+const CF_ACCOUNT_ID = Deno.env.get('CLOUDFLARE_ACCOUNT_ID') ?? ''
+const CF_API_TOKEN = Deno.env.get('CLOUDFLARE_STREAM_TOKEN') ?? '' // Stream과 Images 공용 토큰
 
 // 미디어 URL 자동 감지용 확장자
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.heic']
@@ -152,6 +156,110 @@ Deno.serve(async (req: Request) => {
 
     console.log(`[openclaw-response] 광장 조회 완료: ${messages.length}건`)
     return jsonResponse({ ok: true, messages })
+  }
+
+  // ─── action: upload_image → Base64 이미지를 Cloudflare Images에 업로드 ───
+  // 지원 필드:
+  //   image_base64 (string) - Base64 인코딩된 이미지 데이터 (필수, data URI 접두사 허용)
+  //   filename (string)     - 파일명 (선택, 기본 'openclaw-{timestamp}.jpg')
+  //   content_type (string) - MIME 타입 (선택, 기본 'image/jpeg')
+  if (action === 'upload_image') {
+    let rawBase64 = ((body.image_base64 ?? body.image ?? '') as string).trim()
+
+    if (!rawBase64) {
+      return jsonResponse({ error: 'image_base64 is required' }, 400)
+    }
+
+    // data URI 접두사 제거 (예: "data:image/png;base64,...")
+    let detectedType = 'image/jpeg'
+    const dataUriMatch = rawBase64.match(/^data:(image\/[a-zA-Z+]+);base64,/)
+    if (dataUriMatch) {
+      detectedType = dataUriMatch[1]
+      rawBase64 = rawBase64.slice(dataUriMatch[0].length)
+    }
+
+    // Base64 디코딩
+    let imageBytes: Uint8Array
+    try {
+      const binaryStr = atob(rawBase64)
+      imageBytes = new Uint8Array(binaryStr.length)
+      for (let i = 0; i < binaryStr.length; i++) {
+        imageBytes[i] = binaryStr.charCodeAt(i)
+      }
+    } catch {
+      return jsonResponse({ error: 'Invalid base64 data' }, 400)
+    }
+
+    // 10MB 제한
+    if (imageBytes.length > 10 * 1024 * 1024) {
+      return jsonResponse({ error: 'Image too large (max 10MB)' }, 400)
+    }
+
+    if (!CF_ACCOUNT_ID || !CF_API_TOKEN) {
+      console.error('[openclaw-response] Cloudflare Images 환경변수 미설정')
+      return jsonResponse({ error: 'Cloudflare Images not configured' }, 500)
+    }
+
+    const contentType = (body.content_type as string) || detectedType
+    const ext = contentType.split('/')[1]?.replace('+xml', '') || 'jpg'
+    const filename = (body.filename as string) || `openclaw-${Date.now()}.${ext}`
+
+    try {
+      // 1) Direct Upload URL 요청
+      const uploadForm = new FormData()
+      uploadForm.append('requireSignedURLs', 'false')
+      uploadForm.append('metadata', JSON.stringify({
+        source: 'openclaw',
+        uploadedAt: new Date().toISOString(),
+      }))
+
+      const directRes = await fetch(
+        `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/images/v2/direct_upload`,
+        {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${CF_API_TOKEN}` },
+          body: uploadForm,
+        }
+      )
+      const directData = await directRes.json() as { success: boolean; result?: { uploadURL: string; id: string }; errors?: { message: string }[] }
+
+      if (!directData.success || !directData.result?.uploadURL) {
+        console.error('[openclaw-response] CF Direct Upload 실패:', directData.errors)
+        return jsonResponse({ error: 'Failed to get upload URL' }, 500)
+      }
+
+      // 2) 이미지 파일 업로드
+      const imageFile = new File([imageBytes], filename, { type: contentType })
+      const imageForm = new FormData()
+      imageForm.append('file', imageFile)
+
+      const uploadRes = await fetch(directData.result.uploadURL, {
+        method: 'POST',
+        body: imageForm,
+      })
+      const uploadResult = await uploadRes.json() as { success: boolean; result?: { variants?: string[] }; errors?: { message: string }[] }
+
+      if (!uploadResult.success) {
+        console.error('[openclaw-response] CF 이미지 업로드 실패:', uploadResult.errors)
+        return jsonResponse({ error: 'Image upload failed' }, 500)
+      }
+
+      // public variant URL 추출
+      const variants = uploadResult.result?.variants ?? []
+      const publicUrl = variants.find((v: string) => v.includes('/public')) ?? variants[0] ?? ''
+
+      console.log(`[openclaw-response] 이미지 업로드 완료: id=${directData.result.id}, url=${publicUrl}`)
+
+      return jsonResponse({
+        ok: true,
+        image_id: directData.result.id,
+        url: publicUrl,
+        variants,
+      })
+    } catch (err) {
+      console.error('[openclaw-response] 이미지 업로드 예외:', err)
+      return jsonResponse({ error: 'Image upload exception' }, 500)
+    }
   }
 
   // ─── action: post_lounge → 광장 메시지 삽입 (전기수) ───

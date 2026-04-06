@@ -981,19 +981,19 @@ const Lounge = () => {
 
     </div>
 
-    {/* 플로팅 글쓰기 버튼 */}
+    {/* 플로팅 글쓰기 버튼 (홈 검색 버튼과 동일 형태) */}
     {!isComposing && (
-      <div className={`fixed right-4 z-40 transition-all duration-300 ${scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'}`} style={{ bottom: 'calc(80px + env(safe-area-inset-bottom, 0px) + 8px)' }}>
-        <button
-          onClick={() => { setMentionText(''); setIsComposing(true); }}
-          className="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white rounded-full shadow-lg p-3.5 transition-all duration-300 hover:shadow-xl active:scale-95"
-          aria-label="광장에 글쓰기"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-            <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
-          </svg>
-        </button>
-      </div>
+      <button
+        onClick={() => { setMentionText(''); setIsComposing(true); }}
+        className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 active:scale-95 ${
+          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
+        }`}
+        aria-label="광장에 글쓰기"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-white">
+          <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
+        </svg>
+      </button>
     )}
 
     {/* 글쓰기 모달 (음성입력 + 다중 이미지 지원) */}

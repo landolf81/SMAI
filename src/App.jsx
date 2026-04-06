@@ -295,7 +295,7 @@ const Layout = () => {
 
       {/* 플로팅 글쓰기 버튼 + 팝업 메뉴 */}
       {isCommunityPage && currentUser && !isBanned && (isMobileDevice() || isTabletDevice() || window.innerWidth <= 768) && (
-        <div className={`fixed right-4 z-40 transition-all duration-300 bottom-20 ${
+        <div className={`fixed right-4 z-50 transition-all duration-300 bottom-24 ${
           scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
         }`}>
           {/* 팝업 메뉴 (버튼 위에 표시) */}

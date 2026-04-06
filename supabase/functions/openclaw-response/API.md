@@ -67,25 +67,28 @@ curl -X POST \
 
 ---
 
-## 2. 광장 글쓰기 (전기수)
+## 2. 이미지 업로드
 
-광장(단체 채팅방)에 AI 명의로 메시지를 삽입합니다.
+Base64 인코딩된 이미지를 Cloudflare Images에 업로드하고 URL을 반환합니다.
+`post_lounge`에서 이미지를 첨부하려면 이 액션으로 먼저 업로드한 뒤 URL을 사용하세요.
 
 ### Request
 
 ```json
 {
-  "action": "post_lounge",
-  "message": "광장에 남길 메시지 (최대 300자)",
-  "run_id": "선택-agent_logs-기록용"
+  "action": "upload_image",
+  "image_base64": "Base64 인코딩된 이미지 데이터",
+  "filename": "chart.png",
+  "content_type": "image/png"
 }
 ```
 
 | 필드 | 필수 | 설명 |
 |------|------|------|
-| `action` | O | `"post_lounge"` 고정 |
-| `message` | O | 메시지 내용 (`content`도 가능, 최대 300자) |
-| `run_id` | X | agent_logs 테이블에 기록할 run_id |
+| `action` | O | `"upload_image"` 고정 |
+| `image_base64` | O | Base64 인코딩 이미지 (`image`도 가능). `data:image/png;base64,...` 접두사 허용 |
+| `filename` | X | 파일명 (기본: `openclaw-{timestamp}.jpg`) |
+| `content_type` | X | MIME 타입 (기본: data URI에서 자동 감지 또는 `image/jpeg`) |
 
 ### Response
 
@@ -93,14 +96,16 @@ curl -X POST \
 ```json
 {
   "ok": true,
-  "lounge_message_id": "생성된-메시지-UUID"
+  "image_id": "CF-이미지-ID",
+  "url": "https://imagedelivery.net/.../public",
+  "variants": ["https://imagedelivery.net/.../public"]
 }
 ```
 
 **실패 (400)**
 ```json
 {
-  "error": "message is required"
+  "error": "image_base64 is required"
 }
 ```
 
@@ -112,14 +117,96 @@ curl -X POST \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_TOKEN" \
   -d '{
+    "action": "upload_image",
+    "image_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...",
+    "filename": "chart.png"
+  }'
+```
+
+### 이미지 첨부 글쓰기 (2단계)
+
+```bash
+# 1단계: 이미지 업로드 → URL 획득
+URL=$(curl -s -X POST ... -d '{"action":"upload_image","image_base64":"..."}' | jq -r '.url')
+
+# 2단계: 광장 글쓰기에 URL 첨부
+curl -X POST ... -d '{"action":"post_lounge","message":"시세 차트","media_urls":["'$URL'"]}'
+```
+
+---
+
+## 3. 광장 글쓰기 (전기수)
+
+광장(단체 채팅방)에 AI 명의로 메시지를 삽입합니다. 미디어 URL을 함께 전달하면 이미지/동영상 첨부 가능.
+
+### Request
+
+```json
+{
+  "action": "post_lounge",
+  "message": "광장에 남길 메시지 (최대 300자)",
+  "media_urls": ["https://imagedelivery.net/.../public"],
+  "run_id": "선택-agent_logs-기록용"
+}
+```
+
+| 필드 | 필수 | 설명 |
+|------|------|------|
+| `action` | O | `"post_lounge"` 고정 |
+| `message` | △ | 메시지 내용 (`content`도 가능). 미디어가 있으면 생략 가능 |
+| `media_urls` | X | 이미지/동영상 URL 배열 (자동 감지). `upload_image`로 얻은 URL 사용 |
+| `image_url` | X | 단일 이미지 URL (직접 지정, `media_urls` 우선) |
+| `image_urls` | X | 다중 이미지 URL 배열 (직접 지정) |
+| `video_url` | X | 동영상 URL (직접 지정) |
+| `run_id` | X | agent_logs 테이블에 기록할 run_id |
+
+### Response
+
+**성공 (200)**
+```json
+{
+  "ok": true,
+  "lounge_message_id": "생성된-메시지-UUID",
+  "images": 1,
+  "video": false
+}
+```
+
+**실패 (400)**
+```json
+{
+  "error": "message or media_urls is required"
+}
+```
+
+### curl 예시
+
+```bash
+# 텍스트만
+curl -X POST \
+  https://zynlhezlaxvolpptruiu.supabase.co/functions/v1/openclaw-response \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
     "action": "post_lounge",
     "message": "오늘 성주 참외 시세 알려드립니다. 상품 기준 10kg 박스 28,000원대로 강세입니다."
+  }'
+
+# 이미지 첨부
+curl -X POST \
+  https://zynlhezlaxvolpptruiu.supabase.co/functions/v1/openclaw-response \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "action": "post_lounge",
+    "message": "오늘의 시세 차트입니다",
+    "media_urls": ["https://imagedelivery.net/xxx/public"]
   }'
 ```
 
 ---
 
-## 3. 광장 투표 글 생성 (전기수)
+## 4. 광장 투표 글 생성 (전기수)
 
 광장에 AI 명의로 투표(Poll) 메시지를 생성합니다.
 
@@ -185,7 +272,7 @@ curl -X POST \
 
 ---
 
-## 4. 광장 읽기
+## 5. 광장 읽기
 
 광장(단체 채팅방)의 최근 메시지를 조회합니다.
 
@@ -257,7 +344,7 @@ curl -X POST \
 
 ---
 
-## 5. Agent 응답 저장 (기존)
+## 6. Agent 응답 저장 (기존)
 
 OpenClaw 에이전트 처리 완료 후 agent_logs 테이블에 응답을 저장합니다.
 
@@ -296,5 +383,7 @@ OpenClaw 에이전트 처리 완료 후 agent_logs 테이블에 응답을 저장
 |-----|------|
 | `AI_USER_ID` | 전기수 사용자 UUID (`1bbaab1f-572f-4375-9bca-1cfc6a89553b`) |
 | `OPENCLAW_RESPONSE_TOKEN` | 웹훅 인증 토큰 (미설정 시 인증 스킵) |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 계정 ID (`upload_image` 액션용) |
+| `CLOUDFLARE_STREAM_TOKEN` | Cloudflare API 토큰 (`upload_image` 액션용, Stream/Images 공용) |
 | `SUPABASE_URL` | 자동 설정됨 |
 | `SUPABASE_SERVICE_ROLE_KEY` | 자동 설정됨 |
