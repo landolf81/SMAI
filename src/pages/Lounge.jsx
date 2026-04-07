@@ -859,7 +859,7 @@ const Lounge = () => {
   }, []);
 
   // ── 날짜 구분선 + 광고 삽입을 위한 렌더링 준비 ──
-  const LOUNGE_AD_INTERVAL = 15; // 15개 메시지마다 광고 1개
+  const LOUNGE_AD_INTERVAL = 10; // 10개 메시지마다 광고 1개
   const isAdmin = currentUser?.isAdmin;
   const visibleMessages = isAdmin ? messages : messages.filter((m) => !m.is_hidden);
   const renderedItems = [];
