@@ -54,7 +54,6 @@ const PHONE_REGEX = /01[0-9][-\s.]?\d{3,4}[-\s.]?\d{4}|0\d{1,2}[-\s.]?\d{3,4}[-\
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 const ACCOUNT_REGEX = /\d{3,6}[-\s]?\d{2,6}[-\s]?\d{2,8}/; // 계좌번호 패턴
 const SSN_REGEX = /\d{6}[-\s]?\d{7}/; // 주민등록번호
-const URL_REGEX = /https?:\/\/[^\s]+/gi;
 const KAKAO_ID_REGEX = /카[카톡]?\s*[:：]?\s*[a-zA-Z0-9_]{2,}/;
 
 const BLOCKED_WORDS = [
@@ -85,8 +84,6 @@ const validateMessage = (content) => {
   if (SSN_REGEX.test(content)) return '주민등록번호는 광장에 남길 수 없어요.';
   if (ACCOUNT_REGEX.test(content)) return '계좌번호는 광장에 남길 수 없어요.';
   if (KAKAO_ID_REGEX.test(content)) return '카카오톡 ID는 광장에 남길 수 없어요.';
-  // 링크 차단
-  if (URL_REGEX.test(content)) return '링크는 광장에 남길 수 없어요.';
   // 광고성 키워드 차단
   for (const word of AD_KEYWORDS) {
     if (content.includes(word)) return '광고성 내용은 광장에 남길 수 없어요.';
@@ -124,23 +121,60 @@ const LONG_PRESS_DELAY = 500;
 const LONG_PRESS_MOVE_THRESHOLD = 10;
 
 // ─────────────────────────────────────────────
-// @멘션 하이라이트 렌더링 (닉네임 목록 기반 greedy match)
+// URL 링크 렌더링 정규식
+// ─────────────────────────────────────────────
+const LINK_URL_REGEX = /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9()@:%_+.~#?&/=]*)/g;
+
+// ─────────────────────────────────────────────
+// @멘션 하이라이트 + URL 링크 렌더링
 // ─────────────────────────────────────────────
 const renderContent = (content, knownNames) => {
-  if (!content || !knownNames || knownNames.length === 0) return content;
+  if (!content) return content;
 
-  // 긴 닉네임부터 매칭 (greedy)
-  const sorted = [...knownNames].sort((a, b) => b.length - a.length);
-  const escaped = sorted.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  const splitPattern = new RegExp(`(@(?:${escaped.join('|')}))(?=\\s|$)`, 'g');
-  const testPattern = new RegExp(`^@(?:${escaped.join('|')})$`);
+  // 1) 먼저 URL을 분리
+  const urlParts = content.split(LINK_URL_REGEX);
 
-  const parts = content.split(splitPattern);
-  return parts.map((part, i) =>
-    testPattern.test(part)
-      ? <span key={i} className="text-blue-500 font-semibold">{part}</span>
-      : part
-  );
+  // 2) 멘션 패턴 준비
+  let mentionSplit = null;
+  let mentionTest = null;
+  if (knownNames && knownNames.length > 0) {
+    const sorted = [...knownNames].sort((a, b) => b.length - a.length);
+    const escaped = sorted.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    mentionSplit = new RegExp(`(@(?:${escaped.join('|')}))(?=\\s|$)`, 'g');
+    mentionTest = new RegExp(`^@(?:${escaped.join('|')})$`);
+  }
+
+  // 3) 각 파트를 렌더링
+  return urlParts.map((part, i) => {
+    // URL 매칭된 부분 → 클릭 가능 링크
+    if (LINK_URL_REGEX.test(part)) {
+      LINK_URL_REGEX.lastIndex = 0; // reset regex state
+      return (
+        <a
+          key={`url-${i}`}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline break-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+
+    // 일반 텍스트 → 멘션 하이라이트 적용
+    if (mentionSplit && mentionTest) {
+      const subParts = part.split(mentionSplit);
+      return subParts.map((sub, j) =>
+        mentionTest.test(sub)
+          ? <span key={`m-${i}-${j}`} className="text-blue-500 font-semibold">{sub}</span>
+          : <React.Fragment key={`t-${i}-${j}`}>{sub}</React.Fragment>
+      );
+    }
+
+    return part;
+  });
 };
 
 // ─────────────────────────────────────────────
