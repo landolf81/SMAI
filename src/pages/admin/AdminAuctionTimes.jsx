@@ -113,21 +113,21 @@ const AdminAuctionTimes = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* 헤더 */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="text-gray-600">
+          <button onClick={() => navigate(-1)} className="text-gray-600 dark:text-gray-300">
             <ArrowBackIcon />
           </button>
-          <h1 className="text-lg font-bold text-gray-800">경매시간 관리</h1>
+          <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">경매시간 관리</h1>
         </div>
       </div>
 
@@ -143,18 +143,18 @@ const AdminAuctionTimes = () => {
 
         {/* 추가/수정 폼 */}
         {showForm && (
-          <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-5 space-y-4">
-            <h3 className="font-bold text-gray-800">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 p-5 space-y-4">
+            <h3 className="font-bold text-gray-800 dark:text-gray-100">
               {editingId ? '경매시간 수정' : '새 경매시간 등록'}
             </h3>
 
             {/* 공판장 선택 */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">공판장</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">공판장</label>
               <select
                 value={formData.market_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, market_name: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
               >
                 <option value="">선택하세요</option>
                 {marketList.map(m => (
@@ -165,37 +165,37 @@ const AdminAuctionTimes = () => {
 
             {/* 경매시간 (24시간 텍스트 입력) */}
             <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">경매시간</label>
+              <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">경매시간</label>
               <input
                 type="text"
                 value={formData.auction_time}
                 onChange={(e) => setFormData(prev => ({ ...prev, auction_time: e.target.value }))}
                 placeholder="예: 13:00"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 rounded-lg px-3 py-2 text-sm"
               />
             </div>
 
             {/* 적용 기간 */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">적용 시작일</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">적용 시작일</label>
                 <input
                   type="date"
                   value={formData.effective_from}
                   onChange={(e) => setFormData(prev => ({ ...prev, effective_from: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-600 mb-1">적용 종료일</label>
+                <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">적용 종료일</label>
                 <input
                   type="date"
                   value={formData.effective_to}
                   onChange={(e) => setFormData(prev => ({ ...prev, effective_to: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                  className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 rounded-lg px-3 py-2 text-sm"
                   placeholder="비워두면 계속 적용"
                 />
-                <p className="text-xs text-gray-400 mt-1">비워두면 계속 적용</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">비워두면 계속 적용</p>
               </div>
             </div>
 
@@ -204,13 +204,13 @@ const AdminAuctionTimes = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 transition-colors"
+                className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 transition-colors"
               >
                 {saving ? '저장 중...' : (editingId ? '수정' : '등록')}
               </button>
               <button
                 onClick={resetForm}
-                className="px-4 py-2.5 bg-gray-100 text-gray-600 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                className="px-4 py-2.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 rounded-lg font-semibold hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
               >
                 취소
               </button>
@@ -220,20 +220,20 @@ const AdminAuctionTimes = () => {
 
         {/* 등록된 경매시간 목록 (공판장별 그룹) */}
         {Object.keys(groupedTimes).length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-400 dark:text-gray-500">
             <AccessTimeIcon style={{ fontSize: 48 }} className="mb-2" />
             <p>등록된 경매시간이 없습니다</p>
           </div>
         ) : (
           Object.entries(groupedTimes).map(([marketName, times]) => (
-            <div key={marketName} className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+            <div key={marketName} className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-100 dark:border-gray-700 overflow-hidden">
               {/* 공판장명 헤더 */}
-              <div className="bg-blue-50 px-4 py-3 border-b border-blue-100">
-                <h3 className="font-bold text-blue-800 text-sm">{marketName}</h3>
+              <div className="bg-blue-50 dark:bg-blue-950/40 px-4 py-3 border-b border-blue-100 dark:border-blue-900/50">
+                <h3 className="font-bold text-blue-800 dark:text-blue-300 text-sm">{marketName}</h3>
               </div>
 
               {/* 시간 목록 */}
-              <div className="divide-y divide-gray-100">
+              <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {times.map((item) => {
                   const today = new Date().toISOString().split('T')[0];
                   const isActive = item.effective_from <= today && (!item.effective_to || item.effective_to >= today);
@@ -242,11 +242,13 @@ const AdminAuctionTimes = () => {
                     <div key={item.id} className="px-4 py-3 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`px-2.5 py-1 rounded-full text-sm font-bold ${
-                          isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                          isActive
+                            ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
                         }`}>
                           {item.auction_time}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {item.effective_from} ~ {item.effective_to || '계속'}
                         </div>
                         {isActive && (
@@ -256,13 +258,13 @@ const AdminAuctionTimes = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleEdit(item)}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                          className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                         >
                           <EditIcon fontSize="small" />
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                          className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         >
                           <DeleteIcon fontSize="small" />
                         </button>
