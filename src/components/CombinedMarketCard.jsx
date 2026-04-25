@@ -437,7 +437,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                           fill="url(#combinedGradAvg)"
                           dot={{ r: 3, fill: '#059669', strokeWidth: 0 }}
                           activeDot={{ r: 5, stroke: '#fff', strokeWidth: 2 }}
-                          connectNulls={false}
+                          connectNulls={true}
                         />
                         <Line
                           type="monotone"
@@ -448,7 +448,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                           strokeDasharray="6 3"
                           dot={{ r: 2, fill: '#D97706', strokeWidth: 0 }}
                           activeDot={{ r: 4, stroke: '#fff', strokeWidth: 1.5 }}
-                          connectNulls={false}
+                          connectNulls={true}
                         />
                       </ComposedChart>
                     ) : (
@@ -501,7 +501,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                           strokeWidth={1.5}
                           strokeDasharray="6 3"
                           dot={{ r: 2, fill: '#D97706', strokeWidth: 0 }}
-                          connectNulls={false}
+                          connectNulls={true}
                         />
                       </ComposedChart>
                     )}
