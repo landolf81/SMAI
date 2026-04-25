@@ -792,8 +792,8 @@ const AdminAdsNew = () => {
                         </div>
                         <div className="text-sm text-amber-700 space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="bg-amber-200/50 px-2 py-1 rounded text-xs font-mono">1:1 정사각형</span>
-                            <span>권장 사이즈: 1080x1080px</span>
+                            <span className="bg-amber-200/50 px-2 py-1 rounded text-xs font-mono">4:5 세로형</span>
+                            <span>권장 사이즈: 1080x1350px</span>
                           </div>
                         </div>
                       </div>
@@ -826,7 +826,7 @@ const AdminAdsNew = () => {
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {selectedFiles.map((file, index) => (
                               <div key={index} className="relative group">
-                                <div className="aspect-square bg-base-200 rounded-xl overflow-hidden border-2 border-base-300">
+                                <div className="aspect-[4/5] bg-base-200 rounded-xl overflow-hidden border-2 border-base-300">
                                   {file.type.startsWith('image/') ? (
                                     <img
                                       src={URL.createObjectURL(file)}
@@ -871,7 +871,7 @@ const AdminAdsNew = () => {
                           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                             {editingAd.image_url && (
                               <div className="relative">
-                                <div className="aspect-square bg-base-200 rounded-xl overflow-hidden border-2 border-amber-300">
+                                <div className="aspect-[4/5] bg-base-200 rounded-xl overflow-hidden border-2 border-amber-300">
                                   {isVideoFile(editingAd.image_url) ? (
                                     <video
                                       src={getImageUrl(editingAd.image_url)}
@@ -893,7 +893,7 @@ const AdminAdsNew = () => {
                             )}
                             {editingAd.media_urls && editingAd.media_urls.map((url, index) => (
                               <div key={index} className="relative">
-                                <div className="aspect-square bg-base-200 rounded-xl overflow-hidden border-2 border-base-300">
+                                <div className="aspect-[4/5] bg-base-200 rounded-xl overflow-hidden border-2 border-base-300">
                                   {isVideoFile(url) ? (
                                     <video
                                       src={getImageUrl(url)}
@@ -1134,7 +1134,7 @@ const AdminAdsNew = () => {
                     </div>
 
                     {/* 메인 미디어 */}
-                    <div className="relative aspect-square bg-base-200">
+                    <div className="relative aspect-[4/5] bg-base-200">
                       {isVideoFile(previewAd.image_content) ? (
                         <video
                           src={getImageUrl(previewAd.image_content)}
