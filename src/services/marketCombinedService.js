@@ -174,7 +174,10 @@ const marketCombinedService = {
       const cur = new Date(sY, sM - 1, sD);
       const endDt = new Date(eY, eM - 1, eD);
       while (cur <= endDt) {
-        allDates.push(fmt(cur));
+        // 토요일(6)은 산지 경매 휴장 → 차트에서 제외
+        if (cur.getDay() !== 6) {
+          allDates.push(fmt(cur));
+        }
         cur.setDate(cur.getDate() + 1);
       }
 
