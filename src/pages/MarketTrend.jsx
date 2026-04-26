@@ -13,7 +13,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { marketService } from '../services';
-import { findLastYearWeekdayDate } from '../services/marketCombinedService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DatePickerModal from '../components/DatePickerModal';
 import { useTheme } from '../context/ThemeContext';
@@ -110,22 +109,26 @@ const MarketTrend = () => {
     return { startDate: formatDate(start), endDate: formatDate(end) };
   };
 
-  // 작년 동일 요일 기간 계산 (시작/종료 모두 같은 요일로 매칭)
-  const getLastYearRange = (startDate, endDate) => {
-    const lyStart = findLastYearWeekdayDate(startDate).targetDate;
-    const lyEnd = findLastYearWeekdayDate(endDate).targetDate;
-    return { startDate: lyStart, endDate: lyEnd };
+  // 작년 동일 주기(52주=364일 전) 기간 계산
+  // 경매 휴무와 무관하게 같은 요일 + 같은 주차 사이클로 매칭하기 위해 364일 시프트 사용
+  const shiftBack364 = (dateStr) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() - 364);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
+  const getLastYearRange = (startDate, endDate) => ({
+    startDate: shiftBack364(startDate),
+    endDate: shiftBack364(endDate),
+  });
 
   // 성주군 합계 / 도매시장 합계 여부 확인
   const isSeongjuTotal = marketName === '성주군 합계';
   const isWholesaleTotal = marketName === '도매시장 합계';
   // aggregate 테이블 사용 여부 (성주군 합계 / 도매시장 합계 모두 DB 사전 집계 사용)
   const isAggregateSource = isSeongjuTotal || isWholesaleTotal;
-
-  // 산지(성주 내부) 공판장 — 토요일 휴장 → 차트 X축에서 제외
-  const SEONGJU_LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협'];
-  const isSatClosedMarket = SEONGJU_LOCAL_MARKETS.includes(marketName) || isSeongjuTotal;
 
   // 데이터 로드
   useEffect(() => {
@@ -204,35 +207,23 @@ const MarketTrend = () => {
       currentYearMap.set(item.market_date, item);
     });
 
-    // 작년 데이터를 날짜별로 정렬
-    const sortedLastYear = [...lastYearData].sort((a, b) => a.market_date.localeCompare(b.market_date));
-
-    // 작년 데이터를 요일별로 그룹화 (순서 인덱스 매칭용)
-    // 산지 시장이면 토요일은 매칭 대상에서 제외 (휴장일 노출 방지)
-    const lyByWeekday = {};
-    sortedLastYear.forEach((item) => {
-      const day = new Date(item.market_date + 'T00:00:00').getDay();
-      if (isSatClosedMarket && day === 6) return;
-      if (!lyByWeekday[day]) lyByWeekday[day] = [];
-      lyByWeekday[day].push(item);
+    // 작년 데이터를 날짜 키 맵으로 — 정확히 364일(52주) 전 일자로 직접 매칭
+    const lastYearMap = new Map();
+    lastYearData.forEach((item) => {
+      lastYearMap.set(item.market_date, item);
     });
 
-    // 기간 내 모든 날짜 생성 — 산지 시장은 토요일(6) 휴장이므로 제외
+    // 기간 내 모든 날짜 생성
     const allDates = [];
     const cur = new Date(startDate + 'T00:00:00');
     const endDt = new Date(endDate + 'T00:00:00');
     while (cur <= endDt) {
-      if (!(isSatClosedMarket && cur.getDay() === 6)) {
-        const y = cur.getFullYear();
-        const m = String(cur.getMonth() + 1).padStart(2, '0');
-        const d = String(cur.getDate()).padStart(2, '0');
-        allDates.push(`${y}-${m}-${d}`);
-      }
+      const y = cur.getFullYear();
+      const m = String(cur.getMonth() + 1).padStart(2, '0');
+      const d = String(cur.getDate()).padStart(2, '0');
+      allDates.push(`${y}-${m}-${d}`);
       cur.setDate(cur.getDate() + 1);
     }
-
-    // 올해 날짜들의 요일별 순서 카운터
-    const weekdayCounter = {};
 
     const result = allDates.map((fullDateStr) => {
       const dt = new Date(fullDateStr + 'T00:00:00');
@@ -240,14 +231,10 @@ const MarketTrend = () => {
       const isTodayDate = fullDateStr === today;
       const dayOfWeek = dt.getDay();
 
-      // 요일별 순서 인덱스 (0, 1, 2, ...)
-      if (weekdayCounter[dayOfWeek] === undefined) weekdayCounter[dayOfWeek] = 0;
-      const weekdayIdx = weekdayCounter[dayOfWeek]++;
-
       const currentItem = currentYearMap.get(fullDateStr);
-      // 작년: 같은 요일의 n번째 데이터로 매칭
-      const lyGroup = lyByWeekday[dayOfWeek] || [];
-      const lastYearItem = lyGroup[weekdayIdx] || null;
+      // 작년: 정확히 52주 전(=364일 전) 같은 요일·같은 주차 사이클 데이터
+      const lyDateStr = shiftBack364(fullDateStr);
+      const lastYearItem = lastYearMap.get(lyDateStr) || null;
 
       return {
         date: dayMonth,
@@ -255,7 +242,7 @@ const MarketTrend = () => {
         isToday: isTodayDate,
         isFuture: fullDateStr > today,
         dayOfWeek,
-        lastYearDate: lastYearItem?.market_date || null,
+        lastYearDate: lastYearItem?.market_date || lyDateStr,
         // 올해 가격 데이터
         maxPrice: currentItem ? (parseInt(currentItem.max_price) || null) : null,
         avgPrice: currentItem ? (parseInt(currentItem.avg_price) || null) : null,
@@ -274,7 +261,7 @@ const MarketTrend = () => {
     });
 
     return result;
-  }, [trendData, lastYearData, today, dateRange, isSatClosedMarket]);
+  }, [trendData, lastYearData, today, dateRange]);
 
   // 오늘 날짜의 X축 값 찾기
   const todayXValue = useMemo(() => {
