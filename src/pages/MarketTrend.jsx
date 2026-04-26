@@ -123,6 +123,10 @@ const MarketTrend = () => {
   // aggregate 테이블 사용 여부 (성주군 합계 / 도매시장 합계 모두 DB 사전 집계 사용)
   const isAggregateSource = isSeongjuTotal || isWholesaleTotal;
 
+  // 산지(성주 내부) 공판장 — 토요일 휴장 → 차트 X축에서 제외
+  const SEONGJU_LOCAL_MARKETS = ['선남농협', '성주원예', '성주조공', '용암농협', '초전농협'];
+  const isSatClosedMarket = SEONGJU_LOCAL_MARKETS.includes(marketName) || isSeongjuTotal;
+
   // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
@@ -204,22 +208,26 @@ const MarketTrend = () => {
     const sortedLastYear = [...lastYearData].sort((a, b) => a.market_date.localeCompare(b.market_date));
 
     // 작년 데이터를 요일별로 그룹화 (순서 인덱스 매칭용)
+    // 산지 시장이면 토요일은 매칭 대상에서 제외 (휴장일 노출 방지)
     const lyByWeekday = {};
     sortedLastYear.forEach((item) => {
       const day = new Date(item.market_date + 'T00:00:00').getDay();
+      if (isSatClosedMarket && day === 6) return;
       if (!lyByWeekday[day]) lyByWeekday[day] = [];
       lyByWeekday[day].push(item);
     });
 
-    // 기간 내 모든 날짜 생성
+    // 기간 내 모든 날짜 생성 — 산지 시장은 토요일(6) 휴장이므로 제외
     const allDates = [];
     const cur = new Date(startDate + 'T00:00:00');
     const endDt = new Date(endDate + 'T00:00:00');
     while (cur <= endDt) {
-      const y = cur.getFullYear();
-      const m = String(cur.getMonth() + 1).padStart(2, '0');
-      const d = String(cur.getDate()).padStart(2, '0');
-      allDates.push(`${y}-${m}-${d}`);
+      if (!(isSatClosedMarket && cur.getDay() === 6)) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth() + 1).padStart(2, '0');
+        const d = String(cur.getDate()).padStart(2, '0');
+        allDates.push(`${y}-${m}-${d}`);
+      }
       cur.setDate(cur.getDate() + 1);
     }
 
@@ -266,7 +274,7 @@ const MarketTrend = () => {
     });
 
     return result;
-  }, [trendData, lastYearData, today, dateRange]);
+  }, [trendData, lastYearData, today, dateRange, isSatClosedMarket]);
 
   // 오늘 날짜의 X축 값 찾기
   const todayXValue = useMemo(() => {
