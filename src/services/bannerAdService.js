@@ -72,10 +72,12 @@ export const bannerAdService = {
 
     try {
       const today = _getKstToday();
+      // image_urls 컬럼이 아직 없는 환경(마이그레이션 미적용)도 정상 동작하게 폴백
+      const cols = await _selectableImageColumns();
       const { data, error } = await _activeFilter(
         supabase
           .from('banner_ads')
-          .select('id, name, advertiser_name, slot, image_url, alt_text, landing_slug, external_url, cta_text, title, start_date, end_date, priority')
+          .select(`id, name, advertiser_name, slot, ${cols}, alt_text, landing_slug, external_url, cta_text, title, start_date, end_date, priority`)
           .eq('slot', slot),
         today
       ).order('priority', { ascending: false });
@@ -87,7 +89,7 @@ export const bannerAdService = {
         // 동일 priority 중에서 무작위 선택 (회전 노출)
         const top = data[0].priority;
         const tier = data.filter(a => a.priority === top);
-        ad = tier[Math.floor(Math.random() * tier.length)];
+        ad = _withImagesArray(tier[Math.floor(Math.random() * tier.length)]);
       }
 
       _slotCache.set(slot, { ts: Date.now(), data: ad });
@@ -179,15 +181,16 @@ export const bannerAdService = {
     if (!slug) return null;
     try {
       const today = _getKstToday();
+      const cols = await _selectableImageColumns();
       const { data, error } = await _activeFilter(
         supabase
           .from('banner_ads')
-          .select('id, name, advertiser_name, slot, image_url, alt_text, landing_slug, external_url, cta_text, title, body, contact_phone, start_date, end_date, priority')
+          .select(`id, name, advertiser_name, slot, ${cols}, alt_text, landing_slug, external_url, cta_text, title, body, contact_phone, start_date, end_date, priority`)
           .eq('landing_slug', slug),
         today
       ).maybeSingle();
       if (error) throw error;
-      return data;
+      return _withImagesArray(data);
     } catch (err) {
       console.error('랜딩 광고 조회 실패:', err);
       return null;
@@ -211,6 +214,7 @@ export const bannerAdService = {
   /** 생성 */
   async create(payload) {
     const insert = _normalizePayload(payload);
+    await _stripIfMissingImageUrls(insert);
     const { data, error } = await supabase
       .from('banner_ads')
       .insert([insert])
@@ -225,6 +229,7 @@ export const bannerAdService = {
   async update(id, payload) {
     const update = _normalizePayload(payload, { partial: true });
     update.updated_at = new Date().toISOString();
+    await _stripIfMissingImageUrls(update);
     const { data, error } = await supabase
       .from('banner_ads')
       .update(update)
@@ -292,6 +297,46 @@ export const bannerAdService = {
   },
 };
 
+/**
+ * 다중 이미지 배열을 ad 객체에 추가 (읽기 전용 헬퍼)
+ * - DB에는 image_url(primary) + image_urls(추가) 분리 저장
+ * - 클라이언트에서는 ad.images = [image_url, ...image_urls] 통합 배열로 사용
+ */
+function _withImagesArray(ad) {
+  if (!ad) return ad;
+  const extras = Array.isArray(ad.image_urls) ? ad.image_urls.filter(Boolean) : [];
+  const primary = ad.image_url ? [ad.image_url] : [];
+  return { ...ad, images: [...primary, ...extras] };
+}
+
+/**
+ * image_urls 컬럼 존재 여부를 1회 감지해 캐싱.
+ * 마이그레이션 미적용 환경도 깨지지 않도록 SELECT 컬럼 목록을 동적으로 결정.
+ */
+let _imageUrlsColumnAvailable = null; // null = 미확인, true/false = 결정됨
+async function _selectableImageColumns() {
+  if (_imageUrlsColumnAvailable === true) return 'image_url, image_urls';
+  if (_imageUrlsColumnAvailable === false) return 'image_url';
+  try {
+    const { error } = await supabase
+      .from('banner_ads')
+      .select('image_urls')
+      .limit(1);
+    _imageUrlsColumnAvailable = !error;
+  } catch {
+    _imageUrlsColumnAvailable = false;
+  }
+  return _imageUrlsColumnAvailable ? 'image_url, image_urls' : 'image_url';
+}
+
+/** image_urls 컬럼이 없는 환경에서는 페이로드에서 해당 키 제거 (마이그레이션 미적용 가드) */
+async function _stripIfMissingImageUrls(payload) {
+  await _selectableImageColumns();
+  if (_imageUrlsColumnAvailable === false && 'image_urls' in payload) {
+    delete payload.image_urls;
+  }
+}
+
 function _normalizePayload(p, { partial = false } = {}) {
   const out = {};
   const setIf = (k, v, transform) => {
@@ -303,7 +348,6 @@ function _normalizePayload(p, { partial = false } = {}) {
   setIf('name', p.name);
   setIf('advertiser_name', blankToNull(p.advertiser_name));
   setIf('slot', p.slot);
-  setIf('image_url', p.image_url);
   setIf('alt_text', blankToNull(p.alt_text));
   setIf('landing_slug', blankToNull(p.landing_slug));
   setIf('external_url', blankToNull(p.external_url));
@@ -316,6 +360,20 @@ function _normalizePayload(p, { partial = false } = {}) {
   setIf('priority', p.priority !== undefined ? Number(p.priority) || 0 : undefined);
   setIf('is_active', p.is_active);
   setIf('memo', blankToNull(p.memo));
+
+  // 이미지: 폼이 보내는 형태 두 가지 모두 수용
+  //   1) p.images: 통합 배열 (신형)
+  //   2) p.image_url + p.image_urls: 분리 (구형 / 호환)
+  if (p.images !== undefined) {
+    const arr = Array.isArray(p.images) ? p.images.filter(Boolean) : [];
+    out.image_url = arr[0] || null;
+    out.image_urls = arr.slice(1);
+  } else {
+    if (p.image_url !== undefined) out.image_url = p.image_url || null;
+    if (p.image_urls !== undefined) {
+      out.image_urls = Array.isArray(p.image_urls) ? p.image_urls.filter(Boolean) : [];
+    }
+  }
 
   return out;
 }

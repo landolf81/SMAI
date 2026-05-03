@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bannerAdService } from '../services/bannerAdService';
 import { changeVariant, IMAGE_VARIANTS } from '../services/cfImagesService';
@@ -31,9 +31,11 @@ const BannerAd = ({
   className = '',
   aspectRatio = '8/3',
   rounded = 'rounded-xl',
+  rotateMs = 4000,
 }) => {
   const [ad, setAd] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [imgIndex, setImgIndex] = useState(0);
   const containerRef = useRef(null);
   const impressionTimerRef = useRef(null);
   const trackedRef = useRef(false);
@@ -47,10 +49,27 @@ const BannerAd = ({
       if (!cancelled) {
         setAd(data);
         setLoaded(true);
+        setImgIndex(0);
       }
     })();
     return () => { cancelled = true; };
   }, [slot]);
+
+  // 다중 이미지 자동 회전
+  const images = useMemo(() => {
+    if (!ad) return [];
+    return Array.isArray(ad.images) && ad.images.length > 0
+      ? ad.images
+      : (ad.image_url ? [ad.image_url] : []);
+  }, [ad]);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+    const id = setInterval(() => {
+      setImgIndex(i => (i + 1) % images.length);
+    }, rotateMs);
+    return () => clearInterval(id);
+  }, [images.length, rotateMs]);
 
   // IntersectionObserver — 50% 이상 1초 노출 시 카운트
   useEffect(() => {
@@ -108,11 +127,43 @@ const BannerAd = ({
   }, [ad, navigate]);
 
   // 데이터 로드 전 또는 광고 없음 → 빈 슬롯 (CLS 방지를 위해 자리 차지하지 않음)
-  if (!loaded || !ad) {
+  if (!loaded || !ad || images.length === 0) {
     return null;
   }
 
   const hasLink = !!(ad.external_url || ad.landing_slug);
+
+  // 다중 이미지를 모두 absolute로 깔고 현재 인덱스만 opacity-100, 나머지 opacity-0 (페이드 전환)
+  const imageStack = (
+    <>
+      {images.map((src, idx) => (
+        <img
+          key={`${src}-${idx}`}
+          src={toMediumVariant(src)}
+          alt={ad.alt_text || ad.title || ad.name || '광고'}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+            idx === imgIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+          loading={idx === 0 ? 'eager' : 'lazy'}
+          decoding="async"
+        />
+      ))}
+    </>
+  );
+
+  // 다중일 때 페이지 인디케이터 (점)
+  const indicators = images.length > 1 ? (
+    <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+      {images.map((_, idx) => (
+        <span
+          key={idx}
+          className={`w-1.5 h-1.5 rounded-full transition-colors ${
+            idx === imgIndex ? 'bg-white' : 'bg-white/40'
+          }`}
+        />
+      ))}
+    </div>
+  ) : null;
 
   return (
     <div className={`w-full ${className}`}>
@@ -130,25 +181,15 @@ const BannerAd = ({
             target={ad.external_url && !ad.external_url.startsWith('/') ? '_blank' : undefined}
             rel={ad.external_url && !ad.external_url.startsWith('/') ? 'noopener noreferrer' : undefined}
           >
-            <img
-              src={toMediumVariant(ad.image_url)}
-              alt={ad.alt_text || ad.title || ad.name || '광고'}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
+            {imageStack}
             <BannerOverlay ad={ad} />
+            {indicators}
           </a>
         ) : (
           <div className="absolute inset-0">
-            <img
-              src={toMediumVariant(ad.image_url)}
-              alt={ad.alt_text || ad.title || ad.name || '광고'}
-              className="absolute inset-0 w-full h-full object-cover"
-              loading="lazy"
-              decoding="async"
-            />
+            {imageStack}
             <BannerOverlay ad={ad} />
+            {indicators}
           </div>
         )}
       </div>

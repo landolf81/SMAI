@@ -1,18 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import BannerAdImageInput from './BannerAdImageInput';
+import BannerAdImagesInput from './BannerAdImagesInput';
 import { BANNER_SLOTS, BANNER_SLOT_LABELS } from '../../services/bannerAdService';
 
 /**
  * BannerAdForm
  * - AdminBannerAds 페이지에서 사용하는 생성/수정 공용 폼
- * - 이미지 업로드는 BannerAdImageInput (storageService 직접 호출, type="button" 안전)
+ * - 이미지 업로드는 BannerAdImagesInput (다중 이미지, 순서 변경, 직접 URL 입력 지원)
+ * - form.images = [primary, ...extras] 형태로 관리하고 저장 시 서비스가 image_url + image_urls로 분리
  */
+const _initialImages = (initial) => {
+  if (!initial) return [];
+  if (Array.isArray(initial.images) && initial.images.length > 0) return initial.images;
+  const primary = initial.image_url ? [initial.image_url] : [];
+  const extras = Array.isArray(initial.image_urls) ? initial.image_urls : [];
+  return [...primary, ...extras];
+};
+
 const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
   const [form, setForm] = useState({
     name: '',
     advertiser_name: '',
     slot: BANNER_SLOTS.HOME_TOP,
-    image_url: '',
+    images: [],
     alt_text: '',
     landing_slug: '',
     external_url: '',
@@ -26,10 +35,13 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
     is_active: true,
     memo: '',
     ...initial,
+    images: _initialImages(initial),
   });
 
   useEffect(() => {
-    if (initial) setForm(prev => ({ ...prev, ...initial }));
+    if (initial) {
+      setForm(prev => ({ ...prev, ...initial, images: _initialImages(initial) }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial?.id]);
 
@@ -43,9 +55,9 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
     const missing = [];
     if (!form.name?.trim()) missing.push('광고명');
     if (!form.slot) missing.push('slot');
-    if (!form.image_url?.trim()) missing.push('배너 이미지(또는 이미지 URL)');
+    if (!Array.isArray(form.images) || form.images.length === 0) missing.push('배너 이미지(1장 이상)');
     if (missing.length > 0) {
-      alert(`다음 필수 항목이 비어 있습니다: ${missing.join(', ')}\n\n이미지가 업로드된 것처럼 보이지만 image_url이 비어 있다면 업로드가 실패한 것입니다. "이미지 URL 직접 입력"란에 URL을 붙여넣어 진행할 수 있습니다.`);
+      alert(`다음 필수 항목이 비어 있습니다: ${missing.join(', ')}`);
       return;
     }
     if (form.landing_slug && !/^[a-z0-9-]+$/.test(form.landing_slug)) {
@@ -126,32 +138,15 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
         </Field>
       </div>
 
-      {/* 배너 이미지 */}
-      <Field label="배너 이미지" required>
-        <BannerAdImageInput
-          value={form.image_url}
-          onChange={(url) => setForm(prev => ({ ...prev, image_url: url || '' }))}
+      {/* 배너 이미지 (다중 이미지 — 4초마다 회전) */}
+      <Field label="배너 이미지 (1장 이상)" required>
+        <BannerAdImagesInput
+          value={form.images}
+          onChange={(urls) => setForm(prev => ({ ...prev, images: urls }))}
         />
-        <p className="text-xs text-base-content/60 mt-1">
-          권장 비율 8:3 (예: 1200×450) — 모바일 우선. 너무 큰 이미지는 자동 리사이즈됩니다.
+        <p className="text-xs text-base-content/60 mt-2">
+          권장 비율 8:3 (예: 1200×450). 여러 장 등록 시 첫 이미지가 정적 노출되고 4초마다 회전합니다.
         </p>
-
-        {/* URL 직접 입력 (업로드 실패 시 폴백) */}
-        <div className="mt-3">
-          <label className="block text-xs font-medium text-base-content/70 mb-1">
-            또는 이미지 URL 직접 입력 (업로드가 안 될 때)
-          </label>
-          <input
-            type="url"
-            value={form.image_url}
-            onChange={update('image_url')}
-            className="input input-bordered input-sm w-full font-mono text-xs"
-            placeholder="https://imagedelivery.net/... 또는 R2/외부 이미지 URL"
-          />
-          <p className={`text-[11px] mt-1 ${form.image_url ? 'text-emerald-600' : 'text-red-500'}`}>
-            현재 저장된 image_url: {form.image_url ? '✓ 입력됨' : '✗ 비어 있음'}
-          </p>
-        </div>
       </Field>
 
       <Field label="대체 텍스트 (alt)">
@@ -251,14 +246,16 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
         <span className="text-sm">활성화 (체크 해제 시 노출되지 않음)</span>
       </label>
 
-      {/* 미리보기 */}
-      {form.image_url && (
+      {/* 미리보기 — 첫 이미지 기준 */}
+      {Array.isArray(form.images) && form.images.length > 0 && (
         <div className="border-t border-base-300 pt-4">
-          <h4 className="font-semibold text-sm text-base-content/70 mb-2">미리보기</h4>
+          <h4 className="font-semibold text-sm text-base-content/70 mb-2">
+            미리보기 {form.images.length > 1 && <span className="text-xs text-base-content/50">(실제 노출은 4초마다 회전)</span>}
+          </h4>
           <div className="bg-base-100 p-4 rounded-xl border border-base-300 max-w-md">
             <div className="relative w-full bg-base-200 overflow-hidden rounded-xl" style={{ aspectRatio: '8/3' }}>
               <img
-                src={form.image_url}
+                src={form.images[0]}
                 alt={form.alt_text || form.name}
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -273,6 +270,16 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
                       {form.cta_text}
                     </span>
                   )}
+                </div>
+              )}
+              {form.images.length > 1 && (
+                <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-1 z-10">
+                  {form.images.map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`w-1.5 h-1.5 rounded-full ${idx === 0 ? 'bg-white' : 'bg-white/40'}`}
+                    />
+                  ))}
                 </div>
               )}
             </div>
