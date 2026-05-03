@@ -543,7 +543,7 @@ const MobileAdDisplay = ({ ad }) => {
                   alt={getCurrentMedia().alt || ad.title}
                   className="absolute inset-0 w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                   loading="eager"
-                  fetchpriority="high"
+                  fetchPriority="high"
                   onError={(e) => {
                     e.target.src = DEFAULT_AD_IMAGE;
                   }}

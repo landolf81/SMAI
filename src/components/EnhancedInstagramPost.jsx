@@ -1275,7 +1275,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     alt="게시물 이미지"
                     className="w-full h-full object-cover cursor-pointer"
                     loading={priority ? 'eager' : 'lazy'}
-                    fetchpriority={priority ? 'high' : undefined}
+                    fetchPriority={priority ? 'high' : undefined}
                     onClick={() => {
                       setMediaModalIndex(0);
                       setShowMediaModal(true);
