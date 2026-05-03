@@ -135,6 +135,12 @@ const AdminLeftbar = () => {
           badge: null
         },
         {
+          path: "/admin/banner-ads",
+          icon: CampaignIcon,
+          label: "배너 광고",
+          badge: null
+        },
+        {
           path: "/admin/ads/analytics",
           icon: TrendingUpIcon,
           label: "광고 성과",

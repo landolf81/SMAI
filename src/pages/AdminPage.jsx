@@ -249,7 +249,7 @@ const DashboardContent = ({ navigate }) => {
                             </svg>
                             게시물 관리
                         </button>
-                        <button 
+                        <button
                             onClick={() => navigate('/admin/ads')}
                             className="btn btn-outline gap-2"
                         >
@@ -257,6 +257,15 @@ const DashboardContent = ({ navigate }) => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
                             광고 관리
+                        </button>
+                        <button
+                            onClick={() => navigate('/admin/banner-ads')}
+                            className="btn btn-outline gap-2"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h18M3 12h18M3 19h18"></path>
+                            </svg>
+                            배너 광고
                         </button>
                         <button
                             onClick={() => navigate('/admin/analytics')}

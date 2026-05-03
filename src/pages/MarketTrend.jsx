@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   LineChart,
   Line,
@@ -12,10 +13,15 @@ import {
 } from 'recharts';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { marketService } from '../services';
+import { marketService, adService } from '../services';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DatePickerModal from '../components/DatePickerModal';
 import { useTheme } from '../context/ThemeContext';
+import BannerAd from '../components/BannerAd';
+import { BANNER_SLOTS } from '../services/bannerAdService';
+import MobileAdDisplay from '../components/MobileAdDisplay';
+import { shouldShowAds } from '../utils/deviceDetector';
+import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 
 // 고정 공휴일 (MM-DD 형식)
 const FIXED_HOLIDAYS = [
@@ -84,6 +90,18 @@ const MarketTrend = () => {
   const [customEndDate, setCustomEndDate] = useState(null);
   const [isCustomPeriod, setIsCustomPeriod] = useState(false);
   const [yearlyCumulative, setYearlyCumulative] = useState(null);
+
+  // 광고 데이터 (모바일만) - 하단 피드형 카드용
+  const { data: adsData } = useQuery({
+    queryKey: ['ads', 'active', 'market-trend'],
+    queryFn: () => adService.getActiveAds(),
+    staleTime: 5 * 60 * 1000,
+    enabled: shouldShowAds(),
+  });
+  const sortedAds = useMemo(() => {
+    if (!adsData || adsData.length === 0) return [];
+    return sortAdsByPriority(adsData, getAdViewCounts());
+  }, [adsData]);
 
   // 오늘 날짜 (한국 시간)
   const getKoreanToday = () => {
@@ -371,6 +389,11 @@ const MarketTrend = () => {
             {marketName} 경락가 추세
           </h1>
         </div>
+      </div>
+
+      {/* 배너 광고 - 시세 추세 상단 */}
+      <div className="px-4 pt-3">
+        <BannerAd slot={BANNER_SLOTS.MARKET_TREND_TOP} />
       </div>
 
       {/* 기간 선택 탭 */}
@@ -892,6 +915,13 @@ const MarketTrend = () => {
           );
         })()}
       </div>
+
+      {/* 최하단 피드형 광고 카드 (모바일만) */}
+      {shouldShowAds() && sortedAds.length > 0 && (
+        <div className="mt-4 px-4">
+          <MobileAdDisplay ad={sortedAds[0]} />
+        </div>
+      )}
 
       {/* 날짜 선택 모달 */}
       <DatePickerModal

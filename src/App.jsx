@@ -111,6 +111,8 @@ const TradingPolicy = lazy(() => import('./pages/TradingPolicy'));
 const PCLanding = lazy(() => import('./pages/PCLanding'));
 const DMChatPage = lazy(() => import('./pages/DMChatPage'));
 const Notifications = lazy(() => import('./pages/Notifications'));
+const SponsorLanding = lazy(() => import('./pages/SponsorLanding'));
+const AdminBannerAds = lazy(() => import('./pages/admin/AdminBannerAds'));
 
 // QueryClient는 컴포넌트 외부에서 1회만 생성 (App 리렌더 시 캐시 유지)
 const queryClient = new QueryClient({
@@ -575,6 +577,10 @@ const router = createBrowserRouter(
         element: <PrivacyPolicy />,
       },
       {
+        path: '/sponsor/:slug',
+        element: <SponsorLanding />,
+      },
+      {
         path: '/terms',
         element: <Terms />,
       },
@@ -643,6 +649,10 @@ const router = createBrowserRouter(
       {
         path: '/admin/ads/revenue',
         element: <ProtectedRoute><AdRevenue /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/banner-ads',
+        element: <ProtectedRoute><AdminBannerAds /></ProtectedRoute>,
       },
       {
         path: '/admin/tags',

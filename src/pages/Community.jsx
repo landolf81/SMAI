@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import EnhancedInstagramFeed from '../components/EnhancedInstagramFeed';
 import { AuthContext } from '../context/AuthContext';
+import BannerAd from '../components/BannerAd';
+import { BANNER_SLOTS } from '../services/bannerAdService';
 
 const Community = () => {
     const [searchParams] = useSearchParams();
@@ -36,6 +38,11 @@ const Community = () => {
                     </button>
                 </div>
             )}
+
+            {/* 배너 광고 - 커뮤니티 상단 */}
+            <div className="max-w-md mx-auto px-4 pt-3">
+                <BannerAd slot={BANNER_SLOTS.COMMUNITY_TOP} />
+            </div>
 
             {/* 게시물 목록 */}
             <div className="w-full">

@@ -23,6 +23,8 @@ import { useAdminPermissions } from '../hooks/usePermissions';
 import PushNotificationBanner from '../components/PushNotificationBanner';
 import MarketSearchModal from '../components/MarketSearchModal';
 import CombinedMarketCard from '../components/CombinedMarketCard';
+import BannerAd from '../components/BannerAd';
+import { BANNER_SLOTS } from '../services/bannerAdService';
 
 
 // 색상 정의
@@ -763,6 +765,9 @@ const Home = () => {
       >
         {/* 푸시 알림 구독 배너 */}
         <PushNotificationBanner />
+
+        {/* 배너 광고 - 홈 상단 */}
+        <BannerAd slot={BANNER_SLOTS.HOME_TOP} className="mb-3" />
 
         <MarketCards
           marketData={marketData}

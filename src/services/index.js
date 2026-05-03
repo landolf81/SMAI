@@ -27,4 +27,5 @@ export * from './agentService.js';
 export { pesticideService } from './pesticideService.js';
 export { default as loungePollService } from './loungePollService.js';
 export { default as adPollService } from './adPollService.js';
+export { bannerAdService, BANNER_SLOTS, BANNER_SLOT_LABELS } from './bannerAdService.js';
 export { notificationService } from './notificationService.js';

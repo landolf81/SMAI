@@ -19,6 +19,8 @@ import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils'
 import PriceDetailModal from '../components/PriceDetailModal';
 import LocalMarketDetailModal from '../components/LocalMarketDetailModal';
 import MarketSearchModal from '../components/MarketSearchModal';
+import BannerAd from '../components/BannerAd';
+import { BANNER_SLOTS } from '../services/bannerAdService';
 
 // 산지 목록 — 이 외에는 모두 모달 지원 (도매시장)
 // 성주 내부 산지 + 공판장 (도매시장 집계에서 제외되는 시장)
@@ -471,6 +473,11 @@ const Prices = () => {
         </div>
       </div>
 
+      {/* 배너 광고 - 경락가 상단 */}
+      <div className="w-full max-w-screen-xl mx-auto px-4 pt-3">
+        <BannerAd slot={BANNER_SLOTS.PRICES_TOP} />
+      </div>
+
       {/* AI 브리핑 배너 - 모든 공판장 (터치 시 공유) */}
       {briefing?.briefing && (
         <div
@@ -642,6 +649,11 @@ const Prices = () => {
                 </div>
               </div>
             )}
+
+            {/* 배너 광고 - 경락가 중간 */}
+            <div className="my-4">
+              <BannerAd slot={BANNER_SLOTS.PRICES_MIDDLE} />
+            </div>
 
             {/* 상세 가격 정보 - 카드 형태 (10kg 필터) */}
             <div className="space-y-6">

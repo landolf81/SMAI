@@ -29,6 +29,8 @@ import { estimateLoungeMessageHeight, getDateSeparatorHeight } from '../lib/text
 import LoungeComposeModal from '../components/lounge/LoungeComposeModal';
 import LoungeImageScroll from '../components/lounge/LoungeImageScroll';
 import ProfileModal from '../components/ProfileModal';
+import BannerAd from '../components/BannerAd';
+import { BANNER_SLOTS } from '../services/bannerAdService';
 import { BadgeList } from '../components/BadgeDisplay';
 import { badgeService } from '../services';
 import { useQuery } from '@tanstack/react-query';
@@ -951,6 +953,11 @@ const Lounge = () => {
             <p className="text-[13px]">첫 번째 글을 남겨보세요!</p>
           </div>
         ))}
+
+        {/* 배너 광고 - 라운지 상단 */}
+        <div className="px-3 pt-2">
+          <BannerAd slot={BANNER_SLOTS.LOUNGE_TOP} />
+        </div>
 
         {/* 날짜 구분선 + 메시지 (최신순) */}
         <div className="py-2">
