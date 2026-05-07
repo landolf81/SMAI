@@ -9,6 +9,8 @@ import toast from 'react-hot-toast';
 import { marketService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BannerAd from '../components/BannerAd';
+import { BANNER_SLOTS } from '../services/bannerAdService';
 
 // 가격 포맷
 const formatPrice = (price) => {
@@ -200,6 +202,11 @@ const FavoritePrices = () => {
             </svg>
           </button>
         </div>
+      </div>
+
+      {/* 배너 광고 - 즐겨찾기 시세 상단 */}
+      <div className="w-full max-w-screen-xl mx-auto px-4 pt-3">
+        <BannerAd slot={BANNER_SLOTS.FAVORITE_PRICES_TOP} />
       </div>
 
       {/* 콘텐츠 */}
