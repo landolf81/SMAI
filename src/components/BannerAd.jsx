@@ -8,14 +8,17 @@ import { changeVariant, IMAGE_VARIANTS } from '../services/cfImagesService';
  * - slot 하나에 대한 활성 배너 광고를 1개 가져와 렌더링
  * - 화면에 50% 이상 1초 이상 보이면 impression 1회 추적 (IntersectionObserver)
  * - 클릭 시 내부(/sponsor/:slug) 또는 외부 링크 이동
- * - CLS 방지: 항상 고정 비율 컨테이너 점유 (광고가 없으면 className으로 0높이 처리)
+ * - 로딩 중: 동일 비율 스켈레톤 자리 점유 (CLS 방지)
+ * - 로드 완료 후 광고 없음: fallback 이미지 표시 (없으면 null)
  *
  * Props:
  *  - slot: BANNER_SLOTS 중 하나 (필수)
  *  - className: 외곽 wrapper 클래스 (선택)
  *  - aspectRatio: 컨테이너 비율 (기본 '8/3' = 모바일 배너)
  *  - rounded: 모서리 둥글기 (기본 'rounded-xl')
+ *  - fallbackImage: 광고 없을 때 표시할 기본 이미지 경로 (기본 '/images/banner-fallback.png')
  */
+const DEFAULT_FALLBACK_IMAGE = '/images/banner-fallback.png';
 const toMediumVariant = (url) => {
   if (!url || typeof url !== 'string') return url;
   if (!url.includes('imagedelivery.net')) return url;
@@ -32,6 +35,7 @@ const BannerAd = ({
   aspectRatio = '8/3',
   rounded = 'rounded-xl',
   rotateMs = 4000,
+  fallbackImage = DEFAULT_FALLBACK_IMAGE,
 }) => {
   const [ad, setAd] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -126,9 +130,39 @@ const BannerAd = ({
     }
   }, [ad, navigate]);
 
-  // 데이터 로드 전 또는 광고 없음 → 빈 슬롯 (CLS 방지를 위해 자리 차지하지 않음)
-  if (!loaded || !ad || images.length === 0) {
-    return null;
+  // 로드 완료 + 광고 없음 → fallback 이미지 (없으면 null)
+  if (loaded && (!ad || images.length === 0)) {
+    if (!fallbackImage) return null;
+    return (
+      <div className={`w-full ${className}`}>
+        <div
+          className={`relative w-full bg-base-200 overflow-hidden ${rounded}`}
+          style={{ aspectRatio }}
+        >
+          <img
+            src={fallbackImage}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 로딩 중 → 동일 비율 스켈레톤 (CLS 방지)
+  if (!loaded) {
+    return (
+      <div className={`w-full ${className}`}>
+        <div
+          className={`relative w-full bg-base-300 overflow-hidden ${rounded} animate-pulse`}
+          style={{ aspectRatio }}
+          aria-hidden="true"
+        />
+      </div>
+    );
   }
 
   const hasLink = !!(ad.external_url || ad.landing_slug);
