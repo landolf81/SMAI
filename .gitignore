@@ -45,3 +45,16 @@ public/uploads/posts/*
 # Claude Code
 .claude/worktrees/
 .claude/launch.json
+.claude/settings.local.json
+.mcp.json
+
+# Local Supabase CLI temp
+supabase/.temp/
+
+# 임시 데이터 정리 스크립트/쿼리 (service_role 키 등 노출 위험)
+scripts/
+supabase/queries/
+
+# Python cache
+__pycache__/
+*.py[cod]
