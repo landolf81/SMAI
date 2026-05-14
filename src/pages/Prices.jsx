@@ -650,11 +650,6 @@ const Prices = () => {
               </div>
             )}
 
-            {/* 배너 광고 - 경락가 중간 */}
-            <div className="my-4">
-              <BannerAd slot={BANNER_SLOTS.PRICES_MIDDLE} />
-            </div>
-
             {/* 상세 가격 정보 - 카드 형태 (10kg 필터) */}
             <div className="space-y-6">
               {marketData.details.map((item, index) => {
