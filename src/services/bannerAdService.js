@@ -15,7 +15,6 @@ import { supabase } from '../config/supabase.js';
 export const BANNER_SLOTS = Object.freeze({
   HOME_TOP: 'home_top',
   PRICES_TOP: 'prices_top',
-  PRICES_MIDDLE: 'prices_middle',
   FAVORITE_PRICES_TOP: 'favorite_prices_top',
   MARKET_TREND_TOP: 'market_trend_top',
   LOUNGE_TOP: 'lounge_top',
@@ -25,7 +24,6 @@ export const BANNER_SLOTS = Object.freeze({
 export const BANNER_SLOT_LABELS = Object.freeze({
   home_top: '홈 상단',
   prices_top: '경락가 상단',
-  prices_middle: '경락가 중간',
   favorite_prices_top: '즐겨찾기 시세 상단',
   market_trend_top: '시세 추세 상단',
   lounge_top: '라운지 상단',
