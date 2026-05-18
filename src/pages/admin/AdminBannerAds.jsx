@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import AddIcon from '@mui/icons-material/Add';
@@ -28,6 +28,7 @@ const AdminBannerAds = () => {
   const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [slotFilter, setSlotFilter] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all'); // all | active | inactive | expired
 
   // 통계 날짜 필터
   const [startDate, setStartDate] = useState('');
@@ -47,6 +48,24 @@ const AdminBannerAds = () => {
   }, [slotFilter]);
 
   useEffect(() => { loadAds(); }, [loadAds]);
+
+  const { filteredAds, statusCounts } = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const counts = { all: ads.length, active: 0, inactive: 0, expired: 0 };
+    const categorized = ads.map((ad) => {
+      const expired = !!ad.end_date && ad.end_date < today;
+      let status;
+      if (!ad.is_active) status = 'inactive';
+      else if (expired) status = 'expired';
+      else status = 'active';
+      counts[status] += 1;
+      return { ad, status };
+    });
+    const filtered = activeFilter === 'all'
+      ? ads
+      : categorized.filter((x) => x.status === activeFilter).map((x) => x.ad);
+    return { filteredAds: filtered, statusCounts: counts };
+  }, [ads, activeFilter]);
 
   const handleCreate = async (form) => {
     try {
@@ -150,6 +169,19 @@ const AdminBannerAds = () => {
                   </select>
                 </div>
                 <div>
+                  <label className="block text-xs text-base-content/60 mb-1">상태 필터</label>
+                  <select
+                    value={activeFilter}
+                    onChange={(e) => setActiveFilter(e.target.value)}
+                    className="select select-bordered select-sm"
+                  >
+                    <option value="all">전체 ({statusCounts.all})</option>
+                    <option value="active">활성 ({statusCounts.active})</option>
+                    <option value="inactive">비활성 ({statusCounts.inactive})</option>
+                    <option value="expired">기간 종료 ({statusCounts.expired})</option>
+                  </select>
+                </div>
+                <div>
                   <label className="block text-xs text-base-content/60 mb-1">통계 시작일</label>
                   <input
                     type="date"
@@ -184,9 +216,13 @@ const AdminBannerAds = () => {
                 <div className="text-center py-12 text-base-content/60">
                   등록된 배너 광고가 없습니다. 우측 상단 "새 광고"를 눌러 추가하세요.
                 </div>
+              ) : filteredAds.length === 0 ? (
+                <div className="text-center py-12 text-base-content/60">
+                  조건에 맞는 광고가 없습니다.
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {ads.map((ad) => (
+                  {filteredAds.map((ad) => (
                     <AdCard
                       key={ad.id}
                       ad={ad}
