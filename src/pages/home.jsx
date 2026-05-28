@@ -9,7 +9,6 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SearchIcon from '@mui/icons-material/Search';
 import { marketService, weatherBriefingService, postService } from '../services';
-import weatherService from '../services/weatherService';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -20,6 +19,7 @@ import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/device
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import { useAdminPermissions } from '../hooks/usePermissions';
+import { useWeather } from '../hooks/useWeather';
 import PushNotificationBanner from '../components/PushNotificationBanner';
 import MarketSearchModal from '../components/MarketSearchModal';
 import CombinedMarketCard from '../components/CombinedMarketCard';
@@ -65,8 +65,12 @@ const Home = () => {
   // 날씨 브리핑 상태
   const [weatherBriefing, setWeatherBriefing] = useState(null);
   const [briefingRegenerating, setBriefingRegenerating] = useState(false);
+  const briefingFetchedRef = useRef(false); // 브리핑 중복 요청 방지
   const adminPermissions = useAdminPermissions();
   const { currentUser } = useContext(AuthContext);
+
+  // 날씨 데이터: 공유 useWeather 훅으로 위젯/모달과 단일 fetch 공유
+  const { data: weather } = useWeather();
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -154,10 +158,10 @@ const Home = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        // 병렬 실행: 시장 설정, 날씨, 공판장 정보 (LCP 개선: 병렬 로드)
-        const [settings, weather, marketInfoList] = await Promise.all([
+        // 병렬 실행: 시장 설정, 공판장 정보 (LCP 개선: 병렬 로드)
+        // 날씨는 useWeather 훅이 담당하고, 브리핑은 weather 변경 시 별도 effect에서 처리
+        const [settings, marketInfoList] = await Promise.all([
           marketService.getMarketSettings(),
-          weatherService.getWeatherData(),
           marketService.getMarketInfo().catch(() => []), // 오류 시 빈 배열 fallback
         ]);
 
@@ -167,12 +171,6 @@ const Home = () => {
         if (marketInfoList.length > 0) {
           const infoMap = new Map(marketInfoList.map((info) => [info.market_name, info]));
           setMarketInfoMap(infoMap);
-        }
-
-        // 날씨 브리핑: Gemini 사용
-        if (weather) {
-          const briefing = await weatherBriefingService.getBriefing(weather);
-          if (briefing) setWeatherBriefing(briefing);
         }
       } catch (error) {
         console.error('초기 데이터 로드 실패:', error);
@@ -194,12 +192,27 @@ const Home = () => {
 
   }, []);
 
+  // 날씨 데이터가 준비되면 브리핑 1회 요청 (Gemini)
+  useEffect(() => {
+    if (!weather || briefingFetchedRef.current) return;
+    briefingFetchedRef.current = true;
+    weatherBriefingService.getBriefing(weather)
+      .then((briefing) => { if (briefing) setWeatherBriefing(briefing); })
+      .catch((error) => {
+        console.error('날씨 브리핑 로드 실패:', error);
+        briefingFetchedRef.current = false; // 실패 시 재시도 허용
+      });
+  }, [weather]);
+
   // 관리자 전용: Gemini로 브리핑 재생성
   const handleRegenerateBriefing = async () => {
     if (briefingRegenerating) return;
+    if (!weather) {
+      alert('날씨 데이터를 아직 불러오지 못했습니다.');
+      return;
+    }
     setBriefingRegenerating(true);
     try {
-      const weather = await weatherService.getWeatherData();
       const briefing = await weatherBriefingService.regenerateBriefing(weather);
       if (briefing) setWeatherBriefing(briefing);
     } catch (error) {

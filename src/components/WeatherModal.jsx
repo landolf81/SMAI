@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { weatherService } from '../services/weatherService';
+import { useWeather } from '../hooks/useWeather';
 import LoadingSpinner from './LoadingSpinner';
 
 const WeatherModal = ({ isOpen, onClose, briefing }) => {
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // 공유 useWeather 훅 — 모달이 열렸을 때만 활성화. 위젯이 이미 채운 캐시를 즉시 공유.
+  const { data: weather, isLoading: loading, isError } = useWeather({ enabled: isOpen });
+  const error = isError ? '날씨 정보를 불러올 수 없습니다.' : null;
   const [activeTab, setActiveTab] = useState('today'); // today, hourly, weekly
   const scrollYRef = useRef(0);
   const wasOpenRef = useRef(false);
@@ -37,27 +38,6 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
         document.body.style.top = '';
       }
     };
-  }, [isOpen]);
-
-  // 날씨 데이터 로드
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const fetchWeather = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await weatherService.getWeatherData();
-        setWeather(data);
-      } catch (err) {
-        console.error('날씨 데이터 로드 실패:', err);
-        setError('날씨 정보를 불러올 수 없습니다.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeather();
   }, [isOpen]);
 
   // 날짜 포맷

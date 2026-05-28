@@ -1,29 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { weatherService } from '../services/weatherService';
+import { useWeather } from '../hooks/useWeather';
 
 const WeatherWidget = ({ onClick }) => {
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        setLoading(true);
-        const data = await weatherService.getWeatherData(false); // 기본 위치(선남) 사용
-        setWeather(data);
-      } catch (error) {
-        console.error('날씨 데이터 로드 실패:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeather();
-
-    // 30분마다 새로고침
-    const interval = setInterval(fetchWeather, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // 공유 useWeather 훅으로 단일 fetch 결과를 사용 (중복 weather_cache 조회 제거).
+  // 30분 폴링은 setInterval 대신 react-query refetchInterval로 처리.
+  const { data: weather, isLoading: loading } = useWeather({
+    refetchInterval: 30 * 60 * 1000,
+  });
 
   // 현재 시각에 가장 가까운 예보 온도 가져오기
   const getCurrentTemp = () => {
