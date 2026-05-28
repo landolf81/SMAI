@@ -718,6 +718,30 @@ const isCacheUsable = (data) => {
   return hasShortTerm || hasCurrent;
 };
 
+// API 일부 실패로 비어버린 섹션을 기존 캐시 값으로 보존
+// (새 데이터가 있으면 우선, 없으면 기존 유지 — 지난 날짜 제외)
+// → 중기예보 등 일시적 API 오류로 데이터가 통째로 날아가는 것을 방지
+const mergeWeatherFallback = (fresh, prev) => {
+  if (!prev) return fresh;
+  const today = formatDate(new Date());
+  const notPast = (d) => d?.date >= today;
+  const merged = { ...fresh };
+
+  if (fresh.current == null && prev.current != null) {
+    merged.current = prev.current;
+  }
+  if (!fresh.shortTerm?.length && prev.shortTerm?.length) {
+    merged.shortTerm = prev.shortTerm;
+  }
+  if (!fresh.daily?.length && prev.daily?.length) {
+    merged.daily = prev.daily.filter(notPast);
+  }
+  if (!fresh.midTerm?.length && prev.midTerm?.length) {
+    merged.midTerm = prev.midTerm.filter(notPast);
+  }
+  return merged;
+};
+
 // 통합 날씨 데이터 가져오기 (캐시 우선, 만료되어도 즉시 반환)
 const getWeatherData = async () => {
   const locationKey = 'default';
@@ -733,8 +757,10 @@ const getWeatherData = async () => {
     if (isExpired) {
       fetchWeatherFromApi(DEFAULT_LOCATION)
         .then(freshData => {
-          if (isCacheUsable(freshData)) {
-            setCachedWeather(locationKey, freshData);
+          // 일부 섹션(중기예보 등) 실패 시 기존 캐시 값 유지
+          const merged = mergeWeatherFallback(freshData, cachedData);
+          if (isCacheUsable(merged)) {
+            setCachedWeather(locationKey, merged);
             console.log('백그라운드 날씨 캐시 갱신 완료');
           }
         })
@@ -750,7 +776,9 @@ const getWeatherData = async () => {
   } else {
     console.log('기상청 API에서 날씨 데이터 가져오는 중...');
   }
-  const weatherData = await fetchWeatherFromApi(DEFAULT_LOCATION);
+  const freshData = await fetchWeatherFromApi(DEFAULT_LOCATION);
+  // 일부 섹션(중기예보 등) 실패 시 기존 캐시 값 유지
+  const weatherData = mergeWeatherFallback(freshData, cachedData);
 
   // 4. 핵심 데이터가 있을 때만 캐시 저장
   if (isCacheUsable(weatherData)) {

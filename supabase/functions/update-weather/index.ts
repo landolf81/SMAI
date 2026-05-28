@@ -16,6 +16,17 @@ const DEFAULT_LOCATION = {
   regIdTemp: '11H10605'   // 성주 (중기기온예보)
 }
 
+// 캐시에 저장되는 날씨 데이터 형태
+type DatedEntry = { date: string; [key: string]: unknown }
+type WeatherCache = {
+  location?: string
+  current?: unknown
+  shortTerm?: unknown[]
+  daily?: DatedEntry[]
+  midTerm?: DatedEntry[]
+  updatedAt?: string
+}
+
 // 한국 시간 가져오기 (UTC+9)
 const getKoreanTime = (): Date => {
   const now = new Date()
@@ -445,6 +456,14 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+    // 기존 캐시 조회 (API 실패 시 기존 데이터 유지용)
+    const { data: prevRow } = await supabase
+      .from('weather_cache')
+      .select('data')
+      .eq('location_key', 'default')
+      .maybeSingle()
+    const prevData = (prevRow?.data ?? null) as WeatherCache | null
+
     // 모든 API 병렬 호출
     const [current, forecast, midForecast, midTemp] = await Promise.all([
       getUltraSrtNcst(),
@@ -490,12 +509,37 @@ Deno.serve(async (req) => {
     const midTermOnly = Object.values(midForecastMap)
       .filter(day => !dailyDates.has(day.date))
 
+    // === API 실패 시 기존 캐시 데이터로 폴백 ===
+    // 새로 받은 섹션이 비었으면 덮어쓰지 않고 기존 캐시 값을 유지(지난 날짜만 제거).
+    // 성공 시에만 갱신 → 일시적 API 오류로 데이터가 통째로 날아가는 것을 방지.
+    const todayStr = formatDate(getKoreanTime())
+    const notPast = (d: DatedEntry) => d.date >= todayStr
+
+    const currentFailed = current == null
+    const shortTermFailed = !forecast
+    const midTermFailed = !midForecast || midForecast.length === 0
+
+    const finalCurrent = currentFailed ? (prevData?.current ?? null) : current
+    const finalShortTerm = shortTermFailed
+      ? (prevData?.shortTerm ?? [])
+      : (forecast?.hourly || [])
+    const finalDaily = shortTermFailed
+      ? (prevData?.daily ?? []).filter(notPast)
+      : dailyWithMid
+    const finalMidTerm = midTermFailed
+      ? (prevData?.midTerm ?? []).filter(notPast)
+      : midTermOnly
+
+    if (currentFailed) console.warn('초단기실황 실패 — 기존 캐시 유지')
+    if (shortTermFailed) console.warn(`단기예보 실패 — 기존 캐시 유지 (daily ${finalDaily.length}건)`)
+    if (midTermFailed) console.warn(`중기예보 실패 — 기존 캐시 유지 (midTerm ${finalMidTerm.length}건)`)
+
     const weatherData = {
       location: DEFAULT_LOCATION.name,
-      current,
-      shortTerm: forecast?.hourly || [],
-      daily: dailyWithMid,
-      midTerm: midTermOnly,
+      current: finalCurrent,
+      shortTerm: finalShortTerm,
+      daily: finalDaily,
+      midTerm: finalMidTerm,
       updatedAt: new Date().toISOString()
     }
 
