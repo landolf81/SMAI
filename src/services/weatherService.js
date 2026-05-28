@@ -9,6 +9,9 @@ const KMA_API_KEY_RAW = import.meta.env.VITE_KMA_API_KEY;
 
 // 캐시 설정
 const CACHE_DURATION_MS = 60 * 60 * 1000; // 1시간
+// 라이브 API 직접 호출 최소 간격 (cron이 매시간 캐시를 채우므로 새로고침마다 재호출하지 않음)
+const LIVE_FETCH_COOLDOWN_MS = 15 * 60 * 1000; // 15분
+const LIVE_FETCH_TS_KEY = 'weather_last_live_fetch';
 
 // API 베이스 URL 생성 (serviceKey는 수동으로 추가해야 함 - 이중 인코딩 방지)
 const buildKmaUrl = (apiPath, params) => {
@@ -742,6 +745,38 @@ const mergeWeatherFallback = (fresh, prev) => {
   return merged;
 };
 
+// 라이브 API 직접 호출 쿨다운 (새로고침마다 실패한 API를 반복 호출하지 않도록)
+const canLiveFetch = () => {
+  try {
+    const last = parseInt(localStorage.getItem(LIVE_FETCH_TS_KEY) || '0', 10);
+    return Date.now() - last > LIVE_FETCH_COOLDOWN_MS;
+  } catch {
+    return true;
+  }
+};
+const markLiveFetch = () => {
+  try {
+    localStorage.setItem(LIVE_FETCH_TS_KEY, String(Date.now()));
+  } catch {
+    /* localStorage 불가 환경 무시 */
+  }
+};
+
+// 라이브 API 호출 후 기존 캐시와 병합하여 저장 (백그라운드용, 비차단)
+const refreshFromApi = (locationKey, prevData) => {
+  markLiveFetch();
+  fetchWeatherFromApi(DEFAULT_LOCATION)
+    .then(freshData => {
+      // 일부 섹션(중기예보 등) 실패 시 기존 캐시 값 유지
+      const merged = mergeWeatherFallback(freshData, prevData);
+      if (isCacheUsable(merged)) {
+        setCachedWeather(locationKey, merged);
+        console.log('백그라운드 날씨 캐시 갱신 완료');
+      }
+    })
+    .catch(err => console.warn('백그라운드 날씨 갱신 실패:', err));
+};
+
 // 통합 날씨 데이터 가져오기 (캐시 우선, 만료되어도 즉시 반환)
 const getWeatherData = async () => {
   const locationKey = 'default';
@@ -749,36 +784,25 @@ const getWeatherData = async () => {
   // 1. 캐시에서 먼저 조회
   const { data: cachedData, isExpired } = await getCachedWeather(locationKey);
 
-  // 2. 캐시가 있고 핵심 데이터가 존재하면 즉시 반환
-  if (cachedData && isCacheUsable(cachedData)) {
-    console.log('캐시된 날씨 데이터 사용', isExpired ? '(만료됨, 백그라운드 갱신)' : '(유효)');
-
-    // 만료된 경우 백그라운드에서 갱신 (사용자는 기다리지 않음)
-    if (isExpired) {
-      fetchWeatherFromApi(DEFAULT_LOCATION)
-        .then(freshData => {
-          // 일부 섹션(중기예보 등) 실패 시 기존 캐시 값 유지
-          const merged = mergeWeatherFallback(freshData, cachedData);
-          if (isCacheUsable(merged)) {
-            setCachedWeather(locationKey, merged);
-            console.log('백그라운드 날씨 캐시 갱신 완료');
-          }
-        })
-        .catch(err => console.warn('백그라운드 날씨 갱신 실패:', err));
+  // 2. 캐시 행이 있으면 항상 즉시 반환 (블로킹 직접 호출 안 함)
+  //    cron이 매시간 캐시를 채우므로, 만료/빈 데이터여도 라이브 재호출은
+  //    백그라운드에서 쿨다운 간격으로만 시도 → 새로고침마다 반복 조회 방지
+  if (cachedData) {
+    const stale = isExpired || !isCacheUsable(cachedData);
+    if (stale && canLiveFetch()) {
+      refreshFromApi(locationKey, cachedData);
     }
-
     return cachedData;
   }
 
-  // 3. 캐시가 없거나 빈 데이터인 경우 API 호출
-  if (cachedData && !isCacheUsable(cachedData)) {
-    console.warn('캐시된 날씨 데이터가 비어있음 (shortTerm/current 없음), API 재호출');
-  } else {
-    console.log('기상청 API에서 날씨 데이터 가져오는 중...');
+  // 3. 캐시 행 자체가 없을 때만(최초) 직접 호출 — 쿨다운 적용
+  if (!canLiveFetch()) {
+    console.warn('날씨 캐시 없음 + 직전 라이브 호출 실패 — 재시도 쿨다운 중');
+    return null;
   }
-  const freshData = await fetchWeatherFromApi(DEFAULT_LOCATION);
-  // 일부 섹션(중기예보 등) 실패 시 기존 캐시 값 유지
-  const weatherData = mergeWeatherFallback(freshData, cachedData);
+  markLiveFetch();
+  console.log('기상청 API에서 날씨 데이터 가져오는 중...');
+  const weatherData = await fetchWeatherFromApi(DEFAULT_LOCATION);
 
   // 4. 핵심 데이터가 있을 때만 캐시 저장
   if (isCacheUsable(weatherData)) {
