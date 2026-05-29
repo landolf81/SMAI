@@ -71,32 +71,26 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// fetch 핸들러 - PWA 네비게이션 요청 처리 (SPA 라우팅 지원)
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
+// ⚠️ 네비게이션 fetch 핸들러 / index.html 캐싱은 의도적으로 제거함.
+// 이유: 배포 시 index.html → _app.html 로 이름이 바뀌고 모든 경로는 /api/render 로
+//       서버 처리됨. SW가 첫 방문 시점의 index.html(구버전 chunk 참조)을 영구 캐시해
+//       두면, 재배포 후 죽은 chunk 로드 → vite:preloadError → 무한 새로고침으로
+//       iOS Safari가 충돌함. 네비게이션은 서버(/api/render)에 맡기고 SW는 푸시 전용.
 
-  // 네비게이션 요청(페이지 이동)만 처리, 나머지는 브라우저 기본 동작
-  if (request.mode !== 'navigate') return;
-
-  event.respondWith(
-    fetch(request).catch(() => {
-      // 네트워크 실패 시 캐시된 index.html 반환 (SPA 폴백)
-      return caches.match('/index.html');
-    })
-  );
-});
-
-// SW 설치 시 index.html 캐시 + 즉시 활성화
-self.addEventListener('install', (event) => {
-  console.log('[SW] 설치됨');
-  event.waitUntil(
-    caches.open('pwa-shell-v1').then((cache) => cache.add('/index.html'))
-  );
+// SW 설치 시 즉시 활성화 (대기 중인 구버전 SW 교체)
+self.addEventListener('install', () => {
+  console.log('[SW] 설치됨 (푸시 전용)');
   self.skipWaiting();
 });
 
-// 활성화 시 기존 클라이언트 제어
+// 활성화 시 과거에 캐싱된 stale 셸 캐시를 모두 제거 (충돌 유발 캐시 정리)
 self.addEventListener('activate', (event) => {
   console.log('[SW] 활성화됨');
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+      await clients.claim();
+    })()
+  );
 });
