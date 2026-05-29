@@ -368,11 +368,29 @@
             }
         }
 
-        function fullReset() {
-            localStorage.clear();
-            sessionStorage.clear();
-            alert('✅ 모든 캐시가 삭제되었습니다.\n\n페이지를 새로고침합니다...');
-            location.reload(true);
+        async function fullReset() {
+            const log = [];
+            // 1) 서비스워커 전부 해제 (구버전 index.html 셸 제공 중단 → 새로고침 루프 해소)
+            try {
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(regs.map((reg) => reg.unregister()));
+                    log.push('서비스워커 ' + regs.length + '개 해제');
+                }
+            } catch (e) { log.push('SW 해제 오류: ' + e.message); }
+            // 2) Cache Storage 전부 삭제 (고정된 구버전 셸 캐시 제거)
+            try {
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map((k) => caches.delete(k)));
+                    log.push('캐시 ' + keys.length + '개 삭제');
+                }
+            } catch (e) { log.push('캐시 삭제 오류: ' + e.message); }
+            // 3) 스토리지 정리
+            try { localStorage.clear(); sessionStorage.clear(); log.push('스토리지 삭제'); } catch (e) {}
+            alert('✅ 복구 완료\n\n' + log.join('\n') + '\n\n홈으로 이동합니다.');
+            // 캐시 무력화를 위해 타임스탬프 쿼리스트링 후 홈 이동
+            window.location.href = '/?fresh=' + Date.now();
         }
     </script>
 </body>
