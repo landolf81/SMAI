@@ -49,7 +49,8 @@ const Home = () => {
   const [availableMarkets, setAvailableMarkets] = useState([]);
   const [marketInfoMap, setMarketInfoMap] = useState(new Map()); // market_name → info 객체
   const [loading, setLoading] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  // 첫 렌더부터 올바른 값으로 초기화 (false로 시작하면 모바일에서 PC 안내 화면이 한 프레임 깜빡임)
+  const [isMobile, setIsMobile] = useState(() => isMobileDevice() || isTabletDevice());
   const [marketSettings, setMarketSettings] = useState(null); // DB에서 가져온 시장 설정
   const [hottestPost, setHottestPost] = useState(null); // 인기 게시물
   const [hottestPostLoading, setHottestPostLoading] = useState(false);
