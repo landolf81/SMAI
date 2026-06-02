@@ -133,6 +133,27 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+    // 0. 3일 지난 pending/rejected 영상 자동 정리 (승인된 영상은 보존)
+    const cutoffIso = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+    let cleanedUp = 0
+    {
+      const { data: deletedRows, error: cleanupError } = await supabase
+        .from('youtube_videos')
+        .delete()
+        .in('status', ['pending', 'rejected'])
+        .lt('collected_at', cutoffIso)
+        .select('id')
+
+      if (cleanupError) {
+        console.error('자동 정리 오류:', cleanupError)
+      } else {
+        cleanedUp = deletedRows?.length ?? 0
+        if (cleanedUp > 0) {
+          console.log(`자동 정리: ${cleanedUp}개 영상 삭제 (3일 이상 된 pending/rejected)`)
+        }
+      }
+    }
+
     // 1. 활성화된 채널 목록 조회
     const { data: channels, error: channelsError } = await supabase
       .from('youtube_channels')
@@ -147,23 +168,16 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         success: true,
         message: '활성화된 채널이 없습니다.',
-        collected: 0
+        collected: 0,
+        cleaned_up: cleanedUp
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
     const allVideos: any[] = []
-    const existingVideoIds = new Set<string>()
-
-    // 기존 영상 ID 조회 (중복 방지)
-    const { data: existingVideos } = await supabase
-      .from('youtube_videos')
-      .select('video_id')
-
-    if (existingVideos) {
-      existingVideos.forEach(v => existingVideoIds.add(v.video_id))
-    }
+    // 같은 배치 내 중복(여러 채널·RSS/검색이 동일 영상 반환) 차단용. DB 측 중복은 upsert로 처리.
+    const seenInBatch = new Set<string>()
 
     // 2. 각 채널 RSS 수집
     for (const channel of channels as YouTubeChannel[]) {
@@ -172,8 +186,8 @@ serve(async (req) => {
       const rssItems = await fetchRSSFeed(channel.channel_id)
 
       for (const item of rssItems) {
-        // 중복 체크
-        if (existingVideoIds.has(item.videoId)) {
+        // 배치 내 중복만 차단 (DB 중복은 upsert가 처리)
+        if (seenInBatch.has(item.videoId)) {
           continue
         }
 
@@ -194,7 +208,7 @@ serve(async (req) => {
           status: 'pending'
         })
 
-        existingVideoIds.add(item.videoId)
+        seenInBatch.add(item.videoId)
       }
     }
 
@@ -207,7 +221,7 @@ serve(async (req) => {
         const searchItems = await searchYouTube(query)
 
         for (const item of searchItems) {
-          if (existingVideoIds.has(item.videoId)) {
+          if (seenInBatch.has(item.videoId)) {
             continue
           }
 
@@ -222,27 +236,33 @@ serve(async (req) => {
             status: 'pending'
           })
 
-          existingVideoIds.add(item.videoId)
+          seenInBatch.add(item.videoId)
         }
       }
     }
 
-    // 4. DB에 저장
+    // 4. DB에 저장 — upsert로 video_id 중복 시 무시 (UNIQUE 제약 위배로 배치 전체 실패 방지)
+    let insertedCount = 0
     if (allVideos.length > 0) {
-      const { error: insertError } = await supabase
+      const { data: insertedRows, error: insertError } = await supabase
         .from('youtube_videos')
-        .insert(allVideos)
+        .upsert(allVideos, { onConflict: 'video_id', ignoreDuplicates: true })
+        .select('id')
 
       if (insertError) {
         console.error('영상 저장 오류:', insertError)
+        throw new Error(`영상 저장 오류: ${insertError.message}`)
       }
+      insertedCount = insertedRows?.length ?? 0
     }
 
-    console.log(`수집 완료: ${allVideos.length}개 영상`)
+    console.log(`수집 완료: 신규 ${insertedCount}개 / 후보 ${allVideos.length}개 / 정리 ${cleanedUp}개`)
 
     return new Response(JSON.stringify({
       success: true,
-      collected: allVideos.length,
+      collected: insertedCount,
+      candidates: allVideos.length,
+      cleaned_up: cleanedUp,
       channels: channels.length,
       videos: allVideos.map(v => ({ id: v.video_id, title: v.title }))
     }), {

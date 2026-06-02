@@ -108,7 +108,11 @@ const AdminYouTube = () => {
     try {
       const { data, error } = await supabase.functions.invoke('collect-youtube-videos');
       if (error) throw error;
-      alert(`수집 완료: ${data.collected}개 영상`);
+      const lines = [`신규 수집: ${data.collected ?? 0}개 영상`];
+      if (typeof data.cleaned_up === 'number' && data.cleaned_up > 0) {
+        lines.push(`자동 정리: ${data.cleaned_up}개 (3일 이상 된 대기/거절)`);
+      }
+      alert(lines.join('\n'));
       queryClient.invalidateQueries(['youtube-videos']);
       queryClient.invalidateQueries(['youtube-pending-count']);
     } catch (error) {
@@ -155,6 +159,9 @@ const AdminYouTube = () => {
                 <div>
                   <h1 className="text-2xl font-bold text-base-content">YouTube 영상 관리</h1>
                   <p className="text-sm text-base-content/60">참외 관련 YouTube 영상 수집 및 승인</p>
+                  <p className="text-xs text-base-content/50 mt-1">
+                    수집 실행 시 3일 이상 된 대기/거절 영상은 자동으로 삭제됩니다 (승인된 영상은 보존).
+                  </p>
                 </div>
               </div>
               <button
