@@ -651,7 +651,7 @@ const Prices = () => {
               </div>
             )}
 
-            {/* 등급별(정품 특/상/보통, 비품) 요약 - 시장정보 설정의 구분 기준 */}
+            {/* 등급별(특/상/보통) 요약 - 시장정보 설정의 구분 기준 */}
             <GradeCategorySummary
               details={marketData.details}
               categories={gradeSettings?.grade_categories?.[marketName]}

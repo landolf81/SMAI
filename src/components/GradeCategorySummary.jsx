@@ -2,22 +2,21 @@
 /**
  * GradeCategorySummary.jsx
  * 산지 공판장 상세화면 거래 요약 아래 등급 구분별 집계 카드
- * - 시장정보 설정(grade_categories)에서 지정한 정품(특/상/보통)/비품 구분으로 그룹화
+ * - 시장정보 설정(grade_categories)에서 지정한 특/상/보통 구분으로 그룹화
  * - 구분별 합계수량, 평균가(수량 가중평균), 전일대비, 최고가, 최저가 표시
  * - 구분이 지정된 등급이 하나도 없으면 렌더링하지 않음
  * - Prices.jsx에서 사용
  */
 import { useMemo } from 'react';
 
-// 표시 순서: 정품(특 → 상 → 보통) → 비품
-const CATEGORY_ORDER = ['특', '상', '보통', '비품'];
+// 표시 순서: 특 → 상 → 보통
+const CATEGORY_ORDER = ['특', '상', '보통'];
 
-// 구분 뱃지 색상 (정품: 파랑 계열, 비품: 회색)
+// 구분 뱃지 색상
 const CATEGORY_BADGE = {
   '특': 'bg-blue-700',
   '상': 'bg-blue-500',
   '보통': 'bg-sky-500',
-  '비품': 'bg-gray-500',
 };
 
 const formatPrice = (price) => {
@@ -82,7 +81,7 @@ const GradeCategorySummary = ({ details, categories }) => {
       {/* 타이틀 */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm text-base-content/50">등급별 요약</span>
-        <span className="text-sm text-base-content/40">정품(특/상/보통) · 비품</span>
+        <span className="text-sm text-base-content/40">특/상/보통</span>
       </div>
 
       {/* 헤더 행 */}

@@ -1024,7 +1024,7 @@ export const marketService = {
 
   /**
    * 시장 설정 조회 (공판장 순서, 등급 순서, 등급 구분)
-   * @returns {Object|null} { market_order: [], grade_orders: {}, grade_categories: { market: { grade: '특'|'상'|'보통'|'비품' } } }
+   * @returns {Object|null} { market_order: [], grade_orders: {}, grade_categories: { market: { grade: '특'|'상'|'보통' } } }
    */
   async getMarketSettings() {
     try {
