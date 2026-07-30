@@ -58,3 +58,9 @@ supabase/queries/
 # Python cache
 __pycache__/
 *.py[cod]
+
+# 산지 폴백 (단전 대응) — 비밀/다운로드 데이터
+scripts/cookie.json
+scripts/santi_data/
+scripts/santi_fallback.log
+scripts/santi_cron.log
