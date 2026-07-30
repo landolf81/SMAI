@@ -1023,8 +1023,8 @@ export const marketService = {
   },
 
   /**
-   * 시장 설정 조회 (공판장 순서, 등급 순서)
-   * @returns {Object|null} { market_order: [], grade_orders: {} }
+   * 시장 설정 조회 (공판장 순서, 등급 순서, 등급 구분)
+   * @returns {Object|null} { market_order: [], grade_orders: {}, grade_categories: { market: { grade: '특'|'상'|'보통'|'비품' } } }
    */
   async getMarketSettings() {
     try {
@@ -1050,8 +1050,8 @@ export const marketService = {
   },
 
   /**
-   * 시장 설정 저장 (공판장 순서, 등급 순서)
-   * @param {Object} settings - { market_order: [], grade_orders: {} }
+   * 시장 설정 저장 (공판장 순서, 등급 순서, 등급 구분)
+   * @param {Object} settings - { market_order: [], grade_orders: {}, grade_categories: {} }
    */
   async saveMarketSettings(settings) {
     try {

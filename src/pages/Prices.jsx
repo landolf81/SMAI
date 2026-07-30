@@ -18,6 +18,7 @@ import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
 import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 import PriceDetailModal from '../components/PriceDetailModal';
 import LocalMarketDetailModal from '../components/LocalMarketDetailModal';
+import GradeCategorySummary from '../components/GradeCategorySummary';
 import MarketSearchModal from '../components/MarketSearchModal';
 import BannerAd from '../components/BannerAd';
 import { BANNER_SLOTS } from '../services/bannerAdService';
@@ -649,6 +650,12 @@ const Prices = () => {
                 </div>
               </div>
             )}
+
+            {/* 등급별(정품 특/상/보통, 비품) 요약 - 시장정보 설정의 구분 기준 */}
+            <GradeCategorySummary
+              details={marketData.details}
+              categories={gradeSettings?.grade_categories?.[marketName]}
+            />
 
             {/* 상세 가격 정보 - 카드 형태 (10kg 필터) */}
             <div className="space-y-6">

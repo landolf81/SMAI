@@ -6,6 +6,14 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import SaveIcon from '@mui/icons-material/Save';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
+// 등급 구분 옵션 (정품: 특/상/보통, 비품)
+const GRADE_CATEGORY_OPTIONS = [
+  { value: '특', label: '정품·특' },
+  { value: '상', label: '정품·상' },
+  { value: '보통', label: '정품·보통' },
+  { value: '비품', label: '비품' },
+];
+
 const AdminMarketSettings = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -24,6 +32,7 @@ const AdminMarketSettings = () => {
   // 정렬 순서 설정 (DB에 저장될 값)
   const [marketOrder, setMarketOrder] = useState([]); // 공판장 순서
   const [gradeOrders, setGradeOrders] = useState({}); // 공판장별 등급 순서
+  const [gradeCategories, setGradeCategories] = useState({}); // 공판장별 등급 구분 { market: { grade: '특'|'상'|'보통'|'비품' } }
 
   // 드래그 상태
   const [draggedItem, setDraggedItem] = useState(null);
@@ -49,6 +58,7 @@ const AdminMarketSettings = () => {
         setMarketList(Object.keys(grades).sort());
         setMarketOrder(savedSettings.market_order || Object.keys(grades).sort());
         setGradeOrders(savedSettings.grade_orders || {});
+        setGradeCategories(savedSettings.grade_categories || {});
       } else {
         // 설정이 없거나 강제 새로고침이면 DB에서 전체 조회
         const grades = await marketService.getAllMarketGrades();
@@ -63,9 +73,11 @@ const AdminMarketSettings = () => {
           const newMarkets = dbMarkets.filter(m => !validMarketOrder.includes(m));
           setMarketOrder([...validMarketOrder, ...newMarkets]);
           setGradeOrders(savedSettings.grade_orders || {});
+          setGradeCategories(savedSettings.grade_categories || {});
         } else {
           setMarketOrder(dbMarkets);
           setGradeOrders({});
+          setGradeCategories({});
         }
       }
 
@@ -112,6 +124,20 @@ const AdminMarketSettings = () => {
     }));
   };
 
+  // 등급 구분(정품 특/상/보통, 비품) 변경
+  const setGradeCategory = (grade, category) => {
+    if (!selectedMarket) return;
+    setGradeCategories(prev => {
+      const marketCats = { ...(prev[selectedMarket] || {}) };
+      if (category) {
+        marketCats[grade] = category;
+      } else {
+        delete marketCats[grade]; // 미지정으로 되돌리기
+      }
+      return { ...prev, [selectedMarket]: marketCats };
+    });
+  };
+
   // 설정 저장 (DB에 저장 - 공판장/등급 목록도 함께 저장)
   const saveSettings = async () => {
     try {
@@ -120,6 +146,7 @@ const AdminMarketSettings = () => {
       await marketService.saveMarketSettings({
         market_order: marketOrder,
         grade_orders: gradeOrders,
+        grade_categories: gradeCategories, // 등급별 정품(특/상/보통)/비품 구분
         market_grades: marketGrades  // 공판장/등급 목록도 저장 (다음 로드 시 DB 조회 생략)
       });
 
@@ -331,7 +358,8 @@ const AdminMarketSettings = () => {
             ) : (
               <>
                 <p className="text-sm text-base-content/60 mb-2">
-                  드래그하거나 화살표로 정렬 순서를 변경하세요
+                  드래그하거나 화살표로 정렬 순서를 변경하세요.<br/>
+                  구분을 지정하면 산지 상세화면에 정품(특/상/보통)/비품 등급별 요약이 표시됩니다.
                 </p>
                 <ul className="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
                   {currentGradeOrder.map((grade, index) => (
@@ -347,6 +375,25 @@ const AdminMarketSettings = () => {
                     >
                       <DragIndicatorIcon className="text-base-content/40" style={{ fontSize: 16 }} />
                       <span className="flex-1 font-medium text-base-content">{grade}</span>
+                      {/* 정품(특/상/보통)/비품 구분 선택 */}
+                      <select
+                        value={gradeCategories[selectedMarket]?.[grade] || ''}
+                        onChange={(e) => setGradeCategory(grade, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        draggable={false}
+                        className={`select select-xs border rounded-md text-xs h-6 min-h-0 pl-2 pr-6 ${
+                          gradeCategories[selectedMarket]?.[grade]
+                            ? gradeCategories[selectedMarket][grade] === '비품'
+                              ? 'border-gray-400 bg-gray-100 text-gray-700'
+                              : 'border-blue-400 bg-blue-50 text-blue-700'
+                            : 'border-base-300 bg-base-100 text-base-content/50'
+                        }`}
+                      >
+                        <option value="">미지정</option>
+                        {GRADE_CATEGORY_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                       <span className="text-base-content/40 text-xs">#{index + 1}</span>
                       <div className="flex">
                         <button
