@@ -228,9 +228,8 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
   const renderPriceChange = (currentPrice, previousPrice) => {
     if (!previousPrice || previousPrice === 0) return null;
 
-    const rawChange = currentPrice - previousPrice;
-    // 원단위 이하 절사 (10원 단위로 내림)
-    const change = Math.sign(rawChange) * Math.floor(Math.abs(rawChange) / 10) * 10;
+    // 상세 시세와 동일하게 원 단위 차액을 표시한다.
+    const change = currentPrice - previousPrice;
     const isPositive = change > 0;
 
     if (change === 0) return <span className="text-base-content/50 text-sm">보합</span>;

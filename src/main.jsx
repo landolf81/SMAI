@@ -14,6 +14,7 @@ window.addEventListener('vite:preloadError', () => {
   window.location.reload();
 });
 import App from './App.jsx'
+import './utils/koreanMoment.js'
 import './index.css'
 import './enhanced-instagram.css'
 // slick-carousel CSS 제거: react-slick 미사용 확인 (FCP 개선)

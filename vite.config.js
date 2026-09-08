@@ -17,6 +17,10 @@ export default defineConfig(({ mode }) => ({
       }
     }
   ],
+  // 한국어 locale의 CommonJS require와 앱 import가 같은 Moment 인스턴스를 사용한다.
+  resolve: {
+    alias: [{ find: /^moment$/, replacement: 'moment/moment.js' }],
+  },
   server: {
     host: '0.0.0.0',  // 모든 네트워크 인터페이스에서 접근 허용
     port: 3000,       // 포트 명시적 설정

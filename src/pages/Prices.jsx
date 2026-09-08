@@ -474,6 +474,40 @@ const Prices = () => {
         </div>
       </div>
 
+      {/* 가격표를 가리지 않도록 문서 흐름 안에 배치 */}
+      <div className="w-full max-w-screen-xl mx-auto px-4 pt-3 flex gap-2">
+        {/* 검색 버튼 */}
+        <button
+          onClick={() => setSearchModalOpen(true)}
+          className="flex-1 min-h-11 rounded-lg bg-blue-600 text-white flex items-center justify-center gap-2 active:scale-95"
+          title="도매시장 법인 검색"
+        >
+          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span>시장 검색</span>
+        </button>
+
+        {/* 즐겨찾기 버튼 */}
+        <button
+          onClick={() => {
+            if (!currentUser) {
+              toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
+              return;
+            }
+            navigate('/favorite-prices');
+          }}
+          className="flex-1 min-h-11 rounded-lg bg-amber-500 text-white flex items-center justify-center gap-2 active:scale-95"
+          title="즐겨찾기 시세"
+        >
+          <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          <span>즐겨찾기 시세</span>
+        </button>
+
+      </div>
+
       {/* 배너 광고 - 경락가 상단 */}
       <div className="w-full max-w-screen-xl mx-auto px-4 pt-3">
         <BannerAd slot={BANNER_SLOTS.PRICES_TOP} />
@@ -619,11 +653,11 @@ const Prices = () => {
                       <div className="text-sm text-base-content/50 mb-1">전일대비</div>
                       <div className={`text-lg font-bold whitespace-nowrap ${
                         !marketData.overall_comparison?.comparison_available ? 'text-base-content/40' :
-                        Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? 'text-base-content/60' :
+                        marketData.overall_comparison.change === 0 ? 'text-base-content/60' :
                         marketData.overall_comparison.change > 0 ? 'text-red-500' : 'text-blue-500'
                       }`}>
                         {!marketData.overall_comparison?.comparison_available ? '-' :
-                         Math.abs(marketData.overall_comparison.changePercent) < 0.1 ? '보합' :
+                         marketData.overall_comparison.change === 0 ? '보합' :
                          `${marketData.overall_comparison.change > 0 ? '▲' : '▼'} ${Math.abs(marketData.overall_comparison.change).toLocaleString()}`
                         }
                       </div>
@@ -735,11 +769,11 @@ const Prices = () => {
                           </div>
                           <div className={`text-sm font-medium whitespace-nowrap mt-1 ${
                             !priceComparison.comparison_available ? 'text-base-content/30' :
-                            Math.abs(priceComparison.changePercent) < 0.1 ? 'text-base-content/40' :
+                            priceComparison.change === 0 ? 'text-base-content/40' :
                             priceComparison.change > 0 ? 'text-red-500' : 'text-blue-500'
                           }`}>
                             {!priceComparison.comparison_available ? '-' :
-                             Math.abs(priceComparison.changePercent) < 0.1 ? '보합' :
+                             priceComparison.change === 0 ? '보합' :
                              `${priceComparison.change > 0 ? '▲' : '▼'} ${Math.abs(priceComparison.change).toLocaleString()}`
                             }
                           </div>
@@ -756,11 +790,11 @@ const Prices = () => {
                             return (
                               <div className={`text-sm font-medium whitespace-nowrap mt-1 ${
                                 !mc.comparison_available ? 'text-base-content/30' :
-                                Math.abs(mc.changePercent) < 0.1 ? 'text-base-content/40' :
+                                mc.change === 0 ? 'text-base-content/40' :
                                 mc.change > 0 ? 'text-red-500' : 'text-blue-500'
                               }`}>
                                 {!mc.comparison_available ? '-' :
-                                 Math.abs(mc.changePercent) < 0.1 ? '보합' :
+                                 mc.change === 0 ? '보합' :
                                  `${mc.change > 0 ? '▲' : '▼'} ${Math.abs(mc.change).toLocaleString()}`
                                 }
                               </div>
@@ -779,11 +813,11 @@ const Prices = () => {
                             return (
                               <div className={`text-sm font-medium whitespace-nowrap mt-1 ${
                                 !mc.comparison_available ? 'text-base-content/30' :
-                                Math.abs(mc.changePercent) < 0.1 ? 'text-base-content/40' :
+                                mc.change === 0 ? 'text-base-content/40' :
                                 mc.change > 0 ? 'text-red-500' : 'text-blue-500'
                               }`}>
                                 {!mc.comparison_available ? '-' :
-                                 Math.abs(mc.changePercent) < 0.1 ? '보합' :
+                                 mc.change === 0 ? '보합' :
                                  `${mc.change > 0 ? '▲' : '▼'} ${Math.abs(mc.change).toLocaleString()}`
                                 }
                               </div>
@@ -825,39 +859,6 @@ const Prices = () => {
         marketDate={selectedDate}
         gradeName={localSelectedGrade}
       />
-
-      {/* 플로팅 버튼: 오른쪽 세로 (검색 + 즐겨찾기), 왼쪽 (admin) */}
-      {/* 검색 버튼 (오른쪽 하단) */}
-      <button
-        onClick={() => setSearchModalOpen(true)}
-        className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-blue-600 hover:bg-blue-700 active:scale-95 ${
-          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
-        }`}
-        title="도매시장 법인 검색"
-      >
-        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </button>
-
-      {/* 즐겨찾기 버튼 (검색 위) */}
-      <button
-        onClick={() => {
-          if (!currentUser) {
-            toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
-            return;
-          }
-          navigate('/favorite-prices');
-        }}
-        className={`fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-amber-500 hover:bg-amber-600 active:scale-95 ${
-          scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
-        }`}
-        title="즐겨찾기 시세"
-      >
-        <svg className="w-7 h-7 text-white" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-      </button>
 
       {/* 도매시장 검색 모달 */}
       <MarketSearchModal

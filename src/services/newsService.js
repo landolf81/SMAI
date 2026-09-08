@@ -1,3 +1,5 @@
+import { cleanNewsText } from '../utils/newsText.js';
+
 /**
  * 뉴스 피드 서비스
  * 참외/농업 관련 뉴스를 가져옴
@@ -109,10 +111,10 @@ const parseRSSClient = (xml, sourceName) => {
 
     if (title && link) {
       items.push({
-        title: title.replace(/<!\[CDATA\[|\]\]>/g, '').trim(),
+        title: cleanNewsText(title),
         link: link.trim(),
         pubDate: pubDate ? new Date(pubDate).toISOString() : null,
-        description: description?.replace(/<[^>]+>/g, '').substring(0, 200),
+        description: cleanNewsText(description).substring(0, 200),
         imageUrl,
         source: sourceName
       });

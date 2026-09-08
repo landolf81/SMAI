@@ -31,7 +31,7 @@ const getMarketBadgeColor = () => '#1D4ED8';
 // 변동폭 렌더링 헬퍼
 const ChangeText = ({ comparison }) => {
   if (!comparison?.comparison_available) return <span className="text-base-content/30">-</span>;
-  if (Math.abs(comparison.changePercent) < 0.1) return <span className="text-base-content/40">보합</span>;
+  if (comparison.change === 0) return <span className="text-base-content/40">보합</span>;
   const isUp = comparison.change > 0;
   return (
     <span className={isUp ? 'text-red-500' : 'text-blue-500'}>

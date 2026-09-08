@@ -120,7 +120,7 @@ const GradeCategorySummary = ({ details, categories }) => {
                 className={`text-xs font-medium whitespace-nowrap ${
                   !row.comparisonAvailable
                     ? 'text-base-content/30'
-                    : Math.abs(row.changePercent) < 0.1
+                    : row.change === 0
                       ? 'text-base-content/40'
                       : row.change > 0
                         ? 'text-red-500'
@@ -129,7 +129,7 @@ const GradeCategorySummary = ({ details, categories }) => {
               >
                 {!row.comparisonAvailable
                   ? '-'
-                  : Math.abs(row.changePercent) < 0.1
+                  : row.change === 0
                     ? '보합'
                     : `${row.change > 0 ? '▲' : '▼'} ${Math.abs(row.change).toLocaleString()}`}
               </div>

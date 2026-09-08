@@ -1,3 +1,5 @@
+import { cleanNewsText } from '../src/utils/newsText.js';
+
 // Vercel Serverless Function - 뉴스 RSS 프록시
 // CORS 문제 해결을 위한 서버사이드 프록시
 
@@ -136,10 +138,10 @@ function parseRSS(xml, sourceName) {
 
     if (title && link) {
       items.push({
-        title: cleanText(title),
+        title: cleanNewsText(title),
         link: cleanLink(link),
         pubDate: pubDate ? new Date(pubDate).toISOString() : null,
-        description: cleanText(description)?.substring(0, 200),
+        description: cleanNewsText(description)?.substring(0, 200),
         imageUrl,
         source: sourceName
       });
@@ -160,20 +162,6 @@ function extractTag(xml, tagName) {
   const regex = new RegExp(`<${tagName}[^>]*>([\\s\\S]*?)</${tagName}>`, 'i');
   const match = xml.match(regex);
   return match ? match[1] : null;
-}
-
-// 텍스트 정리 (HTML 태그 제거)
-function cleanText(text) {
-  if (!text) return null;
-  return text
-    .replace(/<[^>]+>/g, '')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 // 구글 뉴스 리다이렉트 링크 처리

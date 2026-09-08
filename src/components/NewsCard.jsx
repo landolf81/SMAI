@@ -1,3 +1,4 @@
+import { cleanNewsText } from '../utils/newsText.js';
 /* eslint-disable react/prop-types */
 import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -48,7 +49,7 @@ const NewsCard = ({ news }) => {
           <div className="relative bg-gray-100 aspect-video">
             <img
               src={imageUrl}
-              alt={title}
+              alt={cleanNewsText(title)}
               className="w-full h-full object-cover"
               onError={(e) => {
                 // 이미지 로드 실패 시 이미지 영역 숨김
@@ -62,13 +63,13 @@ const NewsCard = ({ news }) => {
         <div className="p-4">
           {/* 제목 */}
           <h3 className="font-semibold text-gray-900 text-base leading-snug line-clamp-2 mb-2">
-            {title}
+            {cleanNewsText(title)}
           </h3>
 
           {/* 설명 */}
           {description && (
             <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-              {description}
+              {cleanNewsText(description)}
             </p>
           )}
 
