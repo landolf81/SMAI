@@ -15,7 +15,7 @@ import AIBadge from './AIBadge';
 import { isAIUser } from '../config/aiUser';
 
 const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments, onOpenCommentsModal, filterByUserId = null }) => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   
@@ -581,7 +581,7 @@ const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCom
       )}
 
       {/* 비로그인 사용자를 위한 로그인 유도 메시지 */}
-      {!currentUser && (
+      {!authLoading && !currentUser && (
         <div className="px-4 py-2 border-t border-base-300">
           <div className="text-center text-base-content/50 text-sm">
             <span>댓글을 작성하려면 </span>

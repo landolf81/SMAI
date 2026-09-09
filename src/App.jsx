@@ -1,7 +1,6 @@
 import React, { Suspense, lazy, useContext, useEffect, useState } from 'react';
 import {
   createBrowserRouter,
-  Navigate,
   Outlet,
   RouterProvider,
   useLocation,
@@ -20,6 +19,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import OnboardingTooltip from './components/OnboardingTooltip';
 import MarketTrendTooltip from './components/MarketTrendTooltip';
 import LoadingSpinner from './components/LoadingSpinner';
+import { BannedRestrictedRoute, ProtectedRoute, SecondHandGuard } from './components/AuthRouteGuards';
 import { AuthContext } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { isMobileDevice, isTabletDevice } from './utils/deviceDetector';
@@ -131,28 +131,8 @@ const queryClient = new QueryClient({
  * Layout - 모듈 스코프에 정의하여 App 리렌더 시 재생성 방지
  * AuthContext는 useContext로 직접 접근
  */
-// 앱 셸 스켈레톤 (Auth 로딩 중 빠른 FCP 제공)
-const AppSkeleton = () => (
-  <div className="min-h-screen bg-base-200">
-    {/* Navbar skeleton */}
-    <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-base-100 border-b border-base-300">
-      <div className="flex items-center justify-between h-full px-4 max-w-screen-xl mx-auto">
-        <div className="w-8 h-8 bg-base-300 rounded-full animate-pulse" />
-        <div className="w-24 h-6 bg-base-300 rounded animate-pulse" />
-        <div className="w-8 h-8 bg-base-300 rounded-full animate-pulse" />
-      </div>
-    </div>
-    {/* Content skeleton */}
-    <div className="pt-20 px-4 max-w-2xl mx-auto space-y-4">
-      <div className="h-40 bg-base-300 rounded-2xl animate-pulse" />
-      <div className="h-32 bg-base-300 rounded-2xl animate-pulse" />
-      <div className="h-32 bg-base-300 rounded-2xl animate-pulse" />
-    </div>
-  </div>
-);
-
 const Layout = () => {
-  const { currentUser, loading, isBanned } = useContext(AuthContext);
+  const { currentUser, isBanned } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -246,14 +226,6 @@ const Layout = () => {
     return () => document.removeEventListener('visibilitychange', clearBadge);
   }, []);
 
-  // --- 모든 훅 호출 완료 후 early return ---
-
-  // Auth 로딩 중에는 스켈레톤 표시 (빈 화면 방지)
-  if (loading) {
-    return <AppSkeleton />;
-  }
-
-  const isAdminPage = location.pathname.startsWith('/admin');
   const isDMPage = location.pathname.startsWith('/dm/');
 
   // DM 페이지는 전체 화면으로 렌더링 (Navbar, Leftbar, BottomNav 숨김)
@@ -287,6 +259,7 @@ const Layout = () => {
         {/* 메인 콘텐츠 - 전체 화면 (pt-0) */}
         <div className="flex-1 min-w-0">
           <div className="max-w-none mx-auto">
+            {/* 공개 콘텐츠는 인증 초기화와 동시에 로드한다. 보호 라우트와 계정 UI는 각자 인증 완료를 기다린다. */}
             <Suspense fallback={<PageLoader />}>
               <Outlet />
             </Suspense>
@@ -454,49 +427,6 @@ const Layout = () => {
 };
 
 /**
- * ProtectedRoute - 로그인 필요 라우트 가드
- * 모듈 스코프 정의 (App 리렌더 시 재생성 방지)
- */
-// eslint-disable-next-line react/prop-types
-const ProtectedRoute = ({ children }) => {
-  const { currentUser, loading } = useContext(AuthContext);
-  if (loading) return <PageLoader />;
-  if (currentUser === null) {
-    return <Navigate to="/login" />;
-  }
-  return children;
-};
-
-/**
- * BannedRestrictedRoute - 차단된 사용자 접근 제한 (글쓰기, 사고팔고 등)
- * 모듈 스코프 정의 (App 리렌더 시 재생성 방지)
- */
-// eslint-disable-next-line react/prop-types
-const BannedRestrictedRoute = ({ children }) => {
-  const { currentUser, loading, isBanned } = useContext(AuthContext);
-  if (loading) return <PageLoader />;
-  if (currentUser === null) {
-    return <Navigate to="/login" />;
-  }
-  if (isBanned) {
-    return <Navigate to="/community" state={{ banned: true }} />;
-  }
-  return children;
-};
-
-/**
- * SecondHandGuard - 사고팔고 페이지 차단 사용자 리다이렉트
- * isBanned 체크를 라우트 정의가 아닌 컴포넌트 내부에서 수행
- */
-const SecondHandGuard = () => {
-  const { isBanned } = useContext(AuthContext);
-  if (isBanned) {
-    return <Navigate to="/community" state={{ banned: true }} />;
-  }
-  return <SecondHand />;
-};
-
-/**
  * Router - 모듈 스코프에서 1회만 생성
  * App 리렌더 시에도 라우트 트리가 유지되어 컴포넌트 remount 방지
  */
@@ -554,7 +484,7 @@ const router = createBrowserRouter(
       },
       {
         path: '/secondhand',
-        element: <SecondHandGuard />,
+        element: <SecondHandGuard><SecondHand /></SecondHandGuard>,
       },
       {
         path: '/secondhand/new',

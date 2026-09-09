@@ -23,6 +23,7 @@ export const PermissionGuard = ({
   fallback,
   showMessage = true
 }) => {
+  const { loading: authLoading } = useContext(AuthContext);
   const adminPermissions = useAdminPermissions();
   const featurePermissions = useFeaturePermissions();
 
@@ -55,6 +56,14 @@ export const PermissionGuard = ({
     featurePermissions.isLoggedIn,
     customCheck
   ]);
+
+  if (authLoading) {
+    return (
+      <div className="flex justify-center items-center py-8" aria-label="로그인 상태 확인 중">
+        <div className="loading loading-spinner loading-md"></div>
+      </div>
+    );
+  }
 
   
   // 권한이 있으면 자식 컴포넌트 렌더링
@@ -153,8 +162,12 @@ export const LoginRequired = ({ children, fallback, showMessage = true }) => {
  */
 export const TagWritePermission = ({ tag, children, fallback }) => {
   const featurePermissions = useFeaturePermissions();
-  const { currentUser } = useContext(AuthContext);
+  const { loading: authLoading } = useContext(AuthContext);
   const canWrite = useCanWriteToTag(tag);
+
+  if (authLoading) {
+    return <div className="loading loading-spinner loading-sm" aria-label="로그인 상태 확인 중"></div>;
+  }
   
   if (!featurePermissions.isLoggedIn) {
     return fallback || (

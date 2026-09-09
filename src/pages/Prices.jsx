@@ -53,7 +53,7 @@ const Prices = () => {
   const [favorites, setFavorites] = useState([]); // 즐겨찾기 목록
   const [searchModalOpen, setSearchModalOpen] = useState(false); // 검색 모달
   const adminPermissions = useAdminPermissions();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const scrollDirection = useScrollDirection();
 
   // URL 파라미터에서 시장명과 날짜 가져오기
@@ -118,6 +118,7 @@ const Prices = () => {
 
   // 즐겨찾기 토글
   const handleToggleFavorite = useCallback(async (mName, weight, grade) => {
+    if (authLoading) return;
     if (!currentUser) {
       toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
       return;
@@ -143,7 +144,7 @@ const Prices = () => {
     } catch (err) {
       toast.error('처리 중 오류가 발생했습니다');
     }
-  }, [currentUser, favorites, getFavKey, navigate]);
+  }, [authLoading, currentUser, favorites, getFavKey, navigate]);
 
   // 등급 정렬 순서 적용 (공판장별 - DB 설정 사용)
   const sortDetailsByGradeOrder = (details, currentMarket, settings) => {
@@ -280,7 +281,7 @@ const Prices = () => {
 
   // 관리자 전용: 브리핑 생성
   const handleGenerateBriefing = async () => {
-    if (!marketName || briefingGenerating) return;
+    if (authLoading || !adminPermissions.isAdmin || !marketName || briefingGenerating) return;
 
     setBriefingGenerating(true);
     try {
@@ -491,12 +492,14 @@ const Prices = () => {
         {/* 즐겨찾기 버튼 */}
         <button
           onClick={() => {
+            if (authLoading) return;
             if (!currentUser) {
               toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
               return;
             }
             navigate('/favorite-prices');
           }}
+          disabled={authLoading}
           className="flex-1 min-h-11 rounded-lg bg-amber-500 text-white flex items-center justify-center gap-2 active:scale-95"
           title="즐겨찾기 시세"
         >
@@ -613,6 +616,7 @@ const Prices = () => {
                         e.stopPropagation();
                         handleToggleFavorite(marketName, 'all', 'summary');
                       }}
+                      disabled={authLoading}
                       className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
                       title="즐겨찾기"
                     >
@@ -738,6 +742,7 @@ const Prices = () => {
                           e.stopPropagation();
                           handleToggleFavorite(marketName, item.weight, item.grade);
                         }}
+                        disabled={authLoading}
                         className="p-1.5 rounded-full shadow-md bg-base-100 border border-base-300 active:scale-90 transition-transform"
                         title="즐겨찾기"
                       >
@@ -868,7 +873,7 @@ const Prices = () => {
       />
 
       {/* 관리자 전용 플로팅 버튼 (왼쪽 하단) */}
-      {adminPermissions.isAdmin && (
+      {!authLoading && adminPermissions.isAdmin && (
         <button
           onClick={handleGenerateBriefing}
           disabled={briefingGenerating}

@@ -68,7 +68,7 @@ const Home = () => {
   const [briefingRegenerating, setBriefingRegenerating] = useState(false);
   const briefingFetchedRef = useRef(false); // 브리핑 중복 요청 방지
   const adminPermissions = useAdminPermissions();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
 
   // 날씨 데이터: 공유 useWeather 훅으로 위젯/모달과 단일 fetch 공유
   const { data: weather } = useWeather();
@@ -207,7 +207,7 @@ const Home = () => {
 
   // 관리자 전용: Gemini로 브리핑 재생성
   const handleRegenerateBriefing = async () => {
-    if (briefingRegenerating) return;
+    if (authLoading || !adminPermissions.isAdmin || briefingRegenerating) return;
     if (!weather) {
       alert('날씨 데이터를 아직 불러오지 못했습니다.');
       return;
@@ -852,12 +852,14 @@ const Home = () => {
       {/* 즐겨찾기 버튼 (검색 위) */}
       <button
         onClick={() => {
+          if (authLoading) return;
           if (!currentUser) {
             toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
             return;
           }
           navigate('/favorite-prices');
         }}
+        disabled={authLoading}
         className={`fixed bottom-[160px] right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-amber-500 hover:bg-amber-600 active:scale-95 ${
           scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
         }`}
@@ -876,7 +878,7 @@ const Home = () => {
       />
 
       {/* 관리자 전용 플로팅 버튼 (왼쪽 하단) */}
-      {adminPermissions.isAdmin && (
+      {!authLoading && adminPermissions.isAdmin && (
         <button
           onClick={handleRegenerateBriefing}
           disabled={briefingRegenerating}

@@ -42,7 +42,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
   const postId = propPostId || paramPostId;
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
   // 뒤로가기 핸들러 - 모달 모드 또는 일반 모드
@@ -260,6 +260,8 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
+    if (authLoading) return;
+
     if (!commentContent.trim()) {
       alert('댓글 내용을 입력해주세요.');
       return;
@@ -279,6 +281,8 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
   };
 
   const handleLike = () => {
+    if (authLoading) return;
+
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       navigate('/login');
@@ -581,6 +585,7 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
             <div className="px-4 py-3 border-t border-base-200 flex gap-2">
               <button
                 onClick={handleLike}
+                disabled={authLoading}
                 className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-base-200 transition-colors"
               >
                 {post.user_liked ? (

@@ -28,7 +28,7 @@ import { isAIUser } from '../config/aiUser';
 moment.locale('ko');
 
 const PostDetailModal = ({ isOpen, onClose, postId }) => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const queryClient = useQueryClient();
 
   const [commentContent, setCommentContent] = useState('');
@@ -129,6 +129,8 @@ const PostDetailModal = ({ isOpen, onClose, postId }) => {
 
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
+    if (authLoading) return;
+
     if (!commentContent.trim()) {
       alert('댓글 내용을 입력해주세요.');
       return;
@@ -147,6 +149,8 @@ const PostDetailModal = ({ isOpen, onClose, postId }) => {
   };
 
   const handleLike = () => {
+    if (authLoading) return;
+
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       onClose();

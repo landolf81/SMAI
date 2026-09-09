@@ -16,7 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 
 const SecondHand = () => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const [searchTerm, setSearchTerm] = useState('');
@@ -227,6 +227,14 @@ const SecondHand = () => {
       }
     };
   }, [isLoading, postsWithAds.length, navigationType, renderedCount]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-base-200" aria-label="로그인 상태 확인 중">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (

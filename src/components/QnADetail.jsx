@@ -38,7 +38,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const questionId = propQuestionId || paramQuestionId; // Use prop if provided, otherwise URL param
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const queryClient = useQueryClient();
   const [isMobile] = useState(() => isMobileDevice());
 
@@ -415,6 +415,8 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
   const handleSubmitAnswer = (e) => {
     e.preventDefault();
 
+    if (authLoading) return;
+
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       return;
@@ -436,6 +438,8 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
 
   // 답변 좋아요 핸들러
   const handleToggleLike = (answerId) => {
+    if (authLoading) return;
+
     if (!currentUser) {
       alert('로그인이 필요합니다.');
       return;
@@ -934,12 +938,12 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                         {/* 좋아요 버튼 */}
                         <button
                           onClick={() => handleToggleLike(answer.id)}
-                          disabled={!currentUser}
+                          disabled={authLoading || !currentUser}
                           className={`flex items-center gap-1 px-3 py-1 rounded-lg transition-colors ${
                             answer.user_liked
                               ? 'text-blue-600 bg-blue-100 hover:bg-blue-200'
                               : 'text-base-content/50 hover:text-blue-600 hover:bg-blue-500/10'
-                          } ${!currentUser ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                          } ${authLoading || !currentUser ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                         >
                           {answer.user_liked ? (
                             <ThumbUpIcon fontSize="small" />
@@ -1105,6 +1109,10 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
               </div>
             </form>
           )}
+        </div>
+      ) : authLoading ? (
+        <div className="bg-base-200 rounded-lg p-6 border flex justify-center" aria-label="로그인 상태 확인 중">
+          <LoadingSpinner size="sm" />
         </div>
       ) : !currentUser ? (
         <div className="bg-base-200 rounded-lg p-6 border text-center">

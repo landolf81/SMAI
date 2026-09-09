@@ -397,7 +397,7 @@ LoungeMessage.displayName = 'LoungeMessage';
 // Lounge (메인 컴포넌트)
 // ─────────────────────────────────────────────
 const Lounge = () => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const scrollDirection = useScrollDirection();
   const [messages, setMessages] = useState([]);
@@ -801,6 +801,8 @@ const Lounge = () => {
 
   // ── 메시지 전송 (LoungeComposeModal에서 호출) ──
   const handleSend = useCallback(async (content, images, video) => {
+    if (authLoading) return;
+
     if (!currentUser) {
       navigate('/login');
       return;
@@ -858,7 +860,7 @@ const Lounge = () => {
     } finally {
       setIsSending(false);
     }
-  }, [cooldownLeft, currentUser, navigate, scrollToTop]);
+  }, [authLoading, cooldownLeft, currentUser, navigate, scrollToTop]);
 
   // ── 메시지 삭제 ──
   const handleDelete = useCallback(async (id) => {
@@ -1025,7 +1027,12 @@ const Lounge = () => {
     {/* 플로팅 글쓰기 버튼 (홈 검색 버튼과 동일 형태) */}
     {!isComposing && (
       <button
-        onClick={() => { setMentionText(''); setIsComposing(true); }}
+        onClick={() => {
+          if (authLoading) return;
+          setMentionText('');
+          setIsComposing(true);
+        }}
+        disabled={authLoading}
         className={`fixed bottom-24 right-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 active:scale-95 ${
           scrollDirection === 'down' ? 'translate-x-20' : 'translate-x-0'
         }`}

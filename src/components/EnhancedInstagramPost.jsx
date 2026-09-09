@@ -41,7 +41,7 @@ import MediaModal from './MediaModal';
 import { getDisplayName, getProfilePic, isProfileClickable, getAvatarClassName } from '../utils/userHelper';
 
 const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPause, disableAutoplay = false, hideComments = false, filterCommentsByUserId = null, priority = false }) => {
-  const { currentUser, isBanned } = useContext(AuthContext);
+  const { currentUser, loading: authLoading, isBanned } = useContext(AuthContext);
   const navigate = useNavigate();
   const featurePermissions = useFeaturePermissions();
   const videoRef = useRef(null);
@@ -532,6 +532,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 핸들러 함수들
   const handleLike = (animate = false) => {
+    if (authLoading) return;
+
     if (!currentUser?.id) {
       // 비로그인 사용자는 로그인 필요 모달 표시
       setShowLoginModal(true);
@@ -811,6 +813,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   // 조회수 증가 및 열람 기록 저장 (게시물이 보일 때 한 번만, 세션 내 중복 방지)
   useEffect(() => {
+    if (authLoading) return;
+
     if (isVisible && !viewCountIncreased) {
       const viewedKey = `post_viewed_${post.id}`;
 
@@ -842,7 +846,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       const timer = setTimeout(increaseViewCount, 1000);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, viewCountIncreased, post.id, currentUser?.id]);
+  }, [authLoading, isVisible, viewCountIncreased, post.id, currentUser?.id]);
 
   // 설명 텍스트 길이 제한
   const MAX_DESC_LENGTH = 100;
@@ -1321,6 +1325,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 // 좋아요 버튼 클릭 로그 제거
                 handleLike(false);
               }}
+              disabled={authLoading}
               className={`flex items-center justify-center transition-all duration-200 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${localIsLiked ? 'scale-105' : 'hover:scale-105'}`}
               aria-label={localIsLiked ? '좋아요 취소' : '좋아요'}
             >
@@ -1378,6 +1383,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           {/* 저장 버튼 */}
           <button
             onClick={async () => {
+              if (authLoading) return;
+
               // 비로그인 시 로그인 필요 모달 표시
               if (!currentUser) {
                 setShowLoginModal(true);
@@ -1407,6 +1414,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                 console.error('저장 처리 오류:', error);
               }
             }}
+            disabled={authLoading}
             className={`transition-all duration-200 hover:scale-105 cursor-pointer p-1 rounded-full focus:outline-none focus:ring-0 ${isSaved ? 'text-blue-500' : 'text-base-content/70 hover:text-blue-500'}`}
             aria-label={isSaved ? '저장 취소' : '저장'}
           >

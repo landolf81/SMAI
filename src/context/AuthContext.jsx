@@ -1,8 +1,9 @@
-import { createContext, useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase, supabaseHelpers } from "../config/supabase.js";
 import { generateRandomId, generateRandomNickname } from "../utils/randomGenerator";
+import { AuthContext } from './authState.js';
 
-export const AuthContext = createContext();
+export { AuthContext } from './authState.js';
 
 /**
  * 프로필 자동 생성 (AuthCallback 실패 시 안전장치)

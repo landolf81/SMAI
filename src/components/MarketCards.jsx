@@ -68,7 +68,7 @@ const WHOLESALE_TOTAL_INSERT_BEFORE = '서울가락';
 const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh, marketInfoMap }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
 
   // 공판장 정보 바텀시트 상태
   const [infoSheet, setInfoSheet] = useState(null); // null | 공판장 info 객체
@@ -92,6 +92,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
 
   const handleToggleFavorite = useCallback(async (e, mName, weight, grade) => {
     e.stopPropagation();
+    if (authLoading) return;
     if (!currentUser) {
       toast('회원 전용 기능입니다.\n로그인 후 이용해주세요.');
       return;
@@ -111,7 +112,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
     } catch {
       toast.error('처리 중 오류가 발생했습니다');
     }
-  }, [currentUser, favorites, getFavKey, navigate]);
+  }, [authLoading, currentUser, favorites, getFavKey, navigate]);
 
   // vCard 다운로드 (연락처 등록)
   const downloadVCard = (name, phone) => {
@@ -548,6 +549,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                   {/* 즐겨찾기 ★ 버튼 */}
                   <button
                     onClick={(e) => handleToggleFavorite(e, market.name, 'all', 'summary')}
+                    disabled={authLoading}
                     className="p-2 bg-base-100 rounded-full shadow-md hover:bg-base-200 active:scale-90 transition-all"
                     title="즐겨찾기"
                   >
@@ -851,4 +853,4 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
   );
 };
 
-export default MarketCards; 
+export default MarketCards;

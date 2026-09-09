@@ -63,7 +63,7 @@ const HomeIcon = ({ className, isActive }) => (
 );
 
 const MobileBottomNav = ({ scrollDirection }) => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -183,11 +183,12 @@ const MobileBottomNav = ({ scrollDirection }) => {
     },
     {
       id: 'profile',
-      path: currentUser ? `/profile/${currentUser.id}` : '/login',
-      label: currentUser ? '프로필' : '로그인',
+      path: authLoading ? null : currentUser ? `/profile/${currentUser.id}` : '/login',
+      label: authLoading ? '확인 중' : currentUser ? '프로필' : '로그인',
       icon: PersonIcon,
       showLabel: true,
       isProfile: true,
+      isAuthPending: authLoading,
       activeColor: 'text-[#1976D2]' // 청색
     }
   ];
@@ -204,6 +205,8 @@ const MobileBottomNav = ({ scrollDirection }) => {
 
   // 버튼 클릭 핸들러
   const handleButtonClick = (button) => {
+    if (button.isAuthPending) return;
+
     // 광장/커뮤 탭 클릭 시 방문 시각 갱신 + 뱃지 즉시 제거
     if (button.id === 'lounge') {
       localStorage.setItem('lounge_last_visited', new Date().toISOString());
@@ -252,6 +255,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
                 key={button.id}
                 data-onboarding={button.id === 'lounge' ? 'lounge' : undefined}
                 onClick={() => handleButtonClick(button)}
+                disabled={button.isAuthPending}
                 className={`flex flex-col items-center justify-center transition-colors duration-200 ${
                   button.showLabel ? 'px-3 py-2 flex-1' : 'px-4 py-2'
                 } ${
@@ -259,7 +263,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
                     ? `${button.activeColor} -translate-y-1`
                     : 'text-base-content/60 hover:text-base-content'
                 }`}
-                aria-label={button.label}
+                aria-label={button.isAuthPending ? '로그인 상태 확인 중' : button.label}
               >
                 <div className={`relative p-2 rounded-full transition-colors duration-200 ${
                   isActive ? 'bg-base-content/5' : ''
@@ -272,7 +276,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
                   ) : (
                     <IconComponent
                       fontSize={button.showLabel ? 'small' : 'medium'}
-                      className={isActive ? 'text-lg' : 'text-base'}
+                      className={`${isActive ? 'text-lg' : 'text-base'} ${button.isAuthPending ? 'animate-pulse opacity-50' : ''}`}
                     />
                   )}
 

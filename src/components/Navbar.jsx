@@ -19,7 +19,7 @@ import NotificationModal from './NotificationModal';
 const LAST_BROADCAST_VIEW_KEY = 'last_broadcast_view';
 
 const Navbar = () => {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser, loading: authLoading } = useContext(AuthContext);
   const { isDark, setTheme } = useTheme();
   const [hasUnseenBroadcast, setHasUnseenBroadcast] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -115,7 +115,12 @@ const Navbar = () => {
             )}
 
             {/* 벨 아이콘 (로그인 사용자만) */}
-            {currentUser ? (
+            {authLoading ? (
+              <div
+                className="w-7 h-7 rounded-full bg-base-300 animate-pulse"
+                aria-label="로그인 상태 확인 중"
+              />
+            ) : currentUser ? (
               <button
                 onClick={handleBellClick}
                 className="relative p-1 text-base-content/60 hover:text-base-content transition-colors"
