@@ -148,7 +148,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'home',
       path: '/',
-      label: '홈',
+      label: '시세',
       icon: HomeIcon,
       showLabel: true,
       activeColor: 'text-[#FFC600]' // 노랑
@@ -156,7 +156,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'lounge',
       path: '/lounge',
-      label: '광장',
+      label: '대화방',
       icon: GroupsIcon,
       showLabel: true,
       activeColor: 'text-[#FF7043]', // 주황
@@ -166,7 +166,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'community',
       path: '/community',
-      label: '커뮤',
+      label: '게시판',
       icon: ForumIcon,
       showLabel: true,
       activeColor: 'text-[#26A69A]', // 청록
@@ -175,7 +175,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'qna',
       path: '/qna',
-      label: '정보',
+      label: '영농정보',
       icon: HelpOutlineIcon,
       showLabel: true,
       activeColor: 'text-[#42A5F5]', // 하늘
@@ -184,7 +184,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
     {
       id: 'profile',
       path: authLoading ? null : currentUser ? `/profile/${currentUser.id}` : '/login',
-      label: authLoading ? '확인 중' : currentUser ? '프로필' : '로그인',
+      label: authLoading ? '확인 중' : '내정보',
       icon: PersonIcon,
       showLabel: true,
       isProfile: true,
@@ -224,7 +224,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       return location.pathname === '/';
     }
     if (button.isProfile) {
-      return location.pathname.startsWith('/profile');
+      return location.pathname.startsWith('/profile') || location.pathname === '/login';
     }
     // 번역 페이지는 정보 탭으로 이동했으므로 정보 탭 active 처리
     if (button.id === 'qna') {
@@ -245,7 +245,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
       }`}
     >
       <div className="bg-base-100/90 backdrop-blur-md border-t border-base-300 safe-area-bottom">
-        <div className="flex items-center justify-around h-20 max-w-screen-xl mx-auto px-2">
+        <div className="flex items-center justify-around h-20 max-w-screen-xl mx-auto px-1">
           {buttons.map((button) => {
             const IconComponent = button.icon;
             const isActive = isActiveButton(button);
@@ -257,7 +257,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
                 onClick={() => handleButtonClick(button)}
                 disabled={button.isAuthPending}
                 className={`flex flex-col items-center justify-center transition-colors duration-200 ${
-                  button.showLabel ? 'px-3 py-2 flex-1' : 'px-4 py-2'
+                  button.showLabel ? 'px-1 py-2 flex-1 min-w-0' : 'px-2 py-2'
                 } ${
                   isActive
                     ? `${button.activeColor} -translate-y-1`
@@ -295,7 +295,7 @@ const MobileBottomNav = ({ scrollDirection }) => {
 
                 {/* 텍스트 라벨 (showLabel이 true일 때만) */}
                 {button.showLabel && (
-                  <span className={`text-xs mt-1 ${isActive ? 'font-semibold' : 'font-medium'}`}>
+                  <span className={`text-xs mt-1 whitespace-nowrap ${isActive ? 'font-semibold' : 'font-medium'}`}>
                     {button.label}
                   </span>
                 )}
