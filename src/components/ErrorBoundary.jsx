@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import ErrorIcon from '@mui/icons-material/Error';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -12,8 +13,8 @@ const ErrorBoundary = ({ error, resetError, children }) => {
           <p className="text-gray-600 mb-6">
             일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
           </p>
-          
-          {process.env.NODE_ENV === 'development' && (
+
+          {import.meta.env.DEV && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
               <h3 className="font-semibold text-red-800 mb-2">개발자 정보:</h3>
               <pre className="text-xs text-red-700 overflow-auto">
@@ -21,7 +22,7 @@ const ErrorBoundary = ({ error, resetError, children }) => {
               </pre>
             </div>
           )}
-          
+
           <div className="space-y-3">
             <button
               onClick={resetError}
@@ -30,7 +31,7 @@ const ErrorBoundary = ({ error, resetError, children }) => {
               <RefreshIcon fontSize="small" />
               다시 시도
             </button>
-            
+
             <button
               onClick={() => window.location.href = '/'}
               className="w-full border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 transition-colors"
@@ -38,7 +39,7 @@ const ErrorBoundary = ({ error, resetError, children }) => {
               홈으로 이동
             </button>
           </div>
-          
+
           <p className="text-xs text-gray-500 mt-6">
             문제가 계속 발생하면 관리자에게 문의하세요.
           </p>
@@ -48,6 +49,16 @@ const ErrorBoundary = ({ error, resetError, children }) => {
   }
 
   return children;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ErrorBoundary.propTypes = {
+  ...ErrorBoundary.propTypes,
+  "error": PropTypes.shape({
+    "message": PropTypes.string
+  }),
+  "resetError": PropTypes.func,
+  "children": PropTypes.node
 };
 
 // 로딩 컴포넌트
@@ -68,13 +79,20 @@ export const LoadingSpinner = ({ size = 'medium', message = '로딩 중...' }) =
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LoadingSpinner.propTypes = {
+  ...LoadingSpinner.propTypes,
+  "size": PropTypes.string,
+  "message": PropTypes.string
+};
+
 // 빈 상태 컴포넌트
-export const EmptyState = ({ 
-  icon: Icon, 
-  title, 
-  description, 
-  actionLabel, 
-  onAction 
+export const EmptyState = ({
+  icon: Icon,
+  title,
+  description,
+  actionLabel,
+  onAction
 }) => {
   return (
     <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -93,6 +111,16 @@ export const EmptyState = ({
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+EmptyState.propTypes = {
+  ...EmptyState.propTypes,
+  "icon": PropTypes.node,
+  "title": PropTypes.string,
+  "description": PropTypes.string,
+  "actionLabel": PropTypes.string,
+  "onAction": PropTypes.func
 };
 
 // 네트워크 에러 감지
@@ -127,6 +155,12 @@ export const NetworkErrorHandler = ({ children }) => {
   }
 
   return children;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+NetworkErrorHandler.propTypes = {
+  ...NetworkErrorHandler.propTypes,
+  "children": PropTypes.node
 };
 
 export default ErrorBoundary;

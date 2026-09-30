@@ -114,5 +114,9 @@ export const sortAdsByPriority = (ads, viewCountsSnapshot = null) => {
   });
 
   // 가중치 기반 랜덤 셔플 (결정적 정렬 → 확률적 정렬)
-  return weightedRandomShuffle(adsWithScore).map(({ _score, ...ad }) => ad);
+  return weightedRandomShuffle(adsWithScore).map((scoredAd) => {
+    const ad = { ...scoredAd };
+    delete ad._score;
+    return ad;
+  });
 };

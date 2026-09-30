@@ -5,7 +5,7 @@ const TestPermissionComponents = () => {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Permission Components Test</h1>
-      
+
       <div className="space-y-4">
         <div className="border p-4 rounded">
           <h2 className="text-lg font-semibold mb-2">1. Permission Components Import Test</h2>
@@ -50,7 +50,7 @@ const TestPermissionComponents = () => {
       <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
         <h2 className="text-lg font-semibold text-blue-800 mb-2">🔄 다음 단계: 인스타 스타일 게시글</h2>
         <p className="text-blue-700">
-          태그 작성 문제가 해결되었으므로, 이제 인스타 스타일 게시글 컴포넌트와 
+          태그 작성 문제가 해결되었으므로, 이제 인스타 스타일 게시글 컴포넌트와
           동영상 자동재생 기능을 구현할 차례입니다.
         </p>
       </div>

@@ -18,8 +18,8 @@ const MediaModal = ({
   // 동영상 상태
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [showControls, setShowControls] = useState(true);
+  const [, setProgress] = useState(0);
+  const [, setShowControls] = useState(true);
 
   // 터치/스와이프 상태
   const [touchStart, setTouchStart] = useState({ x: 0, y: 0 });
@@ -317,18 +317,7 @@ const MediaModal = ({
   };
 
   // 동영상 컨트롤
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-    setShowControls(true);
-    hideControlsAfterDelay();
-  };
+
 
   const toggleMute = (e) => {
     e.stopPropagation();
@@ -341,23 +330,9 @@ const MediaModal = ({
     }
   };
 
-  const handleVideoProgress = () => {
-    if (videoRef.current && videoRef.current.duration) {
-      const progress = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(progress);
-    }
-  };
 
-  const handleProgressClick = (e) => {
-    e.stopPropagation();
-    if (videoRef.current && videoRef.current.duration) {
-      const rect = e.currentTarget.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const width = rect.width;
-      const newTime = (clickX / width) * videoRef.current.duration;
-      videoRef.current.currentTime = newTime;
-    }
-  };
+
+
 
   // 배경 클릭으로 닫기
   const handleBackgroundClick = (e) => {

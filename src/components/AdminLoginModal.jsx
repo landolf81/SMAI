@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useState, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import LoadingSpinner from './LoadingSpinner';
@@ -152,6 +153,12 @@ const AdminLoginModal = ({ onClose }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdminLoginModal.propTypes = {
+  ...AdminLoginModal.propTypes,
+  "onClose": PropTypes.func
 };
 
 export default AdminLoginModal;

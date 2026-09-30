@@ -43,7 +43,7 @@ import { commentService } from "../services/commentService";
   return (
     <div className="collapse-container">
       <button className="collapse-toggle" onClick={handleCollapse}>
-        Comments {isCollapsed ? "(0)" : "(x)"}{" "} 
+        Comments {isCollapsed ? "(0)" : "(x)"}{" "}
         <i className="fas fa-chevron-down"></i>
       </button>
       <div className={` ${isCollapsed ? "hidden" : ""}`}>
@@ -260,7 +260,7 @@ import { commentService } from "../services/commentService";
                           </div>
                         </footer>
                         <p className="text-gray-500 dark:text-gray-400">
-                          an example replies template 
+                          an example replies template
                         </p>
                         <div className="flex items-center mt-4 space-x-4">
                           <button

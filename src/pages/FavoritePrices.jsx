@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * FavoritePrices.jsx
  * 즐겨찾기 시세 페이지 - 즐겨찾기한 공판장/등급의 특정 날짜 시세 표시
@@ -260,6 +261,7 @@ const FavoritePrices = () => {
                   </button>
                 </div>
               );
+              ActionButtons.propTypes = { stopProp: PropTypes.bool };
 
               // 해당 날짜에 경매 데이터 없음
               if (!data) {
@@ -458,3 +460,6 @@ const FavoritePrices = () => {
 };
 
 export default FavoritePrices;
+
+// 내부 컴포넌트의 입력 데이터 계약.
+ChangeText.propTypes = { comparison: PropTypes.shape({ comparison_available: PropTypes.bool, change: PropTypes.number }) };

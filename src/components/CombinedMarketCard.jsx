@@ -1,3 +1,5 @@
+import { chartDatumType } from './propShapes';
+import PropTypes from 'prop-types';
 /**
  * CombinedMarketCard.jsx
  * 홈 화면 최하단 - 산지 + 도매 종합 카드
@@ -42,12 +44,7 @@ const getNextDate = (dateStr) => {
   return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 };
 
-const getPrevDate = (dateStr) => {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setDate(dt.getDate() - 1);
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-};
+
 
 // 산지 경매 가능일(직전 거래일) 찾기
 // 토요일(6)은 산지 휴장 → 건너뛰어서 금요일로
@@ -123,6 +120,15 @@ const ChartTooltip = ({ active, payload }) => {
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ChartTooltip.propTypes = {
+  ...ChartTooltip.propTypes,
+  "active": PropTypes.bool,
+  "payload": PropTypes.arrayOf(PropTypes.shape({
+    "payload": chartDatumType
+  }))
+};
+
 /**
  * @param {string} selectedDate - 홈에서 선택된 날짜 (YYYY-MM-DD)
  * @param {Function} formatPrice - 숫자 포맷 함수
@@ -141,6 +147,15 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
     }
     return <div style={{ display: 'none' }} />;
   };
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+EmptyTooltip.propTypes = {
+  ...EmptyTooltip.propTypes,
+  "active": PropTypes.bool,
+  "payload": PropTypes.arrayOf(PropTypes.shape({
+    "payload": chartDatumType
+  }))
+};
 
   // 기준일: selectedDate의 직전 산지 거래일 (토요일 휴장 건너뜀)
   // 예: 26일(수) → baseDate=25일(화) 산지 + 26일(수) 도매
@@ -213,7 +228,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
   const dayName = DAY_NAMES[dayOfWeek];
 
   // 등락 표시 헬퍼
-  const renderChange = (current, previous, _unused = false, asMillion = false) => {
+  const renderChange = (current, previous, asMillion = false) => {
     if (!previous || previous === 0) return null;
     const rawChange = current - previous;
     const change = Math.sign(rawChange) * Math.floor(Math.abs(rawChange) / 10) * 10;
@@ -332,7 +347,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                     {formatPrice(lastYearData.avgPrice)}
                   </div>
                   <div className="mt-1">
-                    {renderChange(combined.avgPrice, lastYearData.avgPrice, true)}
+                    {renderChange(combined.avgPrice, lastYearData.avgPrice)}
                   </div>
                 </div>
                 <div>
@@ -341,7 +356,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                     {formatPrice(lastYearData.totalBoxes)}
                   </div>
                   <div className="mt-1">
-                    {renderChange(combined.totalBoxes, lastYearData.totalBoxes, true)}
+                    {renderChange(combined.totalBoxes, lastYearData.totalBoxes)}
                   </div>
                 </div>
                 <div>
@@ -354,7 +369,7 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
                     <span className="text-xs text-base-content/50 ml-0.5">백만</span>
                   </div>
                   <div className="mt-1">
-                    {renderChange(combined.totalAmount, lastYearData.totalAmount, true, true)}
+                    {renderChange(combined.totalAmount, lastYearData.totalAmount, true)}
                   </div>
                 </div>
               </div>
@@ -580,6 +595,13 @@ const CombinedMarketCard = ({ selectedDate, formatPrice }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+CombinedMarketCard.propTypes = {
+  ...CombinedMarketCard.propTypes,
+  "selectedDate": PropTypes.string,
+  "formatPrice": PropTypes.func
 };
 
 export default CombinedMarketCard;

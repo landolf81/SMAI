@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * Lounge.jsx
  * 역할: 광장 - 회원들이 짧은 텍스트 글을 나누는 피드
@@ -184,7 +185,7 @@ const renderContent = (content, knownNames) => {
 // props: msg, currentUserId, onDelete, onTTS, onMention, isSpeaking, isAdmin, onHide, knownNames
 // ─────────────────────────────────────────────
 const LoungeMessage = React.memo(({ msg, currentUserId, onDelete, onAdminDelete, onTTS, onMention, onProfileClick, isSpeaking, isAdmin, onHide, onImageClick, knownNames, myPollVotes, onVote, onClosePoll, isVoting, badges }) => {
-  const user = msg.users || {};
+  const user = useMemo(() => msg.users || {}, [msg.users]);
   const profileUrl = storageService.getProfileImageUrl(user.profile_pic, user.id);
   const displayName = user.name || user.username || '알 수 없음';
   const isMe = msg.user_id === currentUserId;
@@ -1087,3 +1088,16 @@ const Lounge = () => {
 };
 
 export default Lounge;
+
+// 내부 컴포넌트의 입력 데이터 계약.
+LoungeMessage.propTypes = {
+  msg: PropTypes.shape({ id: PropTypes.string, users: PropTypes.object, user_id: PropTypes.string,
+    is_hidden: PropTypes.bool, poll_id: PropTypes.string, created_at: PropTypes.string,
+    content: PropTypes.string, image_url: PropTypes.string, image_urls: PropTypes.arrayOf(PropTypes.string),
+    video_url: PropTypes.string, lounge_polls: PropTypes.object }).isRequired,
+  currentUserId: PropTypes.string, onDelete: PropTypes.func, onAdminDelete: PropTypes.func,
+  onTTS: PropTypes.func, onMention: PropTypes.func, onProfileClick: PropTypes.func,
+  isSpeaking: PropTypes.bool, isAdmin: PropTypes.bool, onHide: PropTypes.func, onImageClick: PropTypes.func,
+  knownNames: PropTypes.arrayOf(PropTypes.string), myPollVotes: PropTypes.arrayOf(PropTypes.string),
+  onVote: PropTypes.func, onClosePoll: PropTypes.func, isVoting: PropTypes.bool, badges: PropTypes.arrayOf(PropTypes.object),
+};

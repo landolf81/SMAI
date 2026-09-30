@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useRef, useEffect } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -379,6 +380,23 @@ const TranslationHistoryModal = ({ history, onClose, onDelete }) => {
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+TranslationHistoryModal.propTypes = {
+  ...TranslationHistoryModal.propTypes,
+  "history": PropTypes.shape({
+    "audio_url": PropTypes.string,
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "target_translation": PropTypes.string,
+    "input_lang": PropTypes.string,
+    "target_lang": PropTypes.string,
+    "created_at": PropTypes.string,
+    "input_text": PropTypes.string,
+    "back_translation": PropTypes.string
+  }),
+  "onClose": PropTypes.func,
+  "onDelete": PropTypes.func
 };
 
 export default TranslationHistoryModal;

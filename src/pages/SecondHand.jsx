@@ -74,7 +74,7 @@ const SecondHand = () => {
   const renderIntervalRef = useRef(null);
 
   // 중고거래 페이지 스크롤 위치 복원 (검색어 고려)
-  const { resetScrollPosition, scrollToTop } = useScrollRestore(
+  useScrollRestore(
     'secondhand',
     null,
     searchTerm || null
@@ -218,12 +218,13 @@ const SecondHand = () => {
       scheduleNextBatch();
     }
 
+    const renderInterval = renderIntervalRef.current;
     return () => {
       if (frameId) {
         cancelAnimationFrame(frameId);
       }
-      if (renderIntervalRef.current) {
-        clearInterval(renderIntervalRef.current);
+      if (renderInterval) {
+        clearInterval(renderInterval);
       }
     };
   }, [isLoading, postsWithAds.length, navigationType, renderedCount]);
@@ -276,7 +277,7 @@ const SecondHand = () => {
           {/* 검색 결과 개수 */}
           {searchTerm && posts && (
             <div className="max-w-3xl mx-auto mt-2 text-sm text-base-content/60">
-              "{searchTerm}" 검색 결과: {posts.length}개
+              &quot;{searchTerm}&quot; 검색 결과: {posts.length}개
             </div>
           )}
         </div>
@@ -336,7 +337,7 @@ const SecondHand = () => {
                 <>
                   <SearchIcon className="mx-auto text-6xl text-base-content/40 mb-4" />
                   <h3 className="text-lg font-medium text-base-content mb-2">
-                    "{searchTerm}"에 대한 검색 결과가 없습니다
+                    &quot;{searchTerm}&quot;에 대한 검색 결과가 없습니다
                   </h3>
                   <p className="text-base-content/50 mb-4">다른 검색어로 시도해보세요</p>
                   <button

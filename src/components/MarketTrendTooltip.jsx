@@ -48,7 +48,7 @@ const MarketTrendTooltip = () => {
 
   if (!visible || !targetRect) return null;
 
-  const tooltipLeft = targetRect.left + targetRect.width / 2;
+  targetRect.left + targetRect.width / 2;
   const tooltipTop = targetRect.bottom + 12;
 
   return createPortal(

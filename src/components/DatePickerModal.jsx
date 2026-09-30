@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useMemo } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -200,6 +201,16 @@ const DatePickerModal = ({ isOpen, onClose, selectedDate, onSelectDate, maxDate 
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+DatePickerModal.propTypes = {
+  ...DatePickerModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "selectedDate": PropTypes.string,
+  "onSelectDate": PropTypes.func,
+  "maxDate": PropTypes.string
 };
 
 export default DatePickerModal;

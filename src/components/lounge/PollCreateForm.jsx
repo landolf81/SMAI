@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * PollCreateForm.jsx
  * 역할: 광장 투표 생성 폼
@@ -196,6 +197,15 @@ const PollCreateForm = ({ onSubmit, onCancel, isSubmitting = false, cooldownLeft
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PollCreateForm.propTypes = {
+  ...PollCreateForm.propTypes,
+  "onSubmit": PropTypes.func,
+  "onCancel": PropTypes.func,
+  "isSubmitting": PropTypes.bool,
+  "cooldownLeft": PropTypes.number
 };
 
 export default React.memo(PollCreateForm);

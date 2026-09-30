@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { bannerAdService } from '../services/bannerAdService';
@@ -231,6 +232,17 @@ const BannerAd = ({
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BannerAd.propTypes = {
+  ...BannerAd.propTypes,
+  "slot": PropTypes.string,
+  "className": PropTypes.string,
+  "aspectRatio": PropTypes.string,
+  "rounded": PropTypes.string,
+  "rotateMs": PropTypes.number,
+  "fallbackImage": PropTypes.string
+};
+
 const BannerOverlay = ({ ad }) => (
   <>
     {/* 광고 라벨 */}
@@ -253,5 +265,15 @@ const BannerOverlay = ({ ad }) => (
     )}
   </>
 );
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BannerOverlay.propTypes = {
+  ...BannerOverlay.propTypes,
+  "ad": PropTypes.shape({
+    "cta_text": PropTypes.string,
+    "advertiser_name": PropTypes.string,
+    "title": PropTypes.string
+  })
+};
 
 export default BannerAd;

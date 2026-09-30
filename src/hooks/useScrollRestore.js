@@ -1,6 +1,18 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useLocation, useNavigationType } from 'react-router-dom';
 import scrollManager from '../utils/scrollManager';
+
+// 게시판 종류별 저장 대상 경로. 훅 밖에 두어 렌더 간 동일하게 유지한다.
+const getExpectedPathname = (type) => {
+  const pathMap = {
+    home: '/',
+    community: '/community',
+    secondhand: '/secondhand',
+    qna: '/qna',
+    profile: '/profile'
+  };
+  return pathMap[type] || `/${type}`;
+};
 
 /**
  * 게시판별 스크롤 위치 복원 훅 (페이지 재방문 시 복원, 캐시 만료 시 최상단)
@@ -20,20 +32,8 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
   const isRestoringRef = useRef(false); // 스크롤 복원 중 플래그
   const mountNavigationTypeRef = useRef(navigationType); // 마운트 시점의 navigationType 저장
 
-  // boardType과 pathname 매핑
-  const getExpectedPathname = (type) => {
-    const pathMap = {
-      'home': '/',
-      'community': '/community',
-      'secondhand': '/secondhand',
-      'qna': '/qna',
-      'profile': '/profile'
-    };
-    return pathMap[type] || `/${type}`;
-  };
-
   // 스크롤 위치 저장 함수
-  const saveCurrentScrollPosition = () => {
+  const saveCurrentScrollPosition = useCallback(() => {
     if (!enabled) return;
 
     // 스크롤 복원 중에는 저장하지 않음
@@ -54,7 +54,7 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
       scrollManager.saveScrollPosition(boardType, scrollTop, tag, search, userId);
       lastScrollPositionRef.current = scrollTop;
     }
-  };
+  }, [enabled, boardType, location.pathname, tag, search, userId]);
 
   // 페이지 초기화 처리
   useEffect(() => {
@@ -102,7 +102,7 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
         }, 300);
       }, 50);
     }
-  }, [location.pathname, boardType, tag, search, userId, navigationType, enabled]);
+  }, [location.pathname, boardType, tag, search, userId, navigationType, enabled, isCacheValid]);
 
   // 마운트 시점의 navigationType 업데이트
   useEffect(() => {
@@ -131,7 +131,7 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
       }
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [boardType, tag, search, userId, enabled]);
+  }, [boardType, tag, search, userId, enabled, saveCurrentScrollPosition]);
 
   // 스크롤 이벤트 리스너 (저장용)
   useEffect(() => {
@@ -175,7 +175,7 @@ export const useScrollRestore = (boardType, tag = null, search = null, userId = 
         clearTimeout(scrollTimeoutRef.current);
       }
     };
-  }, [boardType, tag, search, userId, enabled]);
+  }, [boardType, tag, search, userId, enabled, saveCurrentScrollPosition]);
 
   // 페이지가 변경될 때마다 초기화 상태 리셋
   useEffect(() => {

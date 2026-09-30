@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * LocalMarketDetailModal.jsx
  * 산지(로컬마켓) 등급별 원본 데이터 모달
@@ -121,6 +122,16 @@ const LocalMarketDetailModal = ({ isOpen, onClose, marketName, marketDate, grade
     </div>,
     document.body
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LocalMarketDetailModal.propTypes = {
+  ...LocalMarketDetailModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "marketName": PropTypes.string,
+  "marketDate": PropTypes.string,
+  "gradeName": PropTypes.string
 };
 
 export default LocalMarketDetailModal;

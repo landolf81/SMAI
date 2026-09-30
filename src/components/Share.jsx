@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useContext, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,7 +20,7 @@ const Share = ({ onPostCreated }) => {
   const [error, setError] = useState("");
 
   // 중고거래 전용 필드
-  const [tradeInfo, setTradeInfo] = useState({
+  const [, setTradeInfo] = useState({
     itemName: '',
     price: '',
     quantity: '',
@@ -239,14 +240,14 @@ const Share = ({ onPostCreated }) => {
           {files.length > 0 && (
             <div className="mt-2">
               <div className="text-sm text-gray-600 mb-2">
-                선택된 파일: {files.length}개 
+                선택된 파일: {files.length}개
                 ({files.filter(f => getMediaType(f).isImage).length}개 이미지, {files.filter(f => getMediaType(f).isVideo).length}개 동영상)
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {files.map((file, index) => {
                   const mediaType = getMediaType(file);
                   const mediaIcon = getMediaIcon(file.name);
-                  
+
                   return (
                     <div key={index} className="relative">
                       {mediaType.isVideo ? (
@@ -299,6 +300,12 @@ const Share = ({ onPostCreated }) => {
       </form>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+Share.propTypes = {
+  ...Share.propTypes,
+  "onPostCreated": PropTypes.func
 };
 
 export default Share;

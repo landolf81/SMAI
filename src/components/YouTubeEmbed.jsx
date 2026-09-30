@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlay, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
@@ -10,11 +11,9 @@ import { getYouTubeVideoId, getYouTubeThumbnail, getYouTubeEmbedUrl } from '../u
 const YouTubeEmbed = ({
   url,
   autoplay = false,
-  showThumbnail = true,
   className = "",
   onPlay,
-  onError,
-  forceAutoplay = false // 강제 자동재생 옵션 (권장하지 않음)
+  onError
 }) => {
   const [isPlaying, setIsPlaying] = useState(autoplay);
   const [thumbnailError, setThumbnailError] = useState(false);
@@ -45,7 +44,7 @@ const YouTubeEmbed = ({
       observer.disconnect();
     };
   }, [isPlaying]);
-  
+
   if (!videoId) {
     return (
       <div className="flex items-center justify-center p-4 bg-gray-100 rounded-lg">
@@ -93,7 +92,7 @@ const YouTubeEmbed = ({
           allowFullScreen
           onError={handleEmbedError}
         />
-        
+
         {/* YouTube에서 열기 버튼 */}
         <button
           onClick={openInYouTube}
@@ -118,7 +117,7 @@ const YouTubeEmbed = ({
           onClick={handlePlay}
         />
       ) : (
-        <div 
+        <div
           className="w-full h-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center"
           onClick={handlePlay}
         >
@@ -129,9 +128,9 @@ const YouTubeEmbed = ({
           </div>
         </div>
       )}
-      
+
       {/* 재생 버튼 오버레이 */}
-      <div 
+      <div
         className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         onClick={handlePlay}
       >
@@ -163,13 +162,25 @@ const YouTubeEmbed = ({
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+YouTubeEmbed.propTypes = {
+  ...YouTubeEmbed.propTypes,
+  "url": PropTypes.string,
+  "autoplay": PropTypes.bool,
+  "showThumbnail": PropTypes.bool,
+  "className": PropTypes.string,
+  "onPlay": PropTypes.func,
+  "onError": PropTypes.func,
+  "forceAutoplay": PropTypes.bool
+};
+
 /**
  * 작은 YouTube 미리보기 카드 (PostEditor용)
  */
 export const YouTubePreviewCard = ({ url, onRemove, className = "" }) => {
   const videoId = getYouTubeVideoId(url);
   const thumbnailUrl = getYouTubeThumbnail(videoId, 'default');
-  
+
   if (!videoId) return null;
 
   return (
@@ -186,7 +197,7 @@ export const YouTubePreviewCard = ({ url, onRemove, className = "" }) => {
             <FontAwesomeIcon icon={faPlay} className="text-white w-3 h-3" />
           </div>
         </div>
-        
+
         {/* 정보 */}
         <div className="flex-1 p-3 min-w-0">
           <div className="flex items-center justify-between">
@@ -198,7 +209,7 @@ export const YouTubePreviewCard = ({ url, onRemove, className = "" }) => {
                 {url}
               </p>
             </div>
-            
+
             {onRemove && (
               <button
                 onClick={onRemove}
@@ -215,6 +226,14 @@ export const YouTubePreviewCard = ({ url, onRemove, className = "" }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+YouTubePreviewCard.propTypes = {
+  ...YouTubePreviewCard.propTypes,
+  "url": PropTypes.string,
+  "onRemove": PropTypes.func,
+  "className": PropTypes.string
 };
 
 export default YouTubeEmbed;

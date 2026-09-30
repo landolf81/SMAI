@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useCallback, useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -24,7 +24,7 @@ const Favorites = () => {
   const { currentUser } = useContext(AuthContext);
 
   // 사용자 관심 목록 가져오기
-  const fetchUserFavorites = async () => {
+  const fetchUserFavorites = useCallback(async () => {
     try {
       const data = await marketService.getFavorites();
       setFavorites(data);
@@ -36,20 +36,20 @@ const Favorites = () => {
         setError('관심 목록을 불러올 수 없습니다.');
       }
     }
-  };
+  }, []);
 
   // 사용가능한 시장 목록 가져오기
-  const fetchAvailableMarkets = async () => {
+  const fetchAvailableMarkets = useCallback(async () => {
     try {
       const markets = await marketService.getAvailableMarkets();
       setAvailableMarkets(markets);
     } catch (error) {
       console.error('시장 목록 조회 실패:', error);
     }
-  };
+  }, []);
 
   // 초기 데이터 로드
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -65,11 +65,11 @@ const Favorites = () => {
     ]);
     
     setLoading(false);
-  };
+  }, [currentUser, fetchAvailableMarkets, fetchUserFavorites]);
 
   useEffect(() => {
     loadData();
-  }, [currentUser]);
+  }, [loadData]);
 
   // 관심 목록에서 제거
   const handleRemoveFavorite = async (favoriteId) => {

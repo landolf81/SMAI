@@ -1,3 +1,5 @@
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import PropTypes from 'prop-types';
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -7,7 +9,7 @@ import moment from 'moment';
 import 'moment/locale/ko';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEllipsisH, faMicrophone, faStop, faImage, faTimes } from "@fortawesome/free-solid-svg-icons";
-import { v4 as uuidv4 } from 'uuid';
+
 import MobileAdDisplay from './MobileAdDisplay';
 import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
@@ -19,7 +21,7 @@ import { getProfilePic } from '../utils/userHelper';
 
 // 아이콘
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import CloseIcon from '@mui/icons-material/Close';
+
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -539,7 +541,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       const maxSize = 50 * 1024 * 1024; // 50MB
       return isValid && file.size <= maxSize;
     });
-    
+
     setNewImages(prevFiles => [...prevFiles, ...validFiles]);
   };
 
@@ -670,7 +672,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
               </div>
             </div>
           </div>
-          
+
           {/* 더보기 메뉴 (수정/삭제) */}
           {currentUser && currentUser.id === question.user_id && (
             <div className="relative group">
@@ -777,7 +779,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
             {question.views_count || 0}
           </span>
           {question.tag_display_name && (
-            <span 
+            <span
               className="px-2 py-1 rounded text-xs"
               style={{ backgroundColor: question.tag_color + '20', color: question.tag_color }}
             >
@@ -1150,7 +1152,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 ✕
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmitEdit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-base-content/70 mb-2">
@@ -1167,7 +1169,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                 />
                 <div className="text-sm text-base-content/50 mt-1">{editTitle.length}/20자</div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-base-content/70 mb-2">
                   내용
@@ -1181,12 +1183,12 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-base-content/70 mb-2">
                   이미지
                 </label>
-                
+
                 {/* 기존 이미지 */}
                 {editImages.length > 0 && (
                   <div className="mb-4">
@@ -1211,7 +1213,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                     </div>
                   </div>
                 )}
-                
+
                 {/* 새 이미지 */}
                 {newImages.length > 0 && (
                   <div className="mb-4">
@@ -1236,7 +1238,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                     </div>
                   </div>
                 )}
-                
+
                 {/* 이미지 추가 버튼 */}
                 <div>
                   <label htmlFor="editImageInput" className="inline-flex items-center px-4 py-2 border border-base-300 rounded-lg shadow-sm text-sm font-medium text-base-content/70 bg-base-100 hover:bg-base-200 cursor-pointer">
@@ -1258,7 +1260,7 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
@@ -1288,6 +1290,14 @@ const QnADetail = ({ questionId: propQuestionId, onClose, isModal = false }) => 
       />
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+QnADetail.propTypes = {
+  ...QnADetail.propTypes,
+  "questionId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "onClose": PropTypes.func,
+  "isModal": PropTypes.bool
 };
 
 export default QnADetail;

@@ -187,7 +187,7 @@ export const browserSecurity = {
     };
 
     const unsupported = Object.entries(features)
-      .filter(([key, supported]) => !supported)
+      .filter(([, supported]) => !supported)
       .map(([key]) => key);
 
     return {

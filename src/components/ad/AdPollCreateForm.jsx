@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * AdPollCreateForm.jsx
  * 역할: 관리자 광고 생성/수정 폼 내 투표 설정 섹션
@@ -164,6 +165,20 @@ const AdPollCreateForm = ({ pollData, onChange, onRemove }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdPollCreateForm.propTypes = {
+  ...AdPollCreateForm.propTypes,
+  "pollData": PropTypes.shape({
+    "question": PropTypes.string,
+    "options": PropTypes.arrayOf(PropTypes.string),
+    "isMultiple": PropTypes.bool,
+    "isAnonymous": PropTypes.bool,
+    "expiresInHours": PropTypes.number
+  }),
+  "onChange": PropTypes.func,
+  "onRemove": PropTypes.func
 };
 
 export default React.memo(AdPollCreateForm);

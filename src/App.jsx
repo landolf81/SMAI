@@ -1,11 +1,11 @@
 import React, { Suspense, lazy, useContext, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import {
   createBrowserRouter,
   Outlet,
   RouterProvider,
   useLocation,
   useNavigate,
-  useSearchParams,
 } from 'react-router-dom';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
@@ -50,6 +50,13 @@ const PolicyIconSvg = ({ className }) => (
     <path d="M21 5l-9-4-9 4v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm-9 4c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm4 8H8v-1c0-1.33 2.67-2 4-2s4 .67 4 2v1z"/>
   </svg>
 );
+
+// 인라인 SVG 아이콘이 받는 CSS 클래스의 타입을 검증한다.
+const svgIconPropTypes = { className: PropTypes.string };
+SearchIconSvg.propTypes = svgIconPropTypes;
+HelpOutlineIconSvg.propTypes = svgIconPropTypes;
+EditIconSvg.propTypes = svgIconPropTypes;
+PolicyIconSvg.propTypes = svgIconPropTypes;
 
 // 로딩 컴포넌트
 const PageLoader = () => (
@@ -135,7 +142,6 @@ const Layout = () => {
   const { currentUser, isBanned } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const scrollDirection = useScrollDirection();
 
   // 글쓰기 버튼 상태 (훅은 early return 전에 호출해야 함)

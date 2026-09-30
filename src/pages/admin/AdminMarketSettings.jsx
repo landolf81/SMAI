@@ -23,7 +23,7 @@ const AdminMarketSettings = () => {
   const [marketGrades, setMarketGrades] = useState({});
 
   // 공판장 목록 (DB 기준)
-  const [marketList, setMarketList] = useState([]);
+  const [, setMarketList] = useState([]);
 
   // 선택된 공판장
   const [selectedMarket, setSelectedMarket] = useState(null);

@@ -490,7 +490,7 @@ const AdminBadgesNew = () => {
                 </div>
                 {manageSearchTerm && (
                   <p className="text-sm text-base-content/50 mt-2">
-                    '{manageSearchTerm}' 검색 결과
+                    &apos;{manageSearchTerm}&apos; 검색 결과
                     <button
                       onClick={() => setManageSearchTerm('')}
                       className="ml-2 text-blue-500 hover:text-blue-700"
@@ -586,7 +586,7 @@ const AdminBadgesNew = () => {
                   <VerifiedIcon className="text-6xl text-base-content/30 mb-4" />
                   {manageSearchTerm ? (
                     <>
-                      <p>'{manageSearchTerm}' 검색 결과가 없습니다.</p>
+                      <p>&apos;{manageSearchTerm}&apos; 검색 결과가 없습니다.</p>
                       <p className="text-sm">다른 검색어를 입력하거나 검색을 초기화해보세요.</p>
                     </>
                   ) : (

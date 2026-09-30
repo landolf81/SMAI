@@ -1,3 +1,4 @@
+import HomeIcon from '@mui/icons-material/Home';
 import { useState, useEffect, useMemo, useRef, useContext, useCallback } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -144,14 +145,14 @@ const Prices = () => {
     } catch (err) {
       toast.error('처리 중 오류가 발생했습니다');
     }
-  }, [authLoading, currentUser, favorites, getFavKey, navigate]);
+  }, [authLoading, currentUser, favorites, getFavKey]);
 
   // 등급 정렬 순서 적용 (공판장별 - DB 설정 사용)
-  const sortDetailsByGradeOrder = (details, currentMarket, settings) => {
+  const sortDetailsByGradeOrder = useCallback((details, currentMarket, settings) => {
     if (!details) return details;
 
     // 전달받은 settings 또는 현재 gradeSettings 사용
-    const currentSettings = settings || gradeSettings;
+    const currentSettings = settings || gradeSettingsRef.current;
 
     // DB에서 가져온 공판장별 등급 순서 확인
     let orderArray = null;
@@ -171,10 +172,10 @@ const Prices = () => {
       if (indexB === -1) return -1;
       return indexA - indexB;
     });
-  };
+  }, []);
 
   // 경락가 데이터 가져오기 (설정도 병렬 로드)
-  const fetchMarketData = async (market, date) => {
+  const fetchMarketData = useCallback(async (market, date) => {
     try {
       setLoading(true);
       setError(null);
@@ -211,7 +212,7 @@ const Prices = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sortDetailsByGradeOrder]);
 
   useEffect(() => {
     if (marketName) {
@@ -236,7 +237,7 @@ const Prices = () => {
       setLoading(false);
       setError('시장을 선택해주세요.');
     }
-  }, [marketName, selectedDate]);
+  }, [marketName, selectedDate, fetchMarketData]);
 
 
   const handleDateChange = (e) => {

@@ -1,4 +1,5 @@
-import React, { useContext, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import React, { useRef, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { AdminOnly } from '../components/PermissionComponents';
@@ -10,11 +11,12 @@ const AdminPage = () => {
     // 탭 상태 제거 - 대시보드만 표시
     const adminPermissions = useAdminPermissions();
     
-    // 컴포넌트 마운트 시에만 로그 출력
+    const initialDebugState = useRef({ currentUser, adminPermissions });
+    // 마운트 시점의 인증 상태만 기록
     useEffect(() => {
         console.log('🔍 [DEBUG] AdminPage 마운트');
-        console.log('🔍 [DEBUG] currentUser:', currentUser);
-        console.log('🔍 [DEBUG] adminPermissions:', adminPermissions);
+        console.log('🔍 [DEBUG] currentUser:', initialDebugState.current.currentUser);
+        console.log('🔍 [DEBUG] adminPermissions:', initialDebugState.current.adminPermissions);
         console.log('🔍 [DEBUG] 대시보드 전용 모드');
     }, []);
 
@@ -320,3 +322,5 @@ const DashboardContent = ({ navigate }) => {
 };
 
 export default AdminPage;
+// 내부 컴포넌트의 입력 데이터 계약.
+DashboardContent.propTypes = { navigate: PropTypes.func.isRequired };

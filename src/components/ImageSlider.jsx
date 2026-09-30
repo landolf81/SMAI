@@ -1,10 +1,10 @@
 /* eslint-disable react/prop-types */
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlay, faPause, faVolumeUp, faVolumeMute, faExpand } from "@fortawesome/free-solid-svg-icons";
+import { faPlay, faExpand } from "@fortawesome/free-solid-svg-icons";
 import { isVideoFile, getMediaIcon, normalizeMediaUrl } from '../utils/mediaUtils';
 
-const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "auto", onMediaClick, videoRef: externalVideoRef, disableAutoplay = false, priority = false }) => {
+const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "auto", onMediaClick, disableAutoplay = false, priority = false }) => {
     // 이미지 URL 정규화 (완전한 URL이면 그대로, 아니면 baseUrl 추가)
     const normalizedImages = useMemo(() => {
         return images.map(img => {
@@ -24,8 +24,8 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
 
     // 인덱스 변경 시 동영상 상태 초기화
     useEffect(() => {
-        if (isVideoFile(normalizedImages[currentIndex]) && !videoStates[currentIndex]) {
-            setVideoStates(prev => ({
+        if (isVideoFile(normalizedImages[currentIndex])) {
+            setVideoStates(prev => prev[currentIndex] ? prev : ({
                 ...prev,
                 [currentIndex]: {
                     isPlaying: false,
@@ -55,50 +55,11 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
     }, [currentIndex, normalizedImages, disableAutoplay]);
 
     // 동영상 제어 함수들
-    const toggleVideoPlay = (index) => {
-        const video = videoRefs.current[index];
-        if (!video) return;
 
-        const currentState = videoStates[index] || {};
-        const isPlaying = !currentState.isPlaying;
 
-        if (isPlaying) {
-            video.play();
-        } else {
-            video.pause();
-        }
 
-        setVideoStates(prev => ({
-            ...prev,
-            [index]: { ...prev[index], isPlaying }
-        }));
-    };
 
-    const toggleVideoMute = (index) => {
-        const video = videoRefs.current[index];
-        if (!video) return;
 
-        const isMuted = !video.muted;
-        video.muted = isMuted;
-        // iOS에서 볼륨도 함께 설정해야 벨소리가 아닌 미디어 볼륨 사용
-        video.volume = isMuted ? 0 : 1;
-
-        setVideoStates(prev => ({
-            ...prev,
-            [index]: { ...prev[index], isMuted }
-        }));
-    };
-
-    const handleVideoProgress = (index) => {
-        const video = videoRefs.current[index];
-        if (!video || !video.duration) return;
-
-        const progress = (video.currentTime / video.duration) * 100;
-        setVideoStates(prev => ({
-            ...prev,
-            [index]: { ...prev[index], progress }
-        }));
-    };
 
     // 컨테이너 스타일 결정
     const containerClass =
@@ -111,14 +72,17 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
         aspectRatio === "4-5" ? "w-full h-full object-cover" :
         "w-full h-auto object-contain";
 
+    const singleVideoRef = useRef(null);
+    const [singleVideoPlaying, setSingleVideoPlaying] = useState(false);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
+
     // 미디어가 없거나 1개 이하면 슬라이더 없이 단순 표시
     if (!normalizedImages || normalizedImages.length === 0) {
         return <div className={`${containerClass} bg-base-300 flex items-center justify-center text-base-content/50`}>미디어가 없습니다.</div>;
     }
 
     // 단일 미디어용 비디오 ref & 재생 상태
-    const singleVideoRef = useRef(null);
-    const [singleVideoPlaying, setSingleVideoPlaying] = useState(false);
 
     if (normalizedImages.length === 1) {
         const isVideo = isVideoFile(normalizedImages[0]);
@@ -178,7 +142,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         alt="게시물 이미지"
                         className={`${mediaClass} cursor-pointer`}
                         loading={priority ? 'eager' : 'lazy'}
-                        fetchPriority={priority ? 'high' : undefined}
+                        fetchpriority={priority ? 'high' : undefined}
                         onClick={() => onMediaClick && onMediaClick(0)}
                     />
                 </div>
@@ -236,8 +200,6 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
     };
 
     // 터치/스와이프 이벤트 처리
-    const [touchStart, setTouchStart] = useState(0);
-    const [touchEnd, setTouchEnd] = useState(0);
 
     const handleTouchStart = (e) => {
         // CSS touch-action으로 제어하므로 preventDefault 불필요
@@ -253,7 +215,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
     const handleTouchEnd = () => {
         // CSS touch-action으로 제어하므로 preventDefault 불필요
         if (!touchStart || !touchEnd) return;
-        
+
         const distance = touchStart - touchEnd;
         const isLeftSwipe = distance > 30;  // 더 민감하게 (50 → 30)
         const isRightSwipe = distance < -30; // 더 민감하게 (-50 → -30)
@@ -267,7 +229,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
             // console.log('오른쪽 스와이프 - 이전 이미지'); // 디버깅용 로그 비활성화
             prevImage();
         }
-        
+
         // 터치 상태 초기화
         setTouchStart(0);
         setTouchEnd(0);
@@ -350,7 +312,7 @@ const ImageSlider = ({ images = [], baseUrl = "/uploads/posts/", aspectRatio = "
                         alt={`게시물 이미지 ${currentIndex + 1}`}
                         className={`${mediaClass} cursor-pointer transition-opacity duration-300`}
                         loading={priority && currentIndex === 0 ? 'eager' : 'lazy'}
-                        fetchPriority={priority && currentIndex === 0 ? 'high' : undefined}
+                        fetchpriority={priority && currentIndex === 0 ? 'high' : undefined}
                         onClick={() => onMediaClick && onMediaClick(currentIndex)}
                         onError={(e) => {
                             console.error('이미지 로드 실패:', e.target.src);

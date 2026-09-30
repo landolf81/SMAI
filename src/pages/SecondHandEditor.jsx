@@ -4,8 +4,8 @@ import { AuthContext } from '../context/AuthContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faImage, faPaperPlane, faTimes, faMicrophone, faStop } from '@fortawesome/free-solid-svg-icons';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+
+
 import { postService, storageService } from '../services';
 import { getMediaType, getAcceptedFileTypes } from '../utils/mediaUtils';
 import { uploadVideo, validateVideo } from '../services/videoUploadService';
@@ -106,7 +106,7 @@ const SecondHandEditor = () => {
   };
 
   // 수정 모드일 때 기존 게시글 데이터 불러오기
-  const { data: postData, isLoading: postLoading } = useQuery({
+  const { data: postData } = useQuery({
     queryKey: ['post', id],
     queryFn: () => postService.getPost(id),
     enabled: isEditMode

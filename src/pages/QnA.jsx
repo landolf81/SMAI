@@ -117,6 +117,7 @@ const QnA = () => {
           <QnAList
             isSearchMode={isSearchMode}
             searchTerm={searchTerm}
+            onClearSearch={handleCloseSearch}
           />
         </>
       )}

@@ -1,3 +1,5 @@
+import { marketType } from './propShapes';
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
 import { useNavigate, useNavigationType } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -57,15 +59,12 @@ const useScrollFadeIn = () => {
 };
 
 // 도매시장 합계 카드에서 제외된 시장명 목록 (성주 내부 + 3대 외부 공판장)
-const WHOLESALE_EXCLUDE_NAMES = [
-  '선남농협', '성주원예', '성주조공', '용암농협', '초전농협',
-  '가락공판장', '대전공판장', '광주공판장'
-];
+
 
 // 도매시장 합계 카드가 삽입될 기준점: 이 시장 카드 바로 앞에 삽입
 const WHOLESALE_TOTAL_INSERT_BEFORE = '서울가락';
 
-const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, formatDateForDisplay, handleRefresh, marketInfoMap }) => {
+const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, selectedDate, formatPrice, marketInfoMap }) => {
   const navigate = useNavigate();
   const navigationType = useNavigationType();
   const { currentUser, loading: authLoading } = useContext(AuthContext);
@@ -112,7 +111,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
     } catch {
       toast.error('처리 중 오류가 발생했습니다');
     }
-  }, [authLoading, currentUser, favorites, getFavKey, navigate]);
+  }, [authLoading, currentUser, favorites, getFavKey]);
 
   // vCard 다운로드 (연락처 등록)
   const downloadVCard = (name, phone) => {
@@ -159,8 +158,9 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
 
   // 컴포넌트 언마운트 시 관찰 해제
   useEffect(() => {
+    const cards = cardRefs.current;
     return () => {
-      Object.values(cardRefs.current).forEach((element) => {
+      Object.values(cards).forEach((element) => {
         if (element) unobserve(element);
       });
     };
@@ -168,7 +168,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
 
 
   // 활성 광고 데이터 가져오기 (모바일에서만)
-  const { data: adsData, error: adsError, isLoading: adsLoading } = useQuery({
+  const { data: adsData } = useQuery({
     queryKey: ['ads', 'active', 'market'],
     queryFn: () => adService.getActiveAds('market'),
     staleTime: 5 * 60 * 1000, // 5분간 캐시 유지
@@ -662,7 +662,7 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
                   </div>
                 </>
               )}
-              
+
               {/* 액션 버튼 - 파랑-녹색 그라데이션 */}
               <div className="mt-4">
                 <button
@@ -851,6 +851,13 @@ const MarketCards = ({ marketData, seongjuTotal, wholesaleTotal, loading, select
       )}
     </>
   );
+};
+
+// 시장 서비스에서 계산된 집계와 Map 기반 상세 정보 입력.
+MarketCards.propTypes = {
+ marketData: PropTypes.arrayOf(marketType), seongjuTotal: marketType, wholesaleTotal: marketType,
+ loading: PropTypes.bool, selectedDate: PropTypes.string, formatPrice: PropTypes.func,
+ marketInfoMap: PropTypes.instanceOf(Map),
 };
 
 export default MarketCards;

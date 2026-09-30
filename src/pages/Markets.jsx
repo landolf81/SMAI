@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import StoreIcon from '@mui/icons-material/Store';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -8,13 +8,13 @@ import InfoIcon from '@mui/icons-material/Info';
 import { marketService } from '../services';
 
 const Markets = () => {
-  const [availableMarkets, setAvailableMarkets] = useState([]);
+  const [, setAvailableMarkets] = useState([]);
   const [marketDetails, setMarketDetails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
   // 실제 데이터가 있는 시장 목록 가져오기
-  const fetchAvailableMarkets = async (date) => {
+  const fetchAvailableMarkets = useCallback(async (date) => {
     try {
       const markets = await marketService.getAvailableMarkets(date);
       setAvailableMarkets(markets);
@@ -24,10 +24,45 @@ const Markets = () => {
       setAvailableMarkets([]);
       return [];
     }
-  };
+  }, []);
+
+  // 시장별 기본 정보 반환 (확장 가능)
+  const getMarketDescription = useCallback((marketName) => {
+    const descriptions = {
+      '성주참외공판장': '성주군 대표 참외 경매장',
+      '성주농협공판장': '농협 운영 종합 공판장',
+      '성주중앙시장': '지역 중앙 농산물 시장',
+      '서부농협공판장': '서부 지역 농협 공판장',
+      '동부농협공판장': '동부 지역 농협 공판장'
+    };
+    return descriptions[marketName] || `${marketName} 농산물 거래소`;
+  }, []);
+
+  const getOperatingHours = useCallback((marketName) => {
+    const hours = {
+      '성주참외공판장': '06:00 - 14:00',
+      '성주농협공판장': '05:30 - 13:00',
+      '성주중앙시장': '24시간',
+      '서부농협공판장': '06:00 - 13:30',
+      '동부농협공판장': '05:00 - 13:00'
+    };
+    return hours[marketName] || '06:00 - 14:00';
+  }, []);
+
+  const getMarketLocation = useCallback((marketName) => {
+    const locations = {
+      '성주참외공판장': '성주군 성주읍',
+      '성주농협공판장': '성주군 성주읍',
+      '성주중앙시장': '성주군 성주읍',
+      '서부농협공판장': '성주군 서부',
+      '동부농협공판장': '성주군 동부'
+    };
+    return locations[marketName] || '성주군';
+  }, []);
+
 
   // 시장별 기본 정보와 요약 데이터 가져오기
-  const fetchMarketDetails = async (markets, date) => {
+  const fetchMarketDetails = useCallback(async (markets, date) => {
     try {
       if (markets.length === 0) {
         setMarketDetails([]);
@@ -39,7 +74,7 @@ const Markets = () => {
       if (response && response.markets) {
         const details = response.markets.map((market, index) => {
           const hasData = market.success && market.data && market.data.details;
-          
+
           return {
             id: index + 1,
             name: market.market_name,
@@ -56,51 +91,17 @@ const Markets = () => {
             error: market.error || null
           };
         });
-        
+
         setMarketDetails(details);
       }
     } catch (error) {
       console.error('Market details 조회 실패:', error);
       setMarketDetails([]);
     }
-  };
-
-  // 시장별 기본 정보 반환 (확장 가능)
-  const getMarketDescription = (marketName) => {
-    const descriptions = {
-      '성주참외공판장': '성주군 대표 참외 경매장',
-      '성주농협공판장': '농협 운영 종합 공판장',
-      '성주중앙시장': '지역 중앙 농산물 시장',
-      '서부농협공판장': '서부 지역 농협 공판장',
-      '동부농협공판장': '동부 지역 농협 공판장'
-    };
-    return descriptions[marketName] || `${marketName} 농산물 거래소`;
-  };
-
-  const getOperatingHours = (marketName) => {
-    const hours = {
-      '성주참외공판장': '06:00 - 14:00',
-      '성주농협공판장': '05:30 - 13:00', 
-      '성주중앙시장': '24시간',
-      '서부농협공판장': '06:00 - 13:30',
-      '동부농협공판장': '05:00 - 13:00'
-    };
-    return hours[marketName] || '06:00 - 14:00';
-  };
-
-  const getMarketLocation = (marketName) => {
-    const locations = {
-      '성주참외공판장': '성주군 성주읍',
-      '성주농협공판장': '성주군 성주읍',
-      '성주중앙시장': '성주군 성주읍',
-      '서부농협공판장': '성주군 서부',
-      '동부농협공판장': '성주군 동부'
-    };
-    return locations[marketName] || '성주군';
-  };
+  }, [getMarketDescription, getOperatingHours, getMarketLocation]);
 
   // 데이터 로드
-  const loadMarketData = async (date) => {
+  const loadMarketData = useCallback(async (date) => {
     setLoading(true);
     const markets = await fetchAvailableMarkets(date);
 
@@ -120,7 +121,7 @@ const Markets = () => {
 
     await fetchMarketDetails(sortedMarkets, date);
     setLoading(false);
-  };
+  }, [fetchAvailableMarkets, fetchMarketDetails]);
 
   // 페이지 진입 시 홈 캐시 무효화 플래그 세팅
   useEffect(() => {
@@ -129,7 +130,7 @@ const Markets = () => {
 
   useEffect(() => {
     loadMarketData(selectedDate);
-  }, [selectedDate]);
+  }, [selectedDate, loadMarketData]);
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -147,7 +148,7 @@ const Markets = () => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
-      month: 'long', 
+      month: 'long',
       day: 'numeric',
       weekday: 'long'
     });
@@ -171,7 +172,7 @@ const Markets = () => {
         <div className="w-full max-w-screen-xl mx-auto p-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold text-base-content">시장 정보</h1>
-            
+
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                 <CalendarTodayIcon fontSize="small" className="text-base-content/50" />
@@ -206,16 +207,16 @@ const Markets = () => {
             <div className="bg-gradient-to-br from-blue-50 to-green-50 border border-blue-200 rounded-xl p-8 max-w-lg mx-auto shadow-lg">
               {/* 이미지 표시 */}
               <div className="mb-6">
-                <img 
-                  src="/images/AS_110.png" 
-                  alt="경락 정보 없음" 
+                <img
+                  src="/images/AS_110.png"
+                  alt="경락 정보 없음"
                   className="w-32 h-32 mx-auto rounded-lg shadow-md"
                   onError={(e) => {
                     e.target.style.display = 'none';
                   }}
                 />
               </div>
-              
+
               <InfoIcon className="w-12 h-12 mx-auto mb-4 text-blue-600" />
               <h3 className="text-xl font-bold text-base-content mb-3">
                 📊 경락 정보가 없습니다
@@ -224,7 +225,7 @@ const Markets = () => {
                 <span className="font-semibold text-blue-700">{formatDate(selectedDate)}</span>에<br/>
                 거래된 경락가 데이터가 없습니다.
               </p>
-              
+
               <div className="bg-base-100 rounded-lg p-4 mb-6 text-left">
                 <h4 className="font-semibold text-base-content/70 mb-2 text-center">💡 참고사항</h4>
                 <div className="space-y-2 text-sm text-base-content/60">
@@ -242,7 +243,7 @@ const Markets = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
@@ -284,7 +285,7 @@ const Markets = () => {
                     <h3 className="font-bold text-lg">{market.name}</h3>
                   </div>
                 </div>
-                
+
                 {/* 시장 정보 */}
                 <div className="p-4">
                   <div className="space-y-3">
@@ -297,7 +298,7 @@ const Markets = () => {
                       <LocationOnIcon fontSize="small" className="text-base-content/50" />
                       <p className="text-base-content/60 text-sm">{market.location}</p>
                     </div>
-                    
+
                     <div className="border-t pt-3">
                       <p className="text-base-content/50 text-xs mb-2">운영시간</p>
                       <p className="font-medium text-market-600">{market.operatingHours}</p>
@@ -326,9 +327,9 @@ const Markets = () => {
                     {!market.hasData && (
                       <div className="border-t pt-3">
                         <div className="text-center py-3">
-                          <img 
-                            src="/images/AS_110.png" 
-                            alt="데이터 없음" 
+                          <img
+                            src="/images/AS_110.png"
+                            alt="데이터 없음"
                             className="w-16 h-16 mx-auto mb-3 rounded opacity-75"
                             onError={(e) => {
                               e.target.style.display = 'none';
@@ -359,10 +360,10 @@ const Markets = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* 상세보기 버튼 */}
                   <div className="mt-4 pt-3 border-t">
-                    <Link 
+                    <Link
                       to={`/prices?market=${encodeURIComponent(market.name)}&date=${selectedDate}`}
                       className={`w-full btn ${market.hasData ? 'btn-primary' : 'btn-disabled'}`}
                     >

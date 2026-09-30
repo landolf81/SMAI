@@ -1,3 +1,5 @@
+import { pollOptionType } from '../propShapes';
+import PropTypes from 'prop-types';
 /**
  * AdPollCard.jsx
  * 역할: 광고 카드 내 투표 표시 + 투표 인터랙션 + 결과 프로그레스바
@@ -30,7 +32,7 @@ const LockIcon = () => (
  * @param {string|null} props.currentUserId
  * @param {boolean} props.isVoting - 투표 처리 중 여부
  */
-const AdPollCard = ({ poll, myVotes = [], onVote, currentUserId, isVoting = false }) => {
+const AdPollCard = ({ poll, myVotes = [], onVote, isVoting = false }) => {
   const [selectedForVote, setSelectedForVote] = useState(null);
 
   // 정렬된 선택지
@@ -165,6 +167,25 @@ const AdPollCard = ({ poll, myVotes = [], onVote, currentUserId, isVoting = fals
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdPollCard.propTypes = {
+  ...AdPollCard.propTypes,
+  "poll": PropTypes.shape({
+    "ad_poll_options": PropTypes.arrayOf(pollOptionType),
+    "expires_at": PropTypes.string,
+    "is_closed": PropTypes.bool,
+    "total_votes": PropTypes.number,
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "question": PropTypes.string,
+    "is_multiple": PropTypes.bool,
+    "is_anonymous": PropTypes.bool
+  }),
+  "myVotes": PropTypes.arrayOf(PropTypes.string),
+  "onVote": PropTypes.func,
+  "currentUserId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "isVoting": PropTypes.bool
 };
 
 export default React.memo(AdPollCard);

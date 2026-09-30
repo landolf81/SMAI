@@ -1,10 +1,12 @@
+import { badgeType } from './propShapes';
+import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import BadgeModal from './BadgeModal';
 import { API_BASE_URL } from '../config/api';
 
-const BadgeDisplay = ({ 
-  badge, 
-  size = 'sm', 
+const BadgeDisplay = ({
+  badge,
+  size = 'sm',
   showText = false, // 기본값을 false로 변경 (아이콘만 표시)
   className = '',
   clickable = true // 클릭 가능 여부
@@ -31,7 +33,7 @@ const BadgeDisplay = ({
     const iconBackground = badge.icon_background || badge.badge_color || badge.color || '#3B82F6';
 
     switch (iconType) {
-      case 'image':
+      case 'image': {
         // iconUrl 또는 iconValue에서 이미지 URL 가져오기
         const imgUrl = iconUrl || iconValue;
         if (imgUrl) {
@@ -53,11 +55,12 @@ const BadgeDisplay = ({
           );
         }
         break;
-        
+
+      }
       case 'icon':
         if (iconValue) {
           return (
-            <div 
+            <div
               className={`${sizes.icon} rounded flex items-center justify-center font-medium`}
               style={{ backgroundColor: iconBackground, color: 'white' }}
             >
@@ -68,10 +71,10 @@ const BadgeDisplay = ({
           );
         }
         break;
-        
+
       default: // 'color'
         return (
-          <div 
+          <div
             className={`${sizes.icon} rounded`}
             style={{ backgroundColor: iconBackground }}
           />
@@ -80,7 +83,7 @@ const BadgeDisplay = ({
 
     // 기본 색상 원형
     return (
-      <div 
+      <div
         className={`${sizes.icon} rounded`}
         style={{ backgroundColor: iconBackground }}
       />
@@ -91,16 +94,16 @@ const BadgeDisplay = ({
   if (!showText) {
     return (
       <>
-        <div 
+        <div
           className={`inline-flex items-center ${className} ${clickable ? 'cursor-pointer hover:scale-110 transition-transform' : ''}`}
           onClick={clickable ? () => setModalOpen(true) : undefined}
           title={badge.badge_name || badge.name}
         >
           {renderIcon()}
         </div>
-        
+
         {clickable && (
-          <BadgeModal 
+          <BadgeModal
             badge={badge}
             isOpen={modalOpen}
             onClose={() => setModalOpen(false)}
@@ -113,7 +116,7 @@ const BadgeDisplay = ({
   return (
     <div className={`inline-flex items-center gap-2 ${className}`}>
       {renderIcon()}
-      <span 
+      <span
         className={`${sizes.text} rounded font-medium text-white inline-flex items-center ${sizes.container}`}
         style={{ backgroundColor: badge.badge_color || badge.color || '#3B82F6' }}
       >
@@ -121,6 +124,25 @@ const BadgeDisplay = ({
       </span>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BadgeDisplay.propTypes = {
+  ...BadgeDisplay.propTypes,
+  "badge": PropTypes.shape({
+    "icon_type": PropTypes.string,
+    "icon_value": PropTypes.string,
+    "icon_url": PropTypes.string,
+    "icon_background": PropTypes.string,
+    "badge_color": PropTypes.string,
+    "color": PropTypes.string,
+    "badge_name": PropTypes.string,
+    "name": PropTypes.string
+  }),
+  "size": PropTypes.string,
+  "showText": PropTypes.bool,
+  "className": PropTypes.string,
+  "clickable": PropTypes.bool
 };
 
 // 여러 뱃지를 나열하는 컴포넌트
@@ -133,10 +155,10 @@ export const BadgeList = ({ badges, size = 'sm', maxDisplay = 3, className = '' 
   return (
     <div className={`flex items-center gap-2 flex-wrap ${className}`}>
       {displayBadges.map((badge, index) => (
-        <BadgeDisplay 
-          key={badge.id || index} 
-          badge={badge} 
-          size={size} 
+        <BadgeDisplay
+          key={badge.id || index}
+          badge={badge}
+          size={size}
         />
       ))}
       {remainingCount > 0 && (
@@ -146,6 +168,15 @@ export const BadgeList = ({ badges, size = 'sm', maxDisplay = 3, className = '' 
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BadgeList.propTypes = {
+  ...BadgeList.propTypes,
+  "badges": PropTypes.arrayOf(badgeType),
+  "size": PropTypes.string,
+  "maxDisplay": PropTypes.number,
+  "className": PropTypes.string
 };
 
 export default BadgeDisplay;

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,7 +18,7 @@ import ProfileModal from '../components/ProfileModal';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 // 아이콘
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
@@ -789,3 +790,6 @@ const PostDetail = ({ postId: propPostId, isModal = false, onClose }) => {
 };
 
 export default PostDetail;
+
+// 내부 컴포넌트의 입력 데이터 계약.
+PostDetail.propTypes = { postId: PropTypes.string, isModal: PropTypes.bool, onClose: PropTypes.func };

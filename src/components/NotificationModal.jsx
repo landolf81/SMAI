@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * NotificationModal - 알림 모달 컴포넌트
  * Navbar 벨 아이콘 클릭 시 상단에서 슬라이드 다운으로 표시
@@ -237,6 +238,14 @@ const NotificationModal = ({ isOpen, onClose, onUnreadChange }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+NotificationModal.propTypes = {
+  ...NotificationModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "onUnreadChange": PropTypes.func
 };
 
 export default NotificationModal;

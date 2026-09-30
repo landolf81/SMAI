@@ -7,18 +7,17 @@ import {
   faShare,
   faEllipsisH,
   faPlay,
-  faPause,
   faVolumeUp,
   faVolumeMute,
   faBookmark,
   faFlag
 } from "@fortawesome/free-solid-svg-icons";
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+
 import PushPinIcon from '@mui/icons-material/PushPin';
 import LockIcon from '@mui/icons-material/Lock';
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useFeaturePermissions } from '../hooks/usePermissions';
 import moment from 'moment';
 import ImageSlider from './ImageSlider';
@@ -28,7 +27,7 @@ import ReportModal from './ReportModal';
 import ReportDetailsModal from './ReportDetailsModal';
 import LocationDisplay from './LocationDisplay';
 import CommentsSection from './CommentsSection';
-import { isVideoFile, normalizeMediaUrl, getMediaType } from '../utils/mediaUtils';
+import { normalizeMediaUrl, getMediaType } from '../utils/mediaUtils';
 import { postService, badgeService } from '../services';
 import BadgeDisplay from './BadgeDisplay';
 
@@ -38,15 +37,15 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
   const featurePermissions = useFeaturePermissions();
   const videoRef = useRef(null);
   const postRef = useRef(null);
-  
+
   // 관리자/운영자 권한 확인 (currentUser 정보에서 직접 확인)
   const isAdminOrModerator = currentUser && (
-    currentUser.role === 'admin' || 
-    currentUser.role === 'moderator' || 
+    currentUser.role === 'admin' ||
+    currentUser.role === 'moderator' ||
     currentUser.is_admin === 1 ||
     currentUser.isAdminOrModerator
   );
-  
+
   // 동영상 상태 관리
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
@@ -70,7 +69,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
   // 미디어 타입 감지
   const mediaFiles = post.images && post.images.length > 0 ? post.images : (post.img ? [post.img] : []);
   const hasMedia = mediaFiles.length > 0;
-  
+
   const normalizedMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file));
   const firstMediaType = hasMedia ? getMediaType(mediaFiles[0]) : { isVideo: false, isImage: false };
   const isVideo = firstMediaType.isVideo;
@@ -162,7 +161,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
     if (!videoRef.current || !isVideo) return;
 
     const video = videoRef.current;
-    
+
     const updateProgress = () => {
       if (video.duration) {
         setProgress((video.currentTime / video.duration) * 100);
@@ -225,9 +224,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
     }
   };
 
-  const handleTagClick = (tagName) => {
-    navigate(`/community?tag=${tagName}`);
-  };
+
 
   const handleVideoClick = () => {
     if (!videoRef.current) return;
@@ -273,21 +270,21 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
   // 설명 텍스트 길이 제한
   const MAX_DESC_LENGTH = 100;
   const postContent = post.Desc || post.desc || '';
-  
+
   // 디버깅용 로그
   if (post.link_type === 'youtube') {
     console.log('YouTube 게시물 데이터:', {
       id: post.id,
       Desc: post.Desc,
-      desc: post.desc, 
+      desc: post.desc,
       postContent,
       link_url: post.link_url,
       link_type: post.link_type
     });
   }
-  
+
   const shouldShowMore = postContent && postContent.length > MAX_DESC_LENGTH;
-  const displayDescription = shouldShowMore && !showFullDescription 
+  const displayDescription = shouldShowMore && !showFullDescription
     ? postContent.slice(0, MAX_DESC_LENGTH) + '...'
     : postContent;
 
@@ -315,12 +312,12 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
 
   return (
     <>
-      <article 
+      <article
         ref={postRef}
         className="w-full max-w-md mx-auto rounded-xl shadow-lg mb-6 overflow-hidden relative"
         style={{
           backgroundColor: post.primaryTag?.color ? post.primaryTag.color + '03' : 'white',
-          boxShadow: post.primaryTag?.color 
+          boxShadow: post.primaryTag?.color
             ? `-3px 0 15px ${post.primaryTag.color}15, 0 3px 15px rgba(0, 0, 0, 0.08)`
             : '-3px 0 15px rgba(255, 165, 0, 0.25), 0 3px 15px rgba(0, 0, 0, 0.1)'
         }}
@@ -329,8 +326,8 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
         {isLikeAnimating && (
           <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
             <div className="animate-ping">
-              <FontAwesomeIcon 
-                icon={faHeart} 
+              <FontAwesomeIcon
+                icon={faHeart}
                 className="w-20 h-20 text-red-500 opacity-80"
               />
             </div>
@@ -348,7 +345,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                 <span className="text-amber-600 font-medium text-sm">❓ 질문</span>
               </div>
             )}
-            
+
             {/* 프로필 사진 - 클릭 시 모달 열기 */}
             <button
               onClick={(e) => {
@@ -370,7 +367,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                 />
               </div>
             </button>
-            
+
             {/* 사용자 정보 - QnA일 때 더 크게 표시 */}
             <div className="flex-1 min-w-0">
               <p className={`font-semibold text-gray-900 truncate ${
@@ -424,8 +421,8 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
 
           {/* 더보기 메뉴 */}
           <div className="dropdown dropdown-end">
-            <button 
-              tabIndex={0} 
+            <button
+              tabIndex={0}
               className="btn btn-ghost btn-circle btn-sm hover:bg-gray-100"
             >
               <FontAwesomeIcon icon={faEllipsisH} className="w-4 h-4 text-gray-600" />
@@ -435,7 +432,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
               {canEdit && (
                 <>
                   <li>
-                    <button 
+                    <button
                       type="button"
                       onClick={(e) => {
                         e.preventDefault();
@@ -450,11 +447,11 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                   <div className="divider my-1"></div>
                 </>
               )}
-              
+
               {canDelete && (
                 <>
                   <li>
-                    <button 
+                    <button
                       type="button"
                       onClick={(e) => {
                         e.preventDefault();
@@ -463,8 +460,8 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                       }}
                       disabled={deleteMutation.isPending}
                       className={`flex items-center w-full text-left p-3 rounded-lg ${
-                        deleteMutation.isPending 
-                          ? 'text-gray-400 bg-gray-100 cursor-not-allowed' 
+                        deleteMutation.isPending
+                          ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
                           : 'text-red-500 hover:bg-red-50'
                       }`}
                     >
@@ -481,10 +478,10 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                   <div className="divider my-1"></div>
                 </>
               )}
-              
+
               {/* 공통 기능 */}
               <li>
-                <button 
+                <button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
@@ -497,7 +494,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                 </button>
               </li>
               <li>
-                <button 
+                <button
                   type="button"
                   onClick={(e) => {
                     e.preventDefault();
@@ -509,13 +506,13 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                   📤 공유
                 </button>
               </li>
-              
+
               {/* 신고 버튼 - 본인 게시글이 아닌 경우에만 표시 */}
               {post.userId !== currentUser.id && (
                 <>
                   <div className="divider my-1"></div>
                   <li>
-                    <button 
+                    <button
                       type="button"
                       onClick={(e) => {
                         e.preventDefault();
@@ -535,7 +532,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
 
         {/* 미디어 컨텐츠 */}
         {hasMedia && (
-          <div 
+          <div
             className="relative w-full bg-gray-100 select-none"
             onMouseEnter={() => setShowControls(true)}
             onMouseLeave={() => setShowControls(false)}
@@ -590,15 +587,15 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                       showControls ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
                     }`}
                   >
-                    <FontAwesomeIcon 
-                      icon={isMuted ? faVolumeMute : faVolumeUp} 
-                      className="w-4 h-4" 
+                    <FontAwesomeIcon
+                      icon={isMuted ? faVolumeMute : faVolumeUp}
+                      className="w-4 h-4"
                     />
                   </button>
 
                   {/* 진행률 바 */}
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-black bg-opacity-20">
-                    <div 
+                    <div
                       className="h-full bg-white transition-all duration-100 ease-out"
                       style={{ width: `${progress}%` }}
                     />
@@ -614,7 +611,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
               )
             ) : (
               // 다중 미디어
-              <ImageSlider 
+              <ImageSlider
                 images={normalizedMediaFiles}
                 baseUrl=""
               />
@@ -637,20 +634,20 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                 onClick={() => handleLike(false)}
                 className={`transition-all duration-200 transform ${isLiked ? 'scale-110' : 'hover:scale-110'}`}
               >
-                <FontAwesomeIcon 
-                  icon={faHeart} 
+                <FontAwesomeIcon
+                  icon={faHeart}
                   className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-gray-700 hover:text-red-500'}`}
                 />
               </button>
-              
-              <button 
+
+              <button
                 onClick={() => setShowComments(!showComments)}
                 className="text-gray-700 hover:text-blue-500 transition-all duration-200 hover:scale-110"
               >
                 <FontAwesomeIcon icon={faComment} className="w-6 h-6" />
               </button>
-              
-              <button 
+
+              <button
                 onClick={handleShare}
                 className="text-gray-700 hover:text-green-500 transition-all duration-200 hover:scale-110"
               >
@@ -659,7 +656,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
 
               {/* 신고 아이콘 (신고가 있을 때만 표시) */}
               {(post.report_count > 0) && (
-                <button 
+                <button
                   onClick={() => setShowReportDetailsModal(true)}
                   className="flex items-center text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110"
                   title={`신고 ${post.report_count}건`}
@@ -673,7 +670,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
             </div>
 
             {/* 저장 버튼 */}
-            <button 
+            <button
               onClick={() => setIsSaved(!isSaved)}
               className={`transition-all duration-200 hover:scale-110 ${isSaved ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'}`}
             >
@@ -687,7 +684,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
               좋아요 {likeCount.toLocaleString()}개
             </p>
           )}
-          
+
 
           {/* 게시물 내용 */}
           {(post.Desc || post.desc) && (
@@ -698,7 +695,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                   {post.title}
                 </h3>
               )}
-              
+
               {/* 일반 게시글일 때는 사용자명과 함께, QnA일 때는 내용만 */}
               <div className="whitespace-pre-wrap break-words">
                 {post.post_type === 'question' ? (
@@ -710,7 +707,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                   </>
                 )}
               </div>
-              
+
               {shouldShowMore && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
@@ -728,15 +725,15 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
               {post.primaryTag && (
                 <span
                   className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                  style={{ 
-                    backgroundColor: post.primaryTag.color + '10', 
+                  style={{
+                    backgroundColor: post.primaryTag.color + '10',
                     color: post.primaryTag.color
                   }}
                 >
                   {post.primaryTag.display_name}
                 </span>
               )}
-              
+
               {post.tags && post.tags
                 .filter(tag => tag.id !== post.primaryTag?.id)
                 .slice(0, 2)
@@ -744,8 +741,8 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                   <span
                     key={tag.id}
                     className="inline-flex items-center px-2 py-0.5 rounded text-xs"
-                    style={{ 
-                      backgroundColor: tag.color + '08', 
+                    style={{
+                      backgroundColor: tag.color + '08',
                       color: tag.color
                     }}
                   >
@@ -760,7 +757,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
           <LocationDisplay post={post} showMap={false} compact={true} />
 
           {/* 댓글 보기 버튼 */}
-          <button 
+          <button
             onClick={() => setShowComments(!showComments)}
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors font-medium"
           >
@@ -770,9 +767,9 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
 
         {/* 댓글 섹션 */}
         {showComments && (
-          <CommentsSection 
-            postId={post.id} 
-            postTag={post.primaryTag?.name} 
+          <CommentsSection
+            postId={post.id}
+            postTag={post.primaryTag?.name}
             post={post}
           />
         )}
@@ -860,7 +857,7 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
                 >
                   프로필 보기
                 </button>
-                
+
                 {post.userId !== currentUser.id && (
                   <button
                     onClick={() => {

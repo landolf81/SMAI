@@ -8,7 +8,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import PushPinIcon from "@mui/icons-material/PushPin";
 import CommentIcon from "@mui/icons-material/Comment";
 import PersonIcon from "@mui/icons-material/Person";
-import BlockIcon from "@mui/icons-material/Block";
+
 import { AdminOnly } from '../../components/PermissionComponents';
 import { SUPABASE_URL } from '../../config/supabase';
 import LazyStreamPlayer from '../../components/LazyStreamPlayer';

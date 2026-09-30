@@ -24,7 +24,7 @@ const Terms = () => {
           <section>
             <h2 className="text-lg font-semibold text-base-content mb-3">제1조 (목적)</h2>
             <p className="text-base-content/60">
-              이 약관은 참외이야기(이하 "서비스")가 제공하는 농업 커뮤니티 서비스의
+              이 약관은 참외이야기(이하 &quot;서비스&quot;)가 제공하는 농업 커뮤니티 서비스의
               이용조건 및 절차, 회원과 서비스 간의 권리, 의무, 책임사항 등을 규정함을 목적으로 합니다.
             </p>
           </section>
@@ -32,9 +32,9 @@ const Terms = () => {
           <section>
             <h2 className="text-lg font-semibold text-base-content mb-3">제2조 (정의)</h2>
             <ul className="list-decimal list-inside text-base-content/60 space-y-2">
-              <li>"서비스"란 회원이 이용할 수 있는 농업 정보 공유, 커뮤니티, 중고거래, Q&A 등 모든 서비스를 의미합니다.</li>
-              <li>"회원"이란 서비스에 가입하여 이용자 아이디(ID)를 부여받은 자를 의미합니다.</li>
-              <li>"게시물"이란 회원이 서비스에 게시한 글, 사진, 댓글 등 모든 콘텐츠를 의미합니다.</li>
+              <li>&quot;서비스&quot;란 회원이 이용할 수 있는 농업 정보 공유, 커뮤니티, 중고거래, Q&A 등 모든 서비스를 의미합니다.</li>
+              <li>&quot;회원&quot;이란 서비스에 가입하여 이용자 아이디(ID)를 부여받은 자를 의미합니다.</li>
+              <li>&quot;게시물&quot;이란 회원이 서비스에 게시한 글, 사진, 댓글 등 모든 콘텐츠를 의미합니다.</li>
             </ul>
           </section>
 

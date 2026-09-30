@@ -1,27 +1,30 @@
 // 프론트엔드 컴포넌트 테스트
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+// import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { inputValidator } from '../utils/security.js';
+// import { BrowserRouter } from 'react-router-dom';
+// import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// 테스트 헬퍼 함수
-const renderWithProviders = (component) => {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  });
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {component}
-      </BrowserRouter>
-    </QueryClientProvider>
-  );
-};
+// 실제 컴포넌트 렌더링 테스트 추가 시 사용할 헬퍼 보존.
+// // 테스트 헬퍼 함수
+// const renderWithProviders = (component) => {
+//   const queryClient = new QueryClient({
+//     defaultOptions: {
+//       queries: { retry: false },
+//       mutations: { retry: false },
+//     },
+//   });
+//
+//   return render(
+//     <QueryClientProvider client={queryClient}>
+//       <BrowserRouter>
+//         {component}
+//       </BrowserRouter>
+//     </QueryClientProvider>
+//   );
+// };
+//
 
 // Mock 데이터
 const mockMarketData = [
@@ -40,34 +43,32 @@ const mockMarketData = [
   }
 ];
 
-const mockUser = {
-  id: 1,
-  username: 'testuser',
-  name: '테스트 사용자',
-  email: 'test@example.com'
-};
+// const mockUser = {
+//   id: 1,
+//   username: 'testuser',
+//   name: '테스트 사용자',
+//   email: 'test@example.com'
+// };
+//
 
 describe('유틸리티 함수 테스트', () => {
   describe('입력값 검증', () => {
     it('이메일 검증이 올바르게 작동해야 함', () => {
-      const { inputValidator } = require('../utils/security.js');
-      
+
       expect(inputValidator.validateInput('test@example.com', 'email')).toBe(true);
       expect(inputValidator.validateInput('invalid-email', 'email')).toBe(false);
       expect(inputValidator.validateInput('', 'email')).toBe(false);
     });
 
     it('사용자명 검증이 올바르게 작동해야 함', () => {
-      const { inputValidator } = require('../utils/security.js');
-      
+
       expect(inputValidator.validateInput('testuser', 'username')).toBe(true);
       expect(inputValidator.validateInput('te', 'username')).toBe(false);
       expect(inputValidator.validateInput('user@name', 'username')).toBe(false);
     });
 
     it('비밀번호 검증이 올바르게 작동해야 함', () => {
-      const { inputValidator } = require('../utils/security.js');
-      
+
       expect(inputValidator.validateInput('TestPass123!', 'password')).toBe(true);
       expect(inputValidator.validateInput('weak', 'password')).toBe(false);
       expect(inputValidator.validateInput('NoSpecialChar123', 'password')).toBe(false);
@@ -151,7 +152,7 @@ describe('성능 모니터링', () => {
     
     start('test-operation');
     // 시뮬레이션된 작업
-    const result = Array(1000).fill(0).reduce((a, b) => a + b, 0);
+    Array(1000).fill(0).reduce((a, b) => a + b, 0);
     const duration = end('test-operation');
     
     expect(duration).toBeGreaterThan(0);

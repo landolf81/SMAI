@@ -23,7 +23,7 @@ const PrivacyPolicy = () => {
 
           <section>
             <p className="text-base-content/60 mb-4">
-              참외이야기(이하 "서비스")는 이용자의 개인정보를 중요시하며,
+              참외이야기(이하 &quot;서비스&quot;)는 이용자의 개인정보를 중요시하며,
               「개인정보 보호법」을 준수합니다.
             </p>
           </section>

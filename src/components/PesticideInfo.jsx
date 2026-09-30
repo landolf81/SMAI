@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * PesticideInfo 컴포넌트
  * 역할: 참외 전용 농약정보 검색 UI
@@ -5,7 +6,7 @@
  * 기능: 통합 검색 + 용도/병해충 필터 + 아코디언 카드
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import SearchIcon from '@mui/icons-material/Search';
+
 import CloseIcon from '@mui/icons-material/Close';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { pesticideService } from '../services';
@@ -96,6 +97,28 @@ const PesticideCard = ({ item, isOpen, onToggle }) => (
   </div>
 );
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PesticideCard.propTypes = {
+  ...PesticideCard.propTypes,
+  "item": PropTypes.shape({
+    "brand_name": PropTypes.string,
+    "pesticide_name": PropTypes.string,
+    "purpose": PropTypes.string,
+    "pest_disease": PropTypes.string,
+    "dilution": PropTypes.string,
+    "usage_timing": PropTypes.string,
+    "usage_count": PropTypes.string,
+    "usage_method": PropTypes.string,
+    "formulation": PropTypes.string,
+    "company": PropTypes.string,
+    "toxicity": PropTypes.string,
+    "eco_toxicity": PropTypes.string,
+    "reg_status": PropTypes.string
+  }),
+  "isOpen": PropTypes.bool,
+  "onToggle": PropTypes.func
+};
+
 /** 상세 항목 행 */
 const DetailItem = ({ label, value }) => (
   <div>
@@ -103,6 +126,13 @@ const DetailItem = ({ label, value }) => (
     <p className="text-sm text-base-content/80">{value}</p>
   </div>
 );
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+DetailItem.propTypes = {
+  ...DetailItem.propTypes,
+  "label": PropTypes.string,
+  "value": PropTypes.string
+};
 
 // ── 메인 컴포넌트 ──
 
@@ -315,7 +345,7 @@ const PesticideInfo = () => {
             className="w-16 h-auto flex-shrink-0"
           />
           <p className="text-[10px] text-base-content/40 leading-relaxed">
-            본 저작물은 '농촌진흥청 농약안전정보시스템'에서 작성하여 공공누리 제1유형으로 개방한 '농약등록정보'를 이용하였으며,
+            본 저작물은 &apos;농촌진흥청 농약안전정보시스템&apos;에서 작성하여 공공누리 제1유형으로 개방한 &apos;농약등록정보&apos;를 이용하였으며,
             해당 저작물은{' '}
             <a href="https://psis.rda.go.kr" target="_blank" rel="noopener noreferrer" className="text-teal-500 underline">
               농약안전정보시스템(psis.rda.go.kr)

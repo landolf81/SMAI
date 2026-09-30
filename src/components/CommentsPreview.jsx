@@ -17,8 +17,8 @@ import { isAIUser } from '../config/aiUser';
 const CommentsPreview = ({ postId, postTag, showCommentForm = false, onToggleCommentForm, previewMode = false, onShowAllComments, onOpenCommentsModal, filterByUserId = null }) => {
   const { currentUser, loading: authLoading } = useContext(AuthContext);
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  
+  useNavigate();
+
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [replyText, setReplyText] = useState('');

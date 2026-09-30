@@ -67,14 +67,9 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
     }
   }, [imageSrc, handleImageLoad]);
 
-  useEffect(() => {
-    if (imageLoaded) {
-      drawCanvas();
-    }
-  }, [imageLoaded, cropArea, isCircleCrop]);
-
-  const drawCanvas = () => {
+  const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const img = imageRef.current;
 
@@ -162,7 +157,13 @@ const ImageCropper = ({ imageSrc, onCropComplete, onCancel, aspectRatio = 1 }) =
       ctx.arc(pos.x, pos.y, handleSize / 2 - 2, 0, Math.PI * 2);
       ctx.fill();
     });
-  };
+  }, [canvasSize, imageSize, cropArea, isCircleCrop]);
+
+  useEffect(() => {
+    if (imageLoaded) {
+      drawCanvas();
+    }
+  }, [imageLoaded, drawCanvas]);
 
   // 포인터 위치 가져오기 (마우스 또는 터치)
   const getPointerPos = useCallback((e) => {

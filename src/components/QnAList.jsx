@@ -1,3 +1,5 @@
+import SearchIcon from '@mui/icons-material/Search';
+import PropTypes from 'prop-types';
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -14,17 +16,17 @@ import ProfileModal from './ProfileModal';
 import LoadingSpinner from './LoadingSpinner';
 
 // 아이콘
-import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+
+
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
 moment.locale('ko');
 
-const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
+const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '', onClearSearch }) => {
   const navigationType = useNavigationType();
   const searchTerm = propSearchTerm; // props에서 받은 검색어 사용
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, ] = useState('all');
   const [page, setPage] = useState(0);
   const [isMobile] = useState(() => isMobileDevice());
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
@@ -130,7 +132,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
   }, [adsData]);
 
   // 질문 목록에 광고 삽입 (useMemo는 early return 전에 와야 함)
-  const questions = data?.questions || [];
+  const questions = useMemo(() => data?.questions || [], [data?.questions]);
   const pagination = data?.pagination || {};
 
   const questionsWithAds = useMemo(() => {
@@ -189,20 +191,13 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
       return;
     }
 
-    // 이미 모두 렌더링 완료된 경우
-    if (renderedCount >= questionsWithAds.length) {
-      return;
-    }
-
     // 기존 인터벌 정리
     if (renderIntervalRef.current) {
       clearInterval(renderIntervalRef.current);
     }
 
     // 첫 번째 아이템 즉시 표시
-    if (renderedCount === 0) {
-      setRenderedCount(1);
-    }
+    setRenderedCount(prev => prev === 0 ? 1 : prev);
 
     // 나머지 아이템 순차적 표시 (50ms 간격)
     renderIntervalRef.current = setInterval(() => {
@@ -224,18 +219,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
 
   // IntersectionObserver 제거 - CSS 애니메이션으로 대체하여 스크롤 성능 향상
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'open':
-        return <QuestionMarkIcon className="text-blue-500" fontSize="small" />;
-      case 'answered':
-        return <ChatBubbleOutlineIcon className="text-yellow-500" fontSize="small" />;
-      case 'closed':
-        return <CheckCircleIcon className="text-green-500" fontSize="small" />;
-      default:
-        return <QuestionMarkIcon className="text-base-content/40" fontSize="small" />;
-    }
-  };
+
 
   const getStatusText = (status) => {
     switch (status) {
@@ -287,7 +271,7 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
         {/* 검색 결과 개수 (검색 모드일 때만) */}
         {isSearchMode && searchTerm && data && (
           <div className="mb-4 text-sm text-base-content/60">
-            "{searchTerm}" 검색 결과: {pagination.total || 0}개
+            &quot;{searchTerm}&quot; 검색 결과: {pagination.total || 0}개
           </div>
         )}
 
@@ -318,12 +302,11 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
             <div className="flex flex-col items-center justify-center py-12">
               <SearchIcon className="text-base-content/30" style={{ fontSize: 64 }} />
               <p className="text-base-content/50 mt-4 text-lg">
-                "{searchTerm}"에 대한 검색 결과가 없습니다.
+                &quot;{searchTerm}&quot;에 대한 검색 결과가 없습니다.
               </p>
               <button
                 onClick={() => {
-                  setSearchTerm('');
-                  setIsSearchMode(false);
+                  onClearSearch?.();
                   setPage(0);
                 }}
                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -508,11 +491,11 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
               >
                 이전
               </button>
-              
+
               <span className="px-3 py-1 text-sm">
                 {page + 1} / {pagination.totalPages}
               </span>
-              
+
               <button
                 onClick={() => setPage(Math.min(pagination.totalPages - 1, page + 1))}
                 disabled={page >= pagination.totalPages - 1}
@@ -580,6 +563,14 @@ const QnAList = ({ isSearchMode = false, searchTerm: propSearchTerm = '' }) => {
       />
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+QnAList.propTypes = {
+  ...QnAList.propTypes,
+  "isSearchMode": PropTypes.bool,
+  "onClearSearch": PropTypes.func,
+  "searchTerm": PropTypes.string
 };
 
 export default QnAList;

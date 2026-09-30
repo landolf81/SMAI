@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { bannerAdService } from '../../services/bannerAdService';
 
@@ -35,6 +36,14 @@ const BannerAdStatsRow = ({ adId, startDate, endDate }) => {
       </span>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BannerAdStatsRow.propTypes = {
+  ...BannerAdStatsRow.propTypes,
+  "adId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "startDate": PropTypes.string,
+  "endDate": PropTypes.string
 };
 
 export default BannerAdStatsRow;

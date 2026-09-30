@@ -235,7 +235,7 @@ const TagManager = () => {
                         <h3 className="font-bold text-lg mb-4">
                             {editingTag ? '태그 수정' : '새 태그 생성'}
                         </h3>
-                        
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="form-control">
                                 <label className="label">

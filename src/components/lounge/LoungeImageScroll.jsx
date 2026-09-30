@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * LoungeImageScroll.jsx
  * 역할: 광장 메시지의 이미지 표시 — 단일/다중 이미지 호환
@@ -94,6 +95,14 @@ const LoungeImageScroll = ({ imageUrl, imageUrls, onImageClick }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LoungeImageScroll.propTypes = {
+  ...LoungeImageScroll.propTypes,
+  "imageUrl": PropTypes.string,
+  "imageUrls": PropTypes.arrayOf(PropTypes.string),
+  "onImageClick": PropTypes.func
 };
 
 export default LoungeImageScroll;

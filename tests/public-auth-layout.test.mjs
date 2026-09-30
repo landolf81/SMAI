@@ -1,12 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-const appPath = new URL('../src/App.jsx', import.meta.url).pathname;
+const appPath = fileURLToPath(new URL('../src/App.jsx', import.meta.url));
 
 function mockComponent(name) {
   return `import React from 'react';
@@ -27,13 +27,14 @@ async function loadAppWithCapturedRouter() {
 
   const result = await build({
     entryPoints: [appPath],
-    absWorkingDir: new URL('..', import.meta.url).pathname,
+    absWorkingDir: fileURLToPath(new URL('..', import.meta.url)),
     bundle: true,
     format: 'esm',
     platform: 'node',
     write: false,
     jsx: 'automatic',
-    external: ['react', 'react/jsx-runtime'],
+    // 실제 패키지 내부의 상대 import를 화면 mock으로 가로채지 않는다.
+    external: ['react', 'react/jsx-runtime', 'prop-types'],
     plugins: [{
       name: 'app-test-mocks',
       setup(plugin) {
@@ -42,7 +43,7 @@ async function loadAppWithCapturedRouter() {
         plugin.onResolve({ filter: /^react-hot-toast$/ }, () => ({ path: 'toast', namespace: 'mock' }));
         plugin.onResolve({ filter: /^@vercel\/(analytics|speed-insights)\/react$/ }, (args) => ({ path: args.path, namespace: 'mock' }));
         plugin.onResolve({ filter: /^\.\/components\/AuthRouteGuards$/ }, () => ({
-          path: new URL('../src/components/AuthRouteGuards.js', import.meta.url).pathname,
+          path: fileURLToPath(new URL('../src/components/AuthRouteGuards.js', import.meta.url)),
         }));
         plugin.onResolve({ filter: /^\./ }, (args) => ({
           path: `${args.importer}:${args.path}`,
@@ -97,7 +98,7 @@ async function loadAppWithCapturedRouter() {
       },
     }],
   });
-  const tempDir = await mkdtemp(new URL('./.public-auth-layout-', import.meta.url).pathname);
+  const tempDir = await mkdtemp(fileURLToPath(new URL('./.public-auth-layout-', import.meta.url)));
   const modulePath = `${tempDir}/app.mjs`;
   try {
     await writeFile(modulePath, result.outputFiles[0].text);

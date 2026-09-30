@@ -8,7 +8,7 @@ import { cleanNewsText } from '../utils/newsText.js';
 const isDev = import.meta.env.DEV;
 
 // 필터링 키워드 (제목/설명에 포함되어야 함)
-const FILTER_KEYWORDS = ['참외', '성주'];
+// const FILTER_KEYWORDS = ['참외', '성주'];
 
 // RSS 소스 목록 (개발 환경용)
 const RSS_SOURCES = [
@@ -22,11 +22,13 @@ const RSS_SOURCES = [
 // CORS 프록시 (개발 환경용)
 const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
-// 키워드 필터링 함수
-const matchesKeywords = (title, description) => {
-  const text = `${title || ''} ${description || ''}`.toLowerCase();
-  return FILTER_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
-};
+// 현재 RSS 소스는 검색 쿼리로 필터링한다. 추가 소스 필터 복원용 보존.
+// // 키워드 필터링 함수
+// const matchesKeywords = (title, description) => {
+//   const text = `${title || ''} ${description || ''}`.toLowerCase();
+//   return FILTER_KEYWORDS.some(keyword => text.includes(keyword.toLowerCase()));
+// };
+//
 
 // 제목에서 핵심 키워드 추출 (불용어 제거)
 const extractKeywords = (title) => {

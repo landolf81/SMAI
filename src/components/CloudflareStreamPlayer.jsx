@@ -43,7 +43,7 @@ const CloudflareStreamPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   // HLS 로딩 완료 여부 (재생 제어용)
   const [isHlsReady, setIsHlsReady] = useState(false);
-  const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
+  const [, setIsWaitingToReplay] = useState(false);
   // 화질 정보 (디버깅용)
   const [qualityInfo, setQualityInfo] = useState(null);
   const videoRef = useRef(null);
@@ -124,15 +124,22 @@ const CloudflareStreamPlayer = ({
       }
       setIsWaitingToReplay(false);
     }
-  }, [autoplay, isHlsReady, loop, initialMuted]);
+  }, [autoplay, isHlsReady, loop, initialMuted, paused]);
 
-  // 컴포넌트 언마운트 시 HLS 정리 및 동영상 정지
+  // 플레이어가 표시된 시점의 노드를 보존하여 언마운트 시 정확한 동영상 정리
+  useEffect(() => {
+    const video = videoRef.current;
+    return () => {
+      if (video) {
+        video.pause();
+        video.src = '';
+      }
+    };
+  }, [showPlayer]);
+
+  // 컴포넌트 언마운트 시 HLS와 재생 타이머 정리
   useEffect(() => {
     return () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        videoRef.current.src = '';
-      }
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
@@ -224,7 +231,7 @@ const CloudflareStreamPlayer = ({
       hls.loadSource(playbackUrl);
       hls.attachMedia(video);
 
-      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
         // 720p 레벨 찾기 (없으면 가장 높은 화질)
         const levels = hls.levels;
         let targetLevel = levels.length - 1; // 기본: 가장 높은 화질
@@ -367,7 +374,7 @@ const CloudflareStreamPlayer = ({
           src={getThumbnailUrl()}
           alt="동영상 썸네일"
           className="w-full h-full object-cover"
-          fetchPriority={priority ? 'high' : undefined}
+          fetchpriority={priority ? 'high' : undefined}
           onError={(e) => { e.target.style.display = 'none'; }}
         />
         {/* 인코딩 중 오버레이 */}
@@ -391,7 +398,7 @@ const CloudflareStreamPlayer = ({
           src={getThumbnailUrl()}
           alt="동영상 썸네일"
           className="w-full h-full object-cover"
-          fetchPriority={priority ? 'high' : undefined}
+          fetchpriority={priority ? 'high' : undefined}
           onError={(e) => {
             e.target.style.display = 'none';
           }}
@@ -416,7 +423,7 @@ const CloudflareStreamPlayer = ({
             src={getThumbnailUrl()}
             alt="동영상 썸네일"
             className="w-full h-full object-cover"
-            fetchPriority={priority ? 'high' : undefined}
+            fetchpriority={priority ? 'high' : undefined}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40">

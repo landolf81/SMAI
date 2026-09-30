@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import React, { useState, useEffect, useCallback } from 'react';
 import { userService, tagService } from '../services';
 
 const UserTagPermissions = () => {
     const [users, setUsers] = useState([]);
     const [tags, setTags] = useState([]);
-    const [permissions, setPermissions] = useState([]);
+    const [, setPermissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showGrantModal, setShowGrantModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState('');
@@ -89,57 +90,16 @@ const UserTagPermissions = () => {
     };
 
     // 권한 제거
-    const handleRevokePermission = async (permissionId) => {
-        if (!confirm('정말로 이 권한을 제거하시겠습니까?')) return;
 
-        try {
-            await userService.revokeTagPermission(permissionId);
-            fetchPermissions();
-            alert('권한이 성공적으로 제거되었습니다.');
-        } catch (error) {
-            console.error('권한 제거 실패:', error);
-            alert(error.message || '권한 제거에 실패했습니다.');
-        }
-    };
 
     // 일괄 권한 부여
-    const handleBulkGrant = async () => {
-        const userIds = selectedUsers;
-        if (userIds.length === 0 || !selectedTag) {
-            alert('사용자들과 태그를 선택해주세요.');
-            return;
-        }
 
-        try {
-            const data = {
-                userIds: userIds.map(id => parseInt(id)),
-                tagId: parseInt(selectedTag),
-                permissionType,
-                expiresAt: expiresAt || null
-            };
-
-            await userService.bulkGrantTagPermissions(data);
-
-            setSelectedUsers([]);
-            alert('일괄 권한 부여가 완료되었습니다.');
-        } catch (error) {
-            console.error('일괄 권한 부여 실패:', error);
-            alert('일괄 권한 부여에 실패했습니다.');
-        }
-    };
 
     // 권한 타입 표시 텍스트
-    const getPermissionTypeText = (type) => {
-        const types = {
-            'read': '읽기',
-            'write': '쓰기',
-            'manage': '관리'
-        };
-        return types[type] || type;
-    };
+
 
     // 필터링된 사용자 목록
-    const filteredUsers = users.filter(user => 
+    const filteredUsers = users.filter(user =>
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.username?.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -205,7 +165,7 @@ const UserTagPermissions = () => {
                 <div className="modal modal-open">
                     <div className="modal-box">
                         <h3 className="font-bold text-lg mb-4">태그 권한 부여</h3>
-                        
+
                         <form onSubmit={handleGrantPermission} className="space-y-4">
                             <div className="form-control">
                                 <label className="label">
@@ -297,12 +257,12 @@ const UserTagPermissions = () => {
 };
 
 // 개별 사용자 권한 카드 컴포넌트
-const UserPermissionCard = ({ user, tags, onRefresh }) => {
+const UserPermissionCard = ({ user }) => {
     const [userPermissions, setUserPermissions] = useState([]);
     const [loading, setLoading] = useState(false);
 
     // 사용자별 권한 조회
-    const fetchUserPermissions = async () => {
+    const fetchUserPermissions = useCallback(async () => {
         setLoading(true);
         try {
             const permissions = await userService.getUserTagPermissions(user.id);
@@ -311,11 +271,11 @@ const UserPermissionCard = ({ user, tags, onRefresh }) => {
             console.error('사용자 권한 조회 실패:', error);
         }
         setLoading(false);
-    };
+    }, [user.id]);
 
     useEffect(() => {
         fetchUserPermissions();
-    }, [user.id]);
+    }, [fetchUserPermissions]);
 
     return (
         <div className="card bg-base-100 border shadow-sm">
@@ -373,6 +333,21 @@ const UserPermissionCard = ({ user, tags, onRefresh }) => {
             </div>
         </div>
     );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+UserPermissionCard.propTypes = {
+  ...UserPermissionCard.propTypes,
+  "user": PropTypes.shape({
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "name": PropTypes.string,
+    "username": PropTypes.string
+  }),
+  "tags": PropTypes.arrayOf(PropTypes.shape({
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "name": PropTypes.string
+  })),
+  "onRefresh": PropTypes.func
 };
 
 export default UserTagPermissions;

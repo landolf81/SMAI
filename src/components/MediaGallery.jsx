@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { storageService, adService } from '../services';
 import { getImageUrl } from '../config/api';
 import { validateUploadFile, getAcceptedFileTypes } from '../utils/mediaUtils';
@@ -15,23 +16,29 @@ const MediaGallery = ({ adId, onMediaChange }) => {
   const [uploading, setUploading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState(null);
 
+  // 부모 콜백 변경으로 목록을 재조회하지 않고 최신 콜백으로 알림
+  const onMediaChangeRef = useRef(onMediaChange);
+  useEffect(() => {
+    onMediaChangeRef.current = onMediaChange;
+  }, [onMediaChange]);
+
   // 미디어 목록 조회 (Supabase)
-  const fetchMedia = async () => {
+  const fetchMedia = useCallback(async () => {
     if (!adId) return;
 
     try {
       setLoading(true);
       const data = await adService.getAdMedia(adId);
       setMedia(data || []);
-      if (onMediaChange) {
-        onMediaChange(data || []);
+      if (onMediaChangeRef.current) {
+        onMediaChangeRef.current(data || []);
       }
     } catch (error) {
       console.error('미디어 목록 조회 실패:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [adId]);
 
   // 미디어 업로드 (Supabase)
   const handleFileUpload = async (files) => {
@@ -156,7 +163,7 @@ const MediaGallery = ({ adId, onMediaChange }) => {
 
   useEffect(() => {
     fetchMedia();
-  }, [adId]);
+  }, [fetchMedia]);
 
   if (!adId) {
     return (
@@ -262,7 +269,7 @@ const MediaGallery = ({ adId, onMediaChange }) => {
                   </div>
                   <span className="text-xs text-gray-500">#{index + 1}</span>
                 </div>
-                
+
                 {item.caption && (
                   <p className="text-xs text-gray-600 mt-1 truncate" title={item.caption}>
                     {item.caption}
@@ -290,6 +297,13 @@ const MediaGallery = ({ adId, onMediaChange }) => {
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+MediaGallery.propTypes = {
+  ...MediaGallery.propTypes,
+  "adId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "onMediaChange": PropTypes.func
 };
 
 export default MediaGallery;

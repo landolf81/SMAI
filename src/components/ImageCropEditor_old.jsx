@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 import CropIcon from '@mui/icons-material/Crop';
@@ -16,41 +17,7 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [canvasSize] = useState(300); // 편집 캔버스 크기
 
-  useEffect(() => {
-    if (imageFile && isOpen) {
-      const img = new Image();
-      img.onload = () => {
-        setImage(img);
-        
-        // 이미지 전체를 캔버스에 맞추기 위한 계산
-        const maxDimension = Math.max(img.width, img.height);
-        const minDimension = Math.min(img.width, img.height);
-        
-        // 초기 줌: 이미지 전체가 캔버스에 보이도록 설정
-        const initialZoom = canvasSize / maxDimension;
-        
-        // 초기 크롭 영역: 이미지 중앙에 정사각형 영역 설정
-        const initialCropSize = Math.min(img.width, img.height);
-        const initialCropArea = {
-          x: (img.width - initialCropSize) / 2,
-          y: (img.height - initialCropSize) / 2,
-          size: initialCropSize
-        };
-        
-        setCropArea(initialCropArea);
-        setZoom(initialZoom);
-        drawCanvas(img, initialCropArea, initialZoom, 0);
-      };
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(imageFile);
-    }
-  }, [imageFile, isOpen]);
-
-  const drawCanvas = (img, crop, currentZoom, currentRotation) => {
+  const drawCanvas = useCallback((img, crop, currentZoom, currentRotation) => {
     const canvas = canvasRef.current;
     if (!canvas || !img) return;
 
@@ -71,12 +38,12 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
     // 캔버스 중앙으로 이동
     ctx.save();
     ctx.translate(canvasSize / 2, canvasSize / 2);
-    
+
     // 회전 적용
     ctx.rotate((currentRotation * Math.PI) / 180);
 
     // 전체 이미지를 배경으로 그리기 (반투명)
-    
+
     // 배경 이미지 (어둡게)
     ctx.globalAlpha = 0.3;
     ctx.drawImage(
@@ -88,9 +55,9 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
 
     // 크롭 영역을 밝게 그리기 (고정된 중앙 영역에)
     ctx.save();
-    
+
     // 고정된 크롭 영역을 클립으로 설정
-    
+
     ctx.beginPath();
     ctx.rect(fixedCropX, fixedCropY, fixedCropScreenSize, fixedCropScreenSize);
     ctx.clip();
@@ -114,7 +81,7 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
     ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
     ctx.lineWidth = 2;
     ctx.setLineDash([]);
-    
+
     // 크롭 영역을 캔버스 중앙에 고정 크기로 표시
     ctx.strokeRect(fixedCropX, fixedCropY, fixedCropScreenSize, fixedCropScreenSize);
 
@@ -122,17 +89,17 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.lineWidth = 1;
     ctx.setLineDash([3, 3]);
-    
+
     for (let i = 1; i < 3; i++) {
       const posX = fixedCropX + (fixedCropScreenSize / 3) * i;
       const posY = fixedCropY + (fixedCropScreenSize / 3) * i;
-      
+
       // 세로선
       ctx.beginPath();
       ctx.moveTo(posX, fixedCropY);
       ctx.lineTo(posX, fixedCropY + fixedCropScreenSize);
       ctx.stroke();
-      
+
       // 가로선
       ctx.beginPath();
       ctx.moveTo(fixedCropX, posY);
@@ -145,7 +112,7 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.lineWidth = 1;
-    
+
     const handleSize = 8;
     const corners = [
       [fixedCropX - handleSize/2, fixedCropY - handleSize/2],
@@ -153,12 +120,46 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
       [fixedCropX - handleSize/2, fixedCropY + fixedCropScreenSize - handleSize/2],
       [fixedCropX + fixedCropScreenSize - handleSize/2, fixedCropY + fixedCropScreenSize - handleSize/2]
     ];
-    
+
     corners.forEach(([x, y]) => {
       ctx.fillRect(x, y, handleSize, handleSize);
       ctx.strokeRect(x, y, handleSize, handleSize);
     });
-  };
+  }, [canvasSize]);
+
+  useEffect(() => {
+    if (imageFile && isOpen) {
+      const img = new Image();
+      img.onload = () => {
+        setImage(img);
+
+        // 이미지 전체를 캔버스에 맞추기 위한 계산
+        const maxDimension = Math.max(img.width, img.height);
+        Math.min(img.width, img.height);
+
+        // 초기 줌: 이미지 전체가 캔버스에 보이도록 설정
+        const initialZoom = canvasSize / maxDimension;
+
+        // 초기 크롭 영역: 이미지 중앙에 정사각형 영역 설정
+        const initialCropSize = Math.min(img.width, img.height);
+        const initialCropArea = {
+          x: (img.width - initialCropSize) / 2,
+          y: (img.height - initialCropSize) / 2,
+          size: initialCropSize
+        };
+
+        setCropArea(initialCropArea);
+        setZoom(initialZoom);
+        drawCanvas(img, initialCropArea, initialZoom, 0);
+      };
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(imageFile);
+    }
+  }, [imageFile, isOpen, canvasSize, drawCanvas]);
 
   const handleMouseDown = (e) => {
     if (!image) return;
@@ -176,7 +177,7 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const currentX = e.clientX - rect.left;
     const currentY = e.clientY - rect.top;
-    
+
     // 화면 좌표를 이미지 좌표로 변환
     // 크롭 영역이 고정되어 있으므로, 마우스 드래그 시 이미지를 반대로 이동
     const deltaX = (currentX - dragStart.x) / zoom;
@@ -199,17 +200,17 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
 
   const handleZoomChange = (newZoom) => {
     if (!image) return;
-    
+
     // 기본 줌: 이미지 긴 쪽이 캔버스에 맞도록
     const maxDimension = Math.max(image.width, image.height);
     const baseZoom = canvasSize / maxDimension;
-    
+
     // 최소 줌: 기본 줌의 20%까지 축소 가능 (이미지가 작아져도 편집 가능)
     const minZoom = baseZoom * 0.2;
-    
+
     // 최대 줌: 기본 줌의 5배까지 확대
     const maxZoom = baseZoom * 5;
-    
+
     const clampedZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
     setZoom(clampedZoom);
     drawCanvas(image, cropArea, clampedZoom, rotation);
@@ -229,9 +230,9 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
     const outputSize = 64; // 최종 출력 크기
     outputCanvas.width = outputSize;
     outputCanvas.height = outputSize;
-    
+
     const ctx = outputCanvas.getContext('2d');
-    
+
     // 회전 적용
     ctx.save();
     ctx.translate(outputSize / 2, outputSize / 2);
@@ -252,7 +253,7 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
         type: 'image/png',
         lastModified: Date.now()
       });
-      
+
       onCropComplete(croppedFile, outputCanvas.toDataURL());
       onClose();
     }, 'image/png', 0.9);
@@ -389,6 +390,17 @@ const ImageCropEditor = ({ imageFile, isOpen, onClose, onCropComplete }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ImageCropEditor.propTypes = {
+  ...ImageCropEditor.propTypes,
+  "imageFile": PropTypes.shape({
+    "name": PropTypes.string
+  }),
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "onCropComplete": PropTypes.func
 };
 
 export default ImageCropEditor;

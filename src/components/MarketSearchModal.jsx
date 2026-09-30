@@ -1,3 +1,5 @@
+import { gradeType, numericType } from './propShapes';
+import PropTypes from 'prop-types';
 /**
  * MarketSearchModal.jsx
  * 도매시장 법인명(등급) 검색 모달
@@ -42,7 +44,7 @@ const renderChange = (current, previous) => {
 };
 
 // ─── 검색 결과 목록 뷰 ───
-const SearchListView = ({ filteredGrades, allGrades, searchTerm, isLoading, onSelect }) => {
+const SearchListView = ({ filteredGrades, searchTerm, isLoading, onSelect }) => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -106,6 +108,24 @@ const SearchListView = ({ filteredGrades, allGrades, searchTerm, isLoading, onSe
       ))}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+SearchListView.propTypes = {
+  ...SearchListView.propTypes,
+  "filteredGrades": PropTypes.arrayOf(PropTypes.shape({
+    "market_name": PropTypes.string,
+    "grade": PropTypes.string,
+    "weight": numericType,
+    "boxes": numericType,
+    "avg_price": numericType,
+    "max_price": numericType,
+    "min_price": numericType
+  })),
+  "allGrades": PropTypes.arrayOf(gradeType),
+  "searchTerm": PropTypes.string,
+  "isLoading": PropTypes.bool,
+  "onSelect": PropTypes.func
 };
 
 // ─── 카드 상세 뷰 (가격+변동+detail) ───
@@ -251,6 +271,21 @@ const DetailView = ({ item, marketDate }) => {
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+DetailView.propTypes = {
+  ...DetailView.propTypes,
+  "item": PropTypes.shape({
+    "market_name": PropTypes.string,
+    "grade": PropTypes.string,
+    "weight": numericType,
+    "boxes": numericType,
+    "avg_price": numericType,
+    "max_price": numericType,
+    "min_price": numericType
+  }),
+  "marketDate": PropTypes.string
+};
+
 // ─── 메인 모달 컴포넌트 ───
 const MarketSearchModal = ({ isOpen, onClose, marketDate }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -373,6 +408,14 @@ const MarketSearchModal = ({ isOpen, onClose, marketDate }) => {
     </div>,
     document.body
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+MarketSearchModal.propTypes = {
+  ...MarketSearchModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "marketDate": PropTypes.string
 };
 
 export default MarketSearchModal;

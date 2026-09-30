@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 import { getDomainName } from '../utils/linkDetector';
 import { fetchLinkPreviewWithCache } from '../services/linkPreviewService';
@@ -6,7 +7,7 @@ import LinkIcon from '@mui/icons-material/Link';
 
 // 고정 높이로 CLS 방지 (이미지 있는 경우 기준)
 const PREVIEW_HEIGHT = 200; // 이미지(2:1) + 텍스트 영역
-const SIMPLE_HEIGHT = 88; // 이미지 없는 간단한 카드
+ // 이미지 없는 간단한 카드
 
 /**
  * 일반 링크 프리뷰 컴포넌트
@@ -161,6 +162,13 @@ const LinkPreview = ({ url, className = '' }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LinkPreview.propTypes = {
+  ...LinkPreview.propTypes,
+  "url": PropTypes.string,
+  "className": PropTypes.string
 };
 
 export default LinkPreview;

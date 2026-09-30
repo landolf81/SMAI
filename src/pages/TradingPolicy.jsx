@@ -230,7 +230,7 @@ const TradingPolicy = () => {
               <strong>신고 방법:</strong>
             </p>
             <ul className="text-sm space-y-1 text-amber-50">
-              <li>• 게시글 우측 상단 ... 메뉴에서 "신고하기" 선택</li>
+              <li>• 게시글 우측 상단 ... 메뉴에서 &quot;신고하기&quot; 선택</li>
               <li>• 신고 사유를 상세히 작성</li>
               <li>• 증거 자료(스크린샷, 대화 내용 등) 첨부</li>
             </ul>

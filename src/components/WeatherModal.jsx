@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { weatherService } from '../services/weatherService';
@@ -354,6 +355,14 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
     </div>,
     document.body
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+WeatherModal.propTypes = {
+  ...WeatherModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "briefing": PropTypes.string
 };
 
 export default WeatherModal;

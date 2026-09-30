@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { weatherService } from '../services/weatherService';
 import { useWeather } from '../hooks/useWeather';
@@ -94,6 +95,12 @@ const WeatherWidget = ({ onClick }) => {
       <span className="text-base-content text-base font-bold">{currentTemp}°</span>
     </button>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+WeatherWidget.propTypes = {
+  ...WeatherWidget.propTypes,
+  "onClick": PropTypes.func
 };
 
 export default WeatherWidget;

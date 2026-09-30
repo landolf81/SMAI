@@ -106,13 +106,13 @@ export async function waitForResponse(session, since, intervalMs = 4000, timeout
  * @returns {Promise<string|null>} 응답 텍스트 or null
  */
 export async function getLatestOrRequest(session = 'seonnam-weather') {
-  // 최근 CACHE_TTL_MS 내 done 응답 있으면 즉시 반환
+  // 캐시 전용 조회와 동일하게 오늘 KST 00:00 이후 응답을 재사용
   const { data: cached } = await supabase
     .from('agent_logs')
     .select('response, created_at')
     .eq('session', session)
     .eq('status', 'done')
-    .gte('created_at', new Date(Date.now() - CACHE_TTL_MS).toISOString())
+    .gte('created_at', getKSTTodayStart())
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();

@@ -1,8 +1,9 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import PersonIcon from '@mui/icons-material/Person';
+
 import CloseIcon from '@mui/icons-material/Close';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import BadgeDisplay from './BadgeDisplay';
@@ -215,6 +216,18 @@ const ProfileModal = ({ isOpen, onClose, user }) => {
     </div>,
     document.body
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ProfileModal.propTypes = {
+  ...ProfileModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "user": PropTypes.shape({
+    "userId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "user_id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  })
 };
 
 export default ProfileModal;

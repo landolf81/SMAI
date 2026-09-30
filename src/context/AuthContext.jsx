@@ -72,6 +72,11 @@ export const AuthContextProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const initializedRef = useRef(false);
+  // Keep the auth subscription stable while reading the latest committed user.
+  const currentUserRef = useRef(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
 
   // 세션 변경 감지 및 사용자 정보 업데이트
   useEffect(() => {
@@ -156,7 +161,7 @@ export const AuthContextProvider = ({ children }) => {
 
         if (session?.user) {
           // 이미 currentUser가 설정되어 있고 같은 사용자면 스킵
-          if (currentUser?.id === session.user.id) {
+          if (currentUserRef.current?.id === session.user.id) {
             console.log("⏭️ 동일 사용자 프로필 이미 로드됨, 스킵");
             return;
           }

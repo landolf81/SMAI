@@ -20,7 +20,7 @@ moment.locale('ko');
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 const DMList = () => {
-  const { currentUser } = useContext(AuthContext);
+  useContext(AuthContext);
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [showAll, setShowAll] = useState(false);

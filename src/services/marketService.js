@@ -787,7 +787,8 @@ export const marketService = {
       let from = 0;
       const pageSize = 1000;
 
-      while (true) {
+      let hasMore = true;
+      while (hasMore) {
         const { data, error } = await supabase
           .from('market_data')
           .select('market_name, grade')
@@ -806,7 +807,7 @@ export const marketService = {
           gradesByMarket[name].add(item.grade);
         });
 
-        if (data.length < pageSize) break;
+        hasMore = data.length === pageSize;
         from += pageSize;
       }
 

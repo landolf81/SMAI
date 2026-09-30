@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useCallback, useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AddAlertIcon from '@mui/icons-material/AddAlert';
@@ -30,7 +30,7 @@ const Alerts = () => {
   const { currentUser } = useContext(AuthContext);
 
   // 사용자 알림 목록 가져오기
-  const fetchUserAlerts = async () => {
+  const fetchUserAlerts = useCallback(async () => {
     try {
       const data = await marketService.getAlerts();
       setAlerts(data);
@@ -42,20 +42,20 @@ const Alerts = () => {
         setError('알림 목록을 불러올 수 없습니다.');
       }
     }
-  };
+  }, []);
 
   // 사용가능한 시장 목록 가져오기
-  const fetchAvailableMarkets = async () => {
+  const fetchAvailableMarkets = useCallback(async () => {
     try {
       const markets = await marketService.getAvailableMarkets();
       setAvailableMarkets(markets);
     } catch (error) {
       console.error('시장 목록 조회 실패:', error);
     }
-  };
+  }, []);
 
   // 초기 데이터 로드
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -71,11 +71,11 @@ const Alerts = () => {
     ]);
     
     setLoading(false);
-  };
+  }, [currentUser, fetchAvailableMarkets, fetchUserAlerts]);
 
   useEffect(() => {
     loadData();
-  }, [currentUser]);
+  }, [loadData]);
 
   // 알림 추가
   const handleAddAlert = async (e) => {

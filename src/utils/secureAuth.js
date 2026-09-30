@@ -1,4 +1,5 @@
-import { supabase } from '../config/supabase';
+import '../config/supabase';
+import { makeRequest } from '../axios';
 
 /**
  * 강화된 권한 및 세션 관리 유틸리티
@@ -20,7 +21,6 @@ export const AUTH_ERRORS = {
  */
 export const handleAuthError = (error, navigate) => {
     const errorCode = error.response?.data?.error;
-    const errorMessage = error.response?.data?.message || '알 수 없는 오류가 발생했습니다.';
 
     switch (errorCode) {
         case AUTH_ERRORS.AUTHENTICATION_REQUIRED:

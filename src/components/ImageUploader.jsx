@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useRef } from 'react';
 import { storageService } from '../services';
 import { v4 as uuidv4 } from 'uuid';
@@ -167,7 +168,7 @@ const ImageUploader = ({
                             alt="업로드된 이미지"
                             className="w-full h-48 object-cover"
                         />
-                        
+
                         {/* 업로드 진행률 */}
                         {uploading && (
                             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
@@ -208,8 +209,8 @@ const ImageUploader = ({
                 // 드래그 앤 드롭 영역
                 <div
                     className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                        dragActive 
-                            ? 'border-blue-500 bg-blue-50' 
+                        dragActive
+                            ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-300 bg-gray-50 hover:border-gray-400'
                     }`}
                     onDragEnter={handleDrag}
@@ -221,15 +222,15 @@ const ImageUploader = ({
                         <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                         </svg>
-                        
+
                         <p className="text-lg font-medium mb-2">
                             이미지를 드래그하거나 클릭하여 업로드
                         </p>
-                        
+
                         <p className="text-sm text-gray-500 mb-4">
                             JPG, PNG, GIF, WebP 파일 (최대 5MB)
                         </p>
-                        
+
                         <button
                             onClick={handleButtonClick}
                             disabled={uploading}
@@ -252,6 +253,16 @@ const ImageUploader = ({
             </div>
         </div>
     );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ImageUploader.propTypes = {
+  ...ImageUploader.propTypes,
+  "onImageUploaded": PropTypes.func,
+  "currentImage": PropTypes.string,
+  "className": PropTypes.string,
+  "uploadType": PropTypes.string,
+  "resourceId": PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default ImageUploader;

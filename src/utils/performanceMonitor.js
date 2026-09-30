@@ -1,9 +1,10 @@
 // 성능 모니터링 및 분석 도구
+import React from 'react';
 class PerformanceMonitor {
   constructor() {
     this.metrics = new Map();
     this.startTimes = new Map();
-    this.enabled = process.env.NODE_ENV === 'development';
+    this.enabled = import.meta.env.DEV;
   }
 
   // 성능 측정 시작
@@ -186,10 +187,12 @@ export const usePerformanceMonitor = (name) => {
 
 // HOC for component performance monitoring
 export const withPerformanceMonitoring = (WrappedComponent, componentName) => {
-  return React.memo((props) => {
+  const MonitoredComponent = (props) => {
     usePerformanceMonitor(`Component:${componentName}`);
-    return <WrappedComponent {...props} />;
-  });
+    return React.createElement(WrappedComponent, props);
+  };
+  MonitoredComponent.displayName = `WithPerformanceMonitoring(${componentName})`;
+  return React.memo(MonitoredComponent);
 };
 
 // API 호출 성능 측정 데코레이터

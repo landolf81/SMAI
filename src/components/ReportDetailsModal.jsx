@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes, faFlag, faExclamationTriangle, faInfoCircle } from "@fortawesome/free-solid-svg-icons";
@@ -11,30 +12,29 @@ const ReportDetailsModal = ({ postId, isOpen, onClose }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const fetchReportDetails = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await reportService.getReports();
+        // postId로 필터링
+        const postReports = data.filter(report => report.post_id === postId);
+        setReportData({
+          reportCount: postReports.length,
+          reports: postReports
+        });
+      } catch (err) {
+        console.error('신고 내역 조회 실패:', err);
+        setError('신고 내역을 불러올 수 없습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
     if (isOpen && postId) {
       fetchReportDetails();
     }
   }, [isOpen, postId]);
-
-  const fetchReportDetails = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const data = await reportService.getReports();
-      // postId로 필터링
-      const postReports = data.filter(report => report.post_id === postId);
-      setReportData({
-        reportCount: postReports.length,
-        reports: postReports
-      });
-    } catch (err) {
-      console.error('신고 내역 조회 실패:', err);
-      setError('신고 내역을 불러올 수 없습니다.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getSeverityColor = (level) => {
     switch (level) {
@@ -80,7 +80,7 @@ const ReportDetailsModal = ({ postId, isOpen, onClose }) => {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         {/* 배경 오버레이 */}
-        <div 
+        <div
           className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
           onClick={onClose}
         ></div>
@@ -144,8 +144,8 @@ const ReportDetailsModal = ({ postId, isOpen, onClose }) => {
                         {/* 신고 헤더 */}
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center">
-                            <FontAwesomeIcon 
-                              icon={getSeverityIcon(report.severity_level)} 
+                            <FontAwesomeIcon
+                              icon={getSeverityIcon(report.severity_level)}
                               className={`mr-2 ${getSeverityColor(report.severity_level).split(' ')[0]}`}
                             />
                             <div>
@@ -199,6 +199,14 @@ const ReportDetailsModal = ({ postId, isOpen, onClose }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ReportDetailsModal.propTypes = {
+  ...ReportDetailsModal.propTypes,
+  "postId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func
 };
 
 export default ReportDetailsModal;

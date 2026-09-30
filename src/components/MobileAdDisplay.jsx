@@ -1,3 +1,5 @@
+import { adPollType } from './propShapes';
+import PropTypes from 'prop-types';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -18,11 +20,25 @@ const toSmallVariant = (url) => {
   return changeVariant(url, IMAGE_VARIANTS.MEDIUM);
 };
 
-const MobileAdDisplay = ({ ad }) => {
+const getMediaTypeFromPath = (path, mediaType) => {
+    if (!path) return 'image';
+    // DB에 저장된 media_type이 'stream'인 경우
+    if (mediaType === 'stream') return 'stream';
+    // Cloudflare Stream URL인 경우
+    if (isCloudflareStreamUrl(path)) return 'stream';
+    // UID만 저장된 경우 (32자 hex 형식) - Stream으로 판단
+    if (/^[a-f0-9]{32}$/.test(path)) return 'stream';
+    const extension = path.toLowerCase().split('.').pop();
+    const videoExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
+    return videoExtensions.includes(extension) ? 'video' : 'image';
+  };
+
+const MobileAdContent = ({ ad }) => {
+  const isPWAInstallAd = ad?.link_url === 'pwa-install';
   const navigate = useNavigate();
   const [adMedia, setAdMedia] = useState([]);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [isVideoPlaying, setIsVideoPlaying] = useState(true);
   const [showLandingModal, setShowLandingModal] = useState(false);
   const [modalVideoMuted, setModalVideoMuted] = useState(false); // false = 음소거 해제
@@ -33,7 +49,7 @@ const MobileAdDisplay = ({ ad }) => {
   const adCardRef = useRef(null);
   const impressionTimerRef = useRef(null); // 노출 타이머
   const scrollYRef = useRef(0); // 스크롤 위치 저장
-  const { canInstall, isInstalled, isIOS, promptInstall } = usePWAInstall();
+  const { canInstall, promptInstall } = usePWAInstall();
 
   // ── 투표(Poll) 관련 state ──
   const [pollData, setPollData] = useState(ad?.ad_polls || null);
@@ -96,8 +112,8 @@ const MobileAdDisplay = ({ ad }) => {
   }, [isVoting, myPollVotes, pollData?.is_multiple]);
 
   // pwa-install 광고인데 이미 설치된 환경이면 렌더링 안 함
-  const isPWAInstallAd = ad?.link_url === 'pwa-install';
-  if (isPWAInstallAd && isInstalled) return null;
+
+
 
   // 추가 미디어 불러오기
   useEffect(() => {
@@ -160,13 +176,14 @@ const MobileAdDisplay = ({ ad }) => {
       }
     );
 
-    if (adCardRef.current) {
-      observer.observe(adCardRef.current);
+    const adCard = adCardRef.current;
+    if (adCard) {
+      observer.observe(adCard);
     }
 
     return () => {
-      if (adCardRef.current) {
-        observer.unobserve(adCardRef.current);
+      if (adCard) {
+        observer.unobserve(adCard);
       }
       // 타이머 정리
       if (impressionTimerRef.current) {
@@ -176,21 +193,10 @@ const MobileAdDisplay = ({ ad }) => {
   }, [currentMediaIndex, hasTrackedImpression, ad]); // 의존성 추가
 
   // 파일 확장자로 미디어 타입 판단
-  const getMediaTypeFromPath = (path, mediaType) => {
-    if (!path) return 'image';
-    // DB에 저장된 media_type이 'stream'인 경우
-    if (mediaType === 'stream') return 'stream';
-    // Cloudflare Stream URL인 경우
-    if (isCloudflareStreamUrl(path)) return 'stream';
-    // UID만 저장된 경우 (32자 hex 형식) - Stream으로 판단
-    if (/^[a-f0-9]{32}$/.test(path)) return 'stream';
-    const extension = path.toLowerCase().split('.').pop();
-    const videoExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
-    return videoExtensions.includes(extension) ? 'video' : 'image';
-  };
+
 
   // 미디어 네비게이션 함수들
-  const getCurrentMedia = () => {
+  const getCurrentMedia = useCallback(() => {
     const allMedia = [];
 
     // 메인 이미지가 있으면 추가 (Supabase는 image_url 사용)
@@ -212,7 +218,7 @@ const MobileAdDisplay = ({ ad }) => {
     }
 
     return allMedia[currentMediaIndex] || null;
-  };
+  }, [ad, adMedia, currentMediaIndex]);
 
   // 모달용 미디어 가져오기
   const getModalMedia = (index) => {
@@ -264,25 +270,9 @@ const MobileAdDisplay = ({ ad }) => {
     return allMedia;
   };
 
-  const getTotalMediaCount = () => {
-    let count = 0;
-    if (ad?.image_url) count++;
-    if (adMedia && adMedia.length > 0) count += adMedia.length;
-    return count;
-  };
 
-  const navigateMedia = (direction) => {
-    const totalCount = getTotalMediaCount();
-    if (totalCount <= 1) return;
-    
-    setCurrentMediaIndex(prev => {
-      if (direction > 0) {
-        return (prev + 1) % totalCount;
-      } else {
-        return prev === 0 ? totalCount - 1 : prev - 1;
-      }
-    });
-  };
+
+
 
   // 미디어 인덱스 변경 시 비디오 자동 재생
   useEffect(() => {
@@ -299,7 +289,7 @@ const MobileAdDisplay = ({ ad }) => {
         }
       }, 100);
     }
-  }, [currentMediaIndex]);
+  }, [getCurrentMedia]);
 
   // 게시글 상태에서 자동 미디어 순환 (동영상 포함)
   useEffect(() => {
@@ -334,13 +324,7 @@ const MobileAdDisplay = ({ ad }) => {
   }, [showLandingModal, ad, adMedia, currentMediaIndex]);
 
   // 외부 광고(카드)에서 동영상 종료 시 다음 미디어로 이동
-  const handleCardVideoEnded = () => {
-    const totalCount = getTotalMediaCount();
-    if (totalCount > 1) {
-      setCurrentMediaIndex(prev => (prev + 1) % totalCount);
-    }
-    setIsVideoPlaying(false);
-  };
+
 
   // 모달 내 자동 순환 (이미지만, 동영상은 onEnded로 처리)
   useEffect(() => {
@@ -469,7 +453,7 @@ const MobileAdDisplay = ({ ad }) => {
            style={{
              boxShadow: '-4px 0 15px rgba(255, 165, 0, 0.3), 0 4px 15px rgba(0, 0, 0, 0.1)'
            }}>
-        
+
         {/* 광고 헤더 */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-base-200">
           <div className="flex items-center space-x-2">
@@ -543,7 +527,7 @@ const MobileAdDisplay = ({ ad }) => {
                   alt={getCurrentMedia().alt || ad.title}
                   className="absolute inset-0 w-full h-full object-contain hover:scale-105 transition-transform duration-300"
                   loading="eager"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   onError={(e) => {
                     e.target.src = DEFAULT_AD_IMAGE;
                   }}
@@ -560,14 +544,14 @@ const MobileAdDisplay = ({ ad }) => {
             </div>
           )}
         </div>
-        
+
         {/* 콘텐츠 영역 */}
         <div className="p-4">
           {/* 제목 */}
           <h3 className="text-base font-bold text-base-content mb-2 leading-tight">
             {ad.title}
           </h3>
-          
+
           {/* 내용 */}
           {ad.content && (
             <p className="text-sm text-base-content/70 mb-3 leading-relaxed whitespace-pre-wrap line-clamp-2">
@@ -587,7 +571,7 @@ const MobileAdDisplay = ({ ad }) => {
           )}
 
           {/* 액션 버튼 */}
-          <button 
+          <button
             onClick={handleAdClick}
             className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold py-3 px-4 rounded-lg hover:from-orange-600 hover:to-pink-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
           >
@@ -782,5 +766,28 @@ const MobileAdDisplay = ({ ad }) => {
     </div>
   );
 };
+
+const MobileAdDisplay = ({ ad }) => {
+  const { isInstalled } = usePWAInstall();
+  if (ad?.link_url === 'pwa-install' && isInstalled) return null;
+  return <MobileAdContent ad={ad} />;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+MobileAdDisplay.propTypes = {
+  ...MobileAdDisplay.propTypes,
+  "ad": PropTypes.shape({
+    "ad_polls": adPollType,
+    "link_url": PropTypes.string,
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "image_url": PropTypes.string,
+    "image_type": PropTypes.string,
+    "image_alt": PropTypes.string,
+    "title": PropTypes.string,
+    "content": PropTypes.string
+  })
+};
+
+MobileAdContent.propTypes = MobileAdDisplay.propTypes;
 
 export default MobileAdDisplay;

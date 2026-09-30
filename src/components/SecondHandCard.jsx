@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import moment from 'moment';
@@ -59,7 +60,7 @@ const SecondHandCard = ({ post, onCardClick }) => {
   const title = post.title || post.name || '';
   const description = post.content || post.desc || post.description || '';
 
-  const price = extractPrice(title, description);
+  extractPrice(title, description);
   const location = extractLocation(description) || (post.username ? post.username.split(' ')[0] : null);
 
   // 이미지 URL 처리 (다중 이미지 지원)
@@ -190,6 +191,28 @@ const SecondHandCard = ({ post, onCardClick }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+SecondHandCard.propTypes = {
+  ...SecondHandCard.propTypes,
+  "post": PropTypes.shape({
+    "tradeInfo": PropTypes.shape({
+    "status": PropTypes.string
+  }),
+    "trade_status": PropTypes.string,
+    "title": PropTypes.string,
+    "name": PropTypes.string,
+    "content": PropTypes.string,
+    "desc": PropTypes.string,
+    "description": PropTypes.string,
+    "username": PropTypes.string,
+    "img": PropTypes.string,
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "createdAt": PropTypes.string,
+    "views": PropTypes.number
+  }),
+  "onCardClick": PropTypes.func
 };
 
 export default SecondHandCard;

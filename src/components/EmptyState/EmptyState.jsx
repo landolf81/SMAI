@@ -1,12 +1,13 @@
+import PropTypes from 'prop-types';
 import React from 'react';
-import SearchIcon from '@mui/icons-material/Search';
+
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import InfoIcon from '@mui/icons-material/Info';
-import AssignmentIcon from '@mui/icons-material/Assignment';
+
 import StoreIcon from '@mui/icons-material/Store';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+
 
 const EmptyState = ({
   type = 'default',
@@ -33,7 +34,7 @@ const EmptyState = ({
           defaultTitle: '데이터가 없습니다',
           defaultDesc: '현재 표시할 정보가 없습니다.'
         };
-      
+
       case 'error':
         return {
           icon: <ErrorOutlineIcon className="text-red-300" style={{ fontSize: size === 'lg' ? '4rem' : '3rem' }} />,
@@ -44,7 +45,7 @@ const EmptyState = ({
           defaultTitle: '오류가 발생했습니다',
           defaultDesc: '데이터를 불러올 수 없습니다.'
         };
-      
+
       case 'no-markets':
         return {
           icon: <StoreIcon className="text-yellow-300" style={{ fontSize: size === 'lg' ? '4rem' : '3rem' }} />,
@@ -55,7 +56,7 @@ const EmptyState = ({
           defaultTitle: '운영 중인 시장이 없습니다',
           defaultDesc: '선택한 날짜에 거래가 진행된 시장이 없습니다.'
         };
-      
+
       case 'no-prices':
         return {
           icon: <img src="/images/AS_110.png" alt="경락가 정보 없음" className="mx-auto" style={{ width: size === 'lg' ? '120px' : '100px', height: 'auto' }} />,
@@ -66,7 +67,7 @@ const EmptyState = ({
           defaultTitle: '경락가 정보가 없습니다',
           defaultDesc: '선택한 조건의 가격 정보가 없습니다.'
         };
-      
+
       case 'no-favorites':
         return {
           icon: <FavoriteIcon className="text-pink-300" style={{ fontSize: size === 'lg' ? '4rem' : '3rem' }} />,
@@ -77,7 +78,7 @@ const EmptyState = ({
           defaultTitle: '관심 목록이 비어있습니다',
           defaultDesc: '자주 확인하는 시장을 추가해보세요.'
         };
-      
+
       case 'no-alerts':
         return {
           icon: <NotificationsIcon className="text-purple-300" style={{ fontSize: size === 'lg' ? '4rem' : '3rem' }} />,
@@ -88,7 +89,7 @@ const EmptyState = ({
           defaultTitle: '설정된 알림이 없습니다',
           defaultDesc: '가격 알림을 설정해보세요.'
         };
-      
+
       case 'network-error':
         return {
           icon: <ErrorOutlineIcon className="text-orange-300" style={{ fontSize: size === 'lg' ? '4rem' : '3rem' }} />,
@@ -99,7 +100,7 @@ const EmptyState = ({
           defaultTitle: '네트워크 연결 오류',
           defaultDesc: '인터넷 연결을 확인해주세요.'
         };
-      
+
       default:
         return {
           icon: <InfoIcon className="text-gray-300" style={{ fontSize: size === 'lg' ? '4rem' : '3rem' }} />,
@@ -126,31 +127,31 @@ const EmptyState = ({
             {customIcon || config.icon}
           </div>
         )}
-        
+
         {/* 제목 */}
         <h3 className={`text-lg font-semibold ${config.titleColor} mb-2`}>
           {title || config.defaultTitle}
         </h3>
-        
+
         {/* 설명 */}
         <p className={`${config.descColor} text-sm mb-4`}>
           {description || config.defaultDesc}
         </p>
-        
+
         {/* 액션 버튼들 */}
         {(actionText || secondaryActionText) && (
           <div className="space-y-2">
             {actionText && onAction && (
-              <button 
+              <button
                 onClick={onAction}
                 className="btn btn-primary w-full"
               >
                 {actionText}
               </button>
             )}
-            
+
             {secondaryActionText && onSecondaryAction && (
-              <button 
+              <button
                 onClick={onSecondaryAction}
                 className="btn btn-outline w-full"
               >
@@ -162,6 +163,21 @@ const EmptyState = ({
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+EmptyState.propTypes = {
+  ...EmptyState.propTypes,
+  "type": PropTypes.string,
+  "title": PropTypes.string,
+  "description": PropTypes.string,
+  "actionText": PropTypes.string,
+  "onAction": PropTypes.func,
+  "secondaryActionText": PropTypes.string,
+  "onSecondaryAction": PropTypes.func,
+  "showImage": PropTypes.bool,
+  "customIcon": PropTypes.node,
+  "size": PropTypes.string
 };
 
 export default EmptyState;

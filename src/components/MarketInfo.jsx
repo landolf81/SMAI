@@ -57,7 +57,7 @@ const MarketInfo = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             공판장 선택
                         </label>
-                        <select 
+                        <select
                             value={selectedMarket}
                             onChange={(e) => setSelectedMarket(e.target.value)}
                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
@@ -69,19 +69,19 @@ const MarketInfo = () => {
                             ))}
                         </select>
                     </div>
-                    
+
                     <div className="flex-1 min-w-48">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             날짜 선택
                         </label>
-                        <input 
+                        <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
                             className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500"
                         />
                     </div>
-                    
+
                     <button
                         onClick={() => queryClient.invalidateQueries(['marketData', selectedMarket, selectedDate])}
                         disabled={loading}
@@ -138,7 +138,7 @@ const MarketInfo = () => {
                                 {addFavoriteMutation.isPending ? '등록중...' : '⭐ 관심 등록'}
                             </button>
                         </div>
-                        
+
                         {marketData.summary && (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="text-center p-4 bg-white rounded-lg">
@@ -228,9 +228,9 @@ const MarketInfo = () => {
                     {marketData.details && marketData.details.length === 0 && (
                         <div className="text-center py-12 bg-gray-50 rounded-lg">
                             <div className="flex flex-col items-center space-y-4">
-                                <img 
-                                    src="/images/AS_110.png" 
-                                    alt="경락가 정보 없음" 
+                                <img
+                                    src="/images/AS_110.png"
+                                    alt="경락가 정보 없음"
                                     className="w-20 h-20 opacity-60"
                                 />
                                 <div>

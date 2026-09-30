@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dmService, storageService } from '../services';
@@ -206,6 +207,19 @@ const DMChat = ({ conversation, onClose }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+DMChat.propTypes = {
+  ...DMChat.propTypes,
+  "conversation": PropTypes.shape({
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "other_user_id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "other_user_profile": PropTypes.string,
+    "other_user_name": PropTypes.string,
+    "other_user_username": PropTypes.string
+  }),
+  "onClose": PropTypes.func
 };
 
 export default DMChat;

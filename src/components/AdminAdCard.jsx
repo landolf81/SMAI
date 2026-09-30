@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import { adPollType } from './propShapes';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { getImageUrl, DEFAULT_AD_IMAGE } from '../config/api';
 import { adService } from '../services';
 import { isCloudflareStreamUrl, getCloudflareStreamUid } from '../utils/mediaUtils';
@@ -12,9 +14,22 @@ import MouseIcon from "@mui/icons-material/Mouse";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 
+const getMediaTypeFromPath = (path, mediaType) => {
+    if (!path) return 'image';
+    // DB에 저장된 media_type이 'stream'인 경우
+    if (mediaType === 'stream') return 'stream';
+    // Cloudflare Stream URL인 경우
+    if (isCloudflareStreamUrl(path)) return 'stream';
+    // UID만 저장된 경우 (32자 hex 형식) - Stream으로 판단
+    if (/^[a-f0-9]{32}$/.test(path)) return 'stream';
+    const extension = path.toLowerCase().split('.').pop();
+    const videoExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
+    return videoExtensions.includes(extension) ? 'video' : 'image';
+  };
+
 const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
   const [adMedia, setAdMedia] = useState([]);
-  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [currentMediaIndex, ] = useState(0);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [modalMediaIndex, setModalMediaIndex] = useState(0);
   const [isAutoCycling, setIsAutoCycling] = useState(true); // 자동 순환 상태
@@ -40,18 +55,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
   }, [ad]);
 
   // 파일 확장자로 미디어 타입 판단
-  const getMediaTypeFromPath = (path, mediaType) => {
-    if (!path) return 'image';
-    // DB에 저장된 media_type이 'stream'인 경우
-    if (mediaType === 'stream') return 'stream';
-    // Cloudflare Stream URL인 경우
-    if (isCloudflareStreamUrl(path)) return 'stream';
-    // UID만 저장된 경우 (32자 hex 형식) - Stream으로 판단
-    if (/^[a-f0-9]{32}$/.test(path)) return 'stream';
-    const extension = path.toLowerCase().split('.').pop();
-    const videoExtensions = ['mp4', 'mov', 'webm', 'avi', 'mkv'];
-    return videoExtensions.includes(extension) ? 'video' : 'image';
-  };
+
 
   // 현재 미디어 가져오기
   const getCurrentMedia = () => {
@@ -78,15 +82,10 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
     return allMedia[currentMediaIndex] || null;
   };
 
-  const getTotalMediaCount = () => {
-    let count = 0;
-    if (ad?.image_url) count++;
-    if (adMedia && adMedia.length > 0) count += adMedia.length;
-    return count;
-  };
+
 
   // 모든 미디어 가져오기
-  const getAllMedia = () => {
+  const getAllMedia = useCallback(() => {
     const allMedia = [];
     if (ad?.image_url) {
       allMedia.push({
@@ -104,7 +103,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
       })));
     }
     return allMedia;
-  };
+  }, [ad, adMedia]);
 
   // 모달용 미디어 가져오기
   const getModalMedia = (index) => {
@@ -144,7 +143,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
         };
       }
     }
-  }, [showDetailModal, modalMediaIndex, isAutoCycling, adMedia]);
+  }, [showDetailModal, modalMediaIndex, isAutoCycling, getAllMedia]);
 
   // 썸네일 클릭 시 자동 순환 일시 정지
   const handleThumbnailClick = (index) => {
@@ -179,10 +178,10 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('ko-KR', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit' 
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
     });
   };
 
@@ -369,7 +368,7 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
               </div>
             )}
           </div>
-          
+
           {/* 액션 버튼 */}
           <button
             onClick={openDetailModal}
@@ -563,6 +562,31 @@ const AdminAdCard = ({ ad, onEdit, onDelete, onToggleStatus }) => {
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdminAdCard.propTypes = {
+  ...AdminAdCard.propTypes,
+  "ad": PropTypes.shape({
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "image_url": PropTypes.string,
+    "image_type": PropTypes.string,
+    "image_alt": PropTypes.string,
+    "title": PropTypes.string,
+    "is_active": PropTypes.bool,
+    "created_at": PropTypes.string,
+    "start_date": PropTypes.string,
+    "end_date": PropTypes.string,
+    "view_count": PropTypes.number,
+    "click_count": PropTypes.number,
+    "priority_boost": PropTypes.number,
+    "content": PropTypes.string,
+    "link_url": PropTypes.string,
+    "ad_polls": adPollType
+  }),
+  "onEdit": PropTypes.func,
+  "onDelete": PropTypes.func,
+  "onToggleStatus": PropTypes.func
 };
 
 export default AdminAdCard;

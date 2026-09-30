@@ -11,7 +11,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { marketService, weatherBriefingService, postService } from '../services';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
-import LoadingSpinner from '../components/LoadingSpinner';
+
 import WeatherWidget from '../components/WeatherWidget';
 import WeatherModal from '../components/WeatherModal';
 import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
@@ -28,13 +28,45 @@ import { BANNER_SLOTS } from '../services/bannerAdService';
 
 
 // 색상 정의
-const COLORS = {
-  mainGreen: '#154734',      // PANTONE 3435 C
-  lightGreen: '#6CC24A',     // 농협 라이트 그린
-  pointYellow: '#FFD400',    // 포인트 노랑
-  neutralBg: '#F7F7F7',      // 중립 배경
-  border: '#E1E4E8',         // 테두리
+
+
+// 한국 시간 기준으로 오늘 날짜 가져오기
+const getKoreanToday = () => {
+  const now = new Date();
+  const koreanTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9
+  return koreanTime.toISOString().split('T')[0];
 };
+
+// 로컬 스토리지에서 저장된 날짜 가져오기 (없으면 오늘 날짜)
+const getSavedDate = () => {
+  try {
+    const saved = localStorage.getItem('market_selected_date');
+    const savedTime = localStorage.getItem('market_selected_date_time');
+
+    if (saved && savedTime) {
+      const now = Date.now();
+      const savedTimestamp = parseInt(savedTime);
+      const oneHour = 60 * 60 * 1000; // 1시간 = 60분 * 60초 * 1000ms
+
+      // 1시간 이내에 저장된 날짜인지 확인
+      if (now - savedTimestamp < oneHour) {
+        // 저장된 날짜가 유효한지 확인
+        const savedDate = new Date(saved);
+        if (!isNaN(savedDate.getTime())) {
+          return saved;
+        }
+      } else {
+        // 1시간 경과 시 저장된 데이터 삭제
+        localStorage.removeItem('market_selected_date');
+        localStorage.removeItem('market_selected_date_time');
+      }
+    }
+  } catch (error) {
+    console.warn('저장된 날짜 불러오기 실패:', error);
+  }
+  return getKoreanToday();
+};
+
 
 const Home = () => {
   // PC 접속 시 랜딩 페이지로 리다이렉트
@@ -42,11 +74,16 @@ const Home = () => {
     return <Navigate to="/landing" replace />;
   }
 
+  return <MobileHome />;
+};
+
+// 모바일 화면의 Hook은 데스크톱 분기와 분리해 항상 같은 순서로 실행한다.
+const MobileHome = () => {
   const navigate = useNavigate();
   const [marketData, setMarketData] = useState([]);
   const [seongjuTotal, setSeongjuTotal] = useState(null); // 성주군 합계
   const [wholesaleTotal, setWholesaleTotal] = useState(null); // 도매시장 합계
-  const [availableMarkets, setAvailableMarkets] = useState([]);
+  const [, setAvailableMarkets] = useState([]);
   const [marketInfoMap, setMarketInfoMap] = useState(new Map()); // market_name → info 객체
   const [loading, setLoading] = useState(true);
   // 첫 렌더부터 올바른 값으로 초기화 (false로 시작하면 모바일에서 PC 안내 화면이 한 프레임 깜빡임)
@@ -82,47 +119,16 @@ const Home = () => {
   const fetchingDateRef = useRef(null); // fetch 진행 중인 날짜 (stale 캐시 저장 방지)
 
   // 홈페이지 스크롤 위치 복원
-  const { resetScrollPosition, scrollToTop } = useScrollRestore('home', null, null, null, true);
+  useScrollRestore('home', null, null, null, true);
   const scrollDirection = useScrollDirection();
 
-  // 한국 시간 기준으로 오늘 날짜 가져오기
-  const getKoreanToday = () => {
-    const now = new Date();
-    const koreanTime = new Date(now.getTime() + (9 * 60 * 60 * 1000)); // UTC+9
-    return koreanTime.toISOString().split('T')[0];
-  };
-
-  // 로컬 스토리지에서 저장된 날짜 가져오기 (없으면 오늘 날짜)
-  const getSavedDate = () => {
-    try {
-      const saved = localStorage.getItem('market_selected_date');
-      const savedTime = localStorage.getItem('market_selected_date_time');
-
-      if (saved && savedTime) {
-        const now = Date.now();
-        const savedTimestamp = parseInt(savedTime);
-        const oneHour = 60 * 60 * 1000; // 1시간 = 60분 * 60초 * 1000ms
-
-        // 1시간 이내에 저장된 날짜인지 확인
-        if (now - savedTimestamp < oneHour) {
-          // 저장된 날짜가 유효한지 확인
-          const savedDate = new Date(saved);
-          if (!isNaN(savedDate.getTime())) {
-            return saved;
-          }
-        } else {
-          // 1시간 경과 시 저장된 데이터 삭제
-          localStorage.removeItem('market_selected_date');
-          localStorage.removeItem('market_selected_date_time');
-        }
-      }
-    } catch (error) {
-      console.warn('저장된 날짜 불러오기 실패:', error);
-    }
-    return getKoreanToday();
-  };
-
-  const [selectedDate, setSelectedDate] = useState(getSavedDate());
+  const [selectedDate, setSelectedDate] = useState(getSavedDate);
+  const initialSelectedDateRef = useRef(selectedDate);
+  // 조회 함수의 identity는 유지하며 최신 카드/설정 값을 읽는다.
+  const marketStateRef = useRef({ marketData, seongjuTotal, marketSettings });
+  useEffect(() => {
+    marketStateRef.current = { marketData, seongjuTotal, marketSettings };
+  }, [marketData, seongjuTotal, marketSettings]);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   // 날짜 포맷 함수 (타임존 안전)
@@ -137,11 +143,7 @@ const Home = () => {
     });
   };
 
-  const formatDateSimple = (dateStr) => {
-    const [year, month, day] = dateStr.split('-');
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    return date.toLocaleDateString('ko-KR');
-  };
+
 
   // 디바이스 감지
   useEffect(() => {
@@ -248,23 +250,27 @@ const Home = () => {
 
   // 시장 설정이 로드되면 기존 데이터 다시 정렬
   useEffect(() => {
-    if (marketSettings?.market_order?.length > 0 && marketData.length > 0) {
+    if (marketSettings?.market_order?.length > 0) {
       const orderArray = marketSettings.market_order;
-      const sortedData = [...marketData].sort((a, b) => {
-        const indexA = orderArray.indexOf(a.name);
-        const indexB = orderArray.indexOf(b.name);
+      setMarketData((previousData) => {
+        if (!previousData.length) return previousData;
+        const sortedData = [...previousData].sort((a, b) => {
+          const indexA = orderArray.indexOf(a.name);
+          const indexB = orderArray.indexOf(b.name);
 
-        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
-        if (indexA === -1) return 1;
-        if (indexB === -1) return -1;
-        return 0;
+          if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return 0;
+        });
+        return sortedData;
       });
-      setMarketData(sortedData);
     }
   }, [marketSettings]);
 
   // 경락가 데이터 가져오기 (단일 쿼리 최적화: getMarketsSummary 사용)
-  const fetchMarketData = async (date) => {
+  const fetchMarketData = useCallback(async (date) => {
+    const { marketData, seongjuTotal, marketSettings } = marketStateRef.current;
     fetchingDateRef.current = date; // fetch 시작 표시 (stale 캐시 저장 방지)
     try {
       // 기존 데이터가 없을 때만 스켈레톤 표시 (날짜 변경 시에는 기존 카드 유지 → CLS 방지)
@@ -434,10 +440,11 @@ const Home = () => {
       fetchingDateRef.current = null; // fetch 완료
       setLoading(false);
     }
-  };
+  }, []);
 
   // 초기 로드 시 데이터 가져오기 (캐시 사용으로 빠른 복귀)
   useEffect(() => {
+    const selectedDate = initialSelectedDateRef.current;
     const loadMarketData = async () => {
       // 강제새로고침(reload) 또는 상세보기 방문 후 복귀 시 캐시 무효화
       // sessionStorage는 F5/Ctrl+F5에서 지워지지 않으므로 직접 처리
@@ -513,7 +520,7 @@ const Home = () => {
       fetchMarketData(selectedDate);
     };
     loadMarketData();
-  }, []); // 최초 로드 시에만 실행
+  }, [fetchMarketData]); // 안정적인 조회 함수로 최초 로드 시에만 실행
 
   // 날짜 변경 시 로컬 스토리지에 저장 (타임스탬프와 함께)
   useEffect(() => {
@@ -555,10 +562,7 @@ const Home = () => {
     return price.toLocaleString('ko-KR');
   };
 
-  const handleDateChange = (e) => {
-    // 날짜 선택 시 상태만 업데이트 (조회는 버튼 클릭 시)
-    setSelectedDate(e.target.value);
-  };
+
 
   const handleRefresh = () => {
     fetchMarketData(selectedDate);
@@ -586,7 +590,7 @@ const Home = () => {
 
     setSelectedDate(newDate);
     fetchMarketData(newDate);
-  }, [selectedDate]);
+  }, [selectedDate, fetchMarketData]);
 
   // 이전 날짜로 이동
   const goToPreviousDay = useCallback(() => {

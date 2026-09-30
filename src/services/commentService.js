@@ -16,7 +16,7 @@ export const commentService = {
    * @param {boolean} options.includeHidden - 숨김 댓글 포함 여부
    * @param {string} options.postOwnerId - 게시물 작성자 ID (비공개 댓글 권한 체크용)
    */
-  async getComments(postId, { limit, offset, includeHidden = false, postOwnerId = null } = {}) {
+  async getComments(postId, { limit, offset, includeHidden = false } = {}) {
     try {
       // 현재 로그인한 사용자 정보 조회 (읽기 전용 - 캐시된 세션 사용)
       const session = await getCachedSession();

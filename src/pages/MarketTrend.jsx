@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -113,7 +114,7 @@ const MarketTrend = () => {
   const today = getKoreanToday();
 
   // 날짜 계산 함수 (오늘을 중심으로 좌우로 표시)
-  const getDateRange = (days) => {
+  const getDateRange = useCallback((days) => {
     const formatDate = (d) => d.toISOString().split('T')[0];
 
     // 오늘을 중심으로 좌우로 날짜 계산
@@ -125,28 +126,28 @@ const MarketTrend = () => {
     end.setDate(end.getDate() + halfDays);
 
     return { startDate: formatDate(start), endDate: formatDate(end) };
-  };
+  }, [today]);
 
   // 작년 동일 주기(52주=364일 전) 기간 계산
   // 경매 휴무와 무관하게 같은 요일 + 같은 주차 사이클로 매칭하기 위해 364일 시프트 사용
-  const shiftBack364 = (dateStr) => {
+  const shiftBack364 = useCallback((dateStr) => {
     const d = new Date(dateStr + 'T00:00:00');
     d.setDate(d.getDate() - 364);
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
-  };
-  const getLastYearRange = (startDate, endDate) => ({
+  }, []);
+  const getLastYearRange = useCallback((startDate, endDate) => ({
     startDate: shiftBack364(startDate),
     endDate: shiftBack364(endDate),
-  });
+  }), [shiftBack364]);
 
   // 성주군 합계 / 도매시장 합계 여부 확인
   const isSeongjuTotal = marketName === '성주군 합계';
   const isWholesaleTotal = marketName === '도매시장 합계';
   // aggregate 테이블 사용 여부 (성주군 합계 / 도매시장 합계 모두 DB 사전 집계 사용)
-  const isAggregateSource = isSeongjuTotal || isWholesaleTotal;
+
 
   // 데이터 로드
   useEffect(() => {
@@ -205,7 +206,7 @@ const MarketTrend = () => {
     };
 
     loadData();
-  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today, isSeongjuTotal, isWholesaleTotal]);
+  }, [marketName, periodDays, isCustomPeriod, customStartDate, customEndDate, today, isSeongjuTotal, isWholesaleTotal, getDateRange, getLastYearRange]);
 
   // 기간 범위 계산 (chartData용)
   const dateRange = useMemo(() => {
@@ -213,7 +214,7 @@ const MarketTrend = () => {
       return { startDate: customStartDate, endDate: customEndDate };
     }
     return getDateRange(periodDays);
-  }, [periodDays, isCustomPeriod, customStartDate, customEndDate]);
+  }, [periodDays, isCustomPeriod, customStartDate, customEndDate, getDateRange]);
 
   // 차트 데이터 생성 — 전년 동일 요일 순서 매칭
   const chartData = useMemo(() => {
@@ -279,7 +280,7 @@ const MarketTrend = () => {
     });
 
     return result;
-  }, [trendData, lastYearData, today, dateRange]);
+  }, [trendData, lastYearData, today, dateRange, shiftBack364]);
 
   // 오늘 날짜의 X축 값 찾기
   const todayXValue = useMemo(() => {
@@ -303,6 +304,7 @@ const MarketTrend = () => {
       </text>
     );
   };
+  CustomXAxisTick.propTypes = { x: PropTypes.number, y: PropTypes.number, payload: PropTypes.shape({ value: PropTypes.string }) };
 
   // 기간 버튼 클릭
   const handlePeriodChange = (days) => {

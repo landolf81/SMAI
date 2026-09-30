@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import PropTypes from 'prop-types';
+import React, { useCallback, useState, useEffect, useRef, useContext } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import TranslateIcon from '@mui/icons-material/Translate';
 import VolumeUpIcon from '@mui/icons-material/VolumeUp';
@@ -10,8 +11,8 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import ShareIcon from '@mui/icons-material/Share';
 import CloseIcon from '@mui/icons-material/Close';
 import toast from 'react-hot-toast';
-import { geminiService, translationService, adService, r2Service } from '../services';
-import { supabase } from '../config/supabase';
+import { geminiService, translationService, adService } from '../services';
+
 import { AuthContext } from '../context/AuthContext';
 import MobileAdDisplay from '../components/MobileAdDisplay';
 import TranslationHistoryModal from '../components/TranslationHistoryModal';
@@ -26,7 +27,7 @@ const LANGUAGES = [
 
 const Translate = ({ embedded = false }) => {
   const { currentUser } = useContext(AuthContext);
-  const [isMobile] = useState(() => isMobileDevice());
+  useState(() => isMobileDevice());
 
   // 사용자별 언어 설정 불러오기
   const getUserLangKey = (type) => currentUser ? `translate_${type}_${currentUser.id}` : `translate_${type}_guest`;
@@ -44,7 +45,7 @@ const Translate = ({ embedded = false }) => {
   const [translations, setTranslations] = useState({ target: '', backTranslation: '' });
   const [isTranslating, setIsTranslating] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [history, setHistory] = useState([]);
   const [selectedHistory, setSelectedHistory] = useState(null);
@@ -134,14 +135,9 @@ const Translate = ({ embedded = false }) => {
   }, [targetLang, currentUser]);
 
   // 히스토리 로드
-  useEffect(() => {
-    if (currentUser) {
-      loadHistory();
-      loadHistoryCount();
-    }
-  }, [currentUser]);
 
-  const loadHistory = async () => {
+
+  const loadHistory = useCallback(async () => {
     if (!currentUser) return;
     try {
       const data = await translationService.getHistory(100, currentUser.id);
@@ -149,9 +145,9 @@ const Translate = ({ embedded = false }) => {
     } catch (error) {
       console.error('히스토리 로드 오류:', error);
     }
-  };
+  }, [currentUser]);
 
-  const loadHistoryCount = async () => {
+  const loadHistoryCount = useCallback(async () => {
     if (!currentUser) return;
     try {
       const count = await translationService.getHistoryCount(currentUser.id);
@@ -159,7 +155,14 @@ const Translate = ({ embedded = false }) => {
     } catch (error) {
       console.error('히스토리 개수 로드 오류:', error);
     }
-  };
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+      loadHistory();
+      loadHistoryCount();
+    }
+  }, [currentUser, loadHistory, loadHistoryCount]);
 
   const startVoiceInput = () => {
     if (!speechSupported) {
@@ -354,13 +357,9 @@ const Translate = ({ embedded = false }) => {
 
   const handleDeleteHistory = async (historyId) => {
     if (!currentUser) return;
-    try {
-      await translationService.deleteHistory(historyId, currentUser.id);
-      await loadHistory();
-      await loadHistoryCount();
-    } catch (error) {
-      throw error;
-    }
+    await translationService.deleteHistory(historyId, currentUser.id);
+    await loadHistory();
+    await loadHistoryCount();
   };
 
   // 복사하기
@@ -878,3 +877,6 @@ const Translate = ({ embedded = false }) => {
 };
 
 export default Translate;
+
+// 내부 컴포넌트의 입력 데이터 계약.
+Translate.propTypes = { embedded: PropTypes.bool };

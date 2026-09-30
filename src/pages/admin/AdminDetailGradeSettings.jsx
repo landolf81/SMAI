@@ -5,7 +5,7 @@
  * - 오른쪽: 선택된 법인의 등급 순서 + 크기규격 순서
  * - app_settings 테이블에 법인별로 저장
  */
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../config/supabase';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -35,11 +35,9 @@ const AdminDetailGradeSettings = () => {
   const [draggedItem, setDraggedItem] = useState(null);
   const [draggedType, setDraggedType] = useState(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
 
-  const loadData = async (forceRefresh = false) => {
+
+  const loadData = useCallback(async (forceRefresh = false) => {
     try {
       setLoading(true);
 
@@ -107,15 +105,19 @@ const AdminDetailGradeSettings = () => {
       });
 
       setCorpSettings(mergedSettings);
-      if (corpList.length > 0 && !selectedCorp) {
-        setSelectedCorp(corpList[0]);
+      if (corpList.length > 0) {
+        setSelectedCorp(previous => previous || corpList[0]);
       }
     } catch (error) {
       console.error('데이터 로드 오류:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // 저장
   const handleSave = async () => {

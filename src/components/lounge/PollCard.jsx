@@ -1,3 +1,5 @@
+import { pollOptionType } from '../propShapes';
+import PropTypes from 'prop-types';
 /**
  * PollCard.jsx
  * 역할: 광장 메시지 내 투표 카드 표시 + 투표 인터랙션 + 실시간 결과
@@ -64,7 +66,7 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
     if (isClosed || isVoting) return;
     setSelectedForVote(optionId);
     onVote?.(poll.id, optionId);
-  }, [isClosed, isVoting, currentUserId, onVote, poll?.id]);
+  }, [isClosed, isVoting, onVote, poll?.id]);
 
   // 마감 핸들러
   const handleClose = useCallback(() => {
@@ -184,6 +186,27 @@ const PollCard = ({ poll, myVotes = [], onVote, onClose, currentUserId, isVoting
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PollCard.propTypes = {
+  ...PollCard.propTypes,
+  "poll": PropTypes.shape({
+    "lounge_poll_options": PropTypes.arrayOf(pollOptionType),
+    "expires_at": PropTypes.string,
+    "is_closed": PropTypes.bool,
+    "user_id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "total_votes": PropTypes.number,
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "question": PropTypes.string,
+    "is_multiple": PropTypes.bool,
+    "is_anonymous": PropTypes.bool
+  }),
+  "myVotes": PropTypes.arrayOf(PropTypes.string),
+  "onVote": PropTypes.func,
+  "onClose": PropTypes.func,
+  "currentUserId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "isVoting": PropTypes.bool
 };
 
 export default React.memo(PollCard);

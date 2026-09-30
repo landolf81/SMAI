@@ -10,7 +10,6 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
   const [showCodeModal, setShowCodeModal] = useState(false);
 
   // 이미 인증된 사용자는 표시하지 않음
-  if (user?.verified) return null;
 
   // 인증 요청 상태 조회
   const { data: request, isLoading } = useQuery({
@@ -20,7 +19,7 @@ const VerificationStatusBanner = ({ user, onVerificationComplete }) => {
     refetchInterval: 10000 // 10초마다 상태 확인
   });
 
-  if (isLoading) return null;
+  if (user?.verified || isLoading) return null;
 
   // 상태별 배너 렌더링
   const renderBanner = () => {

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * BadgeModal.jsx
  * 역할: 뱃지 상세 정보 모달 (클릭 시 표시)
@@ -55,7 +56,7 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
     const sizeClass = size === 'large' ? 'w-16 h-16 text-2xl' : 'w-8 h-8 text-base';
 
     switch (displayData.icon_type) {
-      case 'image':
+      case 'image': {
         const imgUrl = displayData.icon_url || displayData.icon_value;
         if (imgUrl) {
           const imageUrl = imgUrl.startsWith('/uploads/') ? `${API_BASE_URL}${imgUrl}` : imgUrl;
@@ -75,6 +76,7 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
         }
         break;
 
+      }
       case 'icon':
         if (displayData.icon_value) {
           return (
@@ -186,6 +188,29 @@ const BadgeModal = ({ badge, isOpen, onClose }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BadgeModal.propTypes = {
+  ...BadgeModal.propTypes,
+  "badge": PropTypes.shape({
+    "badge_type": PropTypes.string,
+    "type": PropTypes.string,
+    "badge_name": PropTypes.string,
+    "name": PropTypes.string,
+    "description": PropTypes.string,
+    "badge_color": PropTypes.string,
+    "color": PropTypes.string,
+    "icon_type": PropTypes.string,
+    "icon_value": PropTypes.string,
+    "icon_url": PropTypes.string,
+    "icon_background": PropTypes.string,
+    "verified_at": PropTypes.string,
+    "created_at": PropTypes.string,
+    "verified_by_name": PropTypes.string
+  }),
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func
 };
 
 export default BadgeModal;

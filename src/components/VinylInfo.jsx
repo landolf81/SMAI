@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * VinylInfo 컴포넌트
  * 역할: 참외 재배용 비닐 종류 소개
@@ -9,6 +10,13 @@ const Section = ({ title, children }) => (
     {children}
   </section>
 );
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+Section.propTypes = {
+  ...Section.propTypes,
+  "title": PropTypes.string,
+  "children": PropTypes.node
+};
 
 const VinylInfo = () => {
   return (

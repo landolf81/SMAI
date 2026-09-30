@@ -2,12 +2,10 @@
 import PropTypes from 'prop-types';
 import ImageCropper from './ImageCropper';
 import {
-  compressImage,
   optimizeProfileImage,
   optimizeCoverImage,
   analyzeImageQuality,
-  formatFileSize,
-  uploadWithProgress
+  formatFileSize
 } from '../utils/imageOptimization';
 import { convertImageToPng, isHeicFile, formatFileSize as formatSize } from '../utils/imageConverter';
 
@@ -18,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import VerificationRequestModal from './VerificationRequestModal';
 import VerificationCodeModal from './VerificationCodeModal';
 
-const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdating}) => {
+const Update = ({setOpenUpdate, user, onUpdateComplete, setIsUpdating}) => {
 
   const [profile, setProfile] = useState(null);
   const [showVerificationRequestModal, setShowVerificationRequestModal] = useState(false);
@@ -38,7 +36,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   const isVerified = currentUserData?.verified === true || user?.verified === true;
 
   // 인증 요청 상태 조회
-  const { data: verificationRequest } = useQuery({
+  useQuery({
     queryKey: ['myVerificationRequest'],
     queryFn: () => verificationService.getMyRequest(),
     enabled: !isVerified
@@ -55,13 +53,13 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   const [successMessage, setSuccessMessage] = useState('');
   const [deleteProfilePic, setDeleteProfilePic] = useState(false);
   const [deleteCoverPic, setDeleteCoverPic] = useState(false);
-  
+
   // 업로드 진행률 및 최적화 관련 상태
-  const [uploadProgress, setUploadProgress] = useState({});
-  const [isOptimizing, setIsOptimizing] = useState(false);
-  const [optimizationInfo, setOptimizationInfo] = useState({});
-  const [showOptimizationDetails, setShowOptimizationDetails] = useState(false);
-  
+  const [, ] = useState({});
+  const [, setIsOptimizing] = useState(false);
+  const [, setOptimizationInfo] = useState({});
+  const [, ] = useState(false);
+
 
   const [info,setinfo] = useState({
     username:"",
@@ -103,15 +101,15 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   // 폼 유효성 검증 함수
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!info.name || info.name.trim().length < 2) {
       newErrors.name = '별명/닉네임은 2글자 이상 입력해주세요';
     }
-    
+
     if (info.bio && info.bio.length > 200) {
       newErrors.bio = '소개는 200자 이하로 입력해주세요';
     }
-    
+
     return newErrors;
   };
 
@@ -138,11 +136,11 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   // 이미지 최적화 및 분석
   const optimizeAndAnalyzeImage = async (file, type = 'profile') => {
     setIsOptimizing(true);
-    
+
     try {
       // 이미지 품질 분석
       const analysis = await analyzeImageQuality(file);
-      
+
       // 최적화 실행
       let optimizedFile;
       if (type === 'profile') {
@@ -152,7 +150,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
         const optimized = await optimizeCoverImage(file);
         optimizedFile = optimized.medium; // 중간 크기 사용
       }
-      
+
       // 최적화 정보 저장
       setOptimizationInfo(prev => ({
         ...prev,
@@ -168,7 +166,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
           recommendations: analysis.recommendations
         }
       }));
-      
+
       return optimizedFile;
     } catch (error) {
       console.error('이미지 최적화 실패:', error);
@@ -325,28 +323,28 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   // 프로필 크롭 완료 처리
   const handleProfileCropComplete = (croppedBlob) => {
     setProfile(croppedBlob);
-    
+
     // 크롭된 이미지의 미리보기 생성
     const reader = new FileReader();
     reader.onload = (e) => {
       setProfilePreview(e.target.result);
     };
     reader.readAsDataURL(croppedBlob);
-    
+
     setShowProfileCropper(false);
   };
 
   // 커버 크롭 완료 처리
   const handleCoverCropComplete = (croppedBlob) => {
     setCover(croppedBlob);
-    
+
     // 크롭된 이미지의 미리보기 생성
     const reader = new FileReader();
     reader.onload = (e) => {
       setCoverPreview(e.target.result);
     };
     reader.readAsDataURL(croppedBlob);
-    
+
     setShowCoverCropper(false);
   };
 
@@ -372,7 +370,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
   }
 
 
-  
+
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
@@ -393,21 +391,21 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
     onMutate: async (updatedUserData) => {
       // Optimistic update를 위해 기존 쿼리를 취소
       await queryClient.cancelQueries({ queryKey: ['user', user.id] });
-      
+
       // 이전 데이터 백업
       const previousUserData = queryClient.getQueryData(['user', user.id]);
-      
+
       // Optimistic update 적용
       queryClient.setQueryData(['user', user.id], (old) => {
         return { ...old, ...updatedUserData };
       });
-      
+
       console.log('Optimistic update 적용:', updatedUserData);
-      
+
       // 백업 데이터 반환 (롤백용)
       return { previousUserData };
     },
-    onSuccess: (response, variables, context) => {
+    onSuccess: (response, variables) => {
       console.log('✅ 프로필 업데이트 성공!');
       console.log('성공 응답:', response);
       console.log('업데이트된 변수:', variables);
@@ -471,7 +469,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
       queryClient.invalidateQueries({ queryKey: ['user', user.id] });
     },
   });
-  
+
 
   const  handleSubmit = async (e) => {
     e.preventDefault();
@@ -607,17 +605,17 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
             </button>
           </div>
         </div>
-        
+
         {/* 컨텐츠 - 스크롤 가능 */}
         <div className="flex-1 overflow-y-auto p-6">
-      
+
           {/* 성공 메시지 */}
           {successMessage && (
             <div className="bg-success/10 border border-success/30 text-success px-4 py-3 rounded-lg mb-4">
               <span>{successMessage}</span>
             </div>
           )}
-          
+
           {/* 전체 에러 메시지 */}
           {errors.submit && (
             <div className="bg-error/10 border border-error/30 text-error px-4 py-3 rounded-lg mb-4">
@@ -1017,7 +1015,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
                     <h4 className="font-medium text-error mb-1">탈퇴 시 주의사항</h4>
                     <ul className="text-sm text-error/80 space-y-1">
                       <li>• 작성한 게시글과 댓글은 <strong>삭제되지 않습니다</strong></li>
-                      <li>• 작성자 정보는 "탈퇴한 사용자"로 표시됩니다</li>
+                      <li>• 작성자 정보는 &quot;탈퇴한 사용자&quot;로 표시됩니다</li>
                       <li>• 개인정보(이름, 연락처 등)는 즉시 삭제됩니다</li>
                       <li>• 탈퇴 후 동일 계정으로 재가입이 불가합니다</li>
                     </ul>
@@ -1028,7 +1026,7 @@ const Update = ({setOpenUpdate, user, onUpdateComplete, isUpdating, setIsUpdatin
               {/* 확인 입력 */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-base-content/70 mb-2">
-                  탈퇴를 진행하려면 <span className="text-error font-bold">"탈퇴합니다"</span>를 입력하세요
+                  탈퇴를 진행하려면 <span className="text-error font-bold">&quot;탈퇴합니다&quot;</span>를 입력하세요
                 </label>
                 <input
                   type="text"

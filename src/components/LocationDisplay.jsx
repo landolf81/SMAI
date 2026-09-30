@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 // 위치 정보 표시 컴포넌트
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,10 +15,10 @@ const formatGPSCoordinates = (gpsData) => {
 
 const LocationDisplay = ({ post, showMap = true, compact = false }) => {
   const [showDetails, setShowDetails] = useState(false);
-  
+
   // GPS 데이터 존재 여부 확인
   const hasLocation = post?.latitude && post?.longitude;
-  
+
   if (!hasLocation) {
     return null;
   }
@@ -181,6 +182,20 @@ const LocationDisplay = ({ post, showMap = true, compact = false }) => {
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LocationDisplay.propTypes = {
+  ...LocationDisplay.propTypes,
+  "post": PropTypes.shape({
+    "latitude": PropTypes.number,
+    "longitude": PropTypes.number,
+    "location_accuracy": PropTypes.number,
+    "location_timestamp": PropTypes.string,
+    "location_source": PropTypes.string
+  }),
+  "showMap": PropTypes.bool,
+  "compact": PropTypes.bool
 };
 
 export default LocationDisplay;

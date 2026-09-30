@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
@@ -42,7 +42,7 @@ const Profile = () => {
   const { currentUser, logout } = useContext(AuthContext);
 
   // 프로필 페이지 스크롤 위치 복원 (사용자 ID와 탭 고려)
-  const { resetScrollPosition, scrollToTop } = useScrollRestore(
+  useScrollRestore(
     'profile', 
     null, 
     null, 
@@ -51,7 +51,7 @@ const Profile = () => {
   const queryClient = useQueryClient();
 
   // 사용자 정보 조회
-  const { isPending, data, dataUpdatedAt } = useQuery({
+  const { isPending, data } = useQuery({
     queryKey: ["user", userId],
     queryFn: () => userService.getUser(userId),
     staleTime: 0, // 항상 최신 데이터 요청

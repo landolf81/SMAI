@@ -1,3 +1,5 @@
+import { pollOptionType } from '../propShapes';
+import PropTypes from 'prop-types';
 /**
  * AdPollResults.jsx
  * 역할: 관리자용 광고 투표 결과 표시 (조회 전용)
@@ -140,6 +142,22 @@ const AdPollResults = ({ poll, onPollClosed }) => {
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdPollResults.propTypes = {
+  ...AdPollResults.propTypes,
+  "poll": PropTypes.shape({
+    "ad_poll_options": PropTypes.arrayOf(pollOptionType),
+    "expires_at": PropTypes.string,
+    "is_closed": PropTypes.bool,
+    "total_votes": PropTypes.number,
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "question": PropTypes.string,
+    "is_multiple": PropTypes.bool,
+    "is_anonymous": PropTypes.bool
+  }),
+  "onPollClosed": PropTypes.func
 };
 
 export default React.memo(AdPollResults);

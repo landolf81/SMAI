@@ -144,8 +144,6 @@ export const canAssignPermissions = (user) => {
 export const canWriteToTag = (tag, user) => {
   if (!tag || !user) return false;
 
-  const userRole = getUserRole(user);
-
   switch (tag.permission_level) {
     case PERMISSION_LEVELS.PUBLIC:
       return true;

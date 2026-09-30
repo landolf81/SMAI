@@ -17,7 +17,7 @@ import { useTheme } from '../context/ThemeContext';
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState({
     priceAlerts: true,
     marketNews: false,

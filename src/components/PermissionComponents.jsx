@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useContext, useMemo } from 'react';
 import { useAdminPermissions, useFeaturePermissions, useCanWriteToTag } from '../hooks/usePermissions';
 import { PERMISSION_DENIED_CONTENT, LOGIN_REQUIRED_CONTENT } from '../utils/permissions';
@@ -14,10 +15,10 @@ import { AuthContext } from '../context/AuthContext';
  * @param {ReactNode} props.fallback - 권한이 없을 때 표시할 컴포넌트
  * @param {boolean} props.showMessage - 기본 권한 없음 메시지 표시 여부
  */
-export const PermissionGuard = ({ 
-  children, 
+export const PermissionGuard = ({
+  children,
   requireLogin = false,
-  requireAdmin = false, 
+  requireAdmin = false,
   requireSuperAdmin = false,
   customCheck,
   fallback,
@@ -65,7 +66,7 @@ export const PermissionGuard = ({
     );
   }
 
-  
+
   // 권한이 있으면 자식 컴포넌트 렌더링
   if (hasPermission) {
     return <>{children}</>;
@@ -83,7 +84,7 @@ export const PermissionGuard = ({
 
   // 기본 권한 없음 메시지
   const content = denialReason === 'login' ? LOGIN_REQUIRED_CONTENT : PERMISSION_DENIED_CONTENT;
-  
+
   return (
     <div className="flex items-center justify-center min-h-[200px]">
       <div className="text-center">
@@ -95,7 +96,7 @@ export const PermissionGuard = ({
         <h3 className="text-lg font-medium text-gray-900 mb-2">{content.title}</h3>
         <p className="text-gray-600 mb-4">{content.message}</p>
         {denialReason === 'login' && (
-          <button 
+          <button
             onClick={() => window.location.href = '/login'}
             className="btn btn-primary"
           >
@@ -107,12 +108,24 @@ export const PermissionGuard = ({
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PermissionGuard.propTypes = {
+  ...PermissionGuard.propTypes,
+  "children": PropTypes.node,
+  "requireLogin": PropTypes.bool,
+  "requireAdmin": PropTypes.bool,
+  "requireSuperAdmin": PropTypes.bool,
+  "customCheck": PropTypes.func,
+  "fallback": PropTypes.node,
+  "showMessage": PropTypes.bool
+};
+
 /**
  * 관리자 전용 컴포넌트 래퍼
  */
 export const AdminOnly = ({ children, fallback, showMessage = true, customCheck }) => {
   return (
-    <PermissionGuard 
+    <PermissionGuard
       requireAdmin={true}
       fallback={fallback}
       showMessage={showMessage}
@@ -123,12 +136,21 @@ export const AdminOnly = ({ children, fallback, showMessage = true, customCheck 
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdminOnly.propTypes = {
+  ...AdminOnly.propTypes,
+  "children": PropTypes.node,
+  "fallback": PropTypes.node,
+  "showMessage": PropTypes.bool,
+  "customCheck": PropTypes.func
+};
+
 /**
  * 최고 관리자 전용 컴포넌트 래퍼
  */
 export const SuperAdminOnly = ({ children, fallback, showMessage = true }) => {
   return (
-    <PermissionGuard 
+    <PermissionGuard
       requireSuperAdmin={true}
       fallback={fallback}
       showMessage={showMessage}
@@ -138,12 +160,20 @@ export const SuperAdminOnly = ({ children, fallback, showMessage = true }) => {
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+SuperAdminOnly.propTypes = {
+  ...SuperAdminOnly.propTypes,
+  "children": PropTypes.node,
+  "fallback": PropTypes.node,
+  "showMessage": PropTypes.bool
+};
+
 /**
  * 로그인 사용자 전용 컴포넌트 래퍼
  */
 export const LoginRequired = ({ children, fallback, showMessage = true }) => {
   return (
-    <PermissionGuard 
+    <PermissionGuard
       requireLogin={true}
       fallback={fallback}
       showMessage={showMessage}
@@ -151,6 +181,14 @@ export const LoginRequired = ({ children, fallback, showMessage = true }) => {
       {children}
     </PermissionGuard>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LoginRequired.propTypes = {
+  ...LoginRequired.propTypes,
+  "children": PropTypes.node,
+  "fallback": PropTypes.node,
+  "showMessage": PropTypes.bool
 };
 
 /**
@@ -168,12 +206,12 @@ export const TagWritePermission = ({ tag, children, fallback }) => {
   if (authLoading) {
     return <div className="loading loading-spinner loading-sm" aria-label="로그인 상태 확인 중"></div>;
   }
-  
+
   if (!featurePermissions.isLoggedIn) {
     return fallback || (
       <div className="text-center py-4">
         <p className="text-gray-600 mb-2">이 태그로 게시물을 작성하려면 로그인이 필요합니다.</p>
-        <button 
+        <button
           onClick={() => window.location.href = '/login'}
           className="btn btn-primary btn-sm"
         >
@@ -198,6 +236,14 @@ export const TagWritePermission = ({ tag, children, fallback }) => {
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+TagWritePermission.propTypes = {
+  ...TagWritePermission.propTypes,
+  "tag": PropTypes.shape({ permission_level: PropTypes.string }),
+  "children": PropTypes.node,
+  "fallback": PropTypes.node
+};
+
 /**
  * 기능별 권한 체크 컴포넌트
  * @param {Object} props
@@ -207,14 +253,22 @@ export const TagWritePermission = ({ tag, children, fallback }) => {
  */
 export const FeaturePermission = ({ feature, children, fallback }) => {
   const featurePermissions = useFeaturePermissions();
-  
+
   const hasPermission = featurePermissions[feature];
-  
+
   if (hasPermission) {
     return <>{children}</>;
   }
-  
+
   return fallback || null;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+FeaturePermission.propTypes = {
+  ...FeaturePermission.propTypes,
+  "feature": PropTypes.string,
+  "children": PropTypes.node,
+  "fallback": PropTypes.node
 };
 
 /**
@@ -226,6 +280,14 @@ export const FeaturePermission = ({ feature, children, fallback }) => {
  */
 export const ConditionalRender = ({ when, children, otherwise = null }) => {
   return when ? <>{children}</> : <>{otherwise}</>;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ConditionalRender.propTypes = {
+  ...ConditionalRender.propTypes,
+  "when": PropTypes.bool,
+  "children": PropTypes.node,
+  "otherwise": PropTypes.node
 };
 
 /**
@@ -243,8 +305,16 @@ export const PermissionLoader = ({ loading, children, fallback }) => {
       </div>
     );
   }
-  
+
   return <>{children}</>;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PermissionLoader.propTypes = {
+  ...PermissionLoader.propTypes,
+  "loading": PropTypes.bool,
+  "children": PropTypes.node,
+  "fallback": PropTypes.node
 };
 
 /**
@@ -273,6 +343,16 @@ export const PermissionError = ({ error, children, onRetry }) => {
       </div>
     );
   }
-  
+
   return <>{children}</>;
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PermissionError.propTypes = {
+  ...PermissionError.propTypes,
+  "error": PropTypes.shape({
+    "message": PropTypes.string
+  }),
+  "children": PropTypes.node,
+  "onRetry": PropTypes.func
 };

@@ -1,14 +1,15 @@
 /**
- * ThemeContext.jsx
+ * ThemeProvider.jsx
  * 다크모드 테마 상태 관리 컨텍스트.
  * theme 값: 'light' | 'dark' | 'system' (localStorage 'theme' 키에 저장)
  * system 선택 시 OS의 prefers-color-scheme를 자동 감지하여 적용.
  * document.documentElement에 data-theme 속성(DaisyUI)과 dark 클래스(Tailwind) 동시 설정.
  */
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-export const ThemeContext = createContext();
+import PropTypes from "prop-types";
+import { ThemeContext } from "./themeState.js";
 
 /** localStorage 초기값 읽기 (없으면 'light') */
 const getInitialTheme = () => {
@@ -43,7 +44,6 @@ const applyTheme = (isDark) => {
   }
 };
 
-// eslint-disable-next-line react/prop-types
 export const ThemeProvider = ({ children }) => {
   const [theme, setThemeState] = useState(getInitialTheme);
 
@@ -103,14 +103,4 @@ export const ThemeProvider = ({ children }) => {
   );
 };
 
-/**
- * useTheme 훅.
- * @returns {{ theme: string, setTheme: function, isDark: boolean }}
- */
-export const useTheme = () => {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) {
-    throw new Error("useTheme은 ThemeProvider 하위에서만 사용할 수 있습니다.");
-  }
-  return ctx;
-};
+ThemeProvider.propTypes = { children: PropTypes.node };

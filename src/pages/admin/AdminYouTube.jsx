@@ -28,14 +28,14 @@ const AdminYouTube = () => {
   const queryClient = useQueryClient();
 
   // 영상 목록 조회
-  const { data: videos = [], isLoading: videosLoading, refetch: refetchVideos } = useQuery({
+  const { data: videos = [], isLoading: videosLoading } = useQuery({
     queryKey: ['youtube-videos', activeTab],
     queryFn: () => youtubeService.getAllVideos(activeTab === 'channels' ? 'all' : activeTab),
     enabled: activeTab !== 'channels'
   });
 
   // 채널 목록 조회
-  const { data: channels = [], isLoading: channelsLoading, refetch: refetchChannels } = useQuery({
+  const { data: channels = [], isLoading: channelsLoading } = useQuery({
     queryKey: ['youtube-channels'],
     queryFn: () => youtubeService.getChannels(),
     enabled: activeTab === 'channels'

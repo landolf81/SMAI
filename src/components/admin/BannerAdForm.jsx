@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useEffect } from 'react';
 import BannerAdImagesInput from './BannerAdImagesInput';
 import { BANNER_SLOTS, BANNER_SLOT_LABELS } from '../../services/bannerAdService';
@@ -21,7 +22,6 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
     name: '',
     advertiser_name: '',
     slot: BANNER_SLOTS.HOME_TOP,
-    images: [],
     alt_text: '',
     landing_slug: '',
     external_url: '',
@@ -299,6 +299,17 @@ const BannerAdForm = ({ initial, onSubmit, onCancel, saving }) => {
   );
 };
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BannerAdForm.propTypes = {
+  ...BannerAdForm.propTypes,
+  "initial": PropTypes.shape({
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+  }),
+  "onSubmit": PropTypes.func,
+  "onCancel": PropTypes.func,
+  "saving": PropTypes.bool
+};
+
 const Field = ({ label, required, children }) => (
   <div>
     <label className="block text-sm font-medium text-base-content/80 mb-1">
@@ -307,5 +318,13 @@ const Field = ({ label, required, children }) => (
     {children}
   </div>
 );
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+Field.propTypes = {
+  ...Field.propTypes,
+  "label": PropTypes.string,
+  "required": PropTypes.bool,
+  "children": PropTypes.node
+};
 
 export default BannerAdForm;

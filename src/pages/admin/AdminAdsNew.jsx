@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import CampaignIcon from "@mui/icons-material/Campaign";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+
+
+
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PhotoLibraryIcon from "@mui/icons-material/PhotoLibrary";
@@ -407,10 +407,7 @@ const AdminAdsNew = () => {
   };
 
   // 광고 미리보기
-  const showAdPreview = (ad) => {
-    setPreviewAd(ad);
-    setShowPreview(true);
-  };
+
 
   // 미리보기 닫기
   const closePreview = () => {

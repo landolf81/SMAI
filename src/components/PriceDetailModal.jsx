@@ -1,3 +1,5 @@
+import { numericType } from './propShapes';
+import PropTypes from 'prop-types';
 /**
  * PriceDetailModal.jsx
  * 도매시장 법인별 상세 데이터 모달
@@ -32,6 +34,13 @@ const ChangeIndicator = ({ current, prev }) => {
       {isUp ? '▲' : '▼'} {formatPrice(Math.abs(diff))}
     </span>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ChangeIndicator.propTypes = {
+  ...ChangeIndicator.propTypes,
+  "current": numericType,
+  "prev": numericType
 };
 
 // 등급별 세부 데이터 아코디언 내용
@@ -154,6 +163,15 @@ const GradeAccordion = ({ marketName, marketDate, shipperName, weight }) => {
       ))}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+GradeAccordion.propTypes = {
+  ...GradeAccordion.propTypes,
+  "marketName": PropTypes.string,
+  "marketDate": PropTypes.string,
+  "shipperName": PropTypes.string,
+  "weight": PropTypes.string
 };
 
 const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }) => {
@@ -336,6 +354,16 @@ const PriceDetailModal = ({ isOpen, onClose, marketName, marketDate, gradeName }
     </div>,
     document.body
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PriceDetailModal.propTypes = {
+  ...PriceDetailModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "marketName": PropTypes.string,
+  "marketDate": PropTypes.string,
+  "gradeName": PropTypes.string
 };
 
 export default PriceDetailModal;

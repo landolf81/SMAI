@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useCallback, useMemo, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { 
   checkTagPermission, 
@@ -40,7 +40,7 @@ export const useTagPermission = (tagId, permissionType = 'write') => {
   const [error, setError] = useState(null);
   const { currentUser } = useContext(AuthContext);
 
-  const checkPermission = async () => {
+  const checkPermission = useCallback(async () => {
     if (!currentUser || !tagId) {
       setHasPermission(false);
       return false;
@@ -60,11 +60,11 @@ export const useTagPermission = (tagId, permissionType = 'write') => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, tagId, permissionType]);
 
   useEffect(() => {
     checkPermission();
-  }, [tagId, permissionType, currentUser]);
+  }, [checkPermission]);
 
   return {
     hasPermission,
@@ -84,7 +84,7 @@ export const useWritableTags = () => {
   const [error, setError] = useState(null);
   const { currentUser } = useContext(AuthContext);
 
-  const fetchWritableTags = async () => {
+  const fetchWritableTags = useCallback(async () => {
     if (!currentUser) {
       setWritableTags([]);
       setLoading(false);
@@ -103,11 +103,11 @@ export const useWritableTags = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
 
   useEffect(() => {
     fetchWritableTags();
-  }, [currentUser]);
+  }, [fetchWritableTags]);
 
   return {
     writableTags,
@@ -129,8 +129,11 @@ export const useMultipleTagPermissions = (tagIds = [], permissionType = 'write')
   const [error, setError] = useState(null);
   const { currentUser } = useContext(AuthContext);
 
-  const checkPermissions = async () => {
-    if (!currentUser || tagIds.length === 0) {
+  // Equal ID lists keep the same callback even when callers create a new array.
+  const tagIdsKey = JSON.stringify(tagIds);
+  const stableTagIds = useMemo(() => JSON.parse(tagIdsKey), [tagIdsKey]);
+  const checkPermissions = useCallback(async () => {
+    if (!currentUser || stableTagIds.length === 0) {
       setPermissions({});
       return {};
     }
@@ -139,7 +142,7 @@ export const useMultipleTagPermissions = (tagIds = [], permissionType = 'write')
     setError(null);
 
     try {
-      const permissionPromises = tagIds.map(async (tagId) => {
+      const permissionPromises = stableTagIds.map(async (tagId) => {
         const hasPermission = await checkTagPermission(tagId, permissionType);
         return { tagId, hasPermission };
       });
@@ -159,11 +162,11 @@ export const useMultipleTagPermissions = (tagIds = [], permissionType = 'write')
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser, stableTagIds, permissionType]);
 
   useEffect(() => {
     checkPermissions();
-  }, [JSON.stringify(tagIds), permissionType, currentUser]);
+  }, [checkPermissions]);
 
   return {
     permissions,
@@ -268,12 +271,19 @@ export const usePermissionWithError = (permissionCheck, dependencies = []) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const checkPermission = async () => {
+  const permissionCheckRef = useRef(permissionCheck);
+  const previousDependenciesRef = useRef(null);
+
+  useEffect(() => {
+    permissionCheckRef.current = permissionCheck;
+  }, [permissionCheck]);
+
+  const checkPermission = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await permissionCheck();
+      const result = await permissionCheckRef.current();
       setHasPermission(result);
     } catch (err) {
       setError(err);
@@ -281,11 +291,17 @@ export const usePermissionWithError = (permissionCheck, dependencies = []) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
+  // Preserve the public dynamic dependency API with React's Object.is comparison.
+  // No dependency array: compare on each commit, but request only on actual changes.
   useEffect(() => {
+    const previous = previousDependenciesRef.current;
+    if (previous && previous.length === dependencies.length &&
+        dependencies.every((value, index) => Object.is(value, previous[index]))) return;
+    previousDependenciesRef.current = [...dependencies];
     checkPermission();
-  }, dependencies);
+  });
 
   return {
     hasPermission,

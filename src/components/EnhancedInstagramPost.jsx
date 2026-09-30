@@ -1,3 +1,4 @@
+import { usePostTradeState } from './postTradeState';
 /* eslint-disable react/prop-types */
 import React, { useContext, useRef, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -7,21 +8,20 @@ import {
   faShare,
   faEllipsisH,
   faPlay,
-  faPause,
   faVolumeUp,
   faVolumeMute,
   faBookmark,
   faFlag,
   faExpand
 } from "@fortawesome/free-solid-svg-icons";
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+
 import PushPinIcon from '@mui/icons-material/PushPin';
 import LockIcon from '@mui/icons-material/Lock';
-import { useContext as useReactContext } from "react";
+
 import { postService } from "../services";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuthContext } from "../context/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useFeaturePermissions } from '../hooks/usePermissions';
 import moment from 'moment';
 import ImageSlider from './ImageSlider';
@@ -30,11 +30,11 @@ import CommentsModal from './CommentsModal';
 import DeleteConfirmModal from './DeleteConfirmModal';
 import ReportModal from './ReportModal';
 import ReportDetailsModal from './ReportDetailsModal';
-import { isVideoFile, normalizeMediaUrl, getMediaType, isCloudflareStreamUrl, isR2VideoUrl } from '../utils/mediaUtils';
+import { normalizeMediaUrl, getMediaType, isCloudflareStreamUrl, isR2VideoUrl } from '../utils/mediaUtils';
 import LazyStreamPlayer from './LazyStreamPlayer';
 import YouTubeEmbed from './YouTubeEmbed';
 import LinkPreview from './LinkPreview';
-import BadgeDisplay, { BadgeList } from './BadgeDisplay';
+import { BadgeList } from './BadgeDisplay';
 import { badgeService } from '../services';
 import ProfileModal from './ProfileModal';
 import MediaModal from './MediaModal';
@@ -46,27 +46,24 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const featurePermissions = useFeaturePermissions();
   const videoRef = useRef(null);
   const postRef = useRef(null);
-  
   // 관리자/운영자 권한 확인 (currentUser 정보에서 직접 확인)
   const isAdminOrModerator = currentUser && (
-    currentUser.role === 'admin' || 
-    currentUser.role === 'moderator' || 
+    currentUser.role === 'admin' ||
+    currentUser.role === 'moderator' ||
     currentUser.is_admin === 1 ||
     currentUser.isAdminOrModerator
   );
-  
   // 동영상 상태 관리
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const isMutedRef = useRef(true);  // setTimeout에서 최신 값 참조용
-  const [showControls, setShowControls] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [isBuffering, setIsBuffering] = useState(false);
-  const [isWaitingToReplay, setIsWaitingToReplay] = useState(false);
+  const [, setShowControls] = useState(false);
+  const [, setProgress] = useState(0);
+  const [, setIsBuffering] = useState(false);
+  const [, setIsWaitingToReplay] = useState(false);
   const replayTimeoutRef = useRef(null);
   const isLoadingRef = useRef(false);  // 동영상 로드 진행 중 여부
   const hasLoadedRef = useRef(false);  // 동영상이 한번이라도 로드 완료되었는지
-
   // 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {
     return () => {
@@ -75,12 +72,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       }
     };
   }, []);
-
   // UI 상태 관리
   const [isLikeAnimating, setIsLikeAnimating] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-
   // 저장 상태 초기화 (비동기)
   useEffect(() => {
     if (currentUser) {
@@ -107,10 +102,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const [mediaModalTime, setMediaModalTime] = useState(0);  // 동영상 시작 시간
   const [showLoginModal, setShowLoginModal] = useState(false); // 로그인 필요 모달
   const [showCommentsModal, setShowCommentsModal] = useState(false); // 댓글 모달
-
   // 더블탭 좋아요를 위한 상태
   const [lastTap, setLastTap] = useState(0);
-
   // 미디어 타입 감지 - 다중 이미지 지원 (개선된 버전)
   const getMediaFiles = () => {
     // 1. post.images가 배열이면 그대로 사용
@@ -138,25 +131,18 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   const mediaFiles = getMediaFiles();
   const hasMedia = mediaFiles.length > 0;
-
   // 정규화된 미디어 파일 배열 생성 (피드에서는 large variant 사용으로 LCP 최적화)
   const normalizedMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file, '/uploads/posts/', { useFeedVariant: true }));
   // 전체화면 모달용 원본 URL (public variant)
   const originalMediaFiles = mediaFiles.map(file => normalizeMediaUrl(file));
-
   // 첫 번째 미디어의 타입 정보 (하위 호환성)
   const firstMediaType = hasMedia ? getMediaType(mediaFiles[0]) : { isVideo: false, isImage: false };
   const isVideo = firstMediaType.isVideo;
   const isCloudflareStream = hasMedia && isCloudflareStreamUrl(mediaFiles[0]);
   const isR2Video = hasMedia && isR2VideoUrl(mediaFiles[0]);
-
   // 미디어 타입 감지 로그 제거됨
-
   // 삭제 권한 확인 - 작성자 본인만 삭제 가능
   const canDelete = currentUser && post.userId === currentUser.id;
-
-  // 거래 완료 관리 권한 확인 (작성자 또는 관리자, 로그인 필요)
-  const canManageTrade = currentUser && (post.userId === currentUser.id || featurePermissions.canDeleteAnyPost);
 
   // 작성자 정보 (탈퇴 사용자 대응)
   const postUser = post.user || { name: post.name, username: post.username, profile_pic: post.profilePic, deleted_at: post.user_deleted_at };
@@ -164,21 +150,16 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   const authorProfilePic = getProfilePic(postUser);
   const canClickProfile = isProfileClickable(postUser);
   const avatarClassName = getAvatarClassName(postUser);
-
   // 디버깅 로그 제거 (성능 향상)
   // console.log 제거됨
-  // console.log('🔍 Instagram Post 미디어 정보:', {
   //   isVideo: isVideo
   // });
-
   // 권한 체크 로그 제거 (성능 향상)
-
   // 좋아요 조회
   const { isPending, data: likesData } = useQuery({
     queryKey: ["likes", post.id],
     queryFn: () => postService.getLikes(post.id),
   });
-
   // 사용자 뱃지 조회 (헤더 + 프로필 모달용)
   const { data: userBadges } = useQuery({
     queryKey: ["userBadges", post.userId],
@@ -187,7 +168,6 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   });
 
   const queryClient = useQueryClient();
-
   // 좋아요 토글
   const likeMutation = useMutation({
     mutationFn: async () => {
@@ -195,7 +175,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         await postService.toggleLike(post.id);
       } catch (error) {
         // 개발 모드에서만 상세 로그 출력
-        if (process.env.NODE_ENV === 'development') {
+        if (import.meta.env.DEV) {
           console.error('좋아요 요청 실패:', error);
         }
         throw error;
@@ -206,14 +186,14 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     },
     onError: (error) => {
       // 개발 모드에서만 에러 로그 출력
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error('좋아요 처리 실패:', error);
       }
-      
+
       // 실패시 UI 롤백
       setLocalIsLiked(isLiked);
       setLocalLikeCount(likeCount);
-      
+
       if (error.response?.status === 403) {
         // 토스트 메시지로 재로그인 필요 알림
         const toast = document.createElement('div');
@@ -232,7 +212,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             document.body.removeChild(toast);
           }
         }, 6000);
-        
+
         // 토큰 제거
         localStorage.removeItem('token');
       } else if (error.response?.status === 400) {
@@ -273,7 +253,6 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       }
     }
   });
-
   // 게시물 삭제
   const deleteMutation = useMutation({
     mutationFn: (postId) => postService.deletePost(postId),
@@ -281,7 +260,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["enhanced-instagram-posts"] });
       setIsDeleteModalOpen(false);
-      
+
       // 성공 메시지를 더 부드럽게 표시
       const successToast = document.createElement('div');
       successToast.className = 'toast toast-top toast-center z-50';
@@ -295,10 +274,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     },
     onError: (error) => {
       console.error('❌ 게시글 삭제 실패:', error);
-      
+
       let errorMessage = '게시글 삭제에 실패했습니다.';
       let shouldRefresh = false;
-      
+
       if (error.response?.status === 404) {
         errorMessage = '이미 삭제된 게시글이거나 존재하지 않는 게시글입니다.';
         shouldRefresh = true;
@@ -314,13 +293,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
           errorMessage = error.response.data.error;
         }
       }
-      
+
       // 404 에러인 경우 캐시를 무효화하여 UI를 자동 업데이트
       if (shouldRefresh) {
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         queryClient.invalidateQueries({ queryKey: ["enhanced-instagram-posts"] });
       }
-      
+
       // 사용자 친화적인 토스트 메시지로 표시
       const errorToast = document.createElement('div');
       errorToast.className = 'toast toast-top toast-center z-50';
@@ -338,38 +317,8 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     }
   });
 
-  // 거래 상태 업데이트
-  const tradeStatusMutation = useMutation({
-    mutationFn: ({ postId, status }) =>
-      postService.updateTradeStatus(postId, status),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["enhanced-instagram-posts"] });
-      
-      const successToast = document.createElement('div');
-      successToast.className = 'toast toast-top toast-center z-50';
-      successToast.innerHTML = `
-        <div class="alert alert-success">
-          <span>✅ 거래 상태가 업데이트되었습니다.</span>
-        </div>
-      `;
-      document.body.appendChild(successToast);
-      setTimeout(() => document.body.removeChild(successToast), 3000);
-    },
-    onError: (error) => {
-      console.error('❌ 거래 상태 업데이트 실패:', error);
-      
-      const errorToast = document.createElement('div');
-      errorToast.className = 'toast toast-top toast-center z-50';
-      errorToast.innerHTML = `
-        <div class="alert alert-error">
-          <span>❌ 거래 상태 업데이트에 실패했습니다.</span>
-        </div>
-      `;
-      document.body.appendChild(errorToast);
-      setTimeout(() => document.body.removeChild(errorToast), 5000);
-    }
-  });
+  // 거래 액션은 미노출 상태로 보존하며 자동으로 mutation을 실행하지 않는다.
+  usePostTradeState({ post, currentUser, featurePermissions, queryClient });
 
   // 동영상 자동재생 관리 (개선된 버전)
   // Cloudflare Stream은 CloudflareStreamPlayer가 자체 관리하므로 제외
@@ -384,7 +333,6 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     if (!videoRef.current || (!isVideo && !isR2Video)) return;
 
     const video = videoRef.current;
-    const wasVisible = lastVisibleRef.current;
     lastVisibleRef.current = isVisible;
 
     // 이전 타이머들 취소
@@ -543,13 +491,13 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     // 현재 로컬 상태를 기준으로 토글
     const currentLikedState = localIsLiked;
     const newLikedState = !currentLikedState;
-    
+
     // 좋아요 토글 로그 제거
 
     // 즉시 UI 업데이트 (Optimistic Update)
     setLocalIsLiked(newLikedState);
     setLocalLikeCount(prev => newLikedState ? prev + 1 : prev - 1);
-    
+
     // 좋아요 애니메이션 트리거
     if (animate || newLikedState) {
       setIsLikeAnimating(true);
@@ -583,39 +531,38 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     }, 50);
   };
 
-
   // 고정하기 mutation
   const pinMutation = useMutation({
     mutationFn: () => postService.togglePin(post.id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['enhanced-instagram-posts'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
-      
+
       // 현재 게시물의 고정 상태 업데이트
       queryClient.setQueryData(['post', post.id], (oldData) => ({
         ...oldData,
         is_pinned: data.is_pinned
       }));
-      
+
       // 고정 상태 변경 성공 로그 제거
     },
     onError: (error) => {
       // 개발 모드에서만 에러 로그 출력
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error('고정 상태 변경 실패:', error);
       }
-      
+
       // 401/403 에러는 권한 문제이므로 별도 처리
       if (error.response?.status === 401) {
         alert('로그인이 필요합니다.');
         return;
       }
-      
+
       if (error.response?.status === 403) {
         alert('게시물 고정 권한이 없습니다. 관리자만 가능합니다.');
         return;
       }
-      
+
       alert(error.response?.data || '고정 상태 변경에 실패했습니다.');
     }
   });
@@ -633,7 +580,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       queryClient.invalidateQueries({ queryKey: ['posts'] });
     },
     onError: (error) => {
-      if (process.env.NODE_ENV === 'development') {
+      if (import.meta.env.DEV) {
         console.error('숨김 상태 변경 실패:', error);
       }
       alert(error.response?.data || '숨김 처리에 실패했습니다.');
@@ -648,25 +595,11 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
     }
   };
 
-  const handleReport = () => {
-    // console.log('🚨 신고 버튼 클릭됨 (Instagram)'); // 디버깅용 로그 비활성화
-    alert('신고 기능은 개발 중입니다.');
-  };
-
-  const handleTradeStatusToggle = () => {
-    if (!post.tradeInfo || !canManageTrade) return;
-    
-    const newStatus = post.tradeInfo.status === 'completed' ? 'available' : 'completed';
-    tradeStatusMutation.mutate({ 
-      postId: post.id, 
-      status: newStatus 
-    });
-  };
 
   const handleShare = () => {
     const shareUrl = `${window.location.origin}/post/${post.id}`;
     const shareText = `${authorName}님의 게시글: ${postContent.slice(0, 100)}${postContent.length > 100 ? '...' : ''}`;
-    
+
     if (navigator.share) {
       navigator.share({
         title: '게시글 공유',
@@ -674,7 +607,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         url: shareUrl
       }).then(() => {
         // 공유 성공 로그 제거
-      }).catch((error) => {
+      }).catch(() => {
         // 공유 실패 로그 제거
         // 공유 실패 시 클립보드 복사로 fallback
         fallbackShare(shareUrl);
@@ -703,21 +636,6 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       });
   };
 
-  const handleTagClick = (tagName) => {
-    navigate(`/community?tag=${tagName}`);
-  };
-
-  const handleVideoClick = () => {
-    if (!videoRef.current) return;
-
-    if (isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      videoRef.current.play();
-      setIsPlaying(true);
-    }
-  };
 
   const handleMuteToggle = (e) => {
     e.stopPropagation();
@@ -793,19 +711,19 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   const isLiked = currentUser ? likesData?.includes(currentUser.id) : false;
   const likeCount = likesData?.length || 0;
-  
+
   // 좋아요 상태에 따른 로컬 상태 관리 (Optimistic UI를 위한)
   const [localIsLiked, setLocalIsLiked] = useState(false);
   const [localLikeCount, setLocalLikeCount] = useState(0);
-  
+
   // 서버 데이터가 로드되면 로컬 상태 업데이트
   useEffect(() => {
     if (likesData !== undefined) {
       const newIsLiked = isLiked;
       const newLikeCount = likeCount;
-      
+
       // 서버 데이터 동기화 로그 제거
-      
+
       setLocalIsLiked(newIsLiked);
       setLocalLikeCount(newLikeCount);
     }
@@ -827,7 +745,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       const increaseViewCount = async () => {
         try {
           // 조회수 증가 (로그인/비로그인 모두)
-          const result = await postService.incrementViewCount(post.id);
+          await postService.incrementViewCount(post.id);
 
           // 피드 알고리즘용 열람 기록 저장 (로그인 사용자만)
           if (currentUser?.id) {
@@ -887,7 +805,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
 
   return (
     <>
-    <article 
+    <article
       ref={postRef}
       className="w-full max-w-md mx-auto rounded-xl shadow-lg mb-6 overflow-hidden relative"
       style={getPostBackgroundColor()}
@@ -972,7 +890,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             <PushPinIcon className="w-4 h-4 text-blue-500" />
           </div>
         )}
-        
+
         {/* 비밀글 표시 */}
         {post.isPrivate && (
           <div className="mr-2">
@@ -1279,7 +1197,7 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
                     alt="게시물 이미지"
                     className="w-full h-full object-cover cursor-pointer"
                     loading={priority ? 'eager' : 'lazy'}
-                    fetchPriority={priority ? 'high' : undefined}
+                    fetchpriority={priority ? 'high' : undefined}
                     onClick={() => {
                       setMediaModalIndex(0);
                       setShowMediaModal(true);
@@ -1444,7 +1362,6 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
             )}
           </div>
         )}
-
 
         {/* 중고거래 정보 */}
         {post.tradeInfo && (

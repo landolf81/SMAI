@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * LoungeAdMessage.jsx
  * 역할: 광장 피드 내 메시지형 경량 광고 컴포넌트
@@ -35,7 +36,7 @@ const getMediaInfo = (media) => {
   return { type: 'image', url: toSmallVariant(getImageUrl(url)) };
 };
 
-const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
+const LoungeAdContent = ({ ad, onImageClick }) => {
   const navigate = useNavigate();
   const containerRef = useRef(null);
   const hasTrackedRef = useRef(false);
@@ -44,7 +45,7 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
   const [isVisible, setIsVisible] = useState(false);
 
   // pwa-install 광고는 렌더링 안 함
-  if (ad?.link_url === 'pwa-install') return null;
+
 
   const content = stripHtml(ad.content);
 
@@ -211,7 +212,18 @@ const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
       </div>
     </div>
   );
+};
+
+const LoungeAdMessage = React.memo(({ ad, onImageClick }) => {
+  if (ad?.link_url === 'pwa-install') return null;
+  return <LoungeAdContent ad={ad} onImageClick={onImageClick} />;
 });
+
+LoungeAdContent.propTypes = {
+  ad: PropTypes.shape({ id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]), link_url: PropTypes.string, content: PropTypes.string, image_url: PropTypes.string, title: PropTypes.string }),
+  onImageClick: PropTypes.func,
+};
+LoungeAdMessage.propTypes = LoungeAdContent.propTypes;
 
 LoungeAdMessage.displayName = 'LoungeAdMessage';
 export default LoungeAdMessage;

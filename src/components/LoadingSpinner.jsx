@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 const LoadingSpinner = ({ size = 'md', className = '' }) => {
   const sizeMap = { sm: 24, md: 32, lg: 64 };
   const pixelSize = typeof size === 'number' ? size : sizeMap[size];
@@ -38,6 +39,13 @@ const LoadingSpinner = ({ size = 'md', className = '' }) => {
       </svg>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LoadingSpinner.propTypes = {
+  ...LoadingSpinner.propTypes,
+  "size": PropTypes.string,
+  "className": PropTypes.string
 };
 
 export default LoadingSpinner;

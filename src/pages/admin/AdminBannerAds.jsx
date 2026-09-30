@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import CampaignIcon from '@mui/icons-material/Campaign';
@@ -214,7 +215,7 @@ const AdminBannerAds = () => {
                 <div className="text-center py-12 text-base-content/60">불러오는 중…</div>
               ) : ads.length === 0 ? (
                 <div className="text-center py-12 text-base-content/60">
-                  등록된 배너 광고가 없습니다. 우측 상단 "새 광고"를 눌러 추가하세요.
+                  등록된 배너 광고가 없습니다. 우측 상단 &quot;새 광고&quot;를 눌러 추가하세요.
                 </div>
               ) : filteredAds.length === 0 ? (
                 <div className="text-center py-12 text-base-content/60">
@@ -319,3 +320,13 @@ const AdCard = ({ ad, startDate, endDate, onEdit, onToggle, onDelete }) => {
 };
 
 export default AdminBannerAds;
+
+// 내부 컴포넌트의 입력 데이터 계약.
+AdCard.propTypes = {
+  ad: PropTypes.shape({ id: PropTypes.string, end_date: PropTypes.string, is_active: PropTypes.bool,
+    image_url: PropTypes.string, alt_text: PropTypes.string, name: PropTypes.string, slot: PropTypes.string,
+    advertiser_name: PropTypes.string, priority: PropTypes.number, start_date: PropTypes.string,
+    landing_slug: PropTypes.string, external_url: PropTypes.string }).isRequired,
+  startDate: PropTypes.string, endDate: PropTypes.string, onEdit: PropTypes.func,
+  onToggle: PropTypes.func, onDelete: PropTypes.func,
+};

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { reportService } from '../services';
@@ -60,7 +61,7 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
 
       // 모달 닫기 및 상태 초기화
       handleClose();
-      
+
       // 게시물/댓글 목록 새로고침 (신고된 항목이 숨겨질 수 있음)
       if (actualTargetType === 'post') {
         queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -95,14 +96,14 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
       const errorToast = document.createElement('div');
       errorToast.innerHTML = `
         <div style="
-          position: fixed; 
-          top: 20px; 
-          right: 20px; 
-          background: #f44336; 
-          color: white; 
-          padding: 16px 24px; 
-          border-radius: 8px; 
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3); 
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: #f44336;
+          color: white;
+          padding: 16px 24px;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
           z-index: 10000;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           max-width: 400px;
@@ -247,8 +248,8 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
 
           {/* 에러 메시지 */}
           {error && (
-            <Alert 
-              severity="error" 
+            <Alert
+              severity="error"
               sx={{ mb: 2 }}
               icon={<WarningIcon />}
             >
@@ -259,10 +260,10 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
           )}
 
           {/* 디버깅: 현재 에러 상태 */}
-          {process.env.NODE_ENV === 'development' && error && (
+          {import.meta.env.DEV && error && (
             <Box mb={2} p={1} bgcolor="red.50" borderRadius={1}>
               <Typography variant="caption" color="error.main">
-                Debug: Error = "{error}"
+                Debug: Error = &quot;{error}&quot;
               </Typography>
             </Box>
           )}
@@ -347,6 +348,20 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
       </form>
     </Dialog>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+ReportModal.propTypes = {
+  ...ReportModal.propTypes,
+  "open": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "postId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "commentId": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  "postAuthor": PropTypes.string,
+  "targetType": PropTypes.string,
+  "isOpen": PropTypes.bool,
+  "onSubmit": PropTypes.func,
+  "targetId": PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default ReportModal;

@@ -25,7 +25,7 @@ const PostEditor = () => {
   const urlParams = new URLSearchParams(location.search);
   const postTypeParam = urlParams.get('type');
   // QnA는 QnAForm 사용, 여기서는 general/secondhand만 지원
-  const [postType, setPostType] = useState(postTypeParam === 'secondhand' ? 'secondhand' : 'general');
+  const [postType] = useState(postTypeParam === 'secondhand' ? 'secondhand' : 'general');
 
   // 상태 관리
   const [files, setFiles] = useState([]);
@@ -33,8 +33,8 @@ const PostEditor = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [previewImages, setPreviewImages] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [, setExistingImages] = useState([]);
+  useState('');
   const [gpsData, setGpsData] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(null);
   const [uploadedVideos, setUploadedVideos] = useState([]); // Cloudflare Stream 동영상 정보
@@ -59,14 +59,11 @@ const PostEditor = () => {
 
       recognition.onresult = (event) => {
         let finalTranscript = '';
-        let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
           if (event.results[i].isFinal) {
             finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
           }
         }
 
@@ -122,7 +119,7 @@ const PostEditor = () => {
 
   // 링크 미리보기 상태
   const [linkPreview, setLinkPreview] = useState(null);
-  const [showLinkPreview, setShowLinkPreview] = useState(true);
+  const [showLinkPreview] = useState(true);
 
   // 수정 모드일 때 기존 게시글 데이터 불러오기
   const { data: postData } = useQuery({

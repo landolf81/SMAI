@@ -300,7 +300,7 @@ class AdAnalyticsCalculator {
     }
 
     // 예산 최적화 분석
-    analyzeBudgetOptimization(ads, totalBudget) {
+    analyzeBudgetOptimization(ads) {
         const adsWithROI = ads.map(ad => {
             const stats = this.calculateBasicStats([ad]);
             const roi = stats.totalCost > 0 ? (stats.totalRevenue / stats.totalCost) : 0;
@@ -423,7 +423,7 @@ class AdAnalyticsCalculator {
 const adAnalytics = new AdAnalyticsCalculator();
 
 // 개발 모드에서 디버깅을 위해 전역 객체에 추가
-if (process.env.NODE_ENV === 'development') {
+if (import.meta.env.DEV) {
     window.adAnalytics = adAnalytics;
 }
 

@@ -218,7 +218,7 @@ export const briefingService = {
    * 추세 분석
    */
   analyzeTrend(data) {
-    const { today, d1, d2, d3, d7, lastYear } = data;
+    const { today, d1, d2, d7, lastYear } = data;
 
     // 가격 추세 분석
     let priceTrend = '보합';

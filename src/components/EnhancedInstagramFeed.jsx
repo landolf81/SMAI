@@ -52,8 +52,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     isLoading,
     isFetching,
     error,
-    refetch,
-    dataUpdatedAt
+    refetch
   } = useInfiniteQuery({
     queryKey: ['enhanced-instagram-posts', tag, search, userId],
     queryFn: async ({ pageParam = 0 }) => {
@@ -124,18 +123,16 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     enabled: !userId && !isLoading, // 프로필 페이지에서는 비활성화, 게시물 로딩 완료 후에만 활성화
   });
 
-  // 광고 우선순위 정렬 (공통 유틸리티 사용)
+  // 광고가 처음 도착했을 때 노출 횟수를 고정하여 이후 순서 재추첨 방지
+  if (adsData?.length > 0 && initialAdViewCountsRef.current === null) {
+    initialAdViewCountsRef.current = { ...adViewCounts };
+  }
+
+  // 광고 데이터 변경 시에만 랜덤 우선순위를 계산
   const shuffledAds = useMemo(() => {
     if (!adsData || adsData.length === 0) return [];
-
-    // 초기 로딩 시점의 viewCounts 스냅샷 저장 (한 번만)
-    // 이후 광고 노출로 adViewCounts가 변경되어도 순서가 바뀌지 않음
-    if (initialAdViewCountsRef.current === null) {
-      initialAdViewCountsRef.current = { ...adViewCounts };
-    }
-
     return sortAdsByPriority(adsData, initialAdViewCountsRef.current);
-  }, [adsData]); // adViewCounts 의존성 제거 - 초기 스냅샷만 사용
+  }, [adsData]);
 
   // 모든 페이지의 게시물을 하나의 배열로 합치기
   // 커뮤니티 피드(userId가 없을 때)에서는 인코딩 중인 동영상 게시물 숨김
@@ -169,7 +166,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
     if (ads.length === 0 && news.length === 0 && youtubeVideos.length === 0) {
       // 광고, 뉴스, YouTube가 없으면 게시물만 반환
-      return allPosts.map((post, index) => ({ type: 'post', data: post, key: `post-${post.id}` }));
+      return allPosts.map((post) => ({ type: 'post', data: post, key: `post-${post.id}` }));
     }
 
     let adIndex = 0; // 현재 광고 인덱스
@@ -375,7 +372,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
 
     // 초기 로딩 시에만 첫 번째 게시물 자동 활성화
     // 무한 스크롤 중에는 실행하지 않음 (isInitialLoadRef로 체크)
-    if (isInitialLoadRef.current && postElements.length > 0 && visiblePosts.size === 0) {
+    if (isInitialLoadRef.current && postElements.length > 0) {
       const firstPost = postElements[0];
       const postId = firstPost.dataset.postId;
       if (postId) {
@@ -683,7 +680,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
       </div>
       <h3 className="text-xl font-medium text-base-content mb-3">게시글이 없습니다</h3>
       <p className="text-base-content/60 mb-6">
-        {tag ? `'${tag}' 태그의 게시글이 없습니다.` : 
+        {tag ? `'${tag}' 태그의 게시글이 없습니다.` :
          search ? `'${search}' 검색 결과가 없습니다.` :
          '아직 작성된 게시글이 없습니다.'}
       </p>

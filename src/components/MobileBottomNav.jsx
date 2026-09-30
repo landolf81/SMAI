@@ -1,4 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AuthContext } from '../context/AuthContext';
@@ -21,11 +22,12 @@ const HelpOutlineIcon = ({ fontSize, className }) => (
     <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
   </svg>
 );
-const ShoppingBagIcon = ({ fontSize, className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
-    <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z"/>
-  </svg>
-);
+// 사고팔고 메뉴 재개 시 함께 복원할 예약 아이콘 (현재 메뉴는 비활성화).
+// const ShoppingBagIcon = ({ fontSize, className }) => (
+//   <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
+//     <path d="M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h2v2c0 .55.45 1 1 1s1-.45 1-1V8h4v2c0 .55.45 1 1 1s1-.45 1-1V8h2v12z"/>
+//   </svg>
+// );
 const PersonIcon = ({ fontSize, className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" width={fontSize === 'small' ? 20 : 24} height={fontSize === 'small' ? 20 : 24}>
     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
@@ -61,6 +63,20 @@ const HomeIcon = ({ className, isActive }) => (
     />
   </svg>
 );
+
+// 아이콘 입력: 크기 문자열, CSS 클래스, 홈 메뉴 선택 여부.
+const iconPropTypes = {
+  fontSize: PropTypes.oneOf(['small', 'medium']),
+  className: PropTypes.string,
+};
+GroupsIcon.propTypes = iconPropTypes;
+ForumIcon.propTypes = iconPropTypes;
+HelpOutlineIcon.propTypes = iconPropTypes;
+PersonIcon.propTypes = iconPropTypes;
+HomeIcon.propTypes = {
+  className: PropTypes.string,
+  isActive: PropTypes.bool,
+};
 
 const MobileBottomNav = ({ scrollDirection }) => {
   const { currentUser, loading: authLoading } = useContext(AuthContext);
@@ -311,6 +327,11 @@ const MobileBottomNav = ({ scrollDirection }) => {
       </div>
     </div>
   );
+};
+
+// 스크롤 방향에 따라 기존 하단 메뉴 숨김/표시 동작을 유지한다.
+MobileBottomNav.propTypes = {
+  scrollDirection: PropTypes.oneOf(['up', 'down']),
 };
 
 export default MobileBottomNav;

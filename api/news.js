@@ -195,7 +195,7 @@ export default async function handler(req, res) {
     const allItems = [];
 
     // 모든 RSS 소스에서 데이터 가져오기
-    const fetchPromises = Object.entries(RSS_SOURCES).map(async ([key, source]) => {
+    const fetchPromises = Object.values(RSS_SOURCES).map(async (source) => {
       try {
         const response = await fetch(source.url, {
           headers: {

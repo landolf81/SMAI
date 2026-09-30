@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services';
@@ -209,6 +210,13 @@ const BannerAdImagesInput = ({ value = [], onChange }) => {
       {error && <p className="text-xs text-red-500">⚠ {error}</p>}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BannerAdImagesInput.propTypes = {
+  ...BannerAdImagesInput.propTypes,
+  "value": PropTypes.arrayOf(PropTypes.string),
+  "onChange": PropTypes.func
 };
 
 export default BannerAdImagesInput;

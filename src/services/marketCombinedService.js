@@ -241,8 +241,6 @@ const marketCombinedService = {
       });
 
       // 전체 날짜를 순회하며 데이터 구성 (데이터 없는 미래일도 포함)
-      // 올해 데이터 있는 날짜들만 추출 (요일 매칭 인덱스용)
-      const datesWithData = allDates.filter(d => seongjuMap.has(d));
 
       return allDates.map(date => {
         const s = seongjuMap.get(date);

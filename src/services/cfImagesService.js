@@ -105,7 +105,7 @@ export const uploadImageToCloudflare = async (file, options = {}) => {
       throw new Error(uploadError?.message || 'Upload URL 생성 실패');
     }
 
-    const { uploadURL, id } = uploadData;
+    const { uploadURL } = uploadData;
 
     // 2. 이미지 파일 업로드 (파일명 UUID로 변경)
     const ext = file.name.split('.').pop() || 'jpg';

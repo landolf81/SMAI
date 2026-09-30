@@ -5,7 +5,7 @@
 import { fetchLinkPreviewWithCache } from '../services/linkPreviewService';
 
 // URL 정규식 - 다양한 URL 형태를 포괄적으로 감지
-const URL_REGEX = /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&=\/]*))/g;
+const URL_REGEX = /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&=/]*))/g;
 
 // YouTube URL 정규식 - 다양한 YouTube URL 형태 지원 (live, shorts 포함)
 const YOUTUBE_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:live\/|shorts\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;

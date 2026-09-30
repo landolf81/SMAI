@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 
 class AdErrorBoundary extends React.Component {
@@ -21,7 +22,7 @@ class AdErrorBoundary extends React.Component {
                     <div className="text-sm text-red-800">
                         광고를 불러오는 중 오류가 발생했습니다.
                     </div>
-                    {process.env.NODE_ENV === 'development' && (
+                    {import.meta.env.DEV && (
                         <details className="mt-2">
                             <summary className="text-xs text-red-600 cursor-pointer">오류 세부사항</summary>
                             <pre className="text-xs text-red-600 mt-1 whitespace-pre-wrap">
@@ -36,5 +37,11 @@ class AdErrorBoundary extends React.Component {
         return this.props.children;
     }
 }
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+AdErrorBoundary.propTypes = {
+  ...AdErrorBoundary.propTypes,
+  "children": PropTypes.node
+};
 
 export default AdErrorBoundary;

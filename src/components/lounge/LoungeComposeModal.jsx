@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * LoungeComposeModal.jsx
  * 역할: 광장 글쓰기 모달 (Lounge.jsx에서 추출)
@@ -433,6 +434,24 @@ const LoungeComposeModal = ({
       </div>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LoungeComposeModal.propTypes = {
+  ...LoungeComposeModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "currentUser": PropTypes.shape({
+    "id": PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    "name": PropTypes.string,
+    "username": PropTypes.string
+  }),
+  "onSendMessage": PropTypes.func,
+  "onSendPoll": PropTypes.func,
+  "isSending": PropTypes.bool,
+  "cooldownLeft": PropTypes.number,
+  "isUploading": PropTypes.bool,
+  "initialText": PropTypes.string
 };
 
 export default LoungeComposeModal;

@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUpload, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -183,6 +184,14 @@ const BadgeIconUploader = ({
       </p>
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+BadgeIconUploader.propTypes = {
+  ...BadgeIconUploader.propTypes,
+  "onIconChange": PropTypes.func,
+  "currentIcon": PropTypes.string,
+  "disabled": PropTypes.bool
 };
 
 export default BadgeIconUploader;

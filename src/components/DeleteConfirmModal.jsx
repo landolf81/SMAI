@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * DeleteConfirmModal.jsx
  * 게시물 삭제 확인 모달 - 웹앱 테마 반영 디자인
@@ -107,6 +108,15 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, loading }) => {
     </div>,
     document.body
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+DeleteConfirmModal.propTypes = {
+  ...DeleteConfirmModal.propTypes,
+  "isOpen": PropTypes.bool,
+  "onClose": PropTypes.func,
+  "onConfirm": PropTypes.func,
+  "loading": PropTypes.bool
 };
 
 export default DeleteConfirmModal;

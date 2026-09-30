@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * LazyStreamPlayer.jsx
  * CloudflareStreamPlayer를 lazy load하는 래퍼 컴포넌트
@@ -19,5 +20,11 @@ const LazyStreamPlayer = (props) => (
     <CloudflareStreamPlayer {...props} />
   </Suspense>
 );
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+LazyStreamPlayer.propTypes = {
+  ...LazyStreamPlayer.propTypes,
+  "aspectRatio": PropTypes.string
+};
 
 export default LazyStreamPlayer;

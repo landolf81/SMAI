@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { userService, adService } from '../services';
@@ -101,6 +102,12 @@ const UserComments = ({ userId }) => {
       ))}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+UserComments.propTypes = {
+  ...UserComments.propTypes,
+  "userId": PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 };
 
 export default UserComments;

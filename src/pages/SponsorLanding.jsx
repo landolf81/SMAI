@@ -115,7 +115,7 @@ const SponsorLanding = () => {
             alt={ad.alt_text || ad.title || ad.name || '광고'}
             className="w-full h-auto object-cover"
             loading="eager"
-            fetchPriority="high"
+            fetchpriority="high"
           />
         </div>
 

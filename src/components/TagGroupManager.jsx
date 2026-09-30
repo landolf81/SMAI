@@ -129,15 +129,15 @@ const TagGroupManager = () => {
                                 ></span>
                                 <h3 className="card-title text-lg">{group.display_name}</h3>
                             </div>
-                            
+
                             <p className="text-sm text-gray-600 mb-2">
                                 그룹명: <code className="bg-gray-100 px-1 rounded">{group.name}</code>
                             </p>
-                            
+
                             {group.description && (
                                 <p className="text-sm text-gray-700 mb-3">{group.description}</p>
                             )}
-                            
+
                             <div className="stats stats-vertical bg-base-200">
                                 <div className="stat">
                                     <div className="stat-title">태그 수</div>
@@ -148,7 +148,7 @@ const TagGroupManager = () => {
                                     <div className="stat-value text-lg">{group.sort_order}</div>
                                 </div>
                             </div>
-                            
+
                             <div className="card-actions justify-end mt-4">
                                 <button
                                     onClick={() => openEditModal(group)}
@@ -194,7 +194,7 @@ const TagGroupManager = () => {
                         <h3 className="font-bold text-lg mb-4">
                             {editingGroup ? '태그 그룹 수정' : '새 태그 그룹 생성'}
                         </h3>
-                        
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="form-control">
                                 <label className="label">

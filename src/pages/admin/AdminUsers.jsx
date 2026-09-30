@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import React, { useCallback, useState, useEffect } from 'react';
 import PeopleIcon from "@mui/icons-material/People";
 import SearchIcon from "@mui/icons-material/Search";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
+
+
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import EditIcon from "@mui/icons-material/Edit";
@@ -44,7 +45,7 @@ const AdminUsers = () => {
   const [welcomeSending, setWelcomeSending] = useState({}); // { [userId]: true }
   const [bulkSending, setBulkSending] = useState(false);
 
-  const fetchUsers = async (page = 1, search = '', role = 'all', status = 'all') => {
+  const fetchUsers = useCallback(async (page = 1, search = '', role = 'all', status = 'all') => {
     try {
       setLoading(true);
       setError(null);
@@ -87,7 +88,7 @@ const AdminUsers = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.limit]);
 
   // 전체 통계는 최초 1회만 로드
   useEffect(() => {
@@ -96,7 +97,7 @@ const AdminUsers = () => {
 
   useEffect(() => {
     fetchUsers(1, searchTerm, filterRole, filterStatus);
-  }, [searchTerm, filterRole, filterStatus]);
+  }, [searchTerm, filterRole, filterStatus, fetchUsers]);
 
   const handleSearch = () => {
     setSearchTerm(searchInput);
@@ -309,8 +310,6 @@ const UserListContent = ({
   handleBulkWelcomeDM,
   welcomeSending = {},
   bulkSending = false,
-  getRoleText,
-  getStatusColor,
   getStatusText,
   fetchUsers,
   pagination,
@@ -697,3 +696,20 @@ const UserListContent = ({
 };
 
 export default AdminUsers;
+
+// 내부 컴포넌트의 입력 데이터 계약.
+UserListContent.propTypes = {
+  users: PropTypes.arrayOf(PropTypes.object),
+  globalStats: PropTypes.shape({ total: PropTypes.number, superAdmins: PropTypes.number,
+    admins: PropTypes.number, active: PropTypes.number, banned: PropTypes.number }),
+  searchInput: PropTypes.string, setSearchInput: PropTypes.func, searchTerm: PropTypes.string,
+  handleSearch: PropTypes.func, handleSearchKeyPress: PropTypes.func, filterRole: PropTypes.string,
+  setFilterRole: PropTypes.func, filterStatus: PropTypes.string, setFilterStatus: PropTypes.func,
+  handleStatusToggle: PropTypes.func, handleRoleChange: PropTypes.func, handleDeleteUser: PropTypes.func,
+  handleSendWelcomeDM: PropTypes.func, handleBulkWelcomeDM: PropTypes.func,
+  welcomeSending: PropTypes.objectOf(PropTypes.bool), bulkSending: PropTypes.bool,
+  getRoleText: PropTypes.func, getStatusColor: PropTypes.func, getStatusText: PropTypes.func, fetchUsers: PropTypes.func,
+  pagination: PropTypes.shape({ total: PropTypes.number, totalPages: PropTypes.number,
+    page: PropTypes.number, limit: PropTypes.number }).isRequired,
+  setPagination: PropTypes.func, loading: PropTypes.bool,
+};

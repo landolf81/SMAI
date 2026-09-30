@@ -15,7 +15,7 @@ import { isAIUser } from '../config/aiUser';
 const CommentsSection = ({ postId, postTag, post }) => {
   const { currentUser, isBanned } = useContext(AuthContext);
   const queryClient = useQueryClient();
-  
+
   const [newComment, setNewComment] = useState('');
   const [replyTo, setReplyTo] = useState(null);
   const [replyText, setReplyText] = useState('');
@@ -455,7 +455,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                     </ul>
                   </div>
                 </div>
-                
+
                 {editingComment === comment.id ? (
                   <form onSubmit={(e) => handleUpdateComment(e, comment.id)} className="mt-2">
                     <textarea
@@ -676,7 +676,7 @@ const CommentsSection = ({ postId, postTag, post }) => {
                           </ul>
                         </div>
                       </div>
-                      
+
                       {editingComment === reply.id ? (
                         <form onSubmit={(e) => handleUpdateComment(e, reply.id)} className="mt-1">
                           <textarea

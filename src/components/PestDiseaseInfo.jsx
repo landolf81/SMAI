@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 /**
  * PestDiseaseInfo 컴포넌트
  * 역할: 참외 병충해 정보 소개 (병해 6종 + 해충 7종)
@@ -182,12 +183,27 @@ const Section = ({ title, children }) => (
   </section>
 );
 
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+Section.propTypes = {
+  ...Section.propTypes,
+  "title": PropTypes.string,
+  "children": PropTypes.node
+};
+
 const DetailRow = ({ label, text, highlight }) => (
   <div>
     <p className={`text-xs font-semibold mb-0.5 ${highlight ? 'text-orange-700' : 'text-base-content/50'}`}>{label}</p>
     <p className="text-sm text-base-content/80 leading-relaxed">{text}</p>
   </div>
 );
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+DetailRow.propTypes = {
+  ...DetailRow.propTypes,
+  "label": PropTypes.string,
+  "text": PropTypes.string,
+  "highlight": PropTypes.bool
+};
 
 const PestCard = ({ item, isOpen, onToggle, accentColor }) => {
   const hoverBg = accentColor === 'red' ? 'hover:bg-red-500/10' : 'hover:bg-teal-500/10';
@@ -249,6 +265,25 @@ const PestCard = ({ item, isOpen, onToggle, accentColor }) => {
       )}
     </div>
   );
+};
+
+// 입력값의 구조를 명시해 호출부의 실수를 개발 중 확인한다.
+PestCard.propTypes = {
+  ...PestCard.propTypes,
+  "item": PropTypes.shape({
+    "image": PropTypes.string,
+    "name": PropTypes.string,
+    "icon": PropTypes.node,
+    "badge": PropTypes.string,
+    "cause": PropTypes.string,
+    "symptoms": PropTypes.string,
+    "immediate": PropTypes.string,
+    "prevention": PropTypes.string,
+    "pesticide": PropTypes.string
+  }),
+  "isOpen": PropTypes.bool,
+  "onToggle": PropTypes.func,
+  "accentColor": PropTypes.string
 };
 
 const DiseaseCard = (props) => <PestCard {...props} accentColor="red" />;
