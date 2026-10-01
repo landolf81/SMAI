@@ -56,6 +56,7 @@ const Translate = ({ embedded = false }) => {
   const recognitionRef = useRef(null);
   const audioCache = useRef(null); // TTS 오디오 캐시
   const currentAudio = useRef(null); // 현재 재생 중인 오디오
+  const translationGeneration = useRef(0);
   const historySaved = useRef(false); // 히스토리 저장 여부
   const modalAudioIntervalRef = useRef(null); // 모달 음성 반복 재생 인터벌
   const isModalOpenRef = useRef(false); // 모달 열림 상태 ref
@@ -204,6 +205,7 @@ const Translate = ({ embedded = false }) => {
       toast.error('텍스트는 5000자 이하로 입력해주세요.');
       return;
     }
+    const generation = ++translationGeneration.current;
     setIsTranslating(true);
     setTranslations({ target: '', backTranslation: '' });
 
@@ -220,22 +222,48 @@ const Translate = ({ embedded = false }) => {
       const result = await geminiService.translate(inputText, inputLang, targetLang);
       setTranslations({ target: result.targetTranslation, backTranslation: result.backTranslation });
       toast.success('번역이 완료되었습니다.');
+      // Save text independently of voice generation. Audio can be attached afterwards.
+      if (currentUser) historySaved.current = true;
+      const textHistory = currentUser ? translationService.saveHistory({
+        inputText, inputLang, targetLang,
+        targetTranslation: result.targetTranslation, backTranslation: result.backTranslation,
+      }, null, currentUser.id).then(record => {
+        if (translationGeneration.current === generation) historySaved.current = true;
+        loadHistory();
+        loadHistoryCount();
+        return record;
+      }).catch(() => {
+        if (translationGeneration.current === generation) historySaved.current = false;
+        toast.error('번역은 완료됐지만 기록 저장에 실패했습니다.');
+        return null;
+      }) : Promise.resolve(null);
 
       // 2단계: TTS 생성 (백그라운드, 약간의 딜레이 추가)
       setTimeout(async () => {
         try {
+          if (translationGeneration.current !== generation) return;
           toast.loading('음성을 생성하는 중...');
           const audioBlob = await geminiService.textToSpeech(result.targetTranslation, targetLang);
 
+          if (translationGeneration.current !== generation) return;
           // 오디오 캐시에 저장
           audioCache.current = {
             text: result.targetTranslation,
+            lang: targetLang,
             blob: audioBlob
           };
 
           toast.dismiss();
           toast.success('음성 생성이 완료되었습니다.');
+          const record = await textHistory;
+          if (record && currentUser) {
+            try {
+              await translationService.attachAudio(record.id, audioBlob, currentUser.id);
+              loadHistory();
+            } catch { toast.error('음성은 생성됐지만 음성 기록 저장에 실패했습니다.'); }
+          }
         } catch (ttsError) {
+          if (translationGeneration.current !== generation) return;
           console.error('TTS 생성 오류:', ttsError);
           toast.dismiss();
           toast.error('음성 생성에 실패했습니다. 텍스트 번역만 표시됩니다.');
@@ -268,7 +296,7 @@ const Translate = ({ embedded = false }) => {
       let audioBlob;
 
       // 캐시에 오디오가 있으면 재사용, 없으면 생성
-      if (audioCache.current?.blob) {
+      if (audioCache.current?.blob && audioCache.current.text === translations.target && audioCache.current.lang === targetLang) {
         audioBlob = audioCache.current.blob;
       } else {
         // TTS 생성
@@ -278,6 +306,7 @@ const Translate = ({ embedded = false }) => {
         // 오디오 캐시에 저장
         audioCache.current = {
           text: translations.target,
+          lang: targetLang,
           blob: audioBlob
         };
         toast.dismiss();
@@ -317,6 +346,16 @@ const Translate = ({ embedded = false }) => {
       setIsSpeaking(false);
       toast.dismiss();
       toast.error(error.message || '음성 생성 중 오류가 발생했습니다.');
+      if (currentUser && !historySaved.current && translations.target) {
+        try {
+          await translationService.saveHistory({ inputText, inputLang, targetLang,
+            targetTranslation: translations.target, backTranslation: translations.backTranslation,
+          }, null, currentUser.id);
+          historySaved.current = true;
+          await loadHistory();
+          await loadHistoryCount();
+        } catch { toast.error('번역 기록 저장에 실패했습니다.'); }
+      }
     }
   };
 
@@ -380,36 +419,25 @@ const Translate = ({ embedded = false }) => {
     isModalOpenRef.current = true;
     setShowTranslationModal(true);
 
-    // 히스토리 저장 (로그인한 경우 & 아직 저장되지 않은 경우)
+    // Text record recovery must also work when TTS fails or its ticket has expired.
     if (currentUser && !historySaved.current && translations.target) {
       try {
-        // TTS 오디오 생성 (캐시 확인)
-        let audioBlob;
-        if (audioCache.current?.blob && audioCache.current?.text === translations.target) {
-          audioBlob = audioCache.current.blob;
-        } else {
-          audioBlob = await geminiService.textToSpeech(translations.target, targetLang);
-          audioCache.current = { text: translations.target, blob: audioBlob };
-        }
-
-        // 히스토리 저장
-        await translationService.saveHistory({
-          inputText,
-          inputLang,
-          targetLang,
-          targetTranslation: translations.target,
-          backTranslation: translations.backTranslation
-        }, audioBlob, currentUser.id);
-
-        // 히스토리 갱신
+        const record = await translationService.saveHistory({
+          inputText, inputLang, targetLang,
+          targetTranslation: translations.target, backTranslation: translations.backTranslation,
+        }, null, currentUser.id);
+        historySaved.current = true;
         await loadHistory();
         await loadHistoryCount();
-
-        // 저장 완료 플래그 설정
-        historySaved.current = true;
-      } catch (error) {
-        console.error('히스토리 저장 오류:', error);
-        // 저장 실패해도 모달은 열림
+        try {
+          const audioBlob = audioCache.current?.text === translations.target && audioCache.current?.lang === targetLang
+            ? audioCache.current.blob : await geminiService.textToSpeech(translations.target, targetLang);
+          audioCache.current = { text: translations.target, lang: targetLang, blob: audioBlob };
+          await translationService.attachAudio(record.id, audioBlob, currentUser.id);
+          await loadHistory();
+        } catch { /* Text was saved; audio recovery remains optional. */ }
+      } catch {
+        toast.error('번역 기록 저장에 실패했습니다.');
       }
     }
 
@@ -438,11 +466,11 @@ const Translate = ({ embedded = false }) => {
         let audioBlob;
 
         // 캐시에 오디오가 있으면 재사용
-        if (audioCache.current?.blob) {
+        if (audioCache.current?.blob && audioCache.current.text === translations.target && audioCache.current.lang === targetLang) {
           audioBlob = audioCache.current.blob;
         } else {
           audioBlob = await geminiService.textToSpeech(translations.target, targetLang);
-          audioCache.current = { text: translations.target, blob: audioBlob };
+          audioCache.current = { text: translations.target, lang: targetLang, blob: audioBlob };
         }
 
         // 현재 재생 중인 오디오가 있으면 중지
@@ -465,12 +493,23 @@ const Translate = ({ embedded = false }) => {
           }
         };
 
-        audio.onerror = () => {
+        // A rejected modal playback must not leave a stale player that consumes the next click.
+        let playbackFailed = false;
+        const reportPlaybackFailure = () => {
+          if (playbackFailed) return;
+          playbackFailed = true;
           URL.revokeObjectURL(audioUrl);
+          if (currentAudio.current === audio) {
+            currentAudio.current = null;
+            setIsSpeaking(false);
+          }
+          toast.error('음성을 재생하지 못했습니다. 브라우저의 소리 설정을 확인해주세요.');
         };
+        audio.onerror = reportPlaybackFailure;
 
         audio.play().catch(err => {
           console.error('모달 오디오 재생 오류:', err);
+          reportPlaybackFailure();
         });
       } catch (error) {
         console.error('모달 TTS 오류:', error);
@@ -540,6 +579,7 @@ const Translate = ({ embedded = false }) => {
   return (
     <div className={embedded ? 'bg-base-200 px-4 pb-4' : 'min-h-screen bg-base-200 pt-16 px-4 pb-4'}>
       <div className="max-w-3xl mx-auto">
+        {!currentUser && <p className="text-sm text-base-content/70 mb-3">로그인 없이 짧은 문장 번역과 음성을 맛볼 수 있어요. 사용량 제한에 도달하면 로그인해주세요. 기록 저장은 로그인 후 가능합니다.</p>}
         {/* 헤더 */}
         <div className="bg-gradient-to-r from-emerald-600 to-blue-600 rounded-xl shadow-lg px-4 py-3 mb-4 text-white">
           <div className="flex items-center gap-2">

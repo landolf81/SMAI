@@ -20,9 +20,11 @@ export const translationService = {
     // 오디오를 R2에 업로드
     if (audioBlob) {
       try {
-        // Blob을 File 객체로 변환 (Azure TTS는 MP3 반환)
-        const fileName = `${userId}_${Date.now()}.mp3`;
-        const audioFile = new File([audioBlob], fileName, { type: 'audio/mpeg' });
+        // 신규 Gemini WAV와 기존 MP3를 실제 MIME에 맞춰 저장
+        const mime = audioBlob.type === 'audio/wav' ? 'audio/wav' : 'audio/mpeg';
+        const extension = mime === 'audio/wav' ? 'wav' : 'mp3';
+        const fileName = `${userId}_${Date.now()}.${extension}`;
+        const audioFile = new File([audioBlob], fileName, { type: mime });
 
         // R2에 업로드 (folder: 'translation-audio')
         const result = await r2Service.upload(audioFile, 'translation-audio');
@@ -50,6 +52,21 @@ export const translationService = {
 
     if (error) throw error;
     return history;
+  },
+
+  /** Attach new WAV audio to an already saved text record; owner-filtered update. */
+  async attachAudio(historyId, audioBlob, userId) {
+    if (!historyId || !userId || !audioBlob) return;
+    const mime = audioBlob.type === 'audio/wav' ? 'audio/wav' : 'audio/mpeg';
+    const extension = mime === 'audio/wav' ? 'wav' : 'mp3';
+    const file = new File([audioBlob], `${userId}_${Date.now()}.${extension}`, { type: mime });
+    const uploaded = await r2Service.upload(file, 'translation-audio');
+    const { data: attached, error } = await supabase.rpc('attach_translation_audio', { p_history_id: historyId, p_audio_url: uploaded.url });
+    if (error || attached !== true) {
+      // Remove only the new orphan upload; the existing text record is preserved.
+      if (uploaded.key) await r2Service.delete(uploaded.key).catch(() => {});
+      throw error || new Error('음성 기록을 저장하지 못했습니다.');
+    }
   },
 
   /**

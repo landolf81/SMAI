@@ -2,7 +2,9 @@
   "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build && mv dist/index.html dist/_app.html",
   "outputDirectory": "dist",
+  "functions": { "api/translation.js": { "maxDuration": 60 } },
   "rewrites": [
+    { "source": "/api/translation", "destination": "/api/translation" },
     { "source": "/(.*)", "destination": "/api/render" }
   ],
   "headers": [
