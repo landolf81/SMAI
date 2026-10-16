@@ -1,3 +1,4 @@
+import { sameSecret } from '../_shared/authorization.ts'
 // Supabase Edge Function - OpenClaw 에이전트 응답 수신기
 // 역할: 1) agent_logs 응답 저장 (기존) 2) AI 댓글 삽입 (action: 'post_comment') 3) 광장 글쓰기 + @멘션 알림 (action: 'post_lounge') 4) 광장 읽기 (action: 'get_lounge') 5) 광장 투표 글 생성 (action: 'post_lounge_poll') 6) 이미지 업로드 (action: 'upload_image')
 // 배포: supabase functions deploy openclaw-response --no-verify-jwt
@@ -11,7 +12,7 @@ const AI_USER_ID = Deno.env.get('AI_USER_ID') ?? ''
 
 // OpenClaw 콜백 검증 토큰
 // OPENCLAW_RESPONSE_TOKEN: OpenClaw이 이 웹훅을 호출할 때 쓰는 시크릿 (별도 설정)
-// 미설정 시 검증 스킵 (디버깅 단계에서 사용)
+// 미설정 시 모든 콜백 거부 (fail closed)
 const OPENCLAW_RESPONSE_TOKEN = Deno.env.get('OPENCLAW_RESPONSE_TOKEN') ?? ''
 
 // Cloudflare Images (upload_image 액션용)
@@ -55,18 +56,10 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
 
-  // 수신 Authorization 헤더 로깅 (디버깅용 - 앞 10자리만 노출)
-  const authHeader = req.headers.get('Authorization') ?? ''
-  const token = authHeader.replace('Bearer ', '').trim()
-  const maskedToken = token ? `${token.slice(0, 10)}***` : '(없음)'
-  console.log(`[openclaw-response] 수신 Authorization: ${maskedToken}`)
-  console.log(`[openclaw-response] OPENCLAW_RESPONSE_TOKEN 설정 여부: ${OPENCLAW_RESPONSE_TOKEN ? '설정됨' : '미설정(검증 스킵)'}`)
-
-  // 토큰 검증: OPENCLAW_RESPONSE_TOKEN이 설정된 경우에만 검증
-  if (OPENCLAW_RESPONSE_TOKEN && token !== OPENCLAW_RESPONSE_TOKEN) {
-    console.error(`[openclaw-response] 토큰 불일치 - 수신: ${maskedToken}`)
-    return jsonResponse({ error: 'Unauthorized' }, 401)
-  }
+  // A missing webhook secret is a configuration failure, never public access.
+  if (!OPENCLAW_RESPONSE_TOKEN) return jsonResponse({ error: 'Webhook unavailable' }, 503)
+  const token = req.headers.get('Authorization')?.match(/^Bearer (.+)$/)?.[1] || ''
+  if (!sameSecret(token, OPENCLAW_RESPONSE_TOKEN)) return jsonResponse({ error: 'Unauthorized' }, 401)
 
   let body: Record<string, unknown>
   try {
@@ -76,7 +69,6 @@ Deno.serve(async (req: Request) => {
   }
 
   // 수신 body 전체 로깅 (형식 디버깅용)
-  console.log('[openclaw-response] 수신 body:', JSON.stringify(body))
 
   const action = ((body.action ?? '') as string).trim()
 

@@ -1,3 +1,4 @@
+import { authorize } from '../_shared/authorization.ts'
 /**
  * check-price-push Edge Function
  * pg_cron에서 KST 11:20~16:00 매 20분 호출
@@ -52,6 +53,9 @@ function jsonRes(data: unknown, status = 200): Response {
 // ── 메인 핸들러 ──
 
 Deno.serve(async (req) => {
+  const access = await authorize(req, 'internal')
+  if (access instanceof Response) return access
+
   // CORS (수동 테스트용)
   if (req.method === 'OPTIONS') {
     return new Response(null, {

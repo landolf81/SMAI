@@ -1,3 +1,4 @@
+import { authorize } from '../_shared/authorization.ts'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -126,6 +127,9 @@ function matchesKeywords(title: string, description: string, keywords: string[] 
 }
 
 serve(async (req) => {
+  const access = await authorize(req, 'internal')
+  if (access instanceof Response) return access
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }

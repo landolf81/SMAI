@@ -1,3 +1,4 @@
+import { authorize } from '../_shared/authorization.ts'
 // Supabase Edge Function - 날씨 캐시 자동 갱신
 // pg_cron으로 매시간 호출
 
@@ -440,6 +441,9 @@ const getMidTa = async () => {
 }
 
 Deno.serve(async (req) => {
+  const access = await authorize(req, 'internal')
+  if (access instanceof Response) return access
+
   // CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', {

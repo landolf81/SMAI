@@ -257,10 +257,8 @@ export const dmService = {
         .then(({ data: senderInfo }) => {
           const senderName = senderInfo?.name || senderInfo?.username || '참외이야기';
           pushNotificationService.sendDmPush({
+            referenceId: data.id,
             receiverId: messageData.receiverId,
-            senderName,
-            senderId: user.id,
-            content: messageData.content,
           }).catch(() => {});
           // 개인 알림 저장
           notificationService.createNotification({

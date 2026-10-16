@@ -1,3 +1,4 @@
+import { authorize } from '../_shared/authorization.ts'
 /**
  * sync-pesticide-data Edge Function
  * 식품안전나라 Open API(I1910)에서 참외 등록 농약 데이터를 수집하여 DB에 저장
@@ -155,6 +156,9 @@ async function fetchAllChamoeRows(): Promise<DbRow[]> {
 
 // ── 메인 핸들러 ──
 Deno.serve(async (_req: Request) => {
+  const access = await authorize(_req, 'internal')
+  if (access instanceof Response) return access
+
   try {
     console.log('[sync-pesticide] 동기화 시작')
 

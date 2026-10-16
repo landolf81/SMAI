@@ -232,9 +232,10 @@ const AdminReports = () => {
       toast.className = 'toast toast-top toast-center';
       toast.innerHTML = `
         <div class="alert alert-error">
-          <span>❌ ${error.response?.data?.error || '신고 처리 중 오류가 발생했습니다.'}</span>
+          <span>❌ <span data-toast-text></span></span>
         </div>
       `;
+      toast.querySelector('[data-toast-text]').textContent = String((error.response?.data?.error || '신고 처리 중 오류가 발생했습니다.') ?? '');
       document.body.appendChild(toast);
       setTimeout(() => document.body.removeChild(toast), 3000);
     },
@@ -330,9 +331,10 @@ const AdminReports = () => {
       toast.className = 'toast toast-top toast-center';
       toast.innerHTML = `
         <div class="alert alert-error">
-          <span>❌ 처리 중 오류가 발생했습니다: ${error.message}</span>
+          <span>❌ 처리 중 오류가 발생했습니다: <span data-toast-text></span></span>
         </div>
       `;
+      toast.querySelector('[data-toast-text]').textContent = String((error.message) ?? '');
       document.body.appendChild(toast);
       setTimeout(() => document.body.removeChild(toast), 3000);
     }

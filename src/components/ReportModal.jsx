@@ -109,9 +109,10 @@ const ReportModal = ({ open = false, onClose, postId, commentId, postAuthor, tar
           max-width: 400px;
         ">
           <strong>신고 실패</strong><br/>
-          ${errorMessage}
+          <span data-toast-text></span>
         </div>
       `;
+      errorToast.querySelector('[data-toast-text]').textContent = String((errorMessage) ?? '');
       document.body.appendChild(errorToast);
       setTimeout(() => {
         if (document.body.contains(errorToast)) {

@@ -1,3 +1,4 @@
+import { authorizePush } from '../_shared/pushAuthorization.ts'
 /**
  * send-push Edge Function
  * 관리자가 모든 구독자에게 Web Push 알림 발송
@@ -21,6 +22,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const recentEvents = new Map<string, number>()
+
 Deno.serve(async (req) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -28,7 +31,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, body, url, userId } = await req.json()
+    if (req.method !== 'POST') return new Response(null, { status: 405, headers: corsHeaders })
+    const raw = await req.text()
+    if (raw.length > 12000) return new Response(null, { status: 413, headers: corsHeaders })
+    const input = JSON.parse(raw)
+    if (!input || typeof input !== 'object' || Array.isArray(input)) return new Response(null, { status: 400, headers: corsHeaders })
+    const payloadData = await authorizePush(req, input)
+    if (payloadData instanceof Response) return payloadData
+    const { title, body, url, userId } = payloadData
+    if (input.referenceId && ['dm', 'mention'].includes(input.tag)) {
+      const now = Date.now()
+      for (const [key, time] of recentEvents) if (now - time > 5 * 60 * 1000) recentEvents.delete(key)
+      const eventKey = `${input.tag}:${input.referenceId}:${userId}`
+      if (recentEvents.has(eventKey)) return new Response(JSON.stringify({ sent: 0, duplicate: true }), { headers: corsHeaders })
+      recentEvents.set(eventKey, now)
+    }
 
     if (!title || !body) {
       return new Response(JSON.stringify({ error: '제목과 내용이 필요합니다' }), {
@@ -96,12 +113,12 @@ Deno.serve(async (req) => {
           expiredIds.push(sub.id)
           failed++
         } else {
-          const responseText = await response.text()
-          console.error(`Push failed for ${sub.endpoint}: ${response.status} ${responseText}`)
+          await response.body?.cancel()
+          console.error(`Push delivery failed: ${response.status}`)
           failed++
         }
       } catch (e: any) {
-        console.error(`Push error for ${sub.endpoint}:`, e.message || e)
+        console.error('Push delivery failed')
         failed++
       }
     }
@@ -119,8 +136,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e: any) {
-    console.error('send-push error:', e)
-    return new Response(JSON.stringify({ error: e.message }), {
+    console.error('send-push failed')
+    return new Response(JSON.stringify({ error: 'Push service unavailable' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

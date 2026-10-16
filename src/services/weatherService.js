@@ -4,38 +4,17 @@
 
 import { supabase } from '../config/supabase';
 
-// 기상청 API 키 (이미 인코딩된 형태로 사용)
-const KMA_API_KEY_RAW = import.meta.env.VITE_KMA_API_KEY;
-
 // 캐시 설정
 const CACHE_DURATION_MS = 60 * 60 * 1000; // 1시간
 // 라이브 API 직접 호출 최소 간격 (cron이 매시간 캐시를 채우므로 새로고침마다 재호출하지 않음)
 const LIVE_FETCH_COOLDOWN_MS = 15 * 60 * 1000; // 15분
 const LIVE_FETCH_TS_KEY = 'weather_last_live_fetch';
 
-// API 베이스 URL 생성 (serviceKey는 수동으로 추가해야 함 - 이중 인코딩 방지)
-const buildKmaUrl = (apiPath, params) => {
-  const isDev = import.meta.env.DEV;
-  const baseUrl = isDev ? '/api/kma' : '';
-
-  // serviceKey를 제외한 파라미터만 URLSearchParams로 처리
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
-    if (key !== 'serviceKey') {
-      searchParams.append(key, value);
-    }
-  });
-
-  // serviceKey는 이미 인코딩된 값을 직접 추가
-  const encodedKey = encodeURIComponent(KMA_API_KEY_RAW);
-  const queryString = `serviceKey=${encodedKey}&${searchParams.toString()}`;
-
-  if (isDev) {
-    return `${baseUrl}${apiPath}?${queryString}`;
-  }
-  // 프로덕션: Vercel serverless function
-  const endpoint = `${apiPath}?${queryString}`;
-  return `/api/weather?endpoint=${encodeURIComponent(endpoint)}`;
+// Keys are attached only by the same-origin server route in every mode.
+export const buildKmaUrl = (apiPath, params) => {
+  const searchParams = new URLSearchParams(params);
+  searchParams.delete('serviceKey');
+  return `/api/weather?endpoint=${encodeURIComponent(`${apiPath}?${searchParams}`)}`;
 };
 
 // 성주군 기상청 격자 좌표 (성주읍 삼산리 측정지점 기준)

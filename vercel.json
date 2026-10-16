@@ -5,6 +5,7 @@
   "functions": { "api/translation.js": { "maxDuration": 60 } },
   "rewrites": [
     { "source": "/api/translation", "destination": "/api/translation" },
+    { "source": "/api/weather", "destination": "/api/weather" },
     { "source": "/(.*)", "destination": "/api/render" }
   ],
   "headers": [

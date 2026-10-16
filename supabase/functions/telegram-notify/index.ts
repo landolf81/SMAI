@@ -1,3 +1,4 @@
+import { authorize } from '../_shared/authorization.ts'
 import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN')!
@@ -92,6 +93,9 @@ function formatNewUserMessage(record: Record<string, unknown>): string {
 }
 
 Deno.serve(async (req) => {
+  const access = await authorize(req, 'internal')
+  if (access instanceof Response) return access
+
   try {
     const payload: WebhookPayload = await req.json()
 

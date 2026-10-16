@@ -1,3 +1,4 @@
+import { authorize } from '../_shared/authorization.ts'
 /**
  * collect-market-data Edge Function
  * 공공데이터포털 API로 농협가락·대전 공판장 참외 경매 데이터 수집
@@ -218,6 +219,9 @@ function buildSummary(
 // ── 메인 핸들러 ──
 
 Deno.serve(async (req) => {
+  const access = await authorize(req, 'internal')
+  if (access instanceof Response) return access
+
   // CORS
   if (req.method === 'OPTIONS') {
     return new Response(null, {

@@ -227,14 +227,11 @@ export const pushNotificationService = {
   /**
    * 광장 @멘션 시 해당 사용자에게 푸시 알림 발송 (fire-and-forget)
    */
-  async sendMentionPush({ receiverId, senderName, content }) {
-    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
+  async sendMentionPush({ receiverId, referenceId }) {
     const { error } = await supabase.functions.invoke('send-push', {
       body: {
         userId: receiverId,
-        title: `${senderName}님이 회원님을 언급했어요`,
-        body: preview,
-        url: '/lounge',
+        referenceId,
         tag: 'mention',
       },
     });
@@ -244,14 +241,11 @@ export const pushNotificationService = {
     }
   },
 
-  async sendDmPush({ receiverId, senderName, senderId, content }) {
-    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
+  async sendDmPush({ receiverId, referenceId }) {
     const { error } = await supabase.functions.invoke('send-push', {
       body: {
         userId: receiverId,
-        title: `💬 ${senderName}`,
-        body: preview,
-        url: `/dm/${senderId}`,
+        referenceId,
         tag: 'dm',
       },
     });
