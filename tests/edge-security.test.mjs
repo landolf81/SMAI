@@ -64,6 +64,8 @@ test('push broadcast requires admin, individual DM uses owned stored event and c
  const now=Date.now();const d=setup({event:{sender_id:user,receiver_id:other,content:'actual message',created_at:new Date(now).toISOString()}});
  const result=await authorizePush(req(),{tag:'dm',userId:other,referenceId:'123',body:'forged',title:'forged'},d);
  assert.equal(result.body,'actual message');assert.equal(result.url,`/dm/${user}`);
+ const adminEvent=setup({admin:true,event:{sender_id:user,receiver_id:other,content:'admin message',created_at:new Date(now).toISOString()}});
+ assert.equal((await authorizePush(req(),{tag:'dm',userId:other,referenceId:'123'},adminEvent)).body,'admin message');
  const f=setup({event:{sender_id:other,receiver_id:user,content:'private',created_at:new Date(now).toISOString()}});
  assert.equal((await authorizePush(req(),{tag:'dm',userId:other,referenceId:'123'},f)).status,403);
  const old=setup({event:{sender_id:user,receiver_id:other,content:'old',created_at:'2020-01-01'}});

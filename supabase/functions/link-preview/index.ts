@@ -1,3 +1,4 @@
+import { previewURL, canFetchPreview, fetchPreviewText } from '../_shared/previewFetch.ts'
 // Supabase Edge Function: Link Preview
 // 웹페이지의 Open Graph 메타데이터를 추출합니다
 
@@ -13,10 +14,7 @@ const corsHeaders = {
 async function fetchTwitterPreview(url: string) {
   try {
     const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&omit_script=true`
-    const response = await fetch(oembedUrl)
-    if (!response.ok) return null
-
-    const data = await response.json()
+    const data = JSON.parse(await fetchPreviewText(oembedUrl))
     return {
       url,
       title: data.author_name ? `${data.author_name}의 게시물` : 'X 게시물',
@@ -24,12 +22,11 @@ async function fetchTwitterPreview(url: string) {
       image: null,
       siteName: 'X (Twitter)',
       favicon: 'https://abs.twimg.com/favicons/twitter.2.ico',
-      html: data.html, // 임베드 HTML (선택적 사용)
       authorName: data.author_name,
       authorUrl: data.author_url
     }
   } catch (e) {
-    console.error('Twitter oEmbed error:', e)
+    console.warn('Twitter preview unavailable')
     return null
   }
 }
@@ -38,10 +35,7 @@ async function fetchTwitterPreview(url: string) {
 async function fetchInstagramPreview(url: string) {
   try {
     const oembedUrl = `https://api.instagram.com/oembed?url=${encodeURIComponent(url)}&omitscript=true`
-    const response = await fetch(oembedUrl)
-    if (!response.ok) return null
-
-    const data = await response.json()
+    const data = JSON.parse(await fetchPreviewText(oembedUrl))
     return {
       url,
       title: data.author_name ? `${data.author_name}의 게시물` : 'Instagram 게시물',
@@ -49,12 +43,11 @@ async function fetchInstagramPreview(url: string) {
       image: data.thumbnail_url || null,
       siteName: 'Instagram',
       favicon: 'https://www.instagram.com/favicon.ico',
-      html: data.html,
       authorName: data.author_name,
       authorUrl: `https://www.instagram.com/${data.author_name}/`
     }
   } catch (e) {
-    console.error('Instagram oEmbed error:', e)
+    console.warn('Instagram preview unavailable')
     return null
   }
 }
@@ -63,10 +56,10 @@ async function fetchInstagramPreview(url: string) {
 function getPlatform(url: string): string | null {
   const hostname = new URL(url).hostname.toLowerCase()
 
-  if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+  if (['twitter.com', 'www.twitter.com', 'x.com', 'www.x.com'].includes(hostname)) {
     return 'twitter'
   }
-  if (hostname.includes('instagram.com')) {
+  if (['instagram.com', 'www.instagram.com'].includes(hostname)) {
     return 'instagram'
   }
   return null
@@ -79,7 +72,10 @@ serve(async (req) => {
   }
 
   try {
-    const { url } = await req.json()
+    if (req.method !== 'POST') return new Response(null, { status: 405, headers: corsHeaders })
+    const raw = await req.text()
+    if (raw.length > 4096) return new Response(null, { status: 413, headers: corsHeaders })
+    const { url } = JSON.parse(raw)
 
     if (!url) {
       return new Response(
@@ -94,7 +90,7 @@ serve(async (req) => {
     // URL 유효성 검사
     let targetUrl: URL
     try {
-      targetUrl = new URL(url)
+      targetUrl = previewURL(url)
     } catch (e) {
       return new Response(
         JSON.stringify({ error: 'Invalid URL' }),
@@ -105,7 +101,10 @@ serve(async (req) => {
       )
     }
 
-    console.log('Fetching link preview for:', url)
+    const basic = { url: targetUrl.href, title: targetUrl.hostname, description: null,
+      image: null, siteName: targetUrl.hostname, favicon: null, blocked: true }
+    // Arbitrary external links still render, without fetching their origin server-side.
+    if (!canFetchPreview(targetUrl)) return Response.json(basic, { headers: corsHeaders })
 
     // 특정 플랫폼은 oEmbed API 사용
     const platform = getPlatform(url)
@@ -113,7 +112,6 @@ serve(async (req) => {
     if (platform === 'twitter') {
       const twitterPreview = await fetchTwitterPreview(url)
       if (twitterPreview) {
-        console.log('Twitter preview extracted:', twitterPreview)
         return new Response(
           JSON.stringify(twitterPreview),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -124,7 +122,6 @@ serve(async (req) => {
     if (platform === 'instagram') {
       const instagramPreview = await fetchInstagramPreview(url)
       if (instagramPreview) {
-        console.log('Instagram preview extracted:', instagramPreview)
         return new Response(
           JSON.stringify(instagramPreview),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -134,36 +131,9 @@ serve(async (req) => {
 
     // 일반 웹페이지 HTML 가져오기
     // 네이버 등 일부 사이트는 Googlebot을 차단하므로 일반 브라우저 User-Agent 사용
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-        'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
-      }
-    })
-
-    // 429 (Rate Limited) 또는 403 (Forbidden) 에러 시 기본 정보만 반환
-    if (response.status === 429 || response.status === 403) {
-      console.log(`Site blocked access (${response.status}), returning basic info`)
-      return new Response(
-        JSON.stringify({
-          url: url,
-          title: targetUrl.hostname.replace('www.', ''),
-          description: null,
-          image: null,
-          siteName: targetUrl.hostname.replace('www.', ''),
-          favicon: `${targetUrl.protocol}//${targetUrl.host}/favicon.ico`,
-          blocked: true  // 클라이언트에서 차단 여부 확인용
-        }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const html = await response.text()
+    let html: string
+    try { html = await fetchPreviewText(targetUrl) }
+    catch { return Response.json(basic, { headers: corsHeaders }) }
     const $ = load(html)
 
     // Open Graph 메타데이터 추출
@@ -200,19 +170,13 @@ serve(async (req) => {
                    $('link[rel="shortcut icon"]').attr('href') ||
                    '/favicon.ico'
 
-    // 상대 URL을 절대 URL로 변환
-    if (favicon && !favicon.startsWith('http')) {
-      metadata.favicon = `${targetUrl.protocol}//${targetUrl.host}${favicon.startsWith('/') ? '' : '/'}${favicon}`
-    } else {
-      metadata.favicon = favicon
+    const safeAsset = (value: string | null) => {
+      if (!value) return null
+      try { return previewURL(new URL(value, targetUrl).href).href } catch { return null }
     }
+    metadata.favicon = safeAsset(favicon)
+    metadata.image = safeAsset(metadata.image)
 
-    // 이미지도 절대 URL로 변환
-    if (metadata.image && !metadata.image.startsWith('http')) {
-      metadata.image = `${targetUrl.protocol}//${targetUrl.host}${metadata.image.startsWith('/') ? '' : '/'}${metadata.image}`
-    }
-
-    console.log('Link preview extracted:', metadata)
 
     return new Response(
       JSON.stringify(metadata),
@@ -223,12 +187,11 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Link preview error:', error)
+    console.warn('Link preview unavailable')
 
     return new Response(
       JSON.stringify({
-        error: 'Failed to fetch link preview',
-        message: error.message
+        error: 'Failed to fetch link preview'
       }),
       {
         status: 500,

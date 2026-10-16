@@ -5,7 +5,9 @@ type Dependencies = { env?: { get(name: string): string | undefined }; fetcher?:
 export async function authorizePush(req: Request, input: Record<string, unknown>, deps: Dependencies = {}) {
   const access = await authorize(req, 'user', deps)
   if (access instanceof Response) return access
-  if (access.admin || access.service) {
+  // Admin UI also emits event-only DM/mention payloads. Those use the same canonical event checks.
+  const eventOnly = ['dm', 'mention'].includes(String(input.tag)) && input.title === undefined && input.body === undefined
+  if ((access.admin || access.service) && !eventOnly) {
     if (typeof input.title !== 'string' || !input.title.trim() || input.title.length > 200 ||
         typeof input.body !== 'string' || !input.body.trim() || input.body.length > 2000 ||
         (input.userId !== undefined && (typeof input.userId !== 'string' || !/^[a-f0-9-]{36}$/i.test(input.userId)))) return json({ error: 'Invalid push' }, 400)
