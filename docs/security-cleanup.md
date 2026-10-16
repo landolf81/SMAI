@@ -36,11 +36,11 @@
 - users.role은 실제 컬럼 목록에도 없다. admin_roles를 권한 기준으로 사용. users의 공개 SELECT와 민감 컬럼 분리는 소비자 목록/컬럼 GRANT 검토가 필요하다.
 - `docs/security/rls-draft.sql`은 운영 스키마와 대조한 trade_items/DM 초안이다. migrations 디렉터리에 넣지 않았으며 마지막에 ROLLBACK한다. **실제 PostgreSQL fixture에서 아직 실행하지 않았다.** 문법·권한·관리자 업무 영향 확인 후 승인된 migration으로 승격해야 한다.
 - 익명 투표는 신뢰할 수 있는 서명된 익명 식별 API/UI 동시 변경이 필요하므로 기존 정책을 로컬에서 임의로 무력화하지 않았다.
-- link-preview SSRF, users 컬럼 분리, 전역 rate limit, R2 Worker 서버 권한, CSP/대표 도메인 정리는 이번 완료 묶음에 포함하지 않았다.
+- 재검토에서 link-preview는 정확한 호스트 허용목록·redirect 검사·크기/시간 제한으로 추가 보강했다. 임의 외부 호스트는 기본 링크 카드만 제공한다. users 컬럼 분리, 전역 rate limit, R2 Worker 서버 권한, CSP/대표 도메인 정리는 아직 미완료다.
 
 ## 의존성 남은 항목
 
-최초 감사 50개(critical 1/high 20/moderate 28/low 1)에서 호환 범위 패치 후 critical은 0개. 남은 정확한 수는 감사 폴더 cleanup-npm-audit.json 참조. Tailwind 4·React Router 7·sharp 0.35 등 주요/호환성 변경이 필요한 제안은 force 적용하지 않았다. 현재 UI/라우팅/이미지 도구 영향 검증을 별도 작업으로 해야 한다. 개발 의존성과 실제 운영 공격 도달성은 구분한다.
+최초 감사 50개(critical 1/high 20/moderate 28/low 1)에서 호환 범위 패치 후 critical은 0개. 남은 정확한 수는 감사 폴더 cleanup-npm-audit.json 참조. Tailwind 4·React Router 7·sharp 0.35 등 주요/호환성 변경이 필요한 제안은 force 적용하지 않았다. 현재 UI/라우팅 영향 검증을 별도 작업으로 해야 한다. 재검토에서 추적 소스 사용처가 없는 sharp는 제거했다. 개발 의존성과 실제 운영 공격 도달성은 구분한다.
 
 ## 로컬 검증
 
