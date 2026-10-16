@@ -82,3 +82,26 @@ test('split saved-post methods retain duplicate-save handling and saved order', 
     assert.deepEqual(saved.map(post => [post.id, post.content]), [[2, 'second'], [1, 'first']]);
   } finally { delete globalThis.__cleanupSupabase; }
 });
+
+test('tagged feed filters in DB before range so matches beyond the first unfiltered page remain pageable', async () => {
+  const rows = Array.from({length:35},(_,i)=>({id:i+1,user_id:'u',description:'post',photo:null,tag:i>=15?'target':'other',users:{name:'농부'}}));
+  const requests=[];
+  globalThis.__cleanupSupabase={ from(table){
+    const filters={};let start=0,end=9,selection='';
+    return {select(value){selection=value;return this;},or(){return this;},order(){return this;},range(a,b){start=a;end=b;return this;},eq(k,v){filters[k]=v;return this;},in(){return this;},then(resolve){
+      requests.push({table,filters,selection,start,end});
+      let data=[];
+      if(table==='posts')data=rows.filter(row=>!filters['filter_tags.tag_id']||row.tag===filters['filter_tags.tag_id']).slice(start,end+1);
+      if(table==='post_tags')data=rows.filter(row=>row.tag==='target').map(row=>({post_id:row.id,tags:{id:'target',name:'tag'}}));
+      return Promise.resolve({data,error:null}).then(resolve);
+    }};
+  },rpc(){throw new Error('tagged feed must not call unfiltered ranking RPC');}};
+  const {postService}=await loadModule('../src/services/postService.js',postServiceMocks);
+  try {
+    const first=await postService.getPosts({tagId:'target',limit:10,offset:0});
+    const next=await postService.getPosts({tagId:'target',limit:10,offset:10});
+    assert.deepEqual(first.map(p=>p.id),Array.from({length:10},(_,i)=>i+16));
+    assert.deepEqual(next.map(p=>p.id),Array.from({length:10},(_,i)=>i+26));
+    assert.match(requests.find(r=>r.table==='posts').selection,/post_tags!inner/);
+  } finally { delete globalThis.__cleanupSupabase; }
+});

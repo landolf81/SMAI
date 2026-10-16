@@ -31,7 +31,7 @@ export const postService = {
       let posts = [];
 
       // algorithm 모드: DB 함수로 개인화 피드 조회 (열람 횟수 + 고정 + 최신글 로직 포함)
-      if (sortBy === 'algorithm' && !userId && !search) {
+      if (sortBy === 'algorithm' && !userId && !search && !tagId) {
         const { data: feedData, error: feedError } = await supabase
           .rpc('get_personalized_feed', {
             p_user_id: currentUser?.id || null,
@@ -94,6 +94,7 @@ export const postService = {
           .from('posts')
           .select(`
             *,
+            ${tagId ? "filter_tags:post_tags!inner(tag_id)," : ""}
             users:user_id (
               id,
               username,
@@ -105,12 +106,15 @@ export const postService = {
 
         // 정렬 방식 선택
         if (sortBy === 'latest') {
-          query = query.order('created_at', { ascending: false });
+          query = query.order('created_at', { ascending: false }).order('id', { ascending: false });
         } else if (sortBy === 'popular') {
           query = query.order('hot_score', { ascending: false });
         } else {
-          query = query.order('created_at', { ascending: false });
+          query = query.order('created_at', { ascending: false }).order('id', { ascending: false });
         }
+
+        // Filter before range: returned length remains the actual page length.
+        if (tagId) query = query.eq('filter_tags.tag_id', tagId);
 
         // 페이지네이션
         query = query.range(offset, offset + limit - 1);
@@ -207,13 +211,6 @@ export const postService = {
           finalScore
         };
       });
-
-      // 태그 필터 (클라이언트 측)
-      if (tagId) {
-        return postsWithDetails.filter(post =>
-          post.tags.some(tag => tag.id === tagId)
-        );
-      }
 
       return postsWithDetails;
     } catch (error) {

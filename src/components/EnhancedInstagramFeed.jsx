@@ -70,7 +70,7 @@ const EnhancedInstagramFeed = ({ tag, search, userId, highlightPostId, enableSna
     },
     getNextPageParam: (lastPage, pages) => {
       // 페이지 크기만큼 받았으면 다음 페이지 있음
-      // 필터링은 클라이언트에서 하므로 원본 데이터 기준으로 판단
+      // 태그 필터도 DB에서 적용하므로 반환된 페이지 크기로 판단
       return lastPage.length === PAGE_SIZE ? pages.length : undefined;
     },
     staleTime: 5 * 60 * 1000,  // 5분 캐시

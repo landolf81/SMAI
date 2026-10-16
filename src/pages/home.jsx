@@ -19,7 +19,7 @@ import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import PushNotificationBanner from '../components/PushNotificationBanner';
 import MarketSearchModal from '../components/MarketSearchModal';
-import CombinedMarketCard from '../components/CombinedMarketCard';
+import CombinedMarketCard from '../components/DeferredCombinedMarketCard';
 import BannerAd from '../components/BannerAd';
 import { BANNER_SLOTS } from '../services/bannerAdService';
 
