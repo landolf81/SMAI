@@ -6,9 +6,8 @@ import StoreIcon from '@mui/icons-material/Store';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SearchIcon from '@mui/icons-material/Search';
-import { marketService, weatherBriefingService, postService } from '../services';
+import { marketService, postService } from '../services';
 import MarketCards from '../components/MarketCards';
 import DatePickerModal from '../components/DatePickerModal';
 
@@ -18,8 +17,6 @@ import EnhancedInstagramPost from '../components/EnhancedInstagramPost';
 import { isMobileDevice, isTabletDevice, isDesktopDevice } from '../utils/deviceDetector';
 import { useScrollRestore } from '../hooks/useScrollRestore';
 import { useScrollDirection } from '../hooks/useScrollDirection';
-import { useAdminPermissions } from '../hooks/usePermissions';
-import { useWeather } from '../hooks/useWeather';
 import PushNotificationBanner from '../components/PushNotificationBanner';
 import MarketSearchModal from '../components/MarketSearchModal';
 import CombinedMarketCard from '../components/CombinedMarketCard';
@@ -100,15 +97,7 @@ const MobileHome = () => {
   // 날씨 모달 상태
   const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
 
-  // 날씨 브리핑 상태
-  const [weatherBriefing, setWeatherBriefing] = useState(null);
-  const [briefingRegenerating, setBriefingRegenerating] = useState(false);
-  const briefingFetchedRef = useRef(false); // 브리핑 중복 요청 방지
-  const adminPermissions = useAdminPermissions();
   const { currentUser, loading: authLoading } = useContext(AuthContext);
-
-  // 날씨 데이터: 공유 useWeather 훅으로 위젯/모달과 단일 fetch 공유
-  const { data: weather } = useWeather();
 
   // 스와이프 관련 상태
   const [swipeDirection, setSwipeDirection] = useState(null); // 'left' | 'right' | null
@@ -162,7 +151,7 @@ const MobileHome = () => {
     const loadInitialData = async () => {
       try {
         // 병렬 실행: 시장 설정, 공판장 정보 (LCP 개선: 병렬 로드)
-        // 날씨는 useWeather 훅이 담당하고, 브리핑은 weather 변경 시 별도 effect에서 처리
+        // 날씨 수치는 WeatherWidget/WeatherModal의 공유 useWeather 훅에서 조회한다.
         const [settings, marketInfoList] = await Promise.all([
           marketService.getMarketSettings(),
           marketService.getMarketInfo().catch(() => []), // 오류 시 빈 배열 fallback
@@ -194,36 +183,6 @@ const MobileHome = () => {
     loadInitialData();
 
   }, []);
-
-  // 날씨 데이터가 준비되면 브리핑 1회 요청 (Gemini)
-  useEffect(() => {
-    if (!weather || briefingFetchedRef.current) return;
-    briefingFetchedRef.current = true;
-    weatherBriefingService.getBriefing(weather)
-      .then((briefing) => { if (briefing) setWeatherBriefing(briefing); })
-      .catch((error) => {
-        console.error('날씨 브리핑 로드 실패:', error);
-        briefingFetchedRef.current = false; // 실패 시 재시도 허용
-      });
-  }, [weather]);
-
-  // 관리자 전용: Gemini로 브리핑 재생성
-  const handleRegenerateBriefing = async () => {
-    if (authLoading || !adminPermissions.isAdmin || briefingRegenerating) return;
-    if (!weather) {
-      alert('날씨 데이터를 아직 불러오지 못했습니다.');
-      return;
-    }
-    setBriefingRegenerating(true);
-    try {
-      const briefing = await weatherBriefingService.regenerateBriefing(weather);
-      if (briefing) setWeatherBriefing(briefing);
-    } catch (error) {
-      alert(`요청 오류: ${error.message}`);
-    } finally {
-      setBriefingRegenerating(false);
-    }
-  };
 
   // 인기 게시물 지연 로딩 (스크롤 시 IntersectionObserver로 감지)
   useEffect(() => {
@@ -768,7 +727,6 @@ const MobileHome = () => {
       <WeatherModal
         isOpen={isWeatherModalOpen}
         onClose={() => setIsWeatherModalOpen(false)}
-        briefing={weatherBriefing}
       />
 
       {/* 메인 콘텐츠 - 스와이프 영역 */}
@@ -881,25 +839,7 @@ const MobileHome = () => {
         marketDate={selectedDate}
       />
 
-      {/* 관리자 전용 플로팅 버튼 (왼쪽 하단) */}
-      {!authLoading && adminPermissions.isAdmin && (
-        <button
-          onClick={handleRegenerateBriefing}
-          disabled={briefingRegenerating}
-          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
-            briefingRegenerating
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
-          } ${scrollDirection === 'down' ? '-translate-x-20' : 'translate-x-0'}`}
-          title="날씨 브리핑 재생성"
-        >
-          {briefingRegenerating ? (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <AutoAwesomeIcon className="text-white" />
-          )}
-        </button>
-      )}
+
     </div>
   );
 };

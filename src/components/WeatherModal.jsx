@@ -5,7 +5,7 @@ import { weatherService } from '../services/weatherService';
 import { useWeather } from '../hooks/useWeather';
 import LoadingSpinner from './LoadingSpinner';
 
-const WeatherModal = ({ isOpen, onClose, briefing }) => {
+const WeatherModal = ({ isOpen, onClose }) => {
   // 공유 useWeather 훅 — 모달이 열렸을 때만 활성화. 위젯이 이미 채운 캐시를 즉시 공유.
   const { data: weather, isLoading: loading, isError } = useWeather({ enabled: isOpen });
   const error = isError ? '날씨 정보를 불러올 수 없습니다.' : null;
@@ -120,14 +120,6 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
             </svg>
           </button>
         </div>
-
-        {/* AI 브리핑 */}
-        {briefing && (
-          <div className="bg-base-200 text-base-content px-4 py-3 text-base border-b border-base-300">
-            <span className="text-[#154734] font-medium mr-2">참외 날씨</span>
-            <span>{briefing}</span>
-          </div>
-        )}
 
         {/* 탭 */}
         <div className="flex border-b">
@@ -361,8 +353,7 @@ const WeatherModal = ({ isOpen, onClose, briefing }) => {
 WeatherModal.propTypes = {
   ...WeatherModal.propTypes,
   "isOpen": PropTypes.bool,
-  "onClose": PropTypes.func,
-  "briefing": PropTypes.string
+  "onClose": PropTypes.func
 };
 
 export default WeatherModal;
