@@ -221,9 +221,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
         const errorMsg = error.response.data;
         toast.innerHTML = `
           <div class="alert alert-warning">
-            <span>⚠️ ${errorMsg.includes('already liked') ? '이미 좋아요를 누른 게시글입니다.' : errorMsg}</span>
+            <span>⚠️ <span data-toast-text></span></span>
           </div>
         `;
+      toast.querySelector('[data-toast-text]').textContent = String((errorMsg.includes('already liked') ? '이미 좋아요를 누른 게시글입니다.' : errorMsg) ?? '');
         document.body.appendChild(toast);
         setTimeout(() => {
           if (document.body.contains(toast)) {
@@ -305,9 +306,10 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
       errorToast.className = 'toast toast-top toast-center z-50';
       errorToast.innerHTML = `
         <div class="alert alert-error">
-          <span>❌ ${errorMessage}</span>
+          <span>❌ <span data-toast-text></span></span>
         </div>
       `;
+      errorToast.querySelector('[data-toast-text]').textContent = String((errorMessage) ?? '');
       document.body.appendChild(errorToast);
       setTimeout(() => {
         if (document.body.contains(errorToast)) {

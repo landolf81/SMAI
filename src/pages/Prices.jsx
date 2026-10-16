@@ -5,18 +5,14 @@ import { useQuery } from '@tanstack/react-query';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import toast from 'react-hot-toast';
-import { marketService, briefingService, adService } from '../services';
-import { useAdminPermissions } from '../hooks/usePermissions';
+import { marketService, adService } from '../services';
 import { AuthContext } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import MobileAdDisplay from '../components/MobileAdDisplay';
 import { shouldShowAds } from '../utils/deviceDetector';
-import { useScrollDirection } from '../hooks/useScrollDirection';
 import { sortAdsByPriority, getAdViewCounts } from '../utils/adPriority';
-import { generatePriceDetailShareText, shareContent } from '../utils/shareUtils';
 import PriceDetailModal from '../components/PriceDetailModal';
 import LocalMarketDetailModal from '../components/LocalMarketDetailModal';
 import GradeCategorySummary from '../components/GradeCategorySummary';
@@ -46,16 +42,12 @@ const Prices = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [gradeSettings, setGradeSettings] = useState(null); // DB에서 가져온 등급 설정
-  const [briefing, setBriefing] = useState(null); // AI 브리핑
-  const [briefingGenerating, setBriefingGenerating] = useState(false); // 브리핑 생성 중
   const [auctionTime, setAuctionTime] = useState(null); // 경매시간
   const [selectedGrade, setSelectedGrade] = useState(null); // 도매시장 모달용 선택된 등급/법인명
   const [localSelectedGrade, setLocalSelectedGrade] = useState(null); // 산지(로컬마켓) 모달용 선택된 등급
   const [favorites, setFavorites] = useState([]); // 즐겨찾기 목록
   const [searchModalOpen, setSearchModalOpen] = useState(false); // 검색 모달
-  const adminPermissions = useAdminPermissions();
   const { currentUser, loading: authLoading } = useContext(AuthContext);
-  const scrollDirection = useScrollDirection();
 
   // URL 파라미터에서 시장명과 날짜 가져오기
   const marketName = searchParams.get('market');
@@ -223,16 +215,6 @@ const Prices = () => {
         .then(time => setAuctionTime(time))
         .catch(() => setAuctionTime(null));
 
-      // 모든 공판장에서 브리핑 조회
-      briefingService.getBriefing(marketName, selectedDate)
-        .then(result => {
-          if (result?.briefing) {
-            setBriefing(result);
-          } else {
-            setBriefing(null);
-          }
-        })
-        .catch(() => setBriefing(null));
     } else {
       setLoading(false);
       setError('시장을 선택해주세요.');
@@ -280,54 +262,8 @@ const Prices = () => {
     }
   };
 
-  // 관리자 전용: 브리핑 생성
-  const handleGenerateBriefing = async () => {
-    if (authLoading || !adminPermissions.isAdmin || !marketName || briefingGenerating) return;
-
-    setBriefingGenerating(true);
-    try {
-      const result = await briefingService.generateBriefing(marketName, selectedDate);
-      if (result.success) {
-        setBriefing({ briefing: result.briefing, trend: result.trend });
-        alert(`브리핑 생성 완료!\n\n"${result.briefing}"`);
-      } else {
-        alert(`브리핑 생성 실패: ${result.error}`);
-      }
-    } catch (error) {
-      alert(`브리핑 생성 오류: ${error.message}`);
-    } finally {
-      setBriefingGenerating(false);
-    }
-  };
-
   const formatPrice = (price) => {
     return price ? price.toLocaleString('ko-KR') : '0';
-  };
-
-  // 브리핑 터치 시 공유 핸들러
-  const handleShareBriefing = async () => {
-    if (!marketData?.summary) return;
-
-    const shareData = {
-      name: marketName,
-      averagePrice: marketData.summary.overall_avg_price,
-      maxPrice: marketData.details?.[0]?.max_price || 0,
-      minPrice: marketData.details?.[marketData.details.length - 1]?.min_price || 0,
-      totalQuantity: marketData.summary.total_boxes,
-      unit: '상자'
-    };
-
-    const text = generatePriceDetailShareText(
-      shareData,
-      selectedDate,
-      briefing?.briefing
-    );
-
-    const result = await shareContent(`${marketName} 시세`, text);
-
-    if (result.success && result.method === 'clipboard') {
-      toast.success('시세 정보가 복사되었습니다');
-    }
   };
 
   const formatDate = (dateStr) => {
@@ -516,19 +452,6 @@ const Prices = () => {
       <div className="w-full max-w-screen-xl mx-auto px-4 pt-3">
         <BannerAd slot={BANNER_SLOTS.PRICES_TOP} />
       </div>
-
-      {/* AI 브리핑 배너 - 모든 공판장 (터치 시 공유) */}
-      {briefing?.briefing && (
-        <div
-          className="w-full max-w-screen-xl mx-auto px-4 pt-4"
-          onClick={handleShareBriefing}
-        >
-          <div className="bg-base-100 text-base-content/70 rounded-xl px-4 py-3 border border-base-300 shadow-sm cursor-pointer active:scale-[0.98] transition-transform">
-            <p className="text-base leading-relaxed font-medium">{briefing.briefing}</p>
-            <p className="text-sm text-base-content/50 mt-1">터치하여 공유하기</p>
-          </div>
-        </div>
-      )}
 
       {/* 메인 콘텐츠 */}
       <div className="w-full max-w-screen-xl mx-auto p-4">
@@ -873,25 +796,7 @@ const Prices = () => {
         marketDate={selectedDate}
       />
 
-      {/* 관리자 전용 플로팅 버튼 (왼쪽 하단) */}
-      {!authLoading && adminPermissions.isAdmin && (
-        <button
-          onClick={handleGenerateBriefing}
-          disabled={briefingGenerating}
-          className={`fixed bottom-24 left-4 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 ${
-            briefingGenerating
-              ? 'bg-base-300 cursor-not-allowed'
-              : 'bg-[#004225] hover:bg-[#003018] active:scale-95'
-          } ${scrollDirection === 'down' ? '-translate-x-20' : 'translate-x-0'}`}
-          title="AI 브리핑 생성"
-        >
-          {briefingGenerating ? (
-            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <AutoAwesomeIcon className="text-white" />
-          )}
-        </button>
-      )}
+
     </div>
   );
 };

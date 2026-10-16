@@ -105,7 +105,6 @@ async function loadHome(api, cache = {}) {
             async getWholesaleAggregateForCard(date) { call('wholesale', date); return null; },
           };
           export const postService = { async getHottestPost() { call('post'); return null; } };
-          export const weatherBriefingService = {};
         ` };
         return { contents: `function Mock() { return null; } Mock.mockName = ${JSON.stringify(path.split('/').pop())}; export default Mock;` };
       });

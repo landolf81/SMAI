@@ -36,7 +36,7 @@ export const generateMarketShareText = (market, date) => {
 /**
  * 상세 페이지용 공유 텍스트 생성
  */
-export const generatePriceDetailShareText = (market, date, briefing) => {
+export const generatePriceDetailShareText = (market, date) => {
   const formattedDate = formatShareDate(date);
   const shortName = shortenMarketName(market.name);
 
@@ -46,11 +46,6 @@ export const generatePriceDetailShareText = (market, date, briefing) => {
 평균 ${market.averagePrice?.toLocaleString()} | 최고 ${market.maxPrice?.toLocaleString()} | 최저 ${market.minPrice?.toLocaleString()}
 출하량 ${market.totalQuantity?.toLocaleString()}${market.unit}`;
 
-  if (briefing) {
-    text += `
-
-💬 ${briefing}`;
-  }
 
   text += `
 

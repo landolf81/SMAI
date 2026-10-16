@@ -8,9 +8,8 @@
     "build": "vite build",
     "build:prod": "NODE_ENV=production vite build",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
+    "test": "node --test tests/*.test.mjs",
+    "test:coverage": "node --experimental-test-coverage --test tests/*.test.mjs",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext js,jsx --fix",
     "analyze": "npm run build && npx vite-bundle-analyzer dist",
@@ -31,7 +30,7 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@mui/icons-material": "^5.15.7",
     "@mui/material": "^5.15.7",
-    "@supabase/supabase-js": "^2.81.1",
+    "@supabase/supabase-js": "2.88.0",
     "@tanstack/react-query": "^5.18.1",
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^2.0.0",
@@ -72,7 +71,6 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss": "^8.4.33",
     "rimraf": "^6.0.1",
-    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "vite": "^7.3.6"
   }

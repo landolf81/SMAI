@@ -29,18 +29,6 @@ test('market grades loads full and partial pages and normalizes duplicate names'
   } finally { delete globalThis.__cleanupSupabase; }
 });
 
-test('agent request helper reuses a current KST-day cache without triggering network', async () => {
-  let cutoff;
-  const chain = { select() { return this; }, eq() { return this; }, gte(field, value) { cutoff = value; return this; }, order() { return this; }, limit() { return this; }, async maybeSingle() { return { data: { response: 'cached response' } }; } };
-  globalThis.__cleanupSupabase = { from() { return chain; } };
-  const { getLatestOrRequest } = await loadModule('../src/services/agentService.js', { '../config/supabase.js': 'export const supabase = globalThis.__cleanupSupabase;' });
-  try {
-    assert.equal(await getLatestOrRequest(), 'cached response');
-    const today = new Date(Date.now() + 9 * 3600000).toISOString().split('T')[0];
-    assert.equal(cutoff, new Date(`${today}T00:00:00+09:00`).toISOString());
-  } finally { delete globalThis.__cleanupSupabase; }
-});
-
 test('secure ad wrapper passes request params through the imported client', async () => {
   const calls = [];
   globalThis.__cleanupClient = { async get(...args) { calls.push(args); return { data: ['ad'] }; } };
