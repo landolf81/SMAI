@@ -102,9 +102,8 @@ const loungeService = {
           if (mentioned && mentioned.id !== user.id) {
             const senderName = data.users?.name || '누군가';
             pushNotificationService.sendMentionPush({
+              referenceId: data.id,
               receiverId: mentioned.id,
-              senderName,
-              content,
             }).catch(() => {});
             // 개인 알림 저장
             notificationService.createNotification({

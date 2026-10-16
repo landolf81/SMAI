@@ -1,3 +1,7 @@
+import { authorizePush } from '../_shared/pushAuthorization.ts'
+import { reserveSecurityAction } from '../_shared/securityQuota.ts'
+import { trustedPushEndpoint } from '../_shared/pushEndpoint.ts'
+import { readBoundedJSON } from '../_shared/requestBody.ts'
 /**
  * send-push Edge Function
  * 관리자가 모든 구독자에게 Web Push 알림 발송
@@ -28,7 +32,14 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { title, body, url, userId } = await req.json()
+    if (req.method !== 'POST') return new Response(null, { status: 405, headers: corsHeaders })
+    const input = await readBoundedJSON(req)
+    if (input instanceof Response) return input
+    const payloadData = await authorizePush(req, input)
+    if (payloadData instanceof Response) return payloadData
+    const { title, body, url, userId, actor, scope, eventKey } = payloadData
+    const quota = await reserveSecurityAction(actor, scope, eventKey, scope === 'push-broadcast' ? 1 : 30, 60)
+    if (quota) return quota
 
     if (!title || !body) {
       return new Response(JSON.stringify({ error: '제목과 내용이 필요합니다' }), {
@@ -60,6 +71,7 @@ Deno.serve(async (req) => {
     // 각 구독자에게 발송
     for (const sub of subscriptions) {
       try {
+        if (!trustedPushEndpoint(sub.endpoint)) { failed++; continue }
         const pushSubscription = {
           endpoint: sub.endpoint,
           keys: {
@@ -83,10 +95,12 @@ Deno.serve(async (req) => {
         )
 
         // Deno fetch로 푸시 서비스에 전송
+        if (!trustedPushEndpoint(requestDetails.endpoint)) { failed++; continue }
         const response = await fetch(requestDetails.endpoint, {
           method: requestDetails.method,
           headers: requestDetails.headers as Record<string, string>,
           body: requestDetails.body,
+          redirect: 'manual', signal: AbortSignal.timeout(8000),
         })
 
         if (response.status === 201 || response.status === 202) {
@@ -96,12 +110,12 @@ Deno.serve(async (req) => {
           expiredIds.push(sub.id)
           failed++
         } else {
-          const responseText = await response.text()
-          console.error(`Push failed for ${sub.endpoint}: ${response.status} ${responseText}`)
+          await response.body?.cancel()
+          console.error(`Push delivery failed: ${response.status}`)
           failed++
         }
       } catch (e: any) {
-        console.error(`Push error for ${sub.endpoint}:`, e.message || e)
+        console.error('Push delivery failed')
         failed++
       }
     }
@@ -119,8 +133,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e: any) {
-    console.error('send-push error:', e)
-    return new Response(JSON.stringify({ error: e.message }), {
+    console.error('send-push failed')
+    return new Response(JSON.stringify({ error: 'Push service unavailable' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

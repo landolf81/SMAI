@@ -161,15 +161,13 @@ export const pushNotificationService = {
    * @returns {Promise<number>}
    */
   async getSubscriberCount() {
-    const { count, error } = await supabase
-      .from('push_subscriptions')
-      .select('*', { count: 'exact', head: true });
+    const { data, error } = await supabase.rpc('get_push_subscriber_count');
 
     if (error) {
       console.error('[Push] 구독자 수 조회 실패:', error);
       return 0;
     }
-    return count || 0;
+    return Number(data) || 0;
   },
 
   /**
@@ -227,14 +225,11 @@ export const pushNotificationService = {
   /**
    * 광장 @멘션 시 해당 사용자에게 푸시 알림 발송 (fire-and-forget)
    */
-  async sendMentionPush({ receiverId, senderName, content }) {
-    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
+  async sendMentionPush({ receiverId, referenceId }) {
     const { error } = await supabase.functions.invoke('send-push', {
       body: {
         userId: receiverId,
-        title: `${senderName}님이 회원님을 언급했어요`,
-        body: preview,
-        url: '/lounge',
+        referenceId,
         tag: 'mention',
       },
     });
@@ -244,14 +239,11 @@ export const pushNotificationService = {
     }
   },
 
-  async sendDmPush({ receiverId, senderName, senderId, content }) {
-    const preview = content.length > 60 ? content.slice(0, 60) + '…' : content;
+  async sendDmPush({ receiverId, referenceId }) {
     const { error } = await supabase.functions.invoke('send-push', {
       body: {
         userId: receiverId,
-        title: `💬 ${senderName}`,
-        body: preview,
-        url: `/dm/${senderId}`,
+        referenceId,
         tag: 'dm',
       },
     });
