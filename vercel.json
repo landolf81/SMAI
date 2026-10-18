@@ -2,8 +2,12 @@
   "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build && mv dist/index.html dist/_app.html",
   "outputDirectory": "dist",
-  "functions": { "api/translation.js": { "maxDuration": 60 } },
+  "functions": {
+    "api/translation.js": { "maxDuration": 60 },
+    "api/share.js": { "includeFiles": "{assets/og/**,public/logo.svg}", "maxDuration": 15 }
+  },
   "rewrites": [
+    { "source": "/api/share", "destination": "/api/share" },
     { "source": "/api/translation", "destination": "/api/translation" },
     { "source": "/(.*)", "destination": "/api/render" }
   ],

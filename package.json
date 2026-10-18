@@ -55,7 +55,8 @@
     "recharts": "^3.1.0",
     "swiper": "^12.2.0",
     "theme-change": "^2.5.0",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "sharp": "0.34.5"
   },
   "devDependencies": {
     "@nodelib/fs.walk": "^3.0.1",

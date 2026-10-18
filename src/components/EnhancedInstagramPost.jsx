@@ -1,3 +1,4 @@
+import { SITE_URL } from '../utils/postShareMetadata';
 import { usePostTradeState } from './postTradeState';
 /* eslint-disable react/prop-types */
 import React, { useContext, useRef, useEffect, useState } from 'react';
@@ -598,18 +599,29 @@ const EnhancedInstagramPost = ({ post, isVisible = true, onVideoPlay, onVideoPau
   };
 
 
-  const handleShare = () => {
-    const shareUrl = `${window.location.origin}/post/${post.id}`;
-    const shareText = `${authorName}님의 게시글: ${postContent.slice(0, 100)}${postContent.length > 100 ? '...' : ''}`;
+  const handleShare = async () => {
+    let meta;
+    try {
+      const response = await fetch(`/api/share?id=${encodeURIComponent(post.id)}`, { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error('Unavailable');
+      meta = await response.json();
+      if (!meta.available) return;
+    } catch {
+      window.alert('공개된 게시글만 공유할 수 있습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
+    const shareUrl = `${SITE_URL}/post/${encodeURIComponent(post.id)}`;
+    const shareText = meta.description;
 
     if (navigator.share) {
       navigator.share({
-        title: '게시글 공유',
+        title: meta.title,
         text: shareText,
         url: shareUrl
       }).then(() => {
         // 공유 성공 로그 제거
-      }).catch(() => {
+      }).catch((error) => {
+        if (error.name === 'AbortError') return;
         // 공유 실패 로그 제거
         // 공유 실패 시 클립보드 복사로 fallback
         fallbackShare(shareUrl);

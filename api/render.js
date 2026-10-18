@@ -1,3 +1,6 @@
+import { getPublicPost, serverPostMetadata } from '../lib/public-post.js';
+import { unavailableMetadata, validPostId } from '../src/utils/postShareMetadata.js';
+import { injectShareHead } from '../lib/share-html.js';
 /**
  * api/render.js
  * Vercel Edge Function - 크롤러 감지 및 SEO HTML 제공
@@ -210,15 +213,31 @@ export default async function handler(req) {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
+  const postMatch = pathname.match(/^\/post\/([^/]+)\/?$/);
+  let postMeta = null;
+  let postStatus = 200;
+  if (postMatch) {
+    try {
+      const post = validPostId(postMatch[1]) ? await getPublicPost(postMatch[1]) : null;
+      postMeta = post ? serverPostMetadata(post) : unavailableMetadata(postMatch[1]);
+      if (!post) postStatus = 404;
+    } catch (error) {
+      console.error('[post-share] metadata lookup failed', error.name, error.code || 'lookup', String(error.message || '').replace(/https?:\/\/\S+/g, '[url]').replace(/[A-Za-z0-9_-]{24,}/g, '[redacted]').slice(0, 160));
+      postMeta = unavailableMetadata(postMatch[1]);
+      postStatus = 503;
+    }
+  }
+
   // 크롤러 감지
   if (CRAWLER_UA.test(ua)) {
     const meta = getMetaForPath(pathname);
-    return new Response(generateSeoHtml(meta, pathname), {
-      status: 200,
+    return new Response(injectShareHead(generateSeoHtml(meta, pathname), postMeta || { ...meta, available: true, image: OG_IMAGE, url: `${SITE_URL}${pathname}`, type: 'website' }), {
+      status: postStatus,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Vary': 'User-Agent',
+        'CDN-Cache-Control': 'no-store',
       },
     });
   }
@@ -226,16 +245,28 @@ export default async function handler(req) {
   // 일반 사용자: 정적 index.html 반환
   const origin = url.origin;
   try {
-    const indexResponse = await fetch(`${origin}/_app.html`, {
-      headers: { 'x-bypass-render': 'true' },
-    });
+    const headers = { 'x-bypass-render': 'true' };
+    // Protected previews must authenticate their own static-shell request.
+    // Forward credentials only to this deployment's exact platform-provided origin.
+    if (process.env.VERCEL_ENV === 'preview' && /^[a-z0-9-]+\.vercel\.app$/i.test(process.env.VERCEL_URL || '') && origin === `https://${process.env.VERCEL_URL}`) {
+      for (const name of ['cookie', 'x-vercel-trusted-oidc-idp-token']) {
+        const value = req.headers.get(name);
+        if (value) headers[name] = value;
+      }
+    }
+    const indexResponse = await fetch(`${origin}/_app.html`, { headers, redirect: 'manual' });
+
+    if (indexResponse.status >= 300 && indexResponse.status < 400) throw new Error('Static shell redirect refused');
 
     // index.html 응답을 그대로 전달
-    return new Response(indexResponse.body, {
-      status: indexResponse.status,
+    const html = postMeta ? injectShareHead(await indexResponse.text(), postMeta) : indexResponse.body;
+    return new Response(html, {
+      status: postMeta ? postStatus : indexResponse.status,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'CDN-Cache-Control': 'no-store',
+        'Vary': 'User-Agent',
       },
     });
   } catch (e) {
