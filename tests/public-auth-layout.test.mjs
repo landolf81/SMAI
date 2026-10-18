@@ -86,6 +86,9 @@ async function loadAppWithCapturedRouter() {
           if (importPath === './context/ThemeContext') {
             return { contents: `import React from 'react'; export function ThemeProvider({ children }) { return children; }` };
           }
+          if (importPath === './hooks/usePostShareMetadata') {
+            return { contents: `export function usePostShareMetadata() {}` };
+          }
           if (importPath === './hooks/useScrollDirection') {
             return { contents: `export function useScrollDirection() { return 'up'; }` };
           }

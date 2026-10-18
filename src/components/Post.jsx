@@ -1,4 +1,5 @@
 /* eslint-disable react/prop-types */
+import { SITE_URL } from '../utils/postShareMetadata';
 import React, { useContext, useRef, useEffect, useState } from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -210,17 +211,20 @@ const Post = ({ post, isVisible = true, onVideoPlay, onVideoPause }) => {
   };
 
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: '게시글 공유',
-        text: postContent,
-        url: window.location.href
-      });
-    } else {
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => alert('링크가 클립보드에 복사되었습니다!'))
-        .catch(() => alert('공유에 실패했습니다.'));
+  const handleShare = async () => {
+    try {
+      const response = await fetch(`/api/share?id=${encodeURIComponent(post.id)}`, { credentials: 'same-origin', cache: 'no-store' });
+      if (!response.ok) throw new Error('Unavailable');
+      const meta = await response.json();
+      if (!meta.available) return;
+      const url = `${SITE_URL}/post/${encodeURIComponent(post.id)}`;
+      if (navigator.share) await navigator.share({ title: meta.title, text: meta.description, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        alert('링크가 클립보드에 복사되었습니다!');
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') alert('공개된 게시글만 공유할 수 있습니다. 잠시 후 다시 시도해 주세요.');
     }
   };
 

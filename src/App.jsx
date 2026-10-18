@@ -11,6 +11,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
+import { usePostShareMetadata } from './hooks/usePostShareMetadata';
 
 // Components (항상 필요한 것들은 즉시 로드)
 import Navbar from './components/Navbar';
@@ -141,6 +142,7 @@ const queryClient = new QueryClient({
 const Layout = () => {
   const { currentUser, isBanned } = useContext(AuthContext);
   const location = useLocation();
+  usePostShareMetadata(location.pathname);
   const navigate = useNavigate();
   const scrollDirection = useScrollDirection();
 
