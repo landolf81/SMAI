@@ -164,22 +164,29 @@ EmptyTooltip.propTypes = {
   const wholesaleDate = getNextDate(baseDate); // 도매 = baseDate + 1
 
   // 산지 데이터 조회 (기준일)
-  const { data: seongjuData } = useQuery({
+  const seongjuQuery = useQuery({
     queryKey: ['combinedSeonju', baseDate],
     queryFn: () => marketCombinedService.getSeongjuForDate(baseDate),
     staleTime: 5 * 60 * 1000,
   });
 
   // 도매(익일) 데이터 조회
-  const { data: wholesaleData } = useQuery({
+  const wholesaleQuery = useQuery({
     queryKey: ['combinedWholesale', wholesaleDate],
     queryFn: () => marketCombinedService.getWholesaleForDate(wholesaleDate),
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: seongjuData } = seongjuQuery;
+  const { data: wholesaleData } = wholesaleQuery;
+  const summaryReady = !seongjuQuery.isPending && !wholesaleQuery.isPending
+    && !seongjuQuery.isError && !wholesaleQuery.isError;
+  const hasSummary = summaryReady && !!(seongjuData || wholesaleData);
+
   // 작년 비교 데이터 — 항상 산지+도매 합산
   const { data: lastYearData } = useQuery({
     queryKey: ['lastYearComparison', baseDate],
+    enabled: hasSummary,
     queryFn: () => marketCombinedService.getLastYearComparison(baseDate),
     staleTime: 10 * 60 * 1000,
   });
@@ -199,15 +206,16 @@ EmptyTooltip.propTypes = {
 
   const { data: trendData, isLoading: trendLoading } = useQuery({
     queryKey: ['combinedTrend', dateRange.start, dateRange.end],
+    enabled: hasSummary,
     queryFn: () => marketCombinedService.getCombinedTrendData(dateRange.start, dateRange.end),
     staleTime: 5 * 60 * 1000,
   });
 
   // 합산 계산
   const combined = useMemo(() => {
-    if (!seongjuData) return null;
-    const sBoxes = seongjuData.total_boxes || 0;
-    const sAmount = seongjuData.total_amount || 0;
+    if (!seongjuData && !wholesaleData) return null;
+    const sBoxes = seongjuData?.total_boxes || 0;
+    const sAmount = seongjuData?.total_amount || 0;
     const wBoxes = wholesaleData?.total_boxes || 0;
     const wAmount = wholesaleData?.total_amount || 0;
     const totalBoxes = sBoxes + wBoxes;
@@ -222,7 +230,19 @@ EmptyTooltip.propTypes = {
     };
   }, [seongjuData, wholesaleData]);
 
-  if (!combined) return null;
+  // Never present a failed market query as an empty day or a complete total.
+  if (seongjuQuery.isError || wholesaleQuery.isError) {
+    return (
+      <div role="alert" className="mt-6 rounded-xl bg-base-200 p-4 text-sm">
+        <p>산지 + 도매 시세를 불러오지 못했습니다.</p>
+        <button type="button" className="btn btn-sm mt-2" onClick={() => {
+          seongjuQuery.refetch();
+          wholesaleQuery.refetch();
+        }}>다시 시도</button>
+      </div>
+    );
+  }
+  if (!summaryReady || !combined) return null;
 
   const dayOfWeek = getDayOfWeek(baseDate);
   const dayName = DAY_NAMES[dayOfWeek];
@@ -274,6 +294,12 @@ EmptyTooltip.propTypes = {
           <div className="text-base font-semibold text-warning mb-2">
             산지 {formatShortDate(baseDate)}({DAY_NAMES[getDayOfWeek(baseDate)]}) + 도매 {formatShortDate(wholesaleDate)}({DAY_NAMES[getDayOfWeek(wholesaleDate)]})
           </div>
+
+          {(!seongjuData || !wholesaleData) && (
+            <p className="text-sm text-base-content/60 mb-3">
+              {seongjuData ? '산지 자료만 집계 · 도매 자료 없음' : '도매 자료만 집계 · 산지 자료 없음'}
+            </p>
+          )}
 
           {/* 총 출하량 */}
           <div className="flex items-baseline gap-2 mb-1.5">

@@ -1,4 +1,4 @@
-/** Load the below-the-fold summary/chart bundle only as it approaches the viewport. */
+/** Defer the summary bundle; release reserved space after mount, including empty results. */
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 
@@ -21,7 +21,7 @@ export default function DeferredCombinedMarketCard({ selectedDate, formatPrice }
     return () => observer.disconnect();
   }, []);
   const placeholder = <div className="min-h-[32rem] flex items-center justify-center" aria-label="종합 시세 차트 로딩 중"><span className="loading loading-spinner" /></div>;
-  return <div ref={root} className="min-h-[32rem]">
+  return <div ref={root}>
     {visible ? <Suspense fallback={placeholder}><Card selectedDate={selectedDate} formatPrice={formatPrice} /></Suspense> : placeholder}
   </div>;
 }

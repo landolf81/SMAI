@@ -44,19 +44,14 @@ const marketCombinedService = {
    * @returns {Object|null}
    */
   async getWholesaleForDate(date) {
-    try {
-      const { data, error } = await supabase
-        .from('market_aggregate_summary')
-        .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
-        .eq('region_name', '도매시장')
-        .eq('market_date', date)
-        .maybeSingle();
-      if (error) throw error;
-      return data && (data.avg_price > 0 || data.total_boxes > 0) ? data : null;
-    } catch (error) {
-      console.error('도매시장 날짜 데이터 조회 오류:', error);
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('market_aggregate_summary')
+      .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
+      .eq('region_name', '도매시장')
+      .eq('market_date', date)
+      .maybeSingle();
+    if (error) throw error;
+    return data && (data.avg_price > 0 || data.total_boxes > 0) ? data : null;
   },
 
   /**
@@ -65,19 +60,14 @@ const marketCombinedService = {
    * @returns {Object|null}
    */
   async getSeongjuForDate(date) {
-    try {
-      const { data, error } = await supabase
-        .from('market_aggregate_summary')
-        .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
-        .eq('region_name', '성주군')
-        .eq('market_date', date)
-        .maybeSingle();
-      if (error) throw error;
-      return data && (data.avg_price > 0 || data.total_boxes > 0) ? data : null;
-    } catch (error) {
-      console.error('산지 날짜 데이터 조회 오류:', error);
-      return null;
-    }
+    const { data, error } = await supabase
+      .from('market_aggregate_summary')
+      .select('market_date, total_boxes, total_amount, avg_price, max_price, min_price')
+      .eq('region_name', '성주군')
+      .eq('market_date', date)
+      .maybeSingle();
+    if (error) throw error;
+    return data && (data.avg_price > 0 || data.total_boxes > 0) ? data : null;
   },
 
   /**
